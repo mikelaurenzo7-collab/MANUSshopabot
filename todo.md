@@ -325,14 +325,14 @@
 - [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
 - [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
 
-## Sprint 15: Brand Rename → Beast Bots
+## Sprint 15: Brand Rename → Beast Bots ✅
 
-- [ ] Update package.json name field to "beast-bots"
-- [ ] Update index.html title, meta description, og:title, og:site_name, twitter:title to "Beast Bots"
-- [ ] Update Landing.tsx company/brand references from "ShopBOTS" to "Beast Bots" (nav logo, footer, hero tagline)
-- [ ] Update DashboardLayout.tsx sidebar logo/brand from "ShopBOTS" to "Beast Bots"
-- [ ] Update server file headers and LLM system prompts referencing old brand
-- [ ] Update README.md and any documentation files
-- [ ] Update VITE_APP_TITLE secret to "Beast Bots"
-- [ ] Verify 0 TypeScript errors and 512 tests still passing
-- [ ] Commit to visual-polish branch and checkpoint
+- [x] Update package.json name field to "beast-bots"
+- [x] Update index.html title, meta description, og:title, og:site_name, twitter:title to "Beast Bots"
+- [x] Update Landing.tsx company/brand references from "ShopBOTS" to "Beast Bots" (nav logo, footer, hero tagline)
+- [x] Update DashboardLayout.tsx sidebar logo/brand from "ShopBOTS" to "Beast Bots"
+- [x] Update server file headers and LLM system prompts referencing old brand
+- [x] Update README.md and any documentation files
+- [x] Update VITE_APP_TITLE secret to "Beast Bots" — user must update via Settings > General in Management UI (built-in secret)
+- [x] Verify 0 TypeScript errors and 512 tests still passing
+- [x] Merge visual-polish branch into main and checkpoint
