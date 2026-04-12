@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,43 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  VitePWA({
+    registerType: "autoUpdate",
+    includeAssets: ["favicon.ico", "robots.txt"],
+    manifest: {
+      name: "ShopBOTS — Autonomous E-Commerce",
+      short_name: "ShopBOTS",
+      description: "Autonomous AI bots that build, run, and grow your e-commerce store 24/7.",
+      theme_color: "#0a0a0f",
+      background_color: "#0a0a0f",
+      display: "standalone",
+      icons: [
+        { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      ],
+    },
+    workbox: {
+      globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+      navigateFallback: "/",
+      navigateFallbackDenylist: [/^\/api\//],
+      runtimeCaching: [
+        {
+          urlPattern: /^\/api\/trpc\//,
+          handler: "NetworkFirst",
+          options: {
+            cacheName: "trpc-cache",
+            expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+          },
+        },
+      ],
+    },
+  }),
+];
 
 export default defineConfig({
   plugins,

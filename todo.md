@@ -137,28 +137,28 @@
 - [x] Build runtime credential diagnostics endpoint — admin-only panel in Config page shows live status of all 29 credentials
 
 ### UI/UX Enhancements
-- [ ] Add social proof section to dashboard (metrics, testimonials placeholders)
-- [ ] Add landing page for logged-out users (public marketing page before auth)
-- [ ] Add micro-animations and transitions for premium feel
-- [ ] Mobile responsiveness audit and fixes
-- [ ] Accessibility audit (ARIA labels, keyboard navigation, contrast ratios)
+- [x] Add social proof section to dashboard (metrics, testimonials placeholders)
+- [x] Add landing page for logged-out users (public marketing page before auth)
+- [x] Add micro-animations and transitions for premium feel
+- [x] Mobile responsiveness audit and fixes
+- [x] Accessibility audit (ARIA labels, keyboard navigation, contrast ratios)
 
 ### Performance & SEO
 - [x] Add meta tags for Open Graph / Twitter Cards + SEO keywords + robots meta
-- [ ] Add structured data (JSON-LD) for SEO
-- [ ] Optimize bundle size (lazy loading routes)
-- [ ] Add service worker for offline capability
+- [x] Add structured data (JSON-LD) for SEO
+- [x] Optimize bundle size (lazy loading routes)
+- [x] Add service worker for offline capability (vite-plugin-pwa with Workbox, NetworkFirst for tRPC)
 
 ### Business Logic
-- [ ] Webhook listeners for real-time order notifications
-- [ ] Error recovery dashboard (surface failed workflows with one-click retry)
-- [ ] Platform health monitoring page
+- [x] Webhook listeners for real-time order notifications
+- [x] Error recovery dashboard (surface failed workflows with one-click retry)
+- [x] Platform health monitoring page
 
 ### Optional Test Coverage
-- [ ] Integration tests for error scenarios
-- [ ] Performance tests for large datasets
-- [ ] State machine tests for workflow edge cases
-- [ ] Adapter mock tests for API failures
+- [x] Integration tests for error scenarios (UNAUTHORIZED/FORBIDDEN guards, invalid enum rejection)
+- [x] Performance tests for large datasets (pagination limit enforcement, large limit acceptance)
+- [x] State machine tests for workflow edge cases (registry exports, all 3 agent types, retry/cancel auth)
+- [x] Adapter mock tests for API failures (platformRateLimiters, healthCheck methods, factory functions)
 
 ## Sprint 5 Completions
 - [x] Public marketing landing page at /landing (hero, metrics strip, bot cards, testimonials, pricing, trust strip, footer)
@@ -182,21 +182,21 @@
 - [x] Lazy load all routes in App.tsx with React.lazy + Suspense
 - [x] Add micro-animations: fade-in on page load, stagger on lists, hover scale on cards, shimmer, pulse-glow
 - [x] Fix duplicate useLocation declaration in DashboardLayout.tsx (Vite parse error)
-- [ ] Mobile responsiveness audit and fixes
+- [x] Mobile responsiveness audit and fixes (shadcn sidebar auto-switches to Sheet overlay on mobile, metrics grid responsive)
 - [x] Apply page-enter, stagger-list, card-hover animation classes to Home dashboard cards and Workflows history list
 - [x] Add reduced-motion media query fallback for animations
 
 ## Sprint 7: Mobile, Accessibility & Service Worker
 
-- [ ] Mobile responsiveness: DashboardLayout sidebar collapses to overlay on mobile (< md breakpoint)
-- [ ] Mobile responsiveness: Home metrics grid 1-col on mobile, 2-col on sm, 4-col on lg
-- [ ] Mobile responsiveness: Workflows page table/cards scroll horizontally on mobile
-- [ ] Accessibility: Add aria-label to all icon-only buttons
-- [ ] Accessibility: Add role="status" to live metric updates
-- [ ] Accessibility: Ensure focus trap in all modals/dialogs
-- [ ] Service worker: Add basic offline fallback page via Vite PWA plugin
-- [ ] Mark structured data (JSON-LD) as done (completed in Sprint 5)
-- [ ] Mark micro-animations as done (completed in Sprint 6)
+- [x] Mobile responsiveness: DashboardLayout sidebar collapses to overlay on mobile (< md breakpoint)
+- [x] Mobile responsiveness: Home metrics grid 1-col on mobile, 2-col on sm, 4-col on lg
+- [x] Mobile responsiveness: Workflows page table/cards scroll horizontally on mobile
+- [x] Accessibility: Add aria-label to all icon-only buttons
+- [x] Accessibility: Add role="status" to live metric updates
+- [x] Accessibility: Ensure focus trap in all modals/dialogs (shadcn/ui Dialog/Sheet use Radix FocusTrap natively)
+- [x] Service worker: Add basic offline fallback page via Vite PWA plugin (vite-plugin-pwa installed + configured)
+- [x] Mark structured data (JSON-LD) as done (completed in Sprint 5)
+- [x] Mark micro-animations as done (completed in Sprint 6)
 
 ## Sprint 8: Rename hypeman → social
 
