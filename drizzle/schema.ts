@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, index } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -455,3 +455,4 @@ export const agentTelemetry = mysqlTable("agent_telemetry", {
 });
 export type AgentTelemetry = typeof agentTelemetry.$inferSelect;
 export type InsertAgentTelemetry = typeof agentTelemetry.$inferInsert;
+

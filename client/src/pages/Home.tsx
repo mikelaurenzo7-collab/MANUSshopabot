@@ -386,12 +386,12 @@ function CrossStoreIntelligence() {
 export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
-  const { data: agentStatus, isLoading: agentLoading } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
-  const { data: recentActivity, isLoading: activityLoading } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
-  const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 15000 });
-  const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
-  const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
+  const { data: agentStatus, isLoading: agentLoading, error: agentError } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
+  const { data: recentActivity, isLoading: activityLoading, error: activityError } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
+  const { data: pendingApprovals, error: approvalsError } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 15000 });
+  const { data: stores, isLoading: storesLoading, error: storesError } = trpc.stores.list.useQuery();
+  const { data: connSummary, error: connError } = trpc.connectors.connectionSummary.useQuery();
 
   const agentConfigs = [
     { name: "The Architect Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
@@ -424,28 +424,41 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Error States */}
+      {(metricsError || agentError || activityError || approvalsError || storesError || connError) && (
+        <Card className="bg-red-500/5 border-red-500/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-400">Dashboard Error</p>
+              <p className="text-xs text-red-400/70 mt-1">Some dashboard data failed to load. Retrying...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Revenue"
-          value={`$${((metrics?.totalRevenue ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+          value={metricsError ? "—" : `$${((metrics?.totalRevenue ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
           loading={metricsLoading}
-          accentColor="bg-emerald-500/10 text-emerald-400"
+          accentColor={metricsError ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"}
         />
         <MetricCard
           title="Total Orders"
-          value={(metrics?.totalOrders ?? 0).toLocaleString()}
+          value={metricsError ? "—" : (metrics?.totalOrders ?? 0).toLocaleString()}
           icon={ShoppingCart}
           loading={metricsLoading}
-          accentColor="bg-blue-500/10 text-blue-400"
+          accentColor={metricsError ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"}
         />
         <MetricCard
           title="Active Products"
-          value={(metrics?.activeProducts ?? 0).toLocaleString()}
+          value={metricsError ? "—" : (metrics?.activeProducts ?? 0).toLocaleString()}
           icon={Package}
           loading={metricsLoading}
-          accentColor="bg-violet-500/10 text-violet-400"
+          accentColor={metricsError ? "bg-red-500/10 text-red-400" : "bg-violet-500/10 text-violet-400"}
         />
         <MetricCard
           title="Connected Platforms"
