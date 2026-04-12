@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `approval_queue` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentTaskId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`actionType` varchar(100) NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`impact` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',\n\t`proposedAction` json,\n\t`status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',\n\t`reviewedAt` timestamp,\n\t`reviewNote` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `approval_queue_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `approval_queue` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentTaskId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`actionType` varchar(100) NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`impact` enum('low','medium','high','critical') NOT NULL DEFAULT 'medium',\n\t`proposedAction` json,\n\t`status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',\n\t`reviewedAt` timestamp,\n\t`reviewNote` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `approval_queue_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 103
+}

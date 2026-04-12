@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `ad_campaigns` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`platform` enum('tiktok','meta','google','email','sms') NOT NULL DEFAULT 'meta',\n\t`adCopy` text,\n\t`imageUrl` text,\n\t`targetAudience` text,\n\t`budgetCents` int DEFAULT 0,\n\t`spentCents` int DEFAULT 0,\n\t`impressions` int DEFAULT 0,\n\t`clicks` int DEFAULT 0,\n\t`conversions` int DEFAULT 0,\n\t`status` enum('draft','active','paused','completed') NOT NULL DEFAULT 'draft',\n\t`scheduledAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `ad_campaigns_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `ad_campaigns` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`platform` enum('tiktok','meta','google','email','sms') NOT NULL DEFAULT 'meta',\n\t`adCopy` text,\n\t`imageUrl` text,\n\t`targetAudience` text,\n\t`budgetCents` int DEFAULT 0,\n\t`spentCents` int DEFAULT 0,\n\t`impressions` int DEFAULT 0,\n\t`clicks` int DEFAULT 0,\n\t`conversions` int DEFAULT 0,\n\t`status` enum('draft','active','paused','completed') NOT NULL DEFAULT 'draft',\n\t`scheduledAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `ad_campaigns_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 213
+}

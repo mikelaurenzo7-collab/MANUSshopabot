@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `products` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`price` int NOT NULL DEFAULT 0,\n\t`costPrice` int DEFAULT 0,\n\t`compareAtPrice` int,\n\t`sku` varchar(100),\n\t`imageUrl` text,\n\t`category` varchar(255),\n\t`supplier` varchar(255),\n\t`supplierUrl` text,\n\t`stockLevel` int NOT NULL DEFAULT 0,\n\t`lowStockThreshold` int DEFAULT 5,\n\t`status` enum('draft','active','out_of_stock','archived') NOT NULL DEFAULT 'draft',\n\t`shopifyProductId` varchar(100),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `products_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `products` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`price` int NOT NULL DEFAULT 0,\n\t`costPrice` int DEFAULT 0,\n\t`compareAtPrice` int,\n\t`sku` varchar(100),\n\t`imageUrl` text,\n\t`category` varchar(255),\n\t`supplier` varchar(255),\n\t`supplierUrl` text,\n\t`stockLevel` int NOT NULL DEFAULT 0,\n\t`lowStockThreshold` int DEFAULT 5,\n\t`status` enum('draft','active','out_of_stock','archived') NOT NULL DEFAULT 'draft',\n\t`shopifyProductId` varchar(100),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `products_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 118
+}

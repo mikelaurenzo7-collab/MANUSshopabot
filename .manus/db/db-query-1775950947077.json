@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `bot_config` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`config` json,\n\t`autoApprove` boolean NOT NULL DEFAULT false,\n\t`maxBudgetCents` int DEFAULT 10000,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `bot_config_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `bot_config` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`config` json,\n\t`autoApprove` boolean NOT NULL DEFAULT false,\n\t`maxBudgetCents` int DEFAULT 10000,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `bot_config_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 138
+}

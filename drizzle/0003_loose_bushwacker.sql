@@ -1,0 +1,40 @@
+CREATE TABLE `platform_credentials` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`storeId` int,
+	`platform` varchar(50) NOT NULL,
+	`accessToken` text,
+	`refreshToken` text,
+	`tokenExpiresAt` timestamp,
+	`scopes` text,
+	`platformAccountId` varchar(255),
+	`platformAccountName` varchar(255),
+	`status` enum('active','expired','revoked','error') NOT NULL DEFAULT 'active',
+	`lastRefreshedAt` timestamp,
+	`lastHealthCheck` timestamp,
+	`metadata` json,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `platform_credentials_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `social_accounts` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`platform` enum('meta','instagram','tiktok','twitter','pinterest','google_ads','linkedin') NOT NULL,
+	`accountName` varchar(255),
+	`accountId` varchar(255),
+	`accessToken` text,
+	`refreshToken` text,
+	`tokenExpiresAt` timestamp,
+	`scopes` text,
+	`profileUrl` text,
+	`profileImageUrl` text,
+	`followerCount` int,
+	`status` enum('active','expired','revoked','error') NOT NULL DEFAULT 'active',
+	`lastRefreshedAt` timestamp,
+	`metadata` json,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `social_accounts_id` PRIMARY KEY(`id`)
+);

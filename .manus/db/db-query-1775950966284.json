@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `orders` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`shopifyOrderId` varchar(100),\n\t`customerName` varchar(255),\n\t`customerEmail` varchar(320),\n\t`totalAmount` int NOT NULL DEFAULT 0,\n\t`currency` varchar(10) DEFAULT 'USD',\n\t`status` enum('pending','processing','fulfilled','shipped','delivered','cancelled','refunded') NOT NULL DEFAULT 'pending',\n\t`fulfillmentStatus` enum('unfulfilled','partial','fulfilled') NOT NULL DEFAULT 'unfulfilled',\n\t`trackingNumber` varchar(255),\n\t`trackingUrl` text,\n\t`itemCount` int DEFAULT 1,\n\t`orderData` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `orders_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `orders` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`shopifyOrderId` varchar(100),\n\t`customerName` varchar(255),\n\t`customerEmail` varchar(320),\n\t`totalAmount` int NOT NULL DEFAULT 0,\n\t`currency` varchar(10) DEFAULT 'USD',\n\t`status` enum('pending','processing','fulfilled','shipped','delivered','cancelled','refunded') NOT NULL DEFAULT 'pending',\n\t`fulfillmentStatus` enum('unfulfilled','partial','fulfilled') NOT NULL DEFAULT 'unfulfilled',\n\t`trackingNumber` varchar(255),\n\t`trackingUrl` text,\n\t`itemCount` int DEFAULT 1,\n\t`orderData` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `orders_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 120
+}

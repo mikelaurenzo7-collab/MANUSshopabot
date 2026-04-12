@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `stores` \n  ADD COLUMN `platform` enum('shopify','woocommerce','amazon','etsy','ebay','tiktok_shop','walmart') NOT NULL DEFAULT 'shopify' AFTER `name`,\n  ADD COLUMN `platformDomain` varchar(255) AFTER `platform`,\n  ADD COLUMN `platformAccessToken` text AFTER `platformDomain`,\n  ADD COLUMN `platformStoreId` varchar(255) AFTER `platformAccessToken`,\n  DROP COLUMN `shopifyDomain`,\n  DROP COLUMN `shopifyAccessToken`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute ALTER TABLE `stores` \n  ADD COLUMN `platform` enum('shopify','woocommerce','amazon','etsy','ebay','tiktok_shop','walmart') NOT NULL DEFAULT 'shopify' AFTER `name`,\n  ADD COLUMN `platformDomain` varchar(255) AFTER `platform`,\n  ADD COLUMN `platformAccessToken` text AFTER `platformDomain`,\n  ADD COLUMN `platformStoreId` varchar(255) AFTER `platformAccessToken`,\n  DROP COLUMN `shopifyDomain`,\n  DROP COLUMN `shopifyAccessToken`;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'platform' in 'stores'"
+  ]
+}

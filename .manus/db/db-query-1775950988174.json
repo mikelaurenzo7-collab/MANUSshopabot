@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `stores` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`shopifyDomain` varchar(255),\n\t`shopifyAccessToken` text,\n\t`niche` varchar(255),\n\t`status` enum('setup','active','paused','archived') NOT NULL DEFAULT 'setup',\n\t`currency` varchar(10) DEFAULT 'USD',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `stores_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `stores` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`shopifyDomain` varchar(255),\n\t`shopifyAccessToken` text,\n\t`niche` varchar(255),\n\t`status` enum('setup','active','paused','archived') NOT NULL DEFAULT 'setup',\n\t`currency` varchar(10) DEFAULT 'USD',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `stores_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 111
+}

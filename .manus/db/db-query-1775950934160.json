@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `agent_tasks` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`taskType` varchar(100) NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`status` enum('running','completed','failed','pending_approval','approved','rejected') NOT NULL DEFAULT 'running',\n\t`result` json,\n\t`storeId` int,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `agent_tasks_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `agent_tasks` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman') NOT NULL,\n\t`taskType` varchar(100) NOT NULL,\n\t`title` varchar(500) NOT NULL,\n\t`description` text,\n\t`status` enum('running','completed','failed','pending_approval','approved','rejected') NOT NULL DEFAULT 'running',\n\t`result` json,\n\t`storeId` int,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `agent_tasks_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 207
+}

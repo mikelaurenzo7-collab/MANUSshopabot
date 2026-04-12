@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `analytics_snapshots` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`date` varchar(10) NOT NULL,\n\t`revenue` int DEFAULT 0,\n\t`orders` int DEFAULT 0,\n\t`visitors` int DEFAULT 0,\n\t`conversionRate` int DEFAULT 0,\n\t`avgOrderValue` int DEFAULT 0,\n\t`topProducts` json,\n\t`trafficSources` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `analytics_snapshots_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `analytics_snapshots` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`date` varchar(10) NOT NULL,\n\t`revenue` int DEFAULT 0,\n\t`orders` int DEFAULT 0,\n\t`visitors` int DEFAULT 0,\n\t`conversionRate` int DEFAULT 0,\n\t`avgOrderValue` int DEFAULT 0,\n\t`topProducts` json,\n\t`trafficSources` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `analytics_snapshots_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 259
+}

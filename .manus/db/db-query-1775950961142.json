@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `notifications` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman','system') NOT NULL,\n\t`type` enum('info','warning','error','success','approval_needed') NOT NULL DEFAULT 'info',\n\t`title` varchar(500) NOT NULL,\n\t`message` text,\n\t`isRead` boolean NOT NULL DEFAULT false,\n\t`actionUrl` varchar(500),\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `notifications_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `notifications` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`agentType` enum('architect','merchant','hypeman','system') NOT NULL,\n\t`type` enum('info','warning','error','success','approval_needed') NOT NULL DEFAULT 'info',\n\t`title` varchar(500) NOT NULL,\n\t`message` text,\n\t`isRead` boolean NOT NULL DEFAULT false,\n\t`actionUrl` varchar(500),\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `notifications_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 142
+}

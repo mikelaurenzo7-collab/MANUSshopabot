@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `social_posts` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`platform` enum('tiktok','instagram','facebook','twitter','pinterest') NOT NULL,\n\t`content` text,\n\t`imageUrl` text,\n\t`scheduledAt` timestamp,\n\t`publishedAt` timestamp,\n\t`status` enum('draft','scheduled','published','failed') NOT NULL DEFAULT 'draft',\n\t`engagement` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `social_posts_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3eWPFCBhXN3VhAz.root --database R65at2L4nXpfNokxNrB7Yp --execute CREATE TABLE `social_posts` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`storeId` int NOT NULL,\n\t`platform` enum('tiktok','instagram','facebook','twitter','pinterest') NOT NULL,\n\t`content` text,\n\t`imageUrl` text,\n\t`scheduledAt` timestamp,\n\t`publishedAt` timestamp,\n\t`status` enum('draft','scheduled','published','failed') NOT NULL DEFAULT 'draft',\n\t`engagement` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `social_posts_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 104
+}

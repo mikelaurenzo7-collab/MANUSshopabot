@@ -1,0 +1,325 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import {
+  Activity,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Loader2,
+  AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
+  Bot,
+  Package,
+  Megaphone,
+  Filter,
+} from "lucide-react";
+
+const agentIcons: Record<string, any> = {
+  architect: Bot,
+  merchant: Package,
+  hypeman: Megaphone,
+};
+const agentColors: Record<string, string> = {
+  architect: "text-violet-400",
+  merchant: "text-cyan-400",
+  hypeman: "text-amber-400",
+};
+const agentNames: Record<string, string> = {
+  architect: "The Architect Agent",
+  merchant: "The Merchant Agent",
+  hypeman: "The Hype-Man Agent",
+};
+
+export default function ActivityPage() {
+  const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [reviewNote, setReviewNote] = useState<Record<number, string>>({});
+
+  const { data: tasks, isLoading: tasksLoading } = trpc.activity.list.useQuery({
+    agentType: agentFilter === "all" ? undefined : (agentFilter as any),
+    limit: 100,
+  });
+  const { data: pendingApprovals, isLoading: approvalsLoading } = trpc.approvals.pending.useQuery();
+  const { data: allApprovals } = trpc.approvals.all.useQuery({ limit: 50 });
+  const utils = trpc.useUtils();
+
+  const reviewApproval = trpc.approvals.review.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(`Decision ${vars.status}!`);
+      utils.approvals.pending.invalidate();
+      utils.approvals.all.invalidate();
+      utils.dashboard.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const statusIcons: Record<string, any> = {
+    completed: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
+    running: <Loader2 className="h-4 w-4 text-amber-400 animate-spin" />,
+    failed: <XCircle className="h-4 w-4 text-destructive" />,
+    pending: <Clock className="h-4 w-4 text-muted-foreground" />,
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Activity className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Agent Activity Log</h1>
+          <p className="text-sm text-muted-foreground">Timestamped history, approval queue, and manual overrides</p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="activity" className="space-y-4">
+        <TabsList className="bg-secondary/50">
+          <TabsTrigger value="activity">Activity Log</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative">
+            Approval Queue
+            {pendingApprovals && pendingApprovals.length > 0 && (
+              <Badge className="ml-1.5 h-5 min-w-5 px-1 text-[10px] bg-amber-500 text-white border-0">
+                {pendingApprovals.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history">Decision History</TabsTrigger>
+        </TabsList>
+
+        {/* Activity Log Tab */}
+        <TabsContent value="activity" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={agentFilter} onValueChange={setAgentFilter}>
+              <SelectTrigger className="w-48 bg-input/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Agents</SelectItem>
+                <SelectItem value="architect">The Architect</SelectItem>
+                <SelectItem value="merchant">The Merchant</SelectItem>
+                <SelectItem value="hypeman">The Hype-Man</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {tasksLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Card key={i} className="bg-card border-border/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : tasks && tasks.length > 0 ? (
+            <div className="space-y-2">
+              {tasks.map((task: any) => {
+                const AgentIcon = agentIcons[task.agentType] || Activity;
+                return (
+                  <Card key={task.id} className="bg-card border-border/50 hover:border-primary/10 transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5">{statusIcons[task.status] || statusIcons.pending}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AgentIcon className={`h-3.5 w-3.5 ${agentColors[task.agentType]}`} />
+                            <span className={`text-xs font-medium ${agentColors[task.agentType]}`}>
+                              {agentNames[task.agentType]}
+                            </span>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {new Date(task.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-medium text-foreground">{task.title}</h4>
+                          {task.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>
+                          )}
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] shrink-0 ${
+                            task.status === "completed"
+                              ? "border-emerald-400/30 text-emerald-400"
+                              : task.status === "running"
+                                ? "border-amber-400/30 text-amber-400"
+                                : task.status === "failed"
+                                  ? "border-destructive/30 text-destructive"
+                                  : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          {task.status}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card className="bg-card border-border/50">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">No agent activity recorded yet</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Approval Queue Tab */}
+        <TabsContent value="approvals" className="space-y-4">
+          {approvalsLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <Card key={i} className="bg-card border-border/50">
+                  <CardContent className="p-5 space-y-3">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : pendingApprovals && pendingApprovals.length > 0 ? (
+            <div className="space-y-3">
+              {pendingApprovals.map((item: any) => (
+                <Card key={item.id} className="bg-card border-amber-400/20 hover:border-amber-400/30 transition-all">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="h-4 w-4 text-amber-400" />
+                          <Badge variant="outline" className={`text-[10px] ${item.impact === "critical" ? "border-destructive/30 text-destructive" : "border-amber-400/30 text-amber-400"}`}>
+                            {item.impact} impact
+                          </Badge>
+                        </div>
+                        <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                          {agentNames[item.agentType]} · {item.actionType?.replace(/_/g, " ")}
+                        </p>
+                      </div>
+                    </div>
+                    {item.description && (
+                      <p className="text-sm text-muted-foreground mb-3">{item.description}</p>
+                    )}
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Add a review note (optional)..."
+                        value={reviewNote[item.id] || ""}
+                        onChange={(e) => setReviewNote((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        className="bg-input/50 min-h-[60px] text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() =>
+                            reviewApproval.mutate({
+                              id: item.id,
+                              status: "approved",
+                              reviewNote: reviewNote[item.id] || undefined,
+                            })
+                          }
+                          disabled={reviewApproval.isPending}
+                        >
+                          <ThumbsUp className="h-3.5 w-3.5 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                          onClick={() =>
+                            reviewApproval.mutate({
+                              id: item.id,
+                              status: "rejected",
+                              reviewNote: reviewNote[item.id] || undefined,
+                            })
+                          }
+                          disabled={reviewApproval.isPending}
+                        >
+                          <ThumbsDown className="h-3.5 w-3.5 mr-1" />
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card border-border/50">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <CheckCircle2 className="h-10 w-10 text-emerald-400/30 mb-3" />
+                <p className="text-sm text-muted-foreground">No pending approvals</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">All agent decisions are up to date</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Decision History Tab */}
+        <TabsContent value="history" className="space-y-4">
+          {allApprovals && allApprovals.length > 0 ? (
+            <div className="space-y-2">
+              {allApprovals.map((item: any) => (
+                <Card key={item.id} className="bg-card border-border/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {agentNames[item.agentType]} · {new Date(item.createdAt).toLocaleDateString()}
+                          {item.reviewedAt && ` · Reviewed ${new Date(item.reviewedAt).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${
+                          item.status === "approved"
+                            ? "border-emerald-400/30 text-emerald-400"
+                            : item.status === "rejected"
+                              ? "border-destructive/30 text-destructive"
+                              : "border-amber-400/30 text-amber-400"
+                        }`}
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                    {item.reviewNote && (
+                      <p className="text-xs text-muted-foreground mt-2 italic">"{item.reviewNote}"</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card border-border/50">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">No decisions recorded yet</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
