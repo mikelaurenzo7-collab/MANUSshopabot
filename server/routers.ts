@@ -17,6 +17,10 @@ import { telemetryRouter } from "./routers/telemetry";
 import { diagnosticsRouter } from "./routers/diagnostics";
 import { healthRouter } from "./routers/health";
 import { orchestratorRouter } from "./routers/orchestrator";
+import { workflowGraphRouter } from "./routers/workflowGraph";
+import { pluginRouter } from "./routers/pluginStore";
+import { supplierRouter } from "./routers/supplier";
+import { promptRLRouter } from "./routers/promptRL";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -44,6 +48,10 @@ export const appRouter = router({
   diagnostics: diagnosticsRouter,
   health: healthRouter,
   orchestrator: orchestratorRouter,
+  workflowGraph: workflowGraphRouter,
+  plugins: pluginRouter,
+  supplier: supplierRouter,
+  promptRL: promptRLRouter,
 
   // Notifications — scoped to current user
   notifications: router({

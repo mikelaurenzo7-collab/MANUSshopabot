@@ -24,6 +24,14 @@ import {
   agentWorkflows, InsertAgentWorkflow,
   workflowSteps, InsertWorkflowStep,
   agentTelemetry, InsertAgentTelemetry,
+  workflowPausePoints, InsertWorkflowPausePoint,
+  executionOverrides, InsertExecutionOverride,
+  botPlugins, InsertBotPlugin,
+  installedPlugins, InsertInstalledPlugin,
+  purchaseOrders, InsertPurchaseOrder,
+  poLineItems, InsertPoLineItem,
+  promptVariants, InsertPromptVariant,
+  promptMetrics, InsertPromptMetric,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1002,4 +1010,247 @@ export async function getTelemetryStats(storeId?: number) {
     avgDurationMs: sql<number>`COALESCE(AVG(${agentTelemetry.durationMs}), 0)`,
   }).from(agentTelemetry).where(where);
   return stats;
+}
+
+// ─── PHASE 1: WORKFLOW PAUSE / OVERRIDE HELPERS ──────────────────────────────
+
+export async function createPausePoint(data: InsertWorkflowPausePoint) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(workflowPausePoints).values(data);
+  return result.insertId;
+}
+
+export async function getPausePointsByWorkflow(workflowId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(workflowPausePoints).where(eq(workflowPausePoints.workflowId, workflowId));
+}
+
+export async function deletePausePoint(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(workflowPausePoints).where(eq(workflowPausePoints.id, id));
+}
+
+export async function createExecutionOverride(data: InsertExecutionOverride) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(executionOverrides).values(data);
+  return result.insertId;
+}
+
+export async function getOverridesByTask(agentTaskId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(executionOverrides).where(eq(executionOverrides.agentTaskId, agentTaskId));
+}
+
+export async function getRecentOverrides(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(executionOverrides).orderBy(desc(executionOverrides.timestamp)).limit(limit);
+}
+
+// ─── PHASE 2: APP STORE / PLUGIN HELPERS ─────────────────────────────────────
+
+export async function listPlugins() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(botPlugins).where(eq(botPlugins.status, "active"));
+}
+
+export async function getPluginById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [plugin] = await db.select().from(botPlugins).where(eq(botPlugins.id, id));
+  return plugin;
+}
+
+export async function createPlugin(data: InsertBotPlugin) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(botPlugins).values(data);
+  return result.insertId;
+}
+
+export async function installPlugin(data: InsertInstalledPlugin) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(installedPlugins).values(data);
+  return result.insertId;
+}
+
+export async function uninstallPlugin(userId: number, pluginId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(installedPlugins).where(
+    and(eq(installedPlugins.userId, userId), eq(installedPlugins.pluginId, pluginId))
+  );
+}
+
+export async function getInstalledPlugins(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(installedPlugins).where(eq(installedPlugins.userId, userId));
+}
+
+export async function togglePlugin(userId: number, pluginId: number, enabled: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(installedPlugins)
+    .set({ enabled })
+    .where(and(eq(installedPlugins.userId, userId), eq(installedPlugins.pluginId, pluginId)));
+}
+
+// ─── PHASE 3: PURCHASE ORDER HELPERS ─────────────────────────────────────────
+
+export async function createPurchaseOrder(data: InsertPurchaseOrder) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(purchaseOrders).values(data);
+  return result.insertId;
+}
+
+export async function getPurchaseOrdersByStore(storeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(purchaseOrders)
+    .where(eq(purchaseOrders.storeId, storeId))
+    .orderBy(desc(purchaseOrders.createdAt));
+}
+
+export async function getPurchaseOrderById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [po] = await db.select().from(purchaseOrders).where(eq(purchaseOrders.id, id));
+  return po;
+}
+
+export async function updatePurchaseOrderStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(purchaseOrders).set({ status, updatedAt: new Date() }).where(eq(purchaseOrders.id, id));
+}
+
+export async function createPoLineItem(data: InsertPoLineItem) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(poLineItems).values(data);
+  return result.insertId;
+}
+
+export async function getPoLineItems(poId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(poLineItems).where(eq(poLineItems.poId, poId));
+}
+
+export async function updatePoLineItemReceived(id: number, receivedQty: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(poLineItems).set({ receivedQty }).where(eq(poLineItems.id, id));
+}
+
+// ─── PHASE 4: PROMPT REINFORCEMENT LEARNING HELPERS ──────────────────────────
+
+export async function createPromptVariant(data: InsertPromptVariant) {
+  const db = await getDb();
+  if (!db) return;
+  const [result] = await db.insert(promptVariants).values(data);
+  return result.insertId;
+}
+
+export async function getActivePromptVariant(agentType: string, taskType: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [variant] = await db.select().from(promptVariants)
+    .where(and(
+      eq(promptVariants.agentType, agentType),
+      eq(promptVariants.taskType, taskType),
+      eq(promptVariants.isActive, true),
+    ));
+  return variant;
+}
+
+export async function listPromptVariants(agentType?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const where = agentType ? eq(promptVariants.agentType, agentType) : undefined;
+  return db.select().from(promptVariants).where(where).orderBy(desc(promptVariants.createdAt));
+}
+
+export async function promotePromptVariant(variantId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const variant = await db.select().from(promptVariants).where(eq(promptVariants.id, variantId));
+  if (!variant[0]) return;
+  // Deactivate all siblings for same agent+task
+  await db.update(promptVariants)
+    .set({ isActive: false })
+    .where(and(
+      eq(promptVariants.agentType, variant[0].agentType),
+      eq(promptVariants.taskType, variant[0].taskType),
+    ));
+  // Activate the winner
+  await db.update(promptVariants).set({ isActive: true }).where(eq(promptVariants.id, variantId));
+}
+
+export async function recordPromptInvocation(variantId: number, storeId: number | null, converted: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(promptMetrics)
+    .where(and(
+      eq(promptMetrics.variantId, variantId),
+      storeId ? eq(promptMetrics.storeId, storeId) : sql`${promptMetrics.storeId} IS NULL`,
+    ));
+  if (existing[0]) {
+    await db.update(promptMetrics).set({
+      invocations: (existing[0].invocations ?? 0) + 1,
+      conversions: (existing[0].conversions ?? 0) + (converted ? 1 : 0),
+      successRate: Math.round(((existing[0].conversions ?? 0) + (converted ? 1 : 0)) / ((existing[0].invocations ?? 0) + 1) * 100),
+      updatedAt: new Date(),
+    }).where(eq(promptMetrics.id, existing[0].id));
+  } else {
+    await db.insert(promptMetrics).values({
+      variantId,
+      storeId,
+      invocations: 1,
+      conversions: converted ? 1 : 0,
+      successRate: converted ? 100 : 0,
+    });
+  }
+}
+
+export async function getPromptMetricsByVariant(variantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(promptMetrics).where(eq(promptMetrics.variantId, variantId));
+}
+
+export async function getTopPerformingVariant(agentType: string, taskType: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const variants = await db.select().from(promptVariants)
+    .where(and(eq(promptVariants.agentType, agentType), eq(promptVariants.taskType, taskType)));
+  if (!variants.length) return undefined;
+  const variantIds = variants.map(v => v.id);
+  const metrics = await db.select().from(promptMetrics)
+    .where(inArray(promptMetrics.variantId, variantIds));
+  // Aggregate per variant
+  const agg: Record<number, { invocations: number; conversions: number }> = {};
+  for (const m of metrics) {
+    if (!agg[m.variantId]) agg[m.variantId] = { invocations: 0, conversions: 0 };
+    agg[m.variantId].invocations += m.invocations ?? 0;
+    agg[m.variantId].conversions += m.conversions ?? 0;
+  }
+  let bestId = variants[0].id;
+  let bestRate = -1;
+  for (const [vid, data] of Object.entries(agg)) {
+    if (data.invocations >= 10) { // min sample size
+      const rate = data.conversions / data.invocations;
+      if (rate > bestRate) { bestRate = rate; bestId = Number(vid); }
+    }
+  }
+  return variants.find(v => v.id === bestId);
 }

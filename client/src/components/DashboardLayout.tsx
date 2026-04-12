@@ -40,6 +40,10 @@ import {
   Workflow,
   HeartPulse,
   Brain,
+  GitBranch,
+  Store,
+  Truck,
+  Sparkles,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -62,6 +66,10 @@ const allMenuItems = [
   { icon: Workflow, label: "Workflows", path: "/workflows", group: "operations", color: "text-rose-400", adminOnly: false },
   { icon: HeartPulse, label: "Platform Health", path: "/health", group: "operations", color: "text-emerald-400", adminOnly: false },
   { icon: Brain, label: "Intelligence", path: "/intelligence", group: "operations", color: "text-violet-400", adminOnly: false },
+  { icon: GitBranch, label: "Orchestrator", path: "/orchestrator", group: "operations", color: "text-indigo-400", adminOnly: false },
+  { icon: Store, label: "App Store", path: "/plugins", group: "operations", color: "text-purple-400", adminOnly: false },
+  { icon: Truck, label: "Supplier POs", path: "/supplier", group: "operations", color: "text-orange-400", adminOnly: false },
+  { icon: Sparkles, label: "Prompt Lab", path: "/prompt-lab", group: "operations", color: "text-pink-400", adminOnly: false },
   { icon: Settings, label: "Bot Config", path: "/config", group: "settings", adminOnly: true },
 ];
 

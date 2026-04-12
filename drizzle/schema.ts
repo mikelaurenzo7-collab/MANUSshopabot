@@ -577,3 +577,110 @@ export const agentTelemetry = mysqlTable("agent_telemetry", {
 export type AgentTelemetry = typeof agentTelemetry.$inferSelect;
 export type InsertAgentTelemetry = typeof agentTelemetry.$inferInsert;
 
+// ─── PHASE 1: WORKFLOW PAUSE/OVERRIDE (Node Graph) ───────────────────────────
+
+export const workflowPausePoints = mysqlTable("workflow_pause_points", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  stepId: int("stepId").notNull(),
+  pauseReason: varchar("pauseReason", { length: 500 }).notNull(),
+  overrideRequired: boolean("overrideRequired").default(true),
+  autoResumeConfig: json("autoResumeConfig"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type WorkflowPausePoint = typeof workflowPausePoints.$inferSelect;
+export type InsertWorkflowPausePoint = typeof workflowPausePoints.$inferInsert;
+
+export const executionOverrides = mysqlTable("execution_overrides", {
+  id: int("id").autoincrement().primaryKey(),
+  agentTaskId: int("agentTaskId").notNull(),
+  overriddenByUserId: int("overriddenByUserId"),
+  actionTaken: varchar("actionTaken", { length: 50 }).notNull(),
+  reason: varchar("reason", { length: 500 }),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+export type ExecutionOverride = typeof executionOverrides.$inferSelect;
+export type InsertExecutionOverride = typeof executionOverrides.$inferInsert;
+
+// ─── PHASE 2: APP STORE / FIRST-PARTY PLUGINS ───────────────────────────────
+
+export const botPlugins = mysqlTable("bot_plugins", {
+  id: int("id").autoincrement().primaryKey(),
+  pluginName: varchar("pluginName", { length: 150 }).notNull(),
+  version: varchar("version", { length: 50 }).notNull(),
+  description: text("description"),
+  author: varchar("author", { length: 100 }).notNull(),
+  category: varchar("category", { length: 50 }).default("utility"),
+  iconUrl: varchar("iconUrl", { length: 500 }),
+  webhookConfig: json("webhookConfig"),
+  eventTypes: json("eventTypes"),
+  status: varchar("status", { length: 50 }).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BotPlugin = typeof botPlugins.$inferSelect;
+export type InsertBotPlugin = typeof botPlugins.$inferInsert;
+
+export const installedPlugins = mysqlTable("installed_plugins", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  pluginId: int("pluginId").notNull(),
+  configJson: json("configJson"),
+  enabled: boolean("enabled").default(true).notNull(),
+  installedAt: timestamp("installedAt").defaultNow().notNull(),
+});
+export type InstalledPlugin = typeof installedPlugins.$inferSelect;
+export type InsertInstalledPlugin = typeof installedPlugins.$inferInsert;
+
+// ─── PHASE 3: SUPPLIER PURCHASE ORDERS ───────────────────────────────────────
+
+export const purchaseOrders = mysqlTable("purchase_orders", {
+  id: int("id").autoincrement().primaryKey(),
+  storeId: int("storeId").notNull(),
+  supplierId: varchar("supplierId", { length: 150 }),
+  poNumber: varchar("poNumber", { length: 150 }).notNull(),
+  totalCents: int("totalCents").notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("draft"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
+export type InsertPurchaseOrder = typeof purchaseOrders.$inferInsert;
+
+export const poLineItems = mysqlTable("po_line_items", {
+  id: int("id").autoincrement().primaryKey(),
+  poId: int("poId").notNull(),
+  productId: int("productId").notNull(),
+  quantity: int("quantity").notNull(),
+  unitCostCents: int("unitCostCents").notNull(),
+  receivedQty: int("receivedQty").default(0),
+});
+export type PoLineItem = typeof poLineItems.$inferSelect;
+export type InsertPoLineItem = typeof poLineItems.$inferInsert;
+
+// ─── PHASE 4: PROMPT REINFORCEMENT LEARNING ──────────────────────────────────
+
+export const promptVariants = mysqlTable("prompt_variants", {
+  id: int("id").autoincrement().primaryKey(),
+  agentType: varchar("agentType", { length: 50 }).notNull(),
+  taskType: varchar("taskType", { length: 100 }).notNull(),
+  variantName: varchar("variantName", { length: 50 }).notNull(),
+  promptTemplate: text("promptTemplate").notNull(),
+  isActive: boolean("isActive").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PromptVariant = typeof promptVariants.$inferSelect;
+export type InsertPromptVariant = typeof promptVariants.$inferInsert;
+
+export const promptMetrics = mysqlTable("prompt_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  variantId: int("variantId").notNull(),
+  storeId: int("storeId"),
+  successRate: int("successRate"),
+  invocations: int("invocations").default(0),
+  conversions: int("conversions").default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PromptMetric = typeof promptMetrics.$inferSelect;
+export type InsertPromptMetric = typeof promptMetrics.$inferInsert;
+

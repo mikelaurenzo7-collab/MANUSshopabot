@@ -23,6 +23,15 @@ import {
   jobQueue,
   oauthStateTokens,
   agentTelemetry,
+, 
+  workflowPausePoints,
+  executionOverrides,
+  botPlugins,
+  installedPlugins,
+  purchaseOrders,
+  poLineItems,
+  promptVariants,
+  promptMetrics,
 } from "./schema";
 
 // ─── User Relations ─────────────────────────────────────────────────────────
@@ -134,4 +143,76 @@ export const emailCampaignsRelations = relations(emailCampaigns, ({ one }) => ({
 // ─── Niche Report Relations ─────────────────────────────────────────────────
 export const nicheReportsRelations = relations(nicheReports, ({ one }) => ({
   store: one(stores, { fields: [nicheReports.storeId], references: [stores.id] }),
+}));
+
+
+export const workflowPausePointsRelations = relations(workflowPausePoints, ({ one }) => ({
+  workflow: one(agentWorkflows, {
+    fields: [workflowPausePoints.workflowId],
+    references: [agentWorkflows.id],
+  }),
+  step: one(workflowSteps, {
+    fields: [workflowPausePoints.stepId],
+    references: [workflowSteps.id],
+  }),
+}));
+
+export const executionOverridesRelations = relations(executionOverrides, ({ one }) => ({
+  agentTask: one(agentTasks, {
+    fields: [executionOverrides.agentTaskId],
+    references: [agentTasks.id],
+  }),
+  overriddenByUser: one(users, {
+    fields: [executionOverrides.overriddenByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const botPluginsRelations = relations(botPlugins, ({ many }) => ({
+  installedPlugins: many(installedPlugins),
+}));
+
+export const installedPluginsRelations = relations(installedPlugins, ({ one }) => ({
+  user: one(users, {
+    fields: [installedPlugins.userId],
+    references: [users.id],
+  }),
+  plugin: one(botPlugins, {
+    fields: [installedPlugins.pluginId],
+    references: [botPlugins.id],
+  }),
+}));
+
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
+  store: one(stores, {
+    fields: [purchaseOrders.storeId],
+    references: [stores.id],
+  }),
+  lineItems: many(poLineItems),
+}));
+
+export const poLineItemsRelations = relations(poLineItems, ({ one }) => ({
+  purchaseOrder: one(purchaseOrders, {
+    fields: [poLineItems.poId],
+    references: [purchaseOrders.id],
+  }),
+  product: one(products, {
+    fields: [poLineItems.productId],
+    references: [products.id],
+  }),
+}));
+
+export const promptVariantsRelations = relations(promptVariants, ({ many }) => ({
+  metrics: many(promptMetrics),
+}));
+
+export const promptMetricsRelations = relations(promptMetrics, ({ one }) => ({
+  variant: one(promptVariants, {
+    fields: [promptMetrics.variantId],
+    references: [promptVariants.id],
+  }),
+  store: one(stores, {
+    fields: [promptMetrics.storeId],
+    references: [stores.id],
+  }),
 }));

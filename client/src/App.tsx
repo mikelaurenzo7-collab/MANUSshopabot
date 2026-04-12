@@ -23,6 +23,10 @@ const LandingPage = lazy(() => import("./pages/Landing"));
 const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
 const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const OrchestratorGraphPage = lazy(() => import("./pages/OrchestratorGraph"));
+const PluginStorePage = lazy(() => import("./pages/PluginStore"));
+const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
+const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 
 function PageLoader() {
   return (
@@ -76,6 +80,10 @@ function Router() {
                   <Route path="/health" component={PlatformHealthPage} />
                   <Route path="/intelligence" component={IntelligencePage} />
                   <Route path="/config" component={ConfigPage} />
+                  <Route path="/orchestrator" component={OrchestratorGraphPage} />
+                  <Route path="/plugins" component={PluginStorePage} />
+                  <Route path="/supplier" component={SupplierPOsPage} />
+                  <Route path="/prompt-lab" component={PromptLabPage} />
                   <Route path="/404" component={NotFound} />
                   <Route component={NotFound} />
                 </Switch>
