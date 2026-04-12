@@ -1,10 +1,10 @@
 /**
  * Onboarding Wizard
  * Guides new users through the 4 steps to get their first bot running:
- * 1. Welcome — understand what ShopBot does
+ * 1. Welcome — understand what ShopBOTS does
  * 2. Connect Store — link a Shopify/WooCommerce store
- * 3. Connect Socials — link Meta/TikTok/Twitter for the Hype-Man Bot
- * 4. Launch — pick a niche and fire the Architect Bot
+ * 3. Connect Socials — link Meta/TikTok/Twitter for the Social Bot
+ * 4. Launch — pick a niche and fire the Builder Bot
  */
 
 import { useState, useEffect } from "react";
@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
-  { id: 1, title: "Welcome to ShopBot", icon: Sparkles },
+  { id: 1, title: "Welcome to ShopBOTS", icon: Sparkles },
   { id: 2, title: "Connect Your Store", icon: Store },
   { id: 3, title: "Connect Socials", icon: Share2 },
   { id: 4, title: "Launch Your First Bot", icon: Zap },
@@ -68,19 +68,19 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   const bots = [
     {
-      name: "The Architect Bot",
+      name: "Builder Bot",
       icon: Bot,
       color: "bg-violet-500/15 text-violet-400 border-violet-500/20",
       description: "Researches niches, sources products, and builds your store in under 30 minutes.",
     },
     {
-      name: "The Merchant Bot",
+      name: "Merchant Bot",
       icon: Package,
       color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
       description: "Monitors inventory, processes orders, and adjusts pricing — all without you.",
     },
     {
-      name: "The Hype-Man Bot",
+      name: "Social Bot",
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
@@ -93,7 +93,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-2">
           <ShoppingBag className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Welcome to ShopBot</h2>
+        <h2 className="text-2xl font-bold text-foreground">Welcome to ShopBOTS</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
           Your three autonomous bots work 24/7 to build, run, and grow your e-commerce business.
           Zero-touch. No daily management required.
@@ -216,7 +216,7 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
         </div>
         <h2 className="text-xl font-bold text-foreground">Connect Your Store</h2>
         <p className="text-muted-foreground text-sm">
-          The Architect Bot needs access to your store to build and manage it.
+          Builder Bot needs access to your store to build and manage it.
         </p>
       </div>
 
@@ -371,7 +371,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         </div>
         <h2 className="text-xl font-bold text-foreground">Connect Social Platforms</h2>
         <p className="text-muted-foreground text-sm">
-          The Hype-Man Bot needs these to publish content and run ads automatically.
+          Social Bot needs these to publish content and run ads automatically.
         </p>
       </div>
 
@@ -474,7 +474,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Your Bot is Live!</h2>
           <p className="text-muted-foreground">
-            The Architect Bot is researching <span className="text-primary font-medium">"{niche}"</span> right now.
+            Builder Bot is researching <span className="text-primary font-medium">"{niche}"</span> right now.
             You'll see updates in the Activity feed.
           </p>
         </div>
@@ -498,7 +498,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
         </div>
         <h2 className="text-xl font-bold text-foreground">Launch Your First Bot</h2>
         <p className="text-muted-foreground text-sm">
-          Give the Architect Bot a niche and it will research, source products, and build your store.
+          Give the Builder Bot a niche and it will research, source products, and build your store.
         </p>
       </div>
 
@@ -527,7 +527,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Bot className="h-4 w-4 text-violet-400" /> What the Architect Bot will do:
+          <Bot className="h-4 w-4 text-violet-400" /> What the Builder Bot will do:
         </h4>
         <ul className="space-y-1.5">
           {[
@@ -583,7 +583,7 @@ export default function OnboardingPage() {
 
   const handleComplete = () => {
     // Mark onboarding as done in localStorage so we don't show it again
-    localStorage.setItem("shopbot_onboarded", "true");
+    localStorage.setItem("shopbots_onboarded", "true");
     setLocation("/");
   };
 
@@ -594,7 +594,7 @@ export default function OnboardingPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2">
             <ShoppingBag className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">ShopBot</span>
+            <span className="text-xl font-bold text-foreground">ShopBOTS</span>
           </div>
         </div>
 

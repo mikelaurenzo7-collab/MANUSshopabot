@@ -8,7 +8,7 @@
  * 4. competitor_analysis — Price comparison and market positioning
  */
 
-import { registerWorkflow, type WorkflowStepDefinition } from "./workflowEngine";
+import { registerWorkflow, type WorkflowStepDefinition, type StepContext } from "./workflowEngine";
 
 // ─── Inventory Audit Workflow ──────────────────────────────────────────────
 
@@ -175,7 +175,7 @@ registerWorkflow("fulfillment_automation", (input): WorkflowStepDefinition[] => 
 Return: validation status, any issues found, recommended shipping method, estimated delivery date.`,
         data: { orderId },
       },
-      rollback: async (_ctx: any, _output: any) => {
+      rollback: async (_ctx: StepContext, _output: unknown) => {
         // Validation is read-only — no side effects to undo
         console.log(`[Rollback] Order validation for ${orderId} — no side effects to undo`);
       },
@@ -189,7 +189,7 @@ Return: validation status, any issues found, recommended shipping method, estima
         orderId,
         steps: ["update_status_processing", "notify_supplier", "generate_shipping_label", "update_tracking"],
       },
-      rollback: async (ctx: any, output: any) => {
+      rollback: async (ctx: StepContext, output: unknown) => {
         // Attempt to revert order status back to unfulfilled
         console.log(`[Rollback] Reverting fulfillment for order ${orderId} on store ${ctx.storeId}`);
         // Note: Not all platforms support fulfillment cancellation.
@@ -543,3 +543,4 @@ Return as JSON.`,
     },
   ];
 });
+

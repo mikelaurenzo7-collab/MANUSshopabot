@@ -45,9 +45,9 @@ const AGENT_COLORS: Record<string, string> = {
 };
 
 const AGENT_NAMES: Record<string, string> = {
-  architect: "The Architect",
-  merchant: "The Merchant",
-  hypeman: "The Hype-Man",
+  architect: "Builder Bot",
+  merchant: "Merchant Bot",
+  hypeman: "Social Bot",
 };
 
 export default function Workflows() {
@@ -318,9 +318,9 @@ export default function Workflows() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Bots</SelectItem>
-                <SelectItem value="architect">The Architect</SelectItem>
-                <SelectItem value="merchant">The Merchant</SelectItem>
-                <SelectItem value="hypeman">The Hype-Man</SelectItem>
+                <SelectItem value="architect">Builder Bot</SelectItem>
+                <SelectItem value="merchant">Merchant Bot</SelectItem>
+                <SelectItem value="hypeman">Social Bot</SelectItem>
               </SelectContent>
             </Select>
           </div>

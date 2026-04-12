@@ -129,7 +129,7 @@ export default function IntegrationsPage() {
             Integrations Hub
           </h2>
           <p className="text-muted-foreground mt-1">
-            Connect your e-commerce stores and social media accounts to power the ShopBot bots.
+            Connect your e-commerce stores and social media accounts to power the ShopBOTS bots.
           </p>
         </div>
       </div>
@@ -323,7 +323,7 @@ export default function IntegrationsPage() {
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     Each social media platform requires its own OAuth app credentials. To connect a platform,
                     create a developer app on that platform, then add the Client ID and Client Secret to your
-                    ShopBot Settings &gt; Secrets. The Hype-Man Bot will then be able to post content
+                    ShopBOTS Settings &gt; Secrets. Social Bot will then be able to post content
                     and manage campaigns on your behalf.
                   </p>
                 </div>
@@ -406,7 +406,7 @@ export default function IntegrationsPage() {
                 <CardContent className="pt-6 text-center">
                   <WifiOff className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No social media accounts connected yet.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Go to the Social Media tab to link your accounts for the Hype-Man Bot.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Go to the Social Media tab to link your accounts for Social Bot.</p>
                 </CardContent>
               </Card>
             ) : (

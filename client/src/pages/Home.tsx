@@ -63,7 +63,7 @@ function MetricCard({
   accentColor?: string;
 }) {
   return (
-    <Card className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300">
+    <Card className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300 metric-lift">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -107,7 +107,7 @@ function BotStatusCard({
 }) {
   const isActive = stats && stats.running > 0;
   return (
-    <Card className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300">
+    <Card className={`border-border/50 hover:border-primary/20 transition-all duration-300 metric-lift ${isActive ? "gradient-border" : "bg-card"}`}>
       <CardContent className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
@@ -167,9 +167,9 @@ function RecentActivityItem({
     hypeman: "text-amber-400",
   };
   const agentNames: Record<string, string> = {
-    architect: "Architect",
-    merchant: "Merchant",
-    hypeman: "Hype-Man",
+    architect: "Builder Bot",
+    merchant: "Merchant Bot",
+    hypeman: "Social Bot",
   };
   const statusIcons: Record<string, any> = {
     completed: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
@@ -394,9 +394,9 @@ export default function Home() {
   const { data: connSummary, error: connError } = trpc.connectors.connectionSummary.useQuery();
 
   const agentConfigs = [
-    { name: "The Architect Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
-    { name: "The Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
-    { name: "The Hype-Man Bot", type: "hypeman", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
+    { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
+    { name: "Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
+    { name: "Social Bot", type: "hypeman", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
   ];
 
   return (
@@ -408,7 +408,7 @@ export default function Home() {
             Welcome back{user?.name ? `, ${user.name}` : ""}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-          Your autonomous commerce bots are working around the clock.
+          Your autonomous bots are building, selling, and marketing 24/7 — zero manual work required.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -532,7 +532,7 @@ export default function Home() {
               <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No stores connected yet</p>
               <p className="text-xs text-muted-foreground/60 mt-1 mb-4">
-              Connect your first e-commerce store to unleash the ShopBot bots             </p>
+              Connect your first store and let your bots take over — from inventory to ads, fully automated.             </p>
               <Button
                 variant="outline"
                 size="sm"
@@ -577,7 +577,7 @@ export default function Home() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Recent Bot Activity               </CardTitle>
+                  Recent Bot Activity</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"

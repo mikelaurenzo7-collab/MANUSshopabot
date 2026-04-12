@@ -1,5 +1,5 @@
 /**
- * ShopBot — Unified E-Commerce Platform Adapter Interface
+ * ShopBOTS — Unified E-Commerce Platform Adapter Interface
  *
  * Every e-commerce platform adapter implements this interface so that
  * The Architect, Merchant, and Hype-Man agents can operate across

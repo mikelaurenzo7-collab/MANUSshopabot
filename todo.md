@@ -216,3 +216,34 @@
 - [ ] Production secrets configured (awaiting external app approvals)
 - [ ] Monitoring dashboards set up
 - [ ] Incident response procedures documented
+
+---
+
+## Rebranding: ShopBOTS + Bot Rename (Sprint 3)
+
+### Name Changes
+- [x] Rename "The Architect Bot" → "Builder Bot" across all files
+- [x] Rename "The Hype-Man Bot" → "Social Bot" across all files
+- [x] Keep "The Merchant Bot" as-is
+- [x] Rename "ShopBot" → "ShopBOTS" in all frontend copy, titles, descriptions (60 instances)
+- [x] Update index.html title and meta description
+- [x] Update DashboardLayout header/logo text (fallback = ShopBOTS)
+- [x] Update Onboarding page bot names
+- [x] Update Home/Landing page bot names and descriptions
+- [x] Update Architect.tsx page title/header → Builder Bot
+- [x] Update HypeMan.tsx page title/header → Social Bot
+- [x] Update sidebar navigation labels (Builder Bot, Merchant Bot, Social Bot)
+- [x] Update all toast messages, notifications, and workflow titles
+- [x] Update server-side workflow engine agentType references (display names only; DB enums unchanged to preserve schema)
+- [x] Update VITE_APP_TITLE to "ShopBOTS" (fallback set in DashboardLayout)
+
+### Premium Branding Audit
+- [x] Audit landing page: upgrade hero headline, subheadline, and CTA copy
+- [ ] Audit landing page: add social proof section (metrics, testimonials placeholders) — FUTURE
+- [x] Audit landing page: upgrade feature cards with stronger value propositions
+- [x] Audit Onboarding: upgrade step copy and bot descriptions
+- [x] Audit Dashboard: upgrade empty states with compelling CTAs
+- [x] Audit Operator pages: upgrade section headers and descriptions (Social Bot Power Features, etc.)
+- [x] Ensure consistent premium typography hierarchy across all pages
+- [x] Ensure consistent color usage (accent colors, gradients) across all pages
+- [ ] Add pricing tier section to landing page (Starter/Growth/Pro/Scale) — NEXT SPRINT

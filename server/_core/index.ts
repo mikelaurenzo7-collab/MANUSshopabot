@@ -79,7 +79,7 @@ async function startServer() {
     // Start the bot task scheduler
     registerDefaultTasks();
     agentScheduler.start();
-    console.log(`[ShopBot] Bot scheduler started with ${agentScheduler.getStatus().length} tasks`);
+    console.log(`[ShopBOTS] Bot scheduler started with ${agentScheduler.getStatus().length} tasks`);
   });
 }
 

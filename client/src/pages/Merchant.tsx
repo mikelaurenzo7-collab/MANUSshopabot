@@ -118,7 +118,7 @@ export default function MerchantPage() {
             <Package className="h-5 w-5 text-cyan-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">The Merchant Bot</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Merchant Bot</h1>
             <p className="text-sm text-muted-foreground">Inventory, pricing, and fulfillment automation</p>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function MerchantPage() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Select a store to manage</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Connect a store in The Architect first</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Connect a store via Builder Bot or Integrations first</p>
           </CardContent>
         </Card>
       ) : (
@@ -222,7 +222,7 @@ export default function MerchantPage() {
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No products yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Use The Architect to generate a product catalog</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Use Builder Bot to generate a product catalog automatically</p>
                 </CardContent>
               </Card>
             )}
@@ -306,7 +306,7 @@ export default function MerchantPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  The Merchant analyzes your products and competition to suggest optimal pricing.
+                  Merchant Bot analyzes your products and competition to suggest optimal pricing.
                 </p>
               </CardContent>
             </Card>
@@ -371,7 +371,7 @@ export default function MerchantPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  The Merchant will automatically process all pending orders and initiate fulfillment.
+                  Merchant Bot will automatically process all pending orders and initiate fulfillment.
                   Zero-touch from "Placed" to "Processed" with 0% human clicks.
                 </p>
               </CardContent>

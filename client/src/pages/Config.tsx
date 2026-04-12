@@ -30,7 +30,7 @@ type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 const agents = [
   {
     key: "architect" as const,
-    name: "The Architect Bot",
+    name: "Builder Bot",
     description: "Niche research, product sourcing, and store setup",
     icon: Bot,
     color: "text-violet-400",
@@ -38,7 +38,7 @@ const agents = [
   },
   {
     key: "merchant" as const,
-    name: "The Merchant Bot",
+    name: "Merchant Bot",
     description: "Inventory monitoring, pricing, and fulfillment",
     icon: Package,
     color: "text-cyan-400",
@@ -46,7 +46,7 @@ const agents = [
   },
   {
     key: "hypeman" as const,
-    name: "The Hype-Man Bot",
+    name: "Social Bot",
     description: "Ad copy, social media, SEO, and email campaigns",
     icon: Megaphone,
     color: "text-amber-400",
@@ -121,7 +121,7 @@ export default function ConfigPage() {
   const [autoFulfill, setAutoFulfill] = useState(true);
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
 
-  // Hype-Man-specific settings
+      // Social Bot-specific settings
   const [maxDailySpend, setMaxDailySpend] = useState("100");
 
   // Global safety settings (applied to all bots)
@@ -187,7 +187,7 @@ export default function ConfigPage() {
         approvalRequired,
       });
 
-      // Save Hype-Man config (carries maxBudgetCents)
+      // Save Social Bot config (carries maxBudgetCents)
       await upsertConfig.mutateAsync({
         agentType: "hypeman",
         enabled: hypemanEnabled,
@@ -361,7 +361,7 @@ export default function ConfigPage() {
                       </div>
                     )}
 
-                    {/* Hype-Man-specific settings */}
+                    {/* Social Bot-specific settings */}
                     {agent.key === "hypeman" && (
                       <div className="mt-4 space-y-3">
                         <Separator />

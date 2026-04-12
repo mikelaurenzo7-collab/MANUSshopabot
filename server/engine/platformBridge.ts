@@ -1,5 +1,5 @@
 /**
- * ShopBot — Platform Bridge
+ * ShopBOTS — Platform Bridge
  *
  * The critical integration layer that connects the workflow engine
  * and agent routers to the platform-specific adapters.

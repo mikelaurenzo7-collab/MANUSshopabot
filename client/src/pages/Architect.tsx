@@ -275,7 +275,7 @@ export default function ArchitectPage() {
           <Bot className="h-5 w-5 text-violet-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">The Architect Bot</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Builder Bot</h1>
           <p className="text-sm text-muted-foreground">Niche research, product sourcing, store setup, health checks, and competitive intelligence</p>
         </div>
         <div className="ml-auto">
@@ -311,7 +311,7 @@ export default function ArchitectPage() {
                 <h3 className="text-sm font-semibold text-foreground">AI Niche Research</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Enter a keyword or niche idea. The Architect will analyze market size, competition, trends, and product opportunities using AI.
+                Enter a keyword or niche idea. Builder Bot will analyze market size, competition, trends, and product opportunities using AI.
               </p>
               <div className="flex gap-2">
                 <Input
@@ -341,7 +341,7 @@ export default function ArchitectPage() {
               {nicheResearch.isPending && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>The Architect is researching your niche...</span>
+                  <span>Builder Bot is researching your niche...</span>
                 </div>
               )}
             </CardContent>
@@ -390,7 +390,7 @@ export default function ArchitectPage() {
                 <h3 className="text-sm font-semibold text-foreground">Generate Product Catalog</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                The Architect will generate a curated product catalog with titles, descriptions, pricing, and supplier suggestions — ready to publish.
+                Builder Bot will generate a curated product catalog with titles, descriptions, pricing, and supplier suggestions — ready to publish.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
@@ -459,7 +459,7 @@ export default function ArchitectPage() {
               {generateCatalog.isPending && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>The Architect is building your product catalog...</span>
+                  <span>Builder Bot is building your product catalog...</span>
                 </div>
               )}
               {generateCatalog.data && (
@@ -599,7 +599,7 @@ export default function ArchitectPage() {
                 <h3 className="text-sm font-semibold text-foreground">Supported Platforms</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                ShopBot is platform-agnostic. Your bots can manage stores across all major e-commerce platforms simultaneously.
+                ShopBOTS is platform-agnostic. Your bots can manage stores across all major e-commerce platforms simultaneously.
               </p>
             </CardContent>
           </Card>
@@ -853,7 +853,7 @@ export default function ArchitectPage() {
           {/* New Workflow Capabilities */}
           <Card className="bg-card border-border/50">
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-foreground mb-3">New Architect Capabilities</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Builder Bot Capabilities</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
                   <Globe className="h-4 w-4 text-violet-400" />
@@ -957,7 +957,7 @@ export default function ArchitectPage() {
                     className="bg-input/50"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    You'll be redirected to Shopify to authorize ShopBot. This is a one-time step.
+                    You'll be redirected to Shopify to authorize ShopBOTS. This is a one-time step.
                   </p>
                 </div>
                 <div className="rounded-lg bg-violet-500/10 border border-violet-400/20 p-3">
@@ -965,7 +965,7 @@ export default function ArchitectPage() {
                     <ShieldCheck className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground">
                       <p className="font-medium text-violet-400 mb-0.5">Secure OAuth Connection</p>
-                      <p>ShopBot will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
+                      <p>ShopBOTS will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
                     </div>
                   </div>
                 </div>

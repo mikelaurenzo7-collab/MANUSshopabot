@@ -44,7 +44,7 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* ShopBot — Dark Elegant Premium Theme */
+/* ShopBOTS — Dark Elegant Premium Theme */
 :root {
   --radius: 0.625rem;
   /* Dark base */
@@ -200,5 +200,34 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Premium glow on primary buttons */
+  .btn-glow {
+    box-shadow: 0 0 20px oklch(0.65 0.25 275 / 35%), 0 0 40px oklch(0.65 0.25 275 / 15%);
+  }
+
+  /* Animated gradient border for featured cards */
+  .gradient-border {
+    position: relative;
+    background: oklch(0.17 0.01 270);
+    border-radius: var(--radius-lg);
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: calc(var(--radius-lg) + 1px);
+    background: linear-gradient(135deg, oklch(0.65 0.25 275 / 60%), oklch(0.72 0.15 200 / 40%), oklch(0.78 0.16 80 / 30%));
+    z-index: -1;
+  }
+
+  /* Metric card hover lift */
+  .metric-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .metric-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px oklch(0.65 0.25 275 / 12%);
   }
 }

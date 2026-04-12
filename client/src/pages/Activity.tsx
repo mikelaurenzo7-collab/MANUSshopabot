@@ -35,9 +35,9 @@ const agentColors: Record<string, string> = {
   hypeman: "text-amber-400",
 };
 const agentNames: Record<string, string> = {
-  architect: "The Architect Bot",
-  merchant: "The Merchant Bot",
-  hypeman: "The Hype-Man Bot",
+  architect: "Builder Bot",
+  merchant: "Merchant Bot",
+  hypeman: "Social Bot",
 };
 
 const PAGE_SIZE = 20;
@@ -116,9 +116,9 @@ export default function ActivityPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Bots</SelectItem>
-                <SelectItem value="architect">The Architect</SelectItem>
-                <SelectItem value="merchant">The Merchant</SelectItem>
-                <SelectItem value="hypeman">The Hype-Man</SelectItem>
+                <SelectItem value="architect">Builder Bot</SelectItem>
+                <SelectItem value="merchant">Merchant Bot</SelectItem>
+                <SelectItem value="hypeman">Social Bot</SelectItem>
               </SelectContent>
             </Select>
           </div>

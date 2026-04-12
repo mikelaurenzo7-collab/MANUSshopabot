@@ -1,5 +1,5 @@
 /**
- * ShopBot — Social Media Platform Adapter Registry
+ * ShopBOTS — Social Media Platform Adapter Registry
  *
  * The central factory for all social media adapters.
  * The Hype-Man Bot uses this registry to post content,

@@ -44,14 +44,14 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
-const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "ShopBot";
+const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "ShopBOTS";
 const APP_LOGO = import.meta.env.VITE_APP_LOGO as string | undefined;
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
-  { icon: Bot, label: "The Architect", path: "/architect", group: "bots", color: "text-violet-400", adminOnly: false },
-  { icon: Package, label: "The Merchant", path: "/merchant", group: "bots", color: "text-cyan-400", adminOnly: false },
-  { icon: Megaphone, label: "The Hype-Man", path: "/hypeman", group: "bots", color: "text-amber-400", adminOnly: false },
+  { icon: Bot, label: "Builder Bot", path: "/architect", group: "bots", color: "text-violet-400", adminOnly: false },
+  { icon: Package, label: "Merchant Bot", path: "/merchant", group: "bots", color: "text-cyan-400", adminOnly: false },
+  { icon: Megaphone, label: "Social Bot", path: "/hypeman", group: "bots", color: "text-amber-400", adminOnly: false },
   { icon: Activity, label: "Activity Log", path: "/activity", group: "operations", adminOnly: false },
   { icon: BarChart3, label: "Analytics", path: "/analytics", group: "operations", adminOnly: false },
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
@@ -104,10 +104,10 @@ export default function DashboardLayout({
               <span className="text-2xl font-bold tracking-tight gradient-text text-center">{APP_TITLE}</span>
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
-              Sign in to your Command Center
+              Your Bots Are Standing By
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access your autonomous e-commerce orchestration platform. Your AI bots are standing by.
+              Builder Bot, Merchant Bot, and Social Bot are ready to build, sell, and market your store — 24/7, fully autonomous.
             </p>
           </div>
           <Button
@@ -115,10 +115,14 @@ export default function DashboardLayout({
               window.location.href = getLoginUrl();
             }}
             size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90"
+            className="w-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90 btn-glow"
           >
-            Sign in
+            <Zap className="h-4 w-4 mr-2" />
+            Launch Command Center
           </Button>
+          <p className="text-xs text-muted-foreground/50 text-center">
+            Autonomous e-commerce. Zero manual work.
+          </p>
         </div>
       </div>
     );
@@ -316,7 +320,7 @@ function DashboardLayoutContent({
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold tracking-tight text-foreground">
-                {activeMenuItem?.label ?? "ShopBot"}
+                {activeMenuItem?.label ?? "ShopBOTS"}
               </h1>
             </div>
           </div>

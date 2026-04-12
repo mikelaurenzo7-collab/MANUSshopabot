@@ -1,5 +1,5 @@
 /**
- * ShopBot Workflow Engine
+ * ShopBOTS Workflow Engine
  * 
  * The orchestration brain. Manages the lifecycle of multi-step bot workflows:
  * 1. Creates workflows with defined step pipelines
@@ -676,3 +676,4 @@ async function executeApiCallStep(context: StepContext): Promise<any> {
     return { error: error.message };
   }
 }
+
