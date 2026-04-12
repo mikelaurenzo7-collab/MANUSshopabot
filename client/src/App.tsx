@@ -21,6 +21,7 @@ const WorkflowsPage = lazy(() => import("./pages/Workflows"));
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
+const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
@@ -73,6 +74,7 @@ function Router() {
                   <Route path="/integrations" component={IntegrationsPage} />
                   <Route path="/workflows" component={WorkflowsPage} />
                   <Route path="/health" component={PlatformHealthPage} />
+                  <Route path="/intelligence" component={IntelligencePage} />
                   <Route path="/config" component={ConfigPage} />
                   <Route path="/404" component={NotFound} />
                   <Route component={NotFound} />

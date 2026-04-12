@@ -15,6 +15,7 @@ import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workfl
 import "../engine/architectWorkflows";
 import "../engine/merchantWorkflows";
 import "../engine/socialWorkflows";
+import "../engine/platformEliteWorkflows";
 
 export const workflowRouter = router({
   // ─── Launch a workflow ─────────────────────────────────────────────────
@@ -154,6 +155,12 @@ export const workflowRouter = router({
         { type: "supply_chain_intelligence", title: "Supply Chain Intelligence", description: "Supplier scorecards, lead time optimization, cost reduction, and risk assessment", icon: "Link", scope: "all_stores" },
         { type: "profit_loss_analysis", title: "Profit & Loss Analysis", description: "CFO-level P&L report with margins, cash flow projections, and strategic recommendations", icon: "TrendingUp", scope: "all_stores" },
         { type: "customer_segmentation", title: "Customer Segmentation", description: "RFM analysis, behavioral segments, churn prediction, and targeted campaign recommendations", icon: "Users", scope: "all_stores" },
+        { type: "shopify_metafields_sync", title: "Shopify Metafields Sync", description: "Store supplier cost, margin, and reorder point data in Shopify metafields for data-driven automation", icon: "Database", scope: "specific_store" },
+        { type: "shopify_bulk_operations", title: "Shopify Bulk Operations", description: "Batch product updates via Shopify Bulk Operations API — prices, inventory, tags", icon: "Layers", scope: "specific_store" },
+        { type: "fba_replenishment_monitor", title: "FBA Replenishment Monitor", description: "Track Amazon IPI score, identify stockout risks, and generate inbound shipment plans", icon: "Warehouse", scope: "specific_store" },
+        { type: "etsy_listing_refresh", title: "Etsy Listing Refresh", description: "Weekly SEO-optimized title and tag updates to maintain Etsy search visibility", icon: "RefreshCw", scope: "specific_store" },
+        { type: "woocommerce_oos_hide", title: "WooCommerce OOS Hide", description: "Hide out-of-stock products from catalog while preserving SEO rankings and backlinks", icon: "EyeOff", scope: "specific_store" },
+        { type: "walmart_performance_alarm", title: "Walmart Performance Alarm", description: "Monitor Walmart seller performance metrics and generate corrective action plans", icon: "AlertTriangle", scope: "specific_store" },
       ],
       social: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
@@ -165,6 +172,13 @@ export const workflowRouter = router({
         { type: "viral_trend_detector", title: "Viral Trend Detector", description: "Real-time trend scanning — viral content, emerging signals, hashtag strategy, and ready-to-film templates", icon: "Zap", scope: "global" },
         { type: "influencer_outreach", title: "Influencer Outreach", description: "Full influencer strategy — discovery, vetting, outreach templates, campaign structure, and contracts", icon: "Star", scope: "specific_store" },
         { type: "conversion_funnel", title: "Conversion Funnel CRO", description: "Funnel leak analysis, checkout optimization, A/B test roadmap, and psychological triggers", icon: "Filter", scope: "specific_store" },
+        { type: "meta_conversions_api", title: "Meta Conversions API", description: "Audit and optimize server-side event tracking with hashed PII for maximum Event Match Quality", icon: "Activity", scope: "specific_store" },
+        { type: "tiktok_engagement_monitor", title: "TikTok Engagement Monitor", description: "Analyze 3-second view rate, hold rate, and engagement to identify Spark Ads candidates", icon: "BarChart3", scope: "global" },
+        { type: "pinterest_trends", title: "Pinterest Trends", description: "Trend-driven pin scheduling with keyword research and seasonal content planning", icon: "TrendingUp", scope: "global" },
+        { type: "tiktok_spark_ads", title: "TikTok Spark Ads", description: "Auto-boost high-performing organic TikTok posts as Spark Ads with social proof", icon: "Flame", scope: "global" },
+        { type: "instagram_reels_boost", title: "Instagram Reels Boost", description: "Identify high watch-time Reels and boost them for maximum reach amplification", icon: "Film", scope: "global" },
+        { type: "google_pmax_optimization", title: "Google PMax Optimization", description: "Performance Max campaign audit — asset groups, audience signals, and bid strategy", icon: "Cpu", scope: "global" },
+        { type: "twitter_stream_monitor", title: "Twitter/X Brand Monitor", description: "Real-time brand mention tracking, sentiment analysis, and crisis detection", icon: "Radio", scope: "global" },
       ],
     };
   }),

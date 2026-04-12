@@ -324,7 +324,7 @@ export const connectorsRouter = router({
   /** Connect a social media account (stores OAuth token after redirect) */
   connectSocialAccount: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "linkedin"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]),
       accountName: z.string().optional(),
       accountId: z.string().optional(),
       accessToken: z.string(),
@@ -524,7 +524,7 @@ export const connectorsRouter = router({
   /** Generate OAuth URL for a social media platform */
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "linkedin"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]),
       origin: z.string(),
       returnTo: z.string().optional(),
     }))

@@ -127,11 +127,11 @@ describe("Social OAuth URL Generation", () => {
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.connectors.generateSocialOAuthUrl({
-      platform: "linkedin",
+      platform: "google_ads",
       origin: "https://beastbots.test",
     });
 
-    // LinkedIn has no client ID configured
+    // Google Ads has no client ID configured in test env
     expect(result.setupRequired).toBe(true);
     expect(result.url).toBeNull();
     expect(result.setupInstructions).toBeTruthy();

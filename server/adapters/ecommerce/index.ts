@@ -95,3 +95,4 @@ export function buildCredentials(record: {
     metadata: meta,
   };
 }
+export * from "../eliteExtensions";

@@ -262,7 +262,6 @@ export async function publishSocialPost(
       instagram: "instagram",
       tiktok: "tiktok",
       pinterest: "pinterest",
-      linkedin: "facebook", // fallback for DB enum
       google_ads: "facebook", // fallback for DB enum
     };
 
@@ -306,7 +305,6 @@ export async function scheduleSocialPost(
       instagram: "instagram",
       tiktok: "tiktok",
       pinterest: "pinterest",
-      linkedin: "facebook",
       google_ads: "facebook",
     };
 
@@ -350,7 +348,6 @@ export async function launchAdCampaign(
     google_ads: "google",
     twitter: "meta", // fallback
     pinterest: "meta", // fallback
-    linkedin: "meta", // fallback
   };
 
   const dbPlatform = platformMap[account.platform] || "meta";

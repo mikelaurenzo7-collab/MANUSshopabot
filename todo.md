@@ -15,7 +15,7 @@
 - [x] Telemetry table: agent_telemetry
 - [x] Composite indexes for performance (14 indexes applied)
 
-### Core Adapters (All 15 Implemented)
+### Core Adapters (All 13 Implemented — LinkedIn Removed)
 - [x] Shopify adapter (OAuth + API integration)
 - [x] WooCommerce adapter (REST API)
 - [x] Amazon SP-API adapter (Catalog, Orders, Fulfillment, FBA Inventory)
@@ -29,7 +29,6 @@
 - [x] Twitter/X adapter (API v2)
 - [x] Pinterest adapter (API v5)
 - [x] Google Ads adapter (REST API)
-- [x] LinkedIn adapter (Marketing API)
 
 ### Workflow Engine
 - [x] Workflow registration system
@@ -206,3 +205,48 @@
 - [x] Update AGENT_NAMES maps, sidebar nav, and workflow type references
 - [x] Update test files that reference "hypeman"
 - [x] Verify TypeScript 0 errors after rename (401 tests passing)
+
+## Sprint 9: Deep Platform Research & Bot Strategy
+- [x] Research all 13 platform connectors (7 e-commerce + 6 social/ads) in parallel
+- [x] Document API capabilities, rate limits, and automation opportunities for each platform
+- [x] Define elite bot strategies for each platform (store operations + social management)
+- [x] Compile comprehensive strategy document with actionable bot playbooks
+
+## Sprint 10: Elite Platform Playbook Implementation
+
+### Phase 2: Merchant Elite Workflows
+- [x] Inventory-aware ad pausing: when product goes OOS, auto-pause ads across ALL connected social platforms
+- [x] Buy Box monitoring workflow for Amazon/eBay/Walmart (reprice within margin limits)
+- [x] Shopify Metafields support: store supplier cost, profit margin, reorder point per product (registered workflow)
+- [x] Shopify Bulk Operations API support for batch product updates (registered workflow)
+- [x] FBA replenishment monitoring: track Amazon IPI score and trigger inbound shipment alerts (registered workflow)
+- [x] Etsy listing refresh automation: weekly title/tag updates to maintain search visibility (registered workflow)
+- [x] WooCommerce out-of-stock hide (not delete) to preserve SEO rankings (registered workflow)
+- [x] Walmart Seller Performance Alarm webhook handler (registered workflow)
+- [x] Dynamic pricing engine: rules based on inventory age, turnover velocity, margin targets, time-of-day
+- [x] Scheduler tasks: buy_box_monitor (every 30 min), inventory_ad_pause (real-time), dynamic_pricing (hourly)
+
+### Phase 3: Social Bot Elite Workflows
+- [x] Conversions API integration for Meta: server-side event sending with hashed PII (registered workflow)
+- [x] Creative velocity A/B testing: auto-pause creatives with CPA > 20% above target, scale winners
+- [x] TikTok early engagement monitoring: 3-second view rate and hold rate tracking (registered workflow)
+- [x] Pinterest Trends API integration: trend-driven pin scheduling (registered workflow)
+- [x] Spark Ads automation: auto-boost high-performing organic TikTok posts (registered workflow)
+- [x] Instagram Reels watch time monitoring: auto-boost high watch-time reels (registered workflow)
+- [x] Google Ads Performance Max optimization: asset group management and bid strategy (registered workflow)
+- [x] Twitter/X Filtered Stream monitoring: brand mention tracking and sentiment analysis (registered workflow)
+- [x] Scheduler tasks: creative_velocity_check (hourly), trend_monitor (daily), spark_ads_boost (daily)
+
+### Phase 4: Cross-Platform Orchestration
+- [x] Anomaly detection engine: detect unusual patterns (price spikes, inventory drops, ROAS crashes)
+- [x] Circuit breaker pattern: auto-pause API calls to a platform if error rate > 50%
+- [x] Unified metrics aggregator: cross-platform ROAS, CPA, inventory health, fulfillment quality
+- [x] Bot autonomy enforcement layer: approval gates for budget increases > 20%, pricing changes > 15%
+- [x] Dead-letter queue for failed webhook deliveries with retry logic
+
+### Phase 5: UI Updates
+- [x] Platform-specific strategy cards in Intelligence Center dashboard
+- [x] Autonomy control panel: per-platform approval thresholds configurable by user (Intelligence Center)
+- [x] Real-time anomaly alerts in Intelligence Center dashboard
+- [x] Cross-platform metrics comparison table in Intelligence Center
+- [x] Buy Box win rate and IPI score widgets in Intelligence Center

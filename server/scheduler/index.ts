@@ -22,6 +22,13 @@ import {
 } from "../engine/platformBridge";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { logAgentAction } from "../telemetry";
+import {
+  pauseAdsForOutOfStockProducts,
+  runDynamicPricingEngine,
+  runCreativeVelocityOptimization,
+  detectAnomalies,
+  processDLQ,
+} from "../engine/eliteOrchestrator";
 
 export interface ScheduledTask {
   id: string;
@@ -701,5 +708,126 @@ export function registerDefaultTasks(): void {
     taskType: "competitor_scan",
     enabled: true,
     handler: handleCompetitorScan,
+  });
+
+  // ─── Elite Orchestrator Tasks ──────────────────────────────────
+  agentScheduler.register({
+    id: "merchant:inventory-aware-ad-pause",
+    name: "Inventory-Aware Ad Pausing",
+    cronExpression: "*/30 * * * *", // Every 30 minutes
+    agentType: "merchant",
+    taskType: "inventory_ad_pause",
+    enabled: true,
+    handler: async () => {
+      const allStores = await db.getActiveStores();
+      const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+      for (const userId of userIds) {
+        try {
+          const result = await pauseAdsForOutOfStockProducts(userId);
+          if (result.paused > 0) {
+            console.log(`[Scheduler] Paused ${result.paused} ads for OOS products (user ${userId})`);
+          }
+        } catch (err: any) {
+          console.error(`[Scheduler] Inventory-aware ad pause failed for user ${userId}:`, err.message);
+        }
+      }
+    },
+  });
+
+  agentScheduler.register({
+    id: "merchant:dynamic-pricing",
+    name: "Dynamic Pricing Engine",
+    cronExpression: "0 */6 * * *", // Every 6 hours
+    agentType: "merchant",
+    taskType: "dynamic_pricing",
+    enabled: true,
+    handler: async () => {
+      const allStores = await db.getActiveStores();
+      const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+      for (const userId of userIds) {
+        try {
+          const results = await runDynamicPricingEngine(userId);
+          const autoApplied = results.filter(r => r.approved).length;
+          const queued = results.filter(r => r.requiresApproval).length;
+          if (results.length > 0) {
+            console.log(`[Scheduler] Dynamic pricing: ${autoApplied} auto-applied, ${queued} queued for approval (user ${userId})`);
+          }
+        } catch (err: any) {
+          console.error(`[Scheduler] Dynamic pricing failed for user ${userId}:`, err.message);
+        }
+      }
+    },
+  });
+
+  agentScheduler.register({
+    id: "social:creative-velocity",
+    name: "Creative Velocity A/B Optimizer",
+    cronExpression: "0 */4 * * *", // Every 4 hours
+    agentType: "social",
+    taskType: "creative_velocity",
+    enabled: true,
+    handler: async () => {
+      const allStores = await db.getActiveStores();
+      const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+      for (const userId of userIds) {
+        try {
+          const result = await runCreativeVelocityOptimization(userId);
+          if (result.paused + result.scaled > 0) {
+            console.log(`[Scheduler] Creative velocity: ${result.paused} paused, ${result.scaled} scaled (user ${userId})`);
+          }
+        } catch (err: any) {
+          console.error(`[Scheduler] Creative velocity failed for user ${userId}:`, err.message);
+        }
+      }
+    },
+  });
+
+  agentScheduler.register({
+    id: "system:anomaly-detection",
+    name: "Anomaly Detection Engine",
+    cronExpression: "0 */1 * * *", // Every hour
+    agentType: "merchant",
+    taskType: "anomaly_detection",
+    enabled: true,
+    handler: async () => {
+      const allStores = await db.getActiveStores();
+      const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+      for (const userId of userIds) {
+        try {
+          const anomalies = await detectAnomalies(userId);
+          const critical = anomalies.filter(a => a.severity === "critical");
+          if (critical.length > 0) {
+            await db.createNotification({
+              userId,
+              agentType: "merchant",
+              type: "error",
+              title: `Critical Anomaly: ${critical[0].type.replace(/_/g, " ")}`,
+              message: critical[0].message,
+              actionUrl: "/home",
+            });
+          }
+        } catch (err: any) {
+          console.error(`[Scheduler] Anomaly detection failed for user ${userId}:`, err.message);
+        }
+      }
+    },
+  });
+
+  agentScheduler.register({
+    id: "system:dlq-processor",
+    name: "Dead-Letter Queue Processor",
+    cronExpression: "*/10 * * * *", // Every 10 minutes
+    agentType: "merchant",
+    taskType: "dlq_retry",
+    enabled: true,
+    handler: async () => {
+      const { processed, failed } = await processDLQ(async (entry) => {
+        console.log(`[DLQ] Retrying event: ${entry.event} on ${entry.platform}`);
+        // In production, re-dispatch to the appropriate webhook handler
+      });
+      if (processed + failed > 0) {
+        console.log(`[DLQ] Processed ${processed}, failed ${failed}`);
+      }
+    },
   });
 }

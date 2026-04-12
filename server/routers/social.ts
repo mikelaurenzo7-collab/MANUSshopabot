@@ -13,7 +13,7 @@ export const socialRouter = router({
       storeId: z.number(),
       productName: z.string(),
       productDescription: z.string().optional(),
-      platform: z.enum(["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "linkedin", "email", "sms"]).default("meta"),
+      platform: z.enum(["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms"]).default("meta"),
       tone: z.string().default("engaging and persuasive"),
     }))
     .mutation(async ({ input }) => {
@@ -226,7 +226,7 @@ export const socialRouter = router({
   generateSocialPost: protectedProcedure
     .input(z.object({
       storeId: z.number(),
-      platform: z.enum(["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "linkedin"]),
+      platform: z.enum(["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads"]),
       topic: z.string(),
       productName: z.string().optional(),
     }))

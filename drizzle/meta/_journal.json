@@ -64,6 +64,13 @@
       "when": 1775997896530,
       "tag": "0008_slippery_hedge_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1775999441092,
+      "tag": "0009_spotty_freak",
+      "breakpoints": true
     }
   ]
 }

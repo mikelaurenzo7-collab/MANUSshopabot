@@ -177,7 +177,7 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "linkedin", "email", "sms"]).default("meta").notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms"]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -255,8 +255,8 @@ export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  // Expanded enum: linkedin and google_ads are first-class values (no more fallback hacks)
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "linkedin", "google_ads"]).notNull(),
+  // Expanded enum: google_ads is first-class value
+  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads"]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),
@@ -339,12 +339,12 @@ export type InsertPlatformCredential = typeof platformCredentials.$inferInsert;
 
 /**
  * Social media accounts — linked accounts for the Social Bot agent.
- * Supports Meta/Instagram, TikTok, Twitter/X, Pinterest, Google Ads, LinkedIn.
+  * Supports Meta/Instagram, TikTok, Twitter/X, Pinterest, Google Ads.
  */
 export const socialAccounts = mysqlTable("social_accounts", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "linkedin"]).notNull(),
+  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accountId: varchar("accountId", { length: 255 }), // platform-specific account/page ID
   accessToken: text("accessToken"),

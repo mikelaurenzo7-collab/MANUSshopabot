@@ -354,6 +354,14 @@ export async function getAdCampaigns(storeId: number) {
   return db.select().from(adCampaigns).where(eq(adCampaigns.storeId, storeId)).orderBy(desc(adCampaigns.createdAt));
 }
 
+export async function getAdCampaignsByUser(userId: number) {
+  const userStores = await getStoresByUser(userId);
+  if (userStores.length === 0) return [];
+  const storeIds = userStores.map((s: any) => s.id);
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(adCampaigns).where(inArray(adCampaigns.storeId, storeIds)).orderBy(desc(adCampaigns.createdAt));
+}
 export async function updateAdCampaign(id: number, data: Partial<InsertAdCampaign>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

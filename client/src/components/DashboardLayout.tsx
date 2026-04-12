@@ -38,6 +38,7 @@ import {
   Plug,
   Workflow,
   HeartPulse,
+  Brain,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -58,6 +59,7 @@ const allMenuItems = [
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
   { icon: Workflow, label: "Workflows", path: "/workflows", group: "operations", color: "text-rose-400", adminOnly: false },
   { icon: HeartPulse, label: "Platform Health", path: "/health", group: "operations", color: "text-emerald-400", adminOnly: false },
+  { icon: Brain, label: "Intelligence", path: "/intelligence", group: "operations", color: "text-violet-400", adminOnly: false },
   { icon: Settings, label: "Bot Config", path: "/config", group: "settings", adminOnly: true },
 ];
 
