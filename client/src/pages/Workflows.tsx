@@ -116,6 +116,16 @@ export default function Workflows() {
     onError: (err) => toast.error("Cancel failed", { description: err.message }),
   });
 
+  const retryMutation = trpc.workflows.retry.useMutation({
+    onSuccess: (data) => {
+      toast.success("Workflow retried!", { description: `New workflow #${data.newWorkflowId} launched.` });
+      utils.workflows.list.invalidate();
+      utils.workflows.active.invalidate();
+      utils.workflows.counts.invalidate();
+    },
+    onError: (err) => toast.error("Retry failed", { description: err.message }),
+  });
+
   // Get all workflow types flattened
   const allTypes = useMemo(() => {
     if (!availableTypes) return [];
@@ -198,7 +208,7 @@ export default function Workflows() {
   const currentInputConfig = inputConfig[launchForm.workflowType] ?? { label: "Input", placeholder: "Describe what you need..." };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -334,7 +344,7 @@ export default function Workflows() {
               </CardContent>
             </Card>
           ) : (
-            workflows.map(wf => <WorkflowCard key={wf.id} workflow={wf} onView={() => { setSelectedWorkflowId(wf.id); setDetailOpen(true); }} />)
+            workflows.map(wf => <WorkflowCard key={wf.id} workflow={wf} onView={() => { setSelectedWorkflowId(wf.id); setDetailOpen(true); }} onRetry={(wf.status === "failed" || wf.status === "cancelled") ? () => retryMutation.mutate({ workflowId: wf.id }) : undefined} retryLoading={retryMutation.isPending} />)
           )}
         </TabsContent>
 
@@ -537,10 +547,11 @@ export default function Workflows() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function WorkflowCard({ workflow, onView, onCancel }: { workflow: any; onView: () => void; onCancel?: () => void }) {
+function WorkflowCard({ workflow, onView, onCancel, onRetry, retryLoading }: { workflow: any; onView: () => void; onCancel?: () => void; onRetry?: () => void; retryLoading?: boolean }) {
   const isActive = workflow.status === "running" || workflow.status === "pending" || workflow.status === "awaiting_approval";
+  const isFailed = workflow.status === "failed" || workflow.status === "cancelled";
   return (
-    <Card className={`${isActive ? "border-primary/30" : "border-zinc-800"} hover:border-zinc-700 transition-colors`}>
+    <Card className={`${isActive ? "border-primary/30" : isFailed ? "border-red-500/20" : "border-zinc-800"} hover:border-zinc-700 transition-colors card-hover`}>
       <CardContent className="py-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1 min-w-0 flex-1">
@@ -566,6 +577,11 @@ function WorkflowCard({ workflow, onView, onCancel }: { workflow: any; onView: (
             {isActive && onCancel && (
               <Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={onCancel}>
                 <XIcon className="w-4 h-4" />
+              </Button>
+            )}
+            {isFailed && onRetry && (
+              <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10" onClick={onRetry} disabled={retryLoading}>
+                {retryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
               </Button>
             )}
           </div>

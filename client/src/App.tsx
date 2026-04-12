@@ -1,23 +1,35 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
-import Home from "./pages/Home";
-import ArchitectPage from "./pages/Architect";
-import MerchantPage from "./pages/Merchant";
-import HypeManPage from "./pages/HypeMan";
-import ActivityPage from "./pages/Activity";
-import AnalyticsPage from "./pages/Analytics";
-import ConfigPage from "./pages/Config";
-import IntegrationsPage from "./pages/Integrations";
-import WorkflowsPage from "./pages/Workflows";
-import OnboardingPage from "./pages/Onboarding";
-import LandingPage from "./pages/Landing";
 import { useAuth } from "./_core/hooks/useAuth";
+import { Loader2 } from "lucide-react";
+
+// Lazy-loaded pages for code splitting
+const Home = lazy(() => import("./pages/Home"));
+const ArchitectPage = lazy(() => import("./pages/Architect"));
+const MerchantPage = lazy(() => import("./pages/Merchant"));
+const HypeManPage = lazy(() => import("./pages/HypeMan"));
+const ActivityPage = lazy(() => import("./pages/Activity"));
+const AnalyticsPage = lazy(() => import("./pages/Analytics"));
+const ConfigPage = lazy(() => import("./pages/Config"));
+const IntegrationsPage = lazy(() => import("./pages/Integrations"));
+const WorkflowsPage = lazy(() => import("./pages/Workflows"));
+const OnboardingPage = lazy(() => import("./pages/Onboarding"));
+const LandingPage = lazy(() => import("./pages/Landing"));
+const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 function OnboardingGuard() {
   const [location, setLocation] = useLocation();
@@ -40,32 +52,37 @@ function OnboardingGuard() {
 
 function Router() {
   return (
-    <Switch>
-      {/* Public marketing landing page */}
-      <Route path="/landing" component={LandingPage} />
-      {/* Onboarding is full-screen, outside DashboardLayout */}
-      <Route path="/onboarding" component={OnboardingPage} />
-      <Route>
-        <>
-          <OnboardingGuard />
-          <DashboardLayout>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/architect" component={ArchitectPage} />
-              <Route path="/merchant" component={MerchantPage} />
-              <Route path="/hypeman" component={HypeManPage} />
-              <Route path="/activity" component={ActivityPage} />
-              <Route path="/analytics" component={AnalyticsPage} />
-              <Route path="/integrations" component={IntegrationsPage} />
-              <Route path="/workflows" component={WorkflowsPage} />
-              <Route path="/config" component={ConfigPage} />
-              <Route path="/404" component={NotFound} />
-              <Route component={NotFound} />
-            </Switch>
-          </DashboardLayout>
-        </>
-      </Route>
-    </Switch>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        {/* Public marketing landing page */}
+        <Route path="/landing" component={LandingPage} />
+        {/* Onboarding is full-screen, outside DashboardLayout */}
+        <Route path="/onboarding" component={OnboardingPage} />
+        <Route>
+          <>
+            <OnboardingGuard />
+            <DashboardLayout>
+              <Suspense fallback={<PageLoader />}>
+                <Switch>
+                  <Route path="/" component={Home} />
+                  <Route path="/architect" component={ArchitectPage} />
+                  <Route path="/merchant" component={MerchantPage} />
+                  <Route path="/hypeman" component={HypeManPage} />
+                  <Route path="/activity" component={ActivityPage} />
+                  <Route path="/analytics" component={AnalyticsPage} />
+                  <Route path="/integrations" component={IntegrationsPage} />
+                  <Route path="/workflows" component={WorkflowsPage} />
+                  <Route path="/health" component={PlatformHealthPage} />
+                  <Route path="/config" component={ConfigPage} />
+                  <Route path="/404" component={NotFound} />
+                  <Route component={NotFound} />
+                </Switch>
+              </Suspense>
+            </DashboardLayout>
+          </>
+        </Route>
+      </Switch>
+    </Suspense>
   );
 }
 

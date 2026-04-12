@@ -15,6 +15,7 @@ import { connectorsRouter } from "./routers/connectors";
 import { workflowRouter } from "./routers/workflows";
 import { telemetryRouter } from "./routers/telemetry";
 import { diagnosticsRouter } from "./routers/diagnostics";
+import { healthRouter } from "./routers/health";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -40,6 +41,7 @@ export const appRouter = router({
   workflows: workflowRouter,
   telemetry: telemetryRouter,
   diagnostics: diagnosticsRouter,
+  health: healthRouter,
 
   // Notifications — scoped to current user
   notifications: router({

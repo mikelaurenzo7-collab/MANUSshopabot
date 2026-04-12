@@ -170,3 +170,18 @@
 - [x] ShopBOTS logo generated and hardcoded as CDN fallback in DashboardLayout and Landing
 - [x] Credential diagnostics admin panel in Config page (29 credentials verified live)
 - [x] Pinterest BLOCKED: awaiting app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured.
+
+## Sprint 6: Error Recovery, Health Monitoring & Performance
+
+- [x] Add workflow retry mutation to workflows router (retry failed/cancelled workflows)
+- [x] Add retry button to failed workflows in Workflows History tab
+- [x] Create platform health monitoring tRPC router (healthCheck all connected adapters)
+- [x] Create PlatformHealth.tsx page with live health status for all connected platforms
+- [x] Add /health route to App.tsx sidebar navigation
+- [x] Webhook listeners already implemented (Shopify orders/create, orders/paid, orders/fulfilled, products/update, inventory_levels/update) - verified mounted in server bootstrap
+- [x] Lazy load all routes in App.tsx with React.lazy + Suspense
+- [x] Add micro-animations: fade-in on page load, stagger on lists, hover scale on cards, shimmer, pulse-glow
+- [x] Fix duplicate useLocation declaration in DashboardLayout.tsx (Vite parse error)
+- [ ] Mobile responsiveness audit and fixes
+- [x] Apply page-enter, stagger-list, card-hover animation classes to Home dashboard cards and Workflows history list
+- [x] Add reduced-motion media query fallback for animations

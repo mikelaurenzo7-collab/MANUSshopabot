@@ -37,6 +37,7 @@ import {
   Zap,
   Plug,
   Workflow,
+  HeartPulse,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -56,6 +57,7 @@ const allMenuItems = [
   { icon: BarChart3, label: "Analytics", path: "/analytics", group: "operations", adminOnly: false },
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
   { icon: Workflow, label: "Workflows", path: "/workflows", group: "operations", color: "text-rose-400", adminOnly: false },
+  { icon: HeartPulse, label: "Platform Health", path: "/health", group: "operations", color: "text-emerald-400", adminOnly: false },
   { icon: Settings, label: "Bot Config", path: "/config", group: "settings", adminOnly: true },
 ];
 
@@ -81,7 +83,7 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [, navigateTo] = useLocation();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -90,9 +92,9 @@ export default function DashboardLayout({
   // Redirect unauthenticated users to the public landing page
   useEffect(() => {
     if (!loading && !user) {
-      setLocation("/landing");
+      navigateTo("/landing");
     }
-  }, [loading, user, setLocation]);
+  }, [loading, user, navigateTo]);
 
   if (loading) {
     return <DashboardLayoutSkeleton />;

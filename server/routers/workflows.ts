@@ -108,6 +108,32 @@ export const workflowRouter = router({
       return { success: true };
     }),
 
+  // ─── Retry a failed or cancelled workflow ─────────────────────────────
+  retry: protectedProcedure
+    .input(z.object({ workflowId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const workflow = await getWorkflowById(input.workflowId);
+      if (!workflow) throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
+      if (workflow.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.status !== "failed" && workflow.status !== "cancelled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only failed or cancelled workflows can be retried" });
+      }
+
+      // Re-launch the workflow with the same parameters
+      const newWorkflowId = await launchWorkflow(ctx.user.id, {
+        agentType: workflow.agentType,
+        workflowType: workflow.workflowType,
+        title: `[Retry] ${workflow.title.replace(/^\[Retry\] /, "")}`,
+        description: workflow.description ?? undefined,
+        scope: workflow.scope,
+        storeId: workflow.storeId ?? undefined,
+        input: (workflow.input as Record<string, any>) ?? {},
+        steps: [],
+      });
+
+      return { newWorkflowId };
+    }),
+
   // ─── Available workflow types ──────────────────────────────────────────
   availableTypes: protectedProcedure.query(() => {
     return {
