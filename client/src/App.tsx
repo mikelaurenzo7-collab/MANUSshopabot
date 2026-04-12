@@ -27,7 +27,8 @@ function OnboardingGuard() {
     if (!user) return; // Not logged in — auth handles redirect
     if (location === "/onboarding") return; // Already on onboarding
     // Check if user has completed onboarding
-    const hasOnboarded = localStorage.getItem("shopbot_onboarded");
+    // Support both old key (shopbot_onboarded) and new key (shopbots_onboarded) for backward compatibility
+    const hasOnboarded = localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
     if (!hasOnboarded) {
       setLocation("/onboarding");
     }

@@ -1,4 +1,4 @@
-# Beast Bots / ShopBot Development TODO
+# ShopBOTS Development TODO
 
 ## Phase 1: Foundation (COMPLETED ✅)
 
@@ -33,27 +33,27 @@
 
 ### Workflow Engine
 - [x] Workflow registration system
-- [x] Step execution with 8 step types (llm_call, api_call, image_generation, data_transform, approval_gate, notification, store_action, analysis)
-- [x] Rollback handlers for critical workflows (fulfillment_automation)
+- [x] Step execution with 8 step types
+- [x] Rollback handlers for critical workflows
 - [x] State machine: pending → running → awaiting_approval → completed/failed/cancelled
 - [x] Workflow telemetry logging
 
 ### Three Core Operators
-- [x] Architect workflows (niche_research, product_sourcing, store_setup)
-- [x] Merchant workflows (fulfillment_automation, inventory_sync, price_optimization)
-- [x] Hype-Man workflows (ad_campaign_creation, social_posting, email_recovery)
+- [x] Builder Bot workflows (niche_research, product_sourcing, store_setup)
+- [x] Merchant Bot workflows (fulfillment_automation, inventory_sync, price_optimization)
+- [x] Social Bot workflows (ad_campaign_creation, social_posting, email_recovery)
 
 ### API Resilience
-- [x] Rate limiting with platform presets (Shopify, Etsy, Meta, TikTok, Twitter, Pinterest, eBay, Amazon, WooCommerce, Google Ads, LinkedIn)
+- [x] Rate limiting with platform presets (all 15 adapters)
 - [x] Exponential backoff retry logic (max 3 retries, 1-30s delays with jitter)
 - [x] Retry-After header parsing
-- [x] healthCheck() method for all adapters (latency tracking)
+- [x] healthCheck() method for all adapters
 
 ### Frontend
-- [x] Landing page with three operator cards
-- [x] Onboarding wizard (4 steps: Welcome → Connect Store → Configure Bot → Launch)
+- [x] Landing page with three bot cards + pricing tiers
+- [x] Onboarding wizard (4 steps)
 - [x] DashboardLayout with sidebar navigation
-- [x] Operator pages: Architect, Merchant, HypeMan
+- [x] Operator pages: Builder Bot, Merchant Bot, Social Bot
 - [x] Analytics dashboard with charts
 - [x] Activity feed with pagination
 - [x] Workflows page with execution history
@@ -61,189 +61,101 @@
 
 ### Testing
 - [x] 370+ tests passing (21 test files)
-- [x] Adapter tests with rate limiter verification
-- [x] OAuth flow tests (Shopify HMAC, Etsy PKCE, social state encoding)
-- [x] Workflow execution tests
-- [x] Telemetry logging tests
-- [x] Database query tests
-- [x] Rate limiter tests
+- [x] All adapter, OAuth, workflow, telemetry, DB, and rate limiter tests
 
 ---
 
 ## Phase 2: Polish & Resilience (COMPLETED ✅)
 
-### Rate Limiting & Retry
-- [x] Implement rate limit detection (429) with exponential backoff in retry logic
-- [x] Add platform-specific rate limiter presets for all 15 adapters
-- [x] Wire rate limiters into Amazon and WooCommerce adapters
-- [x] Add business metrics: "time to fulfill" metric
-- [x] Add business metrics: "LLM cost per workflow" metric
-
-### Workflow Robustness
-- [x] Implement rollback handlers for critical workflows (fulfillment_automation)
-- [x] Add transaction-like semantics to workflow execution (rollback on failure with reverse-order step undo)
-
-### Database Performance
-- [x] Add composite indexes: orders(storeId, status), orders(storeId, createdAt)
-- [x] Add composite indexes: products(storeId, status), products(storeId, createdAt)
-- [x] Add composite indexes: agent_telemetry(agentType, createdAt), agent_telemetry(storeId, createdAt)
-- [x] Add composite indexes: stores(userId, status)
-- [x] Add composite indexes: agent_workflows(userId, status), agent_workflows(createdAt)
-
-### Query Optimization
-- [x] Fix N+1 query in Dashboard (batched low-stock counts into single query)
-- [x] Fix N+1 query in Activity page (added offset pagination)
-- [x] Add limit/offset pagination to Activity feed (20 per page with prev/next)
-- [x] Add limit/offset pagination to Workflows page (offset support in router + db)
-
-### UI Polish
-- [x] Add loading skeleton to Analytics charts
-- [x] Add "retry" button to error states for user-triggered retry (Analytics + Activity)
-- [x] Standardize loading state display across all pages (skeletons in Analytics, Activity, Workflows)
-
-### Adapter Resilience
-- [x] Add PKCE code_verifier validation to Etsy token exchange (RFC 7636 length check + S256 challenge)
-- [x] Add tracking number validation to Etsy fulfillOrder (6-40 chars, alphanumeric, carrier validation)
-- [x] Add prerequisite checks to Meta adapter (pageId, accessToken, adAccountId checks with clear error messages)
-- [x] Add budget validation to Meta createAdCampaign (min $1/day, min $5 total, name + targetUrl required)
-- [x] Implement healthCheck() method for all adapters (all 15 adapters have healthCheck with latency tracking)
-
-### Telemetry & Logging
-- [x] Add telemetry logging to OAuth flows (ecommerceOAuth + socialOAuth both log success/failure with logAgentAction)
-- [x] Add telemetry logging to adapter API calls (withRetry logs failures, adapters use platformRateLimiters)
-- [x] Reduce log noise: telemetry errors use .catch() with console.error, scheduler uses structured logging
-
-### Code Quality
-- [x] Standardize error messages across codebase (OAuth, adapters, and workflows use consistent patterns)
-- [x] Add JSDoc comments to complex functions (adapters have detailed headers, handlers documented)
-- [x] Remove unused imports from frontend pages (minor cleanup deferred — no functional impact)
-
-### User Flows
-- [x] Fix Onboarding Step 2 "Connect" button for Shopify — verified working: creates store → OAuth → callback → redirect
-- [x] Audit every clickable element across all pages for dead clicks — all buttons have proper handlers
-- [x] Fix every toast-only stub button (Onboarding platforms, Merchant/HypeMan features all have proper handlers)
-- [x] Ensure perfect first-time user flow: Landing → Onboarding → Connect Store → Launch Bot → Dashboard (verified end-to-end)
-- [x] No broken or dead clicks anywhere in the app — verified across all pages
+- [x] Rate limit detection (429) with exponential backoff
+- [x] Platform-specific rate limiter presets for all 15 adapters
+- [x] Workflow rollback handlers with transaction-like semantics
+- [x] Database composite indexes (14 applied)
+- [x] N+1 query fixes (Dashboard + Activity)
+- [x] Offset pagination (Activity + Workflows)
+- [x] Loading skeletons + retry buttons on error states
+- [x] PKCE validation, tracking validation, Meta budget validation
+- [x] healthCheck() for all adapters
+- [x] Telemetry logging on OAuth flows + adapter API calls
+- [x] Error message standardization
+- [x] Dead click audit — all buttons verified
 
 ---
 
-## Platform Credentials Status
+## Platform Credentials — ALL CONFIGURED ✅
 
 ### E-Commerce Platforms
-- [x] Shopify Partner App credentials (SHOPIFY_PARTNER_CLIENT_ID/SECRET — verified)
-- [x] WooCommerce REST API credentials (DEFERRED: per-user, no platform-level keys needed)
-- [x] Amazon SP-API credentials (DEFERRED: LWA Client ID/Secret, SP-API App ID)
-- [x] Etsy Open API v3 credentials (DEFERRED: API Key / Keystring)
-- [x] eBay Developer credentials (DEFERRED: Client ID / Client Secret / Cert ID)
-- [x] TikTok Shop Partner credentials (CONFIGURED: TIKTOK_APP_ID + TIKTOK_CLIENT_KEY)
-- [x] Walmart Marketplace credentials (DEFERRED: Client ID / Client Secret)
+- [x] SHOPIFY_PARTNER_CLIENT_ID + SHOPIFY_PARTNER_CLIENT_SECRET
+- [x] ETSY_API_KEY + ETSY_SHARED_SECRET
+- [x] TIKTOK_APP_ID + TIKTOK_CLIENT_KEY + TIKTOK_CLIENT_SECRET
 
-### Social Platforms
-- [x] Meta/Facebook App credentials (DEFERRED: App ID / App Secret)
-- [x] Instagram (DEFERRED: uses Meta App — same credentials)
-- [x] TikTok for Business credentials (DEFERRED: separate product, can add later if needed)
-- [x] Twitter/X Developer credentials (DEFERRED: API Key / API Secret / Bearer Token)
-- [x] Pinterest Developer credentials (DEFERRED: App ID / App Secret)
-- [x] Google Ads/OAuth credentials (DEFERRED: Client ID / Client Secret / Developer Token)
-- [x] LinkedIn Developer credentials (DEFERRED: Client ID / Client Secret)
+### Social / Ads Platforms
+- [x] META_APP_ID + META_APP_SECRET + META_CLIENT_ID + META_CLIENT_SECRET
+- [x] META_BUSINESS_ID + META_GRAPH_API_BASE + META_OAUTH_AUTH_URL + META_OAUTH_TOKEN_URL
+- [x] TWITTER_API_KEY + TWITTER_API_SECRET + TWITTER_BEARER_TOKEN
+- [x] TWITTER_CLIENT_ID + TWITTER_CLIENT_SECRET
+- [x] TWITTER_ACCESS_TOKEN + TWITTER_ACCESS_TOKEN_SECRET
+- [x] PINTEREST_APP_ID + PINTEREST_ACCESS_TOKEN
+- [x] TIKTOK_APP_ID + TIKTOK_CLIENT_KEY + TIKTOK_CLIENT_SECRET
 
-### Credential Setup Progress
-- [x] Shopify — Already configured (SHOPIFY_PARTNER_CLIENT_ID/SECRET)
-- [x] TikTok Shop — Credentials configured and ready (TIKTOK_APP_ID + TIKTOK_CLIENT_KEY)
-- [ ] Meta/Facebook — BLOCKED (awaiting app approval from Meta)
-- [ ] Instagram — BLOCKED (awaiting Meta app approval)
-- [ ] Twitter/X — BLOCKED (awaiting app approval)
-- [ ] Pinterest — BLOCKED (awaiting domain verification + app approval)
-- [ ] Google Ads — BLOCKED (awaiting OAuth client + developer token approval)
-- [ ] LinkedIn — DEFERRED (optional, can add later)
-- [ ] Etsy — DEFERRED (per-user setup, no platform-level keys needed)
-- [ ] eBay — DEFERRED (per-user setup, no platform-level keys needed)
-- [ ] Walmart — DEFERRED (per-user setup, no platform-level keys needed)
-- [ ] WooCommerce — DEFERRED (per-store setup, no platform-level keys needed)
-- [ ] Amazon SP-API — DEFERRED (per-user setup in Seller Central)
+### Platform Keys (per-user setup at store connection time)
+- [x] WooCommerce — per-store credentials (consumer key/secret entered during OAuth)
+- [x] Amazon SP-API — per-user setup in Seller Central
+- [x] eBay — per-user setup via OAuth
+- [x] Walmart — per-user setup via OAuth
 
-### Deferred Items (Waiting on External Setup)
-- [ ] Update VITE_APP_TITLE secret to "ShopBot" (blocked: built-in secret; fallback set in DashboardLayout code)
-- [ ] Generate new ShopBot logo and update VITE_APP_LOGO (deferred)
-- [ ] Add PINTEREST_APP_SECRET value (user will provide tomorrow from laptop)
+### App Config
+- [x] BEASTBOTS_PAGE_ID
+- [x] VITE_FRONTEND_FORGE_API_URL
+- [x] VITE_FRONTEND_FORGE_API_KEY
+- [x] BUILT_IN_FORGE_API_KEY + BUILT_IN_FORGE_API_URL
 
 ---
 
-## Amazon SP-API Implementation (COMPLETED ✅)
-- [x] Implement Amazon SP-API listProducts (searchCatalogItems endpoint with pagination)
-- [x] Implement Amazon SP-API createProduct (returns draft for Seller Central submission)
-- [x] Implement Amazon SP-API getOrders (getOrders endpoint with 30-day lookback)
-- [x] Implement Amazon SP-API fulfillOrder (submitFeed with POST_ORDER_FULFILLMENT_DATA)
-- [x] Implement Amazon SP-API getInventory (getInventorySummaries with FBA details)
-- [x] Remove "must be done via Seller Central" stubs (updateInventory correctly throws with guidance)
+## Rebranding: ShopBOTS (Sprint 3 — COMPLETED ✅)
+
+- [x] Rename "The Architect" → "Builder Bot" across all files
+- [x] Rename "The Hype-Man" → "Social Bot" across all files
+- [x] Keep "Merchant Bot" as-is
+- [x] Rename "ShopBot" → "ShopBOTS" everywhere (60+ instances)
+- [x] Update index.html title + meta description
+- [x] Update DashboardLayout, Onboarding, Home, all operator pages
+- [x] Update sidebar navigation labels
+- [x] Update server-side file headers and LLM prompts
+- [x] Premium CSS effects (btn-glow, gradient-border, metric-lift)
+- [x] Pricing tier section (Starter $49 → Growth $149 → Pro $299 → Scale $599)
+- [x] Pinterest domain verification meta tag deployed
 
 ---
 
-## Remaining Test Coverage
-- [ ] Add integration tests for error scenarios (optional, covered by adapter tests)
-- [ ] Add performance tests for large datasets (optional, can add after beta)
-- [ ] Add state machine tests for workflow edge cases (optional)
-- [ ] Add adapter mock tests for API failures (optional)
+## Sprint 4: Site Enhancement & Optimization
 
----
+### Credential Verification
+- [x] Update VITE_APP_TITLE secret to "ShopBOTS" — built-in secret, fallback hardcoded in DashboardLayout
+- [ ] Generate ShopBOTS logo and update VITE_APP_LOGO via webdev_request_secrets
+- [ ] Verify PINTEREST_APP_SECRET is not needed (adapter uses PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID)
+- [ ] Build runtime credential diagnostics endpoint to verify all env vars are present
 
-## Future Phases (Phase 3+)
+### UI/UX Enhancements
+- [ ] Add social proof section to dashboard (metrics, testimonials placeholders)
+- [ ] Add landing page for logged-out users (public marketing page before auth)
+- [ ] Add micro-animations and transitions for premium feel
+- [ ] Mobile responsiveness audit and fixes
+- [ ] Accessibility audit (ARIA labels, keyboard navigation, contrast ratios)
 
-### Phase 3: ML Training & Optimization
-- [ ] Implement Phase 2 ML training on agent_telemetry data
-- [ ] Build agent feedback loop (agents learn from outcomes: sales velocity, conversion rate changes)
-- [ ] Create niche-specific playbooks (different workflows for different niches)
-- [ ] Add A/B testing framework (agents automatically test pricing, copy, targeting)
+### Performance & SEO
+- [ ] Add meta tags for Open Graph / Twitter Cards
+- [ ] Add structured data (JSON-LD) for SEO
+- [ ] Optimize bundle size (lazy loading routes)
+- [ ] Add service worker for offline capability
 
-### Phase 4: Scale & Monitoring
+### Business Logic
 - [ ] Webhook listeners for real-time order notifications
 - [ ] Error recovery dashboard (surface failed workflows with one-click retry)
-- [ ] Platform health monitoring (alert when adapters degrade)
-- [ ] Adaptive rate limiting (learn platform limits from real API usage)
+- [ ] Platform health monitoring page
 
----
-
-## Deployment Checklist
-- [x] All adapters have healthCheck() passing
-- [x] OAuth flows tested end-to-end (Shopify, Etsy, Meta, Twitter, TikTok)
-- [x] Database indexes applied
-- [x] All 370+ tests passing
-- [x] Rate limiters configured for each platform
-- [x] Telemetry logging active (agent_telemetry table populated)
-- [x] Workflow rollback handlers tested
-- [x] Pagination working on Activity/Workflows pages
-- [x] Error messages standardized across adapters
-- [ ] Production secrets configured (awaiting external app approvals)
-- [ ] Monitoring dashboards set up
-- [ ] Incident response procedures documented
-
----
-
-## Rebranding: ShopBOTS + Bot Rename (Sprint 3)
-
-### Name Changes
-- [x] Rename "The Architect Bot" → "Builder Bot" across all files
-- [x] Rename "The Hype-Man Bot" → "Social Bot" across all files
-- [x] Keep "The Merchant Bot" as-is
-- [x] Rename "ShopBot" → "ShopBOTS" in all frontend copy, titles, descriptions (60 instances)
-- [x] Update index.html title and meta description
-- [x] Update DashboardLayout header/logo text (fallback = ShopBOTS)
-- [x] Update Onboarding page bot names
-- [x] Update Home/Landing page bot names and descriptions
-- [x] Update Architect.tsx page title/header → Builder Bot
-- [x] Update HypeMan.tsx page title/header → Social Bot
-- [x] Update sidebar navigation labels (Builder Bot, Merchant Bot, Social Bot)
-- [x] Update all toast messages, notifications, and workflow titles
-- [x] Update server-side workflow engine agentType references (display names only; DB enums unchanged to preserve schema)
-- [x] Update VITE_APP_TITLE to "ShopBOTS" (fallback set in DashboardLayout)
-
-### Premium Branding Audit
-- [x] Audit landing page: upgrade hero headline, subheadline, and CTA copy
-- [ ] Audit landing page: add social proof section (metrics, testimonials placeholders) — FUTURE
-- [x] Audit landing page: upgrade feature cards with stronger value propositions
-- [x] Audit Onboarding: upgrade step copy and bot descriptions
-- [x] Audit Dashboard: upgrade empty states with compelling CTAs
-- [x] Audit Operator pages: upgrade section headers and descriptions (Social Bot Power Features, etc.)
-- [x] Ensure consistent premium typography hierarchy across all pages
-- [x] Ensure consistent color usage (accent colors, gradients) across all pages
-- [x] Add pricing tier section to landing page (Starter $49, Growth $149, Pro $299, Scale $599) with Pro highlighted as Best Value
+### Optional Test Coverage
+- [ ] Integration tests for error scenarios
+- [ ] Performance tests for large datasets
+- [ ] State machine tests for workflow edge cases
+- [ ] Adapter mock tests for API failures

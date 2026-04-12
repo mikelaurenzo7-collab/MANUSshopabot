@@ -23,6 +23,9 @@ import {
   Eye,
   Hand,
   Info,
+  CheckCircle2,
+  XCircle,
+  Activity,
 } from "lucide-react";
 
 type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
@@ -83,6 +86,68 @@ const autonomyOptions: {
     color: "text-red-400",
   },
 ];
+
+function CredentialDiagnostics() {
+  const { data, isLoading } = trpc.diagnostics.credentialStatus.useQuery();
+
+  return (
+    <Card className="bg-card border-border/50">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-primary" />
+          <CardTitle className="text-base font-semibold">Platform Credential Status</CardTitle>
+        </div>
+        <CardDescription>
+          Live check of all API keys and secrets configured in your environment
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+          </div>
+        ) : data ? (
+          <>
+            <div className="flex gap-4 mb-4 p-3 rounded-lg bg-secondary/30">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400">{data.summary.configured}</div>
+                <div className="text-xs text-muted-foreground">Configured</div>
+              </div>
+              <Separator orientation="vertical" className="h-auto" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-400">{data.summary.missing}</div>
+                <div className="text-xs text-muted-foreground">Missing</div>
+              </div>
+              <Separator orientation="vertical" className="h-auto" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{data.summary.total}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
+              </div>
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {data.results.map((r) => (
+                <div key={r.key} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/20 transition-colors">
+                  <div className="flex items-center gap-2">
+                    {r.configured
+                      ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
+                      : <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />}
+                    <span className="text-xs font-mono text-muted-foreground">{r.key}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">{r.platform}</Badge>
+                    {r.configured && r.preview && (
+                      <span className="text-xs font-mono text-muted-foreground/60">{r.preview}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function ConfigPage() {
   const { user, loading } = useAuth();
@@ -390,6 +455,9 @@ export default function ConfigPage() {
               </Card>
             );
           })}
+
+          {/* Credential Diagnostics — admin only */}
+          {user?.role === "admin" && <CredentialDiagnostics />}
 
           {/* Global Safety & Approvals */}
           <Card className="bg-card border-border/50">

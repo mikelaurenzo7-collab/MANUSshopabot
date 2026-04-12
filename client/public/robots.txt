@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://beastbots-r65at2l4.manus.space/sitemap.xml
