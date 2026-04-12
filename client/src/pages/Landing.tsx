@@ -134,14 +134,14 @@ export default function LandingPage() {
               variant="ghost"
               size="sm"
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground transition-colors duration-300"
             >
               Sign In
             </Button>
             <Button
               size="sm"
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="btn-glow bg-primary hover:bg-primary/90"
+              className="btn-glow bg-primary hover:bg-primary/90 transition-all duration-300"
             >
               Get Started Free
               <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -151,16 +151,16 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <section className="pt-32 pb-20 px-4 relative hero-background">
+        <div className="absolute inset-0 pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative">
           <Badge variant="outline" className="mb-6 border-primary/30 text-primary text-xs tracking-wider uppercase">
             <Cpu className="h-3 w-3 mr-1.5" />
             Autonomous Commerce Platform
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight hero-gradient-text">
             Your E-Commerce Empire,{" "}
-            <span className="bg-gradient-to-r from-primary via-violet-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="hero-gradient-text">
               Run by Bots
             </span>
           </h1>
@@ -171,7 +171,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="btn-glow bg-primary hover:bg-primary/90 text-base px-8 h-12"
+              className="btn-glow bg-primary hover:bg-primary/90 text-base px-8 h-12 transition-all duration-300"
             >
               <Zap className="h-4 w-4 mr-2" />
               Launch Your Command Center
@@ -179,7 +179,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               variant="outline"
-              className="text-base px-8 h-12 border-border/50 hover:border-primary/50"
+              className="text-base px-8 h-12 border-border/50 hover:border-primary/50 transition-all duration-300"
               onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
             >
               <Play className="h-4 w-4 mr-2" />
@@ -212,10 +212,10 @@ export default function LandingPage() {
               Three specialized agents working in parallel — each an expert in their domain.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {BOTS.map((bot) => (
-              <Card key={bot.name} className={`border ${bot.bg} shadow-lg ${bot.glow} hover:shadow-xl transition-all duration-300 metric-lift`}>
-                <CardContent className="p-6">
+              <Card key={bot.name} className={`border ${bot.bg} shadow-lg ${bot.glow} hover:shadow-xl transition-all duration-300 metric-lift glass-card`}>
+                <CardContent className="p-8">
                   <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl ${bot.bg} mb-4`}>
                     <bot.icon className={`h-6 w-6 ${bot.color}`} />
                   </div>

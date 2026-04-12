@@ -63,8 +63,8 @@ function MetricCard({
   accentColor?: string;
 }) {
   return (
-    <Card className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300 metric-lift">
-      <CardContent className="p-5">
+    <Card className="glass-card">
+      <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
@@ -106,9 +106,11 @@ function BotStatusCard({
   loading?: boolean;
 }) {
   const isActive = stats && stats.running > 0;
+  const botAccentColor = type === 'architect' ? 'bg-violet-500/10 border-violet-500/30' : type === 'merchant' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-amber-500/10 border-amber-500/30';
+  const botStatusColor = type === 'architect' ? 'bg-violet-400' : type === 'merchant' ? 'bg-cyan-400' : 'bg-amber-400';
   return (
-    <Card className={`border-border/50 hover:border-primary/20 transition-all duration-300 metric-lift ${isActive ? "gradient-border" : "bg-card"}`}>
-      <CardContent className="p-5">
+    <Card className={`glass-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''}`}>
+      <CardContent className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
             <Icon className="h-5 w-5" />
@@ -116,7 +118,7 @@ function BotStatusCard({
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-foreground truncate">{name}</h3>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-400 bot-pulse" : "bg-muted-foreground/40"}`} />
+              <div className={`h-2 w-2 rounded-full ${isActive ? `${botStatusColor} bot-status-pulse` : 'bg-muted-foreground/40'}`} />
               <span className="text-xs text-muted-foreground">{isActive ? "Active" : "Idle"}</span>
             </div>
           </div>
@@ -127,17 +129,17 @@ function BotStatusCard({
             <Skeleton className="h-4 w-3/4" />
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-2 rounded-md bg-secondary/50">
-              <p className="text-lg font-bold text-foreground">{stats.completed}</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <p className="text-lg font-bold text-emerald-400 metric-number">{stats.completed}</p>
               <p className="text-[10px] text-muted-foreground uppercase">Done</p>
             </div>
-            <div className="text-center p-2 rounded-md bg-secondary/50">
-              <p className="text-lg font-bold text-amber-400">{stats.running}</p>
+            <div className="text-center p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-lg font-bold text-amber-400 metric-number">{stats.running}</p>
               <p className="text-[10px] text-muted-foreground uppercase">Active</p>
             </div>
-            <div className="text-center p-2 rounded-md bg-secondary/50">
-              <p className="text-lg font-bold text-destructive">{stats.failed}</p>
+            <div className="text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-lg font-bold text-red-400 metric-number">{stats.failed}</p>
               <p className="text-[10px] text-muted-foreground uppercase">Failed</p>
             </div>
           </div>
@@ -400,7 +402,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="space-y-6 page-enter">
+    <div className="space-y-8 page-enter">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -438,7 +440,7 @@ export default function Home() {
       )}
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-list" role="region" aria-label="Key metrics">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-list" role="region" aria-label="Key metrics">
         <MetricCard
           title="Total Revenue"
           value={metricsError ? "—" : `$${((metrics?.totalRevenue ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
@@ -620,10 +622,10 @@ export default function Home() {
       </Card>
 
       {/* Agent Status + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Agent Status */}
         <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Bot Status</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Bot Status</h2>
           {agentConfigs.map((agent) => {
             const stats = agentStatus?.find((s: any) => s.agentType === agent.type);
             return (
