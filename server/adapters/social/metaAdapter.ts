@@ -16,21 +16,28 @@ import type {
   AdCampaign,
 } from "./types";
 
-const GRAPH_BASE = "https://graph.facebook.com/v19.0";
+import { ENV } from "../../_core/env";
+
+const GRAPH_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
 
 export class MetaAdapter implements SocialPlatformAdapter {
   readonly platform = "meta";
   readonly platformName = "Meta (Facebook)";
 
+  private getGraphBase(): string {
+    return ENV.metaGraphApiBase || GRAPH_BASE;
+  }
+
   private async graphFetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");
+    const graphBase = this.getGraphBase();
     const params = new URLSearchParams({
       access_token: credentials.accessToken,
       ...options?.params,
     });
     try {
       const response = await axios({
-        url: `${GRAPH_BASE}${path}?${params.toString()}`,
+        url: `${graphBase}${path}?${params.toString()}`,
         method: (options?.method || "GET") as any,
         data: options?.body,
         headers: { "Content-Type": "application/json" },

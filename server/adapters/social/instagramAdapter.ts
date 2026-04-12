@@ -17,21 +17,28 @@ import type {
   AdCampaign,
 } from "./types";
 
-const IG_BASE = "https://graph.facebook.com/v19.0";
+import { ENV } from "../../_core/env";
+
+const IG_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
 
 export class InstagramAdapter implements SocialPlatformAdapter {
   readonly platform = "instagram";
   readonly platformName = "Instagram";
 
+  private getBase(): string {
+    return ENV.metaGraphApiBase || IG_BASE;
+  }
+
   private async fetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");
+    const base = this.getBase();
     const params = new URLSearchParams({
       access_token: credentials.accessToken,
       ...options?.params,
     });
     try {
       const response = await axios({
-        url: `${IG_BASE}${path}?${params.toString()}`,
+        url: `${base}${path}?${params.toString()}`,
         method: (options?.method || "GET") as any,
         data: options?.body,
         headers: { "Content-Type": "application/json" },

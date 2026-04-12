@@ -110,9 +110,11 @@ const SOCIAL_PLATFORMS = {
     connectionType: "oauth" as const,
     description: "Manage Facebook Pages and Instagram Business accounts",
     oauthConfig: {
-      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`,
-      tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) => {
+        const base = ENV.metaOAuthAuthUrl || "https://www.facebook.com/v19.0/dialog/oauth";
+        return `${base}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+      },
+      tokenUrl: ENV.metaOAuthTokenUrl || "https://graph.facebook.com/v19.0/oauth/access_token",
       scopes: "pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,ads_management",
     },
     capabilities: ["page_posting", "instagram_posting", "ads_management", "analytics"],
@@ -124,9 +126,11 @@ const SOCIAL_PLATFORMS = {
     connectionType: "oauth" as const,
     description: "Connected via Meta — manage Instagram Business content",
     oauthConfig: {
-      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`,
-      tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) => {
+        const base = ENV.metaOAuthAuthUrl || "https://www.facebook.com/v19.0/dialog/oauth";
+        return `${base}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;
+      },
+      tokenUrl: ENV.metaOAuthTokenUrl || "https://graph.facebook.com/v19.0/oauth/access_token",
       scopes: "instagram_basic,instagram_content_publish,pages_read_engagement",
     },
     capabilities: ["content_posting", "stories", "reels", "analytics"],
@@ -463,14 +467,44 @@ export const connectorsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: `Unknown social platform: ${input.platform}` });
       }
 
-      // Return setup instructions — in production, each platform's OAuth app credentials
-      // would be stored as secrets and the real OAuth URL would be generated
+      // Resolve the correct client ID for each platform from ENV
+      const clientIdMap: Record<string, string> = {
+        meta: ENV.metaClientId || ENV.metaAppId,
+        instagram: ENV.metaClientId || ENV.metaAppId, // Instagram uses Meta OAuth
+        tiktok: ENV.tiktokClientKey,
+        twitter: ENV.twitterClientId,
+        pinterest: ENV.pinterestAppId,
+        google_ads: ENV.googleAdsClientId,
+        linkedin: "", // Not yet configured
+      };
+
+      const clientId = clientIdMap[input.platform];
+      if (!clientId) {
+        return {
+          url: null,
+          platform: input.platform,
+          message: `${platformConfig.name} OAuth integration requires app credentials. Add your ${platformConfig.name} App ID and Secret in Settings > Secrets to enable this connection.`,
+          setupRequired: true,
+          setupInstructions: getSetupInstructions(input.platform),
+        };
+      }
+
+      // Generate a random state parameter for CSRF protection
+      const crypto = await import("crypto");
+      const state = crypto.randomBytes(16).toString("hex") + `_${ctx.user.id}_${input.platform}`;
+
+      // Build the redirect URI — callback endpoint on our server
+      const redirectUri = `${input.origin}/api/social/oauth/callback`;
+      const scopes = platformConfig.oauthConfig.scopes;
+
+      // Generate the real OAuth authorization URL
+      const url = platformConfig.oauthConfig.authUrl(clientId, scopes, redirectUri, state);
+
       return {
-        url: null,
+        url,
         platform: input.platform,
-        message: `${platformConfig.name} OAuth integration requires app credentials. Add your ${platformConfig.name} App ID and Secret in Settings > Secrets to enable this connection.`,
-        setupRequired: true,
-        setupInstructions: getSetupInstructions(input.platform),
+        message: null,
+        setupRequired: false,
       };
     }),
 });

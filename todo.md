@@ -410,3 +410,11 @@
 - [x] Add TWITTER_ACCESS_TOKEN_SECRET secret to platform
 - [x] Update Twitter adapter to use access token for user-level API calls
 - [x] Add TWITTER_CLIENT_ID secret (OAuth 2.0 Client ID for user-level OAuth flows)
+
+## Wire TikTok + Meta OAuth Adapters
+- [x] Wire TIKTOK_APP_ID, TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET into env.ts
+- [x] Wire TikTok secrets into TikTok social adapter for API authentication
+- [x] Wire META_CLIENT_ID, META_CLIENT_SECRET, META_OAUTH_AUTH_URL, META_OAUTH_TOKEN_URL into env.ts
+- [x] Wire Meta OAuth secrets into Meta/Instagram adapter for OAuth flow + API calls
+- [x] Write vitest tests to validate TikTok and Meta OAuth secrets are wired correctly (21 tests, all passing)
+- [x] Confirm Instagram is covered by Meta adapter (no separate credentials needed)
