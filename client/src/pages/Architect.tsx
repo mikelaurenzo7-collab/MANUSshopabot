@@ -28,6 +28,7 @@ import {
   ExternalLink,
   CheckCircle2,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 
 function NicheReportCard({ report }: { report: any }) {
@@ -231,8 +232,8 @@ export default function ArchitectPage() {
           <Bot className="h-5 w-5 text-violet-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">The Architect Agent</h1>
-          <p className="text-sm text-muted-foreground">Niche research, product sourcing, and store setup</p>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">The Architect Bot</h1>
+          <p className="text-sm text-muted-foreground">Niche research, product sourcing, store setup, health checks, and competitive intelligence</p>
         </div>
         <div className="ml-auto">
           <Badge variant="outline" className="text-[10px] border-violet-400/30 text-violet-400">
@@ -255,6 +256,7 @@ export default function ArchitectPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="platforms">Platforms</TabsTrigger>
+          <TabsTrigger value="tools">AI Tools</TabsTrigger>
         </TabsList>
 
         {/* Niche Research Tab */}
@@ -554,7 +556,7 @@ export default function ArchitectPage() {
                 <h3 className="text-sm font-semibold text-foreground">Supported Platforms</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Beast Bots is platform-agnostic. Your agents can manage stores across all major e-commerce platforms simultaneously.
+                ShopBot is platform-agnostic. Your bots can manage stores across all major e-commerce platforms simultaneously.
               </p>
             </CardContent>
           </Card>
@@ -592,6 +594,117 @@ export default function ArchitectPage() {
             ))}
           </div>
         </TabsContent>
+
+        {/* AI Tools Tab */}
+        <TabsContent value="tools" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Store Health Check */}
+            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                    <ShieldCheck className="h-4.5 w-4.5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Store Health Check</h3>
+                    <p className="text-[11px] text-muted-foreground">Comprehensive diagnostics</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">Run a full health scan on your store — product quality, SEO, conversion readiness, and operational efficiency scored 0-100.</p>
+                {storeOptions.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select value={selectedStore} onValueChange={setSelectedStore}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Select store" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {storeOptions.map((s: any) => (
+                          <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="w-full text-xs" disabled={!selectedStore} onClick={() => toast.info("Launch this via Workflows for full execution")}>
+                      <Zap className="h-3 w-3 mr-1" /> Run Health Check
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">Connect a store first</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Description Rewriter */}
+            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                    <Sparkles className="h-4.5 w-4.5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">AI Copy Rewriter</h3>
+                    <p className="text-[11px] text-muted-foreground">SEO-optimized descriptions</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">Rewrite product titles and descriptions with conversion-focused copy, SEO keywords, and bullet points.</p>
+                <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Select products from the Merchant page to rewrite their descriptions")}>
+                  <Sparkles className="h-3 w-3 mr-1" /> Rewrite Descriptions
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Competitor Price Scanner */}
+            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                    <Target className="h-4.5 w-4.5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Price Scanner</h3>
+                    <p className="text-[11px] text-muted-foreground">Competitive intelligence</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">Scan competitor pricing across the market. Get positioning recommendations and pricing opportunities.</p>
+                <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full competitive price analysis")}>
+                  <Target className="h-3 w-3 mr-1" /> Scan Prices
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* New Workflow Capabilities */}
+          <Card className="bg-card border-border/50">
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-foreground mb-3">New Architect Capabilities</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <Globe className="h-4 w-4 text-violet-400" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Multi-Store Expansion</p>
+                    <p className="text-[11px] text-muted-foreground">Cross-platform strategy for Shopify, Etsy, Amazon, and more</p>
+                  </div>
+                  <Badge variant="outline" className="ml-auto text-[10px] border-violet-400/30 text-violet-400">Workflow</Badge>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Brand Audit</p>
+                    <p className="text-[11px] text-muted-foreground">Full brand health assessment with trust signals and conversion analysis</p>
+                  </div>
+                  <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Workflow</Badge>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <Sparkles className="h-4 w-4 text-blue-400" />
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Product Optimization</p>
+                    <p className="text-[11px] text-muted-foreground">Optimize listings, pricing psychology, cross-sells, and dead product cleanup</p>
+                  </div>
+                  <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Connect Store Dialog */}
@@ -609,7 +722,7 @@ export default function ArchitectPage() {
           <DialogHeader>
             <DialogTitle>Connect a Store</DialogTitle>
             <DialogDescription>
-              Add an e-commerce store for your agents to manage. Your agents will have full access to products, orders, and analytics.
+              Add an e-commerce store for your bots to manage. Your bots will have full access to products, orders, and analytics.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
@@ -666,7 +779,7 @@ export default function ArchitectPage() {
                     className="bg-input/50"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    You'll be redirected to Shopify to authorize Beast Bots. This is a one-time step.
+                    You'll be redirected to Shopify to authorize ShopBot. This is a one-time step.
                   </p>
                 </div>
                 <div className="rounded-lg bg-violet-500/10 border border-violet-400/20 p-3">
@@ -674,7 +787,7 @@ export default function ArchitectPage() {
                     <ShieldCheck className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground">
                       <p className="font-medium text-violet-400 mb-0.5">Secure OAuth Connection</p>
-                      <p>Beast Bots will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
+                      <p>ShopBot will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
                     </div>
                   </div>
                 </div>

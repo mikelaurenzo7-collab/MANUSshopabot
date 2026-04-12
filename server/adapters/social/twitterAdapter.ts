@@ -81,7 +81,7 @@ export class TwitterAdapter implements SocialPlatformAdapter {
 
   async schedulePost(credentials: SocialCredentials, post: CreatePostInput, scheduledAt: Date): Promise<SocialPost> {
     // Twitter API v2 does not support native scheduling via API
-    // Store as a scheduled task in Beast Bots' own scheduler
+    // Store as a scheduled task in ShopBot's own scheduler
     return {
       platformId: `scheduled_${Date.now()}`,
       content: post.content,

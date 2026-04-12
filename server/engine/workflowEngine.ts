@@ -1,7 +1,7 @@
 /**
- * Beast Bots Workflow Engine
+ * ShopBot Workflow Engine
  * 
- * The orchestration brain. Manages the lifecycle of multi-step agent workflows:
+ * The orchestration brain. Manages the lifecycle of multi-step bot workflows:
  * 1. Creates workflows with defined step pipelines
  * 2. Executes steps sequentially (LLM calls, API calls, image gen, etc.)
  * 3. Pauses at approval gates for human-on-the-loop review
@@ -130,7 +130,7 @@ export async function launchWorkflow(userId: number, definition: WorkflowDefinit
 
   await createWorkflowSteps(stepRecords);
 
-  // Log the agent task
+  // Log the bot task
   await createAgentTask({
     agentType: definition.agentType,
     taskType: definition.workflowType,
@@ -483,7 +483,7 @@ async function executeAnalysisStep(context: StepContext): Promise<any> {
 
 async function executeNotificationStep(context: StepContext): Promise<any> {
   const { userId, input, previousOutputs } = context;
-  const title = input.title ?? "Agent Update";
+  const title = input.title ?? "Bot Update";
   const message = input.message ?? `Workflow step completed.`;
 
   await createNotification({

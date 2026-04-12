@@ -20,6 +20,10 @@ import {
   Zap,
   BarChart3,
   RefreshCw,
+  Link,
+  Users,
+  ArrowUpDown,
+  RotateCcw,
 } from "lucide-react";
 
 export default function MerchantPage() {
@@ -82,7 +86,7 @@ export default function MerchantPage() {
             <Package className="h-5 w-5 text-cyan-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">The Merchant Agent</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">The Merchant Bot</h1>
             <p className="text-sm text-muted-foreground">Inventory, pricing, and fulfillment automation</p>
           </div>
         </div>
@@ -113,6 +117,7 @@ export default function MerchantPage() {
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="fulfillment">Fulfillment</TabsTrigger>
+            <TabsTrigger value="tools">AI Tools</TabsTrigger>
           </TabsList>
 
           {/* Inventory Tab */}
@@ -337,6 +342,101 @@ export default function MerchantPage() {
                   The Merchant will automatically process all pending orders and initiate fulfillment.
                   Zero-touch from "Placed" to "Processed" with 0% human clicks.
                 </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AI Tools Tab */}
+          <TabsContent value="tools" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Demand Forecasting */}
+              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                      <TrendingUp className="h-4.5 w-4.5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Demand Forecasting</h3>
+                      <p className="text-[11px] text-muted-foreground">Predict future demand</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">AI-powered demand prediction with stockout risk alerts, seasonal insights, and reorder recommendations.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full demand forecasting")}>
+                    <TrendingUp className="h-3 w-3 mr-1" /> Run Forecast
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Margin Analyzer */}
+              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                      <DollarSign className="h-4.5 w-4.5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Margin Analyzer</h3>
+                      <p className="text-[11px] text-muted-foreground">Profitability deep-dive</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Analyze margins by product and category. Find profit leaks, top performers, and optimization opportunities.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full margin analysis")}>
+                    <DollarSign className="h-3 w-3 mr-1" /> Analyze Margins
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Return Analysis */}
+              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                      <RotateCcw className="h-4.5 w-4.5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Return Analysis</h3>
+                      <p className="text-[11px] text-muted-foreground">Reduce return rates</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Analyze return patterns, identify problematic products, and get strategies to reduce return rates and costs.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full return analysis")}>
+                    <RotateCcw className="h-3 w-3 mr-1" /> Analyze Returns
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* New Workflow Capabilities */}
+            <Card className="bg-card border-border/50">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Merchant Capabilities</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <Link className="h-4 w-4 text-emerald-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Supply Chain Intelligence</p>
+                      <p className="text-[11px] text-muted-foreground">Supplier scorecards, lead time optimization, and risk assessment</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Workflow</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <TrendingUp className="h-4 w-4 text-blue-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Profit & Loss Analysis</p>
+                      <p className="text-[11px] text-muted-foreground">CFO-level P&L report with cash flow projections</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <Users className="h-4 w-4 text-violet-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Customer Segmentation</p>
+                      <p className="text-[11px] text-muted-foreground">RFM analysis, behavioral segments, and churn prediction</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-violet-400/30 text-violet-400">Workflow</Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

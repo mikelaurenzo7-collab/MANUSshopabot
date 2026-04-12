@@ -477,7 +477,7 @@ export const connectorsRouter = router({
 
 function getSetupInstructions(platform: string): string {
   const instructions: Record<string, string> = {
-    meta: "1. Go to developers.facebook.com\n2. Create a new app (Business type)\n3. Add Facebook Login product\n4. Copy App ID and App Secret\n5. Add them as META_APP_ID and META_APP_SECRET in Beast Bots Settings > Secrets",
+    meta: "1. Go to developers.facebook.com\n2. Create a new app (Business type)\n3. Add Facebook Login product\n4. Copy App ID and App Secret\n5. Add them as META_APP_ID and META_APP_SECRET in ShopBot Settings > Secrets",
     instagram: "Instagram Business accounts are connected through Meta. Set up Meta integration first, then select your Instagram Business account.",
     tiktok: "1. Go to developers.tiktok.com\n2. Create a new app\n3. Add Login Kit and Content Posting API\n4. Copy Client Key and Client Secret\n5. Add them as TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in Settings > Secrets",
     twitter: "1. Go to developer.twitter.com\n2. Create a new project and app\n3. Enable OAuth 2.0 with PKCE\n4. Copy Client ID and Client Secret\n5. Add them as TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET in Settings > Secrets",

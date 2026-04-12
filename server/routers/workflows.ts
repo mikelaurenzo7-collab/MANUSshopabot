@@ -1,5 +1,5 @@
 /**
- * Workflow Router — tRPC procedures for the agent workflow engine
+ * Workflow Router — tRPC procedures for the bot workflow engine
  */
 
 import { z } from "zod";
@@ -115,12 +115,18 @@ export const workflowRouter = router({
         { type: "product_sourcing", title: "Product Sourcing", description: "Find and curate winning products with margin analysis and supplier recommendations", icon: "Package", scope: "specific_store" },
         { type: "catalog_generation", title: "Catalog Generation", description: "Generate a complete product catalog from a keyword with pricing and descriptions", icon: "LayoutGrid", scope: "specific_store" },
         { type: "store_setup", title: "Store Setup", description: "Full store setup — brand identity, logo, legal pages, and configuration", icon: "Store", scope: "specific_store" },
+        { type: "multi_store_expansion", title: "Multi-Store Expansion", description: "Cross-platform expansion strategy — analyze Shopify, Etsy, Amazon fit and launch order", icon: "Globe", scope: "global" },
+        { type: "brand_audit", title: "Brand Audit", description: "Comprehensive brand health assessment — consistency, trust signals, conversion, and customer journey", icon: "ShieldCheck", scope: "specific_store" },
+        { type: "product_optimization", title: "Product Optimization", description: "Optimize listings — titles, descriptions, pricing psychology, cross-sells, and dead product cleanup", icon: "Sparkles", scope: "specific_store" },
       ],
       merchant: [
         { type: "inventory_audit", title: "Inventory Audit", description: "Cross-store inventory analysis with restock recommendations and dead stock alerts", icon: "ClipboardCheck", scope: "all_stores" },
         { type: "pricing_optimization", title: "Pricing Optimization", description: "Dynamic pricing analysis with margin targets and competitor benchmarking", icon: "DollarSign", scope: "all_stores" },
         { type: "fulfillment_automation", title: "Fulfillment Automation", description: "Automated order validation, processing, and supplier notification", icon: "Truck", scope: "specific_store" },
         { type: "competitor_analysis", title: "Competitor Analysis", description: "Deep competitive intelligence with counter-strategies and pricing positions", icon: "Target", scope: "global" },
+        { type: "supply_chain_intelligence", title: "Supply Chain Intelligence", description: "Supplier scorecards, lead time optimization, cost reduction, and risk assessment", icon: "Link", scope: "all_stores" },
+        { type: "profit_loss_analysis", title: "Profit & Loss Analysis", description: "CFO-level P&L report with margins, cash flow projections, and strategic recommendations", icon: "TrendingUp", scope: "all_stores" },
+        { type: "customer_segmentation", title: "Customer Segmentation", description: "RFM analysis, behavioral segments, churn prediction, and targeted campaign recommendations", icon: "Users", scope: "all_stores" },
       ],
       hypeman: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
@@ -129,6 +135,9 @@ export const workflowRouter = router({
         { type: "email_flow", title: "Email Flow", description: "Automated email sequences — welcome, abandoned cart, win-back, post-purchase", icon: "Mail", scope: "specific_store" },
         { type: "product_creative", title: "Product Creatives", description: "AI-generated product images — hero shots, lifestyle, and ad creatives", icon: "Image", scope: "specific_store" },
         { type: "brand_content", title: "Brand Content", description: "Blog posts, social snippets, email newsletters, and product description copy", icon: "FileText", scope: "global" },
+        { type: "viral_trend_detector", title: "Viral Trend Detector", description: "Real-time trend scanning — viral content, emerging signals, hashtag strategy, and ready-to-film templates", icon: "Zap", scope: "global" },
+        { type: "influencer_outreach", title: "Influencer Outreach", description: "Full influencer strategy — discovery, vetting, outreach templates, campaign structure, and contracts", icon: "Star", scope: "specific_store" },
+        { type: "conversion_funnel", title: "Conversion Funnel CRO", description: "Funnel leak analysis, checkout optimization, A/B test roadmap, and psychological triggers", icon: "Filter", scope: "specific_store" },
       ],
     };
   }),

@@ -20,6 +20,11 @@ import {
   Share2,
   Sparkles,
   Copy,
+  Star,
+  Filter,
+  MessageSquare,
+  ThumbsUp,
+  TrendingUp,
 } from "lucide-react";
 
 export default function HypeManPage() {
@@ -102,7 +107,7 @@ export default function HypeManPage() {
             <Megaphone className="h-5 w-5 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">The Hype-Man Agent</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">The Hype-Man Bot</h1>
             <p className="text-sm text-muted-foreground">Ad copy, social media, SEO, and email campaigns</p>
           </div>
         </div>
@@ -133,6 +138,7 @@ export default function HypeManPage() {
             <TabsTrigger value="seo">SEO</TabsTrigger>
             <TabsTrigger value="social">Social</TabsTrigger>
             <TabsTrigger value="email">Email</TabsTrigger>
+            <TabsTrigger value="tools">AI Tools</TabsTrigger>
           </TabsList>
 
           {/* Ad Copy Tab */}
@@ -468,6 +474,109 @@ export default function HypeManPage() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* AI Tools Tab */}
+          <TabsContent value="tools" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Viral Trend Detector */}
+              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-rose-500/15 flex items-center justify-center">
+                      <Zap className="h-4.5 w-4.5 text-rose-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Viral Trend Detector</h3>
+                      <p className="text-[11px] text-muted-foreground">Real-time trend scanning</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Scan TikTok, Instagram, and Twitter for viral trends. Get hashtag strategies and ready-to-film content templates.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full trend detection")}>
+                    <Zap className="h-3 w-3 mr-1" /> Detect Trends
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* A/B Test Copy Generator */}
+              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                      <Copy className="h-4.5 w-4.5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">A/B Copy Generator</h3>
+                      <p className="text-[11px] text-muted-foreground">Test psychological triggers</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Generate copy variants for headlines, CTAs, and ads with testing plans and winner predictions.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Feature coming soon — direct A/B test generation")}>
+                    <Copy className="h-3 w-3 mr-1" /> Generate Variants
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* SMS Recovery */}
+              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                      <MessageSquare className="h-4.5 w-4.5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">SMS Recovery Flows</h3>
+                      <p className="text-[11px] text-muted-foreground">Automated SMS sequences</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Generate compliant SMS flows for cart recovery, win-back, post-purchase upsells, and review requests.</p>
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Feature coming soon — direct SMS flow generation")}>
+                    <MessageSquare className="h-3 w-3 mr-1" /> Create SMS Flow
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* New Workflow Capabilities */}
+            <Card className="bg-card border-border/50">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Hype-Man Capabilities</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <Zap className="h-4 w-4 text-rose-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Viral Trend Detector</p>
+                      <p className="text-[11px] text-muted-foreground">Real-time trend scanning across TikTok, Instagram, and Twitter</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-rose-400/30 text-rose-400">Workflow</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <Star className="h-4 w-4 text-amber-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Influencer Outreach</p>
+                      <p className="text-[11px] text-muted-foreground">Full influencer strategy with discovery, vetting, and outreach templates</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-amber-400/30 text-amber-400">Workflow</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <Filter className="h-4 w-4 text-blue-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Conversion Funnel CRO</p>
+                      <p className="text-[11px] text-muted-foreground">Funnel leak analysis, A/B test roadmap, and checkout optimization</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                    <ThumbsUp className="h-4 w-4 text-emerald-400" />
+                    <div>
+                      <p className="text-xs font-medium text-foreground">Social Proof Generator</p>
+                      <p className="text-[11px] text-muted-foreground">Testimonials, urgency notifications, trust badges, and UGC prompts</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Direct Action</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       )}

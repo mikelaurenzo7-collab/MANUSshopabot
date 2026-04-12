@@ -5,7 +5,7 @@ import { ENV } from "./_core/env";
 import * as db from "./db";
 
 /**
- * Shopify OAuth 2.0 flow for connecting user stores to Beast Bots.
+ * Shopify OAuth 2.0 flow for connecting user stores to ShopBot.
  * 
  * Flow:
  * 1. User clicks "Connect Shopify Store" → GET /api/shopify/install?shop=xxx.myshopify.com

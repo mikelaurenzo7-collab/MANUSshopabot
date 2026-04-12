@@ -1,8 +1,8 @@
-# Beast Bots Learning Systems Roadmap
+# ShopBot Learning Systems Roadmap
 
 ## Overview
 
-Beast Bots agents are designed to improve autonomously over time. This document outlines the three-phase rollout of learning capabilities, from rule-based automation to full machine learning optimization.
+ShopBot agents are designed to improve autonomously over time. This document outlines the three-phase rollout of learning capabilities, from rule-based automation to full machine learning optimization.
 
 ---
 
@@ -13,19 +13,19 @@ Beast Bots agents are designed to improve autonomously over time. This document 
 
 ### What's Working Now
 
-**The Merchant Agent — Dynamic Pricing**
+**The Merchant Bot — Dynamic Pricing**
 - Monitors competitor prices every 6 hours
 - Analyzes profit margins and sales velocity
 - Applies price adjustments based on configured thresholds
 - **Learning:** Tracks historical price changes vs. sales impact (logged but not yet optimized)
 
-**The Hype-Man Agent — Performance Tracking**
+**The Hype-Man Bot — Performance Tracking**
 - Tracks ad campaign metrics (CTR, CPC, ROAS)
 - Monitors social media engagement (likes, shares, comments)
 - Logs which ad creatives perform best
 - **Learning:** Identifies top-performing content (manual review required)
 
-**The Architect Agent — Niche Research**
+**The Architect Bot — Niche Research**
 - Generates market reports via LLM
 - Analyzes competitor landscape
 - Recommends products based on demand signals
@@ -171,7 +171,7 @@ A: No. Your data stays in your account. We only use anonymized aggregates for cr
 A: Yes. You can disable learning at any time in Bot Config → Learning Settings.
 
 **Q: How much will learning systems cost?**  
-A: No additional cost. It's included in your Beast Bots subscription.
+A: No additional cost. It's included in your ShopBot subscription.
 
 ---
 

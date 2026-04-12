@@ -84,7 +84,7 @@ export const architectRouter = router({
 
         await notifyOwner({
           title: "Niche Research Complete",
-          content: `The Architect Agent completed niche research for "${input.keyword}" with a viability score of ${reportData.viabilityScore}/100.`,
+          content: `The Architect Bot completed niche research for "${input.keyword}" with a viability score of ${reportData.viabilityScore}/100.`,
         });
 
         return { id: report.id, report: reportData };
@@ -189,7 +189,7 @@ export const architectRouter = router({
 
         await notifyOwner({
           title: "Product Catalog Generated",
-          content: `The Architect Agent generated ${createdProducts.length} products for the "${input.keyword}" niche.`,
+          content: `The Architect Bot generated ${createdProducts.length} products for the "${input.keyword}" niche.`,
         });
 
         return { products: createdProducts };
@@ -243,6 +243,213 @@ export const architectRouter = router({
         return result;
       } catch (error: any) {
         await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
+        throw error;
+      }
+    }),
+
+  // ─── Store Health Check ─────────────────────────────────────────────────
+  storeHealthCheck: protectedProcedure
+    .input(z.object({ storeId: z.number() }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "store_health_check",
+        title: `Health check for store #${input.storeId}`,
+        description: "Running comprehensive store health diagnostics",
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const store = await db.getStoreById(input.storeId);
+        const products = await db.getProductsByStore(input.storeId);
+
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an e-commerce store diagnostics expert. Analyze the store data and provide a health report. Return JSON with:
+- overallScore: number (0-100)
+- productHealth: object { activeCount, draftCount, outOfStockCount, avgMargin, issues: string[] }
+- seoHealth: object { score: number, issues: string[], recommendations: string[] }
+- conversionHealth: object { score: number, issues: string[], recommendations: string[] }
+- operationalHealth: object { score: number, issues: string[], recommendations: string[] }
+- criticalActions: string[] (top 5 things to fix immediately)
+- summary: string`
+            },
+            {
+              role: "user",
+              content: `Store: ${store?.name || "Unknown"} (${store?.platform || "unknown"} platform)\nTotal products: ${products.length}\nProducts data sample: ${JSON.stringify(products.slice(0, 5).map((p: any) => ({ title: p.title, price: p.price, status: p.status, stockLevel: p.stockLevel })))}`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "store_health",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  overallScore: { type: "number" },
+                  productHealth: { type: "object", properties: { activeCount: { type: "number" }, draftCount: { type: "number" }, outOfStockCount: { type: "number" }, avgMargin: { type: "string" }, issues: { type: "array", items: { type: "string" } } }, required: ["activeCount", "draftCount", "outOfStockCount", "avgMargin", "issues"], additionalProperties: false },
+                  seoHealth: { type: "object", properties: { score: { type: "number" }, issues: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["score", "issues", "recommendations"], additionalProperties: false },
+                  conversionHealth: { type: "object", properties: { score: { type: "number" }, issues: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["score", "issues", "recommendations"], additionalProperties: false },
+                  operationalHealth: { type: "object", properties: { score: { type: "number" }, issues: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["score", "issues", "recommendations"], additionalProperties: false },
+                  criticalActions: { type: "array", items: { type: "string" } },
+                  summary: { type: "string" },
+                },
+                required: ["overallScore", "productHealth", "seoHealth", "conversionHealth", "operationalHealth", "criticalActions", "summary"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const healthReport = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result: healthReport });
+        return healthReport;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  // ─── Product Description Rewriter ───────────────────────────────────────
+  rewriteProductDescriptions: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      productIds: z.array(z.number()).min(1).max(20),
+      tone: z.string().default("persuasive and benefit-focused"),
+      seoOptimize: z.boolean().default(true),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "description_rewrite",
+        title: `Rewriting ${input.productIds.length} product descriptions`,
+        description: `AI-optimizing product copy for store #${input.storeId}`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const products = await db.getProductsByStore(input.storeId);
+        const targetProducts = products.filter((p: any) => input.productIds.includes(p.id));
+
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a world-class e-commerce copywriter. Rewrite product descriptions to maximize conversions. Tone: ${input.tone}. ${input.seoOptimize ? "Optimize for SEO with natural keyword integration." : ""} Return JSON with a "products" array, each having: id (number), originalTitle (string), optimizedTitle (string), optimizedDescription (string), bulletPoints (array of strings), seoKeywords (array of strings).`
+            },
+            {
+              role: "user",
+              content: `Rewrite these product descriptions:\n${targetProducts.map((p: any) => `ID: ${p.id}, Title: "${p.title}", Description: "${p.description || 'No description'}", Price: $${((p.price || 0) / 100).toFixed(2)}`).join("\n")}`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "rewritten_products",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  products: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        id: { type: "number" },
+                        originalTitle: { type: "string" },
+                        optimizedTitle: { type: "string" },
+                        optimizedDescription: { type: "string" },
+                        bulletPoints: { type: "array", items: { type: "string" } },
+                        seoKeywords: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["id", "originalTitle", "optimizedTitle", "optimizedDescription", "bulletPoints", "seoKeywords"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["products"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+
+        await notifyOwner({
+          title: "Product Descriptions Optimized",
+          content: `The Architect Bot has rewritten ${result.products.length} product descriptions with SEO optimization.`,
+        });
+
+        return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  // ─── Competitor Price Scanner ────────────────────────────────────────────
+  competitorPriceScan: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      niche: z.string(),
+      productNames: z.array(z.string()).min(1).max(10),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "competitor_price_scan",
+        title: `Scanning competitor prices for ${input.productNames.length} products`,
+        description: `Competitive pricing intelligence for "${input.niche}"`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a competitive pricing intelligence analyst. Analyze competitor pricing for the given products in the specified niche. Return JSON with:
+- products: array of { productName, ourSuggestedPrice (string), competitorPrices: array of { competitor, price, url }, averageMarketPrice (string), pricePosition (string: "below_market" | "at_market" | "above_market"), recommendation (string) }
+- overallStrategy: string
+- pricingOpportunities: array of strings`
+            },
+            {
+              role: "user",
+              content: `Niche: "${input.niche}"\nProducts to scan: ${input.productNames.join(", ")}`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "competitor_prices",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  products: { type: "array", items: { type: "object", properties: { productName: { type: "string" }, ourSuggestedPrice: { type: "string" }, competitorPrices: { type: "array", items: { type: "object", properties: { competitor: { type: "string" }, price: { type: "string" }, url: { type: "string" } }, required: ["competitor", "price", "url"], additionalProperties: false } }, averageMarketPrice: { type: "string" }, pricePosition: { type: "string" }, recommendation: { type: "string" } }, required: ["productName", "ourSuggestedPrice", "competitorPrices", "averageMarketPrice", "pricePosition", "recommendation"], additionalProperties: false } },
+                  overallStrategy: { type: "string" },
+                  pricingOpportunities: { type: "array", items: { type: "string" } },
+                },
+                required: ["products", "overallStrategy", "pricingOpportunities"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
         throw error;
       }
     }),

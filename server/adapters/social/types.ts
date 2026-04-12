@@ -1,8 +1,8 @@
 /**
- * Beast Bots — Unified Social Media Platform Adapter Interface
+ * ShopBot — Unified Social Media Platform Adapter Interface
  *
  * Every social media platform adapter implements this interface so that
- * The Hype-Man Agent can post content, manage ads, and pull analytics
+ * The Hype-Man Bot can post content, manage ads, and pull analytics
  * across Meta, Instagram, TikTok, Twitter/X, Pinterest, Google Ads,
  * and LinkedIn through a single, consistent contract.
  */

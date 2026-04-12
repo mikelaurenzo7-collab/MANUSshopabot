@@ -1,4 +1,4 @@
-# Agent Architecture Research - Beast Bots
+# Agent Architecture Research - ShopBot
 
 ## Key Findings
 
@@ -12,7 +12,7 @@
 
 ### From McKinsey (Jan 2026) - Agentic Commerce Automation Curve
 - Six-level automation curve from basic rules to full autonomy
-- AI agents could mediate $3-5 TRILLION of global consumer commerce by 2030
+- AI bots could mediate $3-5 TRILLION of global consumer commerce by 2030
 - Willingness to delegate varies by: ticket size, emotional salience, identity signaling, regret risk
 - Key insight: "optimal delegation, not maximum autonomy"
 - B2B: authority flows from procurement policies, agents operate within defined policies

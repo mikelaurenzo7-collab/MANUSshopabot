@@ -34,9 +34,9 @@ const agentColors: Record<string, string> = {
   hypeman: "text-amber-400",
 };
 const agentNames: Record<string, string> = {
-  architect: "The Architect Agent",
-  merchant: "The Merchant Agent",
-  hypeman: "The Hype-Man Agent",
+  architect: "The Architect Bot",
+  merchant: "The Merchant Bot",
+  hypeman: "The Hype-Man Bot",
 };
 
 export default function ActivityPage() {
@@ -76,7 +76,7 @@ export default function ActivityPage() {
           <Activity className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Agent Activity Log</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Activity Log</h1>
           <p className="text-sm text-muted-foreground">Timestamped history, approval queue, and manual overrides</p>
         </div>
       </div>
@@ -104,7 +104,7 @@ export default function ActivityPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Agents</SelectItem>
+                <SelectItem value="all">All Bots</SelectItem>
                 <SelectItem value="architect">The Architect</SelectItem>
                 <SelectItem value="merchant">The Merchant</SelectItem>
                 <SelectItem value="hypeman">The Hype-Man</SelectItem>
@@ -177,7 +177,7 @@ export default function ActivityPage() {
             <Card className="bg-card border-border/50">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No agent activity recorded yet</p>
+                <p className="text-sm text-muted-foreground">No bot activity recorded yet</p>
               </CardContent>
             </Card>
           )}
@@ -269,7 +269,7 @@ export default function ActivityPage() {
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <CheckCircle2 className="h-10 w-10 text-emerald-400/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No pending approvals</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">All agent decisions are up to date</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">All bot decisions are up to date</p>
               </CardContent>
             </Card>
           )}

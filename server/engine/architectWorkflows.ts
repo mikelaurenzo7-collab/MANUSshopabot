@@ -1,5 +1,5 @@
 /**
- * The Architect Agent — Workflow Definitions
+ * The Architect Bot — Workflow Definitions
  * 
  * Workflows:
  * 1. niche_research — Deep niche analysis with market sizing, competition, and product ideas
@@ -376,6 +376,271 @@ Return as JSON with keys: privacyPolicy, termsOfService, refundPolicy, shippingP
       input: {
         title: `Store Setup Complete: ${storeName}`,
         message: `The Architect has set up "${storeName}" with brand identity, logo, and legal pages. Your store is ready for products!`,
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Multi-Store Expansion Workflow ──────────────────────────────────────────
+
+registerWorkflow("multi_store_expansion", (input): WorkflowStepDefinition[] => {
+  const currentNiche = input.currentNiche ?? "general";
+  const targetPlatforms = input.targetPlatforms ?? ["shopify", "etsy", "amazon"];
+  return [
+    {
+      stepType: "llm_call",
+      title: "Cross-Platform Opportunity Analysis",
+      description: `Analyzing expansion opportunities for "${currentNiche}" across ${targetPlatforms.join(", ")}`,
+      input: {
+        systemPrompt: "You are a multi-channel e-commerce strategist who has scaled brands from single-platform to omnichannel empires generating $10M+ annually.",
+        userPrompt: `Analyze multi-store expansion opportunities for the "${currentNiche}" niche across these platforms: ${targetPlatforms.join(", ")}
+
+For each platform, provide:
+1. Platform Fit Score (0-100): How well does this niche perform on this platform?
+2. Audience Overlap: How much audience overlap exists with current stores?
+3. Revenue Potential: Estimated monthly revenue within 6 months
+4. Setup Complexity: Time and cost to launch
+5. Unique Advantages: Platform-specific features that benefit this niche
+6. Listing Strategy: How to adapt products for each platform's algorithm
+7. Pricing Strategy: Platform-specific pricing adjustments (fees, competition)
+8. Risk Assessment: Key risks and mitigations per platform
+
+Also provide:
+- Recommended launch order (which platform first, second, etc.)
+- Cross-platform synergy opportunities
+- Unified inventory management strategy
+- Total estimated investment needed
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "multi_store_expansion",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                platformAnalysis: { type: "array", items: { type: "object", properties: { platform: { type: "string" }, fitScore: { type: "number" }, audienceOverlap: { type: "string" }, revenuePotential: { type: "string" }, setupComplexity: { type: "string" }, advantages: { type: "array", items: { type: "string" } }, listingStrategy: { type: "string" }, pricingStrategy: { type: "string" }, risks: { type: "array", items: { type: "string" } } }, required: ["platform", "fitScore", "audienceOverlap", "revenuePotential", "setupComplexity", "advantages", "listingStrategy", "pricingStrategy", "risks"], additionalProperties: false } },
+                launchOrder: { type: "array", items: { type: "string" } },
+                synergyOpportunities: { type: "array", items: { type: "string" } },
+                inventoryStrategy: { type: "string" },
+                totalInvestment: { type: "string" },
+                summary: { type: "string" },
+              },
+              required: ["platformAnalysis", "launchOrder", "synergyOpportunities", "inventoryStrategy", "totalInvestment", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Platform-Specific Product Adaptations",
+      description: "Generating optimized product listings for each target platform",
+      input: {
+        systemPrompt: "You are a product listing optimization expert across all major e-commerce platforms. You understand each platform's algorithm, search behavior, and buyer psychology.",
+        userPrompt: `For the "${currentNiche}" niche, generate platform-specific product listing templates for ${targetPlatforms.join(", ")}:
+
+For each platform provide:
+- Title format (with character limits and keyword placement)
+- Description template (platform-specific formatting)
+- Bullet points / key features format
+- Pricing strategy (accounting for platform fees)
+- Category/tag recommendations
+- Image requirements and recommendations
+- SEO/search optimization tips specific to that platform
+
+Return as JSON with a "platformTemplates" array.`,
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Expansion Plan",
+      description: "Review the multi-platform expansion strategy before execution",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Expansion Plan Ready",
+      description: "Multi-store expansion analysis complete",
+      input: {
+        title: `Multi-Store Expansion Plan: ${currentNiche}`,
+        message: `The Architect has analyzed expansion opportunities across ${targetPlatforms.join(", ")} for your "${currentNiche}" niche. Review the strategy and launch order.`,
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Brand Audit Workflow ────────────────────────────────────────────────────
+
+registerWorkflow("brand_audit", (input): WorkflowStepDefinition[] => {
+  const storeName = input.storeName ?? "the store";
+  const storeUrl = input.storeUrl ?? "";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Brand Health Assessment",
+      description: `Conducting comprehensive brand audit for "${storeName}"`,
+      input: {
+        systemPrompt: "You are a brand strategist and UX expert who has audited Fortune 500 e-commerce brands. You identify gaps between brand promise and customer experience.",
+        userPrompt: `Conduct a comprehensive brand audit for "${storeName}" (${storeUrl}):
+
+1. Brand Consistency Score (0-100):
+   - Visual consistency (logo, colors, typography across touchpoints)
+   - Messaging consistency (tone, value props, taglines)
+   - Experience consistency (navigation, checkout, packaging)
+
+2. Trust Signals Audit:
+   - Reviews/testimonials presence and quality
+   - Security badges and certifications
+   - Return policy clarity
+   - Contact information accessibility
+   - Social proof elements
+
+3. Conversion Optimization:
+   - Homepage effectiveness (above-the-fold, CTA clarity)
+   - Product page optimization (images, descriptions, urgency)
+   - Cart/checkout friction points
+   - Mobile experience quality
+
+4. Competitive Positioning:
+   - How does the brand differentiate?
+   - Price-value perception
+   - Market positioning (premium, mid-range, value)
+
+5. Customer Journey Gaps:
+   - Pre-purchase experience
+   - Purchase experience
+   - Post-purchase experience
+   - Retention/loyalty mechanisms
+
+Return as JSON with detailed scores and specific, actionable recommendations.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "brand_audit",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                overallScore: { type: "number" },
+                brandConsistency: { type: "object", properties: { score: { type: "number" }, visual: { type: "string" }, messaging: { type: "string" }, experience: { type: "string" } }, required: ["score", "visual", "messaging", "experience"], additionalProperties: false },
+                trustSignals: { type: "object", properties: { score: { type: "number" }, findings: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["score", "findings", "recommendations"], additionalProperties: false },
+                conversionOptimization: { type: "object", properties: { score: { type: "number" }, findings: { type: "array", items: { type: "string" } }, recommendations: { type: "array", items: { type: "string" } } }, required: ["score", "findings", "recommendations"], additionalProperties: false },
+                competitivePositioning: { type: "string" },
+                customerJourneyGaps: { type: "array", items: { type: "object", properties: { stage: { type: "string" }, gap: { type: "string" }, fix: { type: "string" } }, required: ["stage", "gap", "fix"], additionalProperties: false } },
+                prioritizedActions: { type: "array", items: { type: "object", properties: { action: { type: "string" }, impact: { type: "string" }, effort: { type: "string" }, priority: { type: "number" } }, required: ["action", "impact", "effort", "priority"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["overallScore", "brandConsistency", "trustSignals", "conversionOptimization", "competitivePositioning", "customerJourneyGaps", "prioritizedActions", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Brand Audit Complete",
+      description: "Comprehensive brand health report ready",
+      input: {
+        title: `Brand Audit Complete: ${storeName}`,
+        message: `The Architect has completed a comprehensive brand audit for "${storeName}" with actionable recommendations prioritized by impact.`,
+        agentType: "architect",
+        notificationType: "info",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Product Optimization Workflow ───────────────────────────────────────────
+
+registerWorkflow("product_optimization", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? 0;
+  const optimizationType = input.optimizationType ?? "full";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Product Listing Analysis",
+      description: "Analyzing all product listings for optimization opportunities",
+      input: {
+        systemPrompt: "You are an e-commerce conversion rate optimization expert. You've optimized thousands of product listings to increase conversion rates by 30-200%.",
+        userPrompt: `Analyze the product catalog and generate optimization recommendations:
+
+1. Title Optimization:
+   - Keyword-rich titles following platform best practices
+   - A/B test variations for top products
+   
+2. Description Enhancement:
+   - Benefit-focused copy that sells
+   - Scannable formatting (bullets, bold, sections)
+   - SEO keyword integration
+   
+3. Pricing Psychology:
+   - Charm pricing recommendations
+   - Bundle/upsell opportunities
+   - Compare-at price strategy
+   
+4. Image Recommendations:
+   - Missing image types per product
+   - Image quality issues
+   - Lifestyle vs. studio shot balance
+   
+5. Cross-sell & Upsell Mapping:
+   - Product pairing recommendations
+   - "Frequently bought together" suggestions
+   - Upsell ladder (good → better → best)
+
+6. Dead Product Identification:
+   - Products with zero views/sales
+   - Seasonal products to archive
+   - Products cannibalizing each other
+
+Return as JSON with specific product-level recommendations.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "product_optimization",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                titleOptimizations: { type: "array", items: { type: "object", properties: { product: { type: "string" }, currentTitle: { type: "string" }, optimizedTitle: { type: "string" }, reason: { type: "string" } }, required: ["product", "currentTitle", "optimizedTitle", "reason"], additionalProperties: false } },
+                descriptionEnhancements: { type: "array", items: { type: "object", properties: { product: { type: "string" }, improvement: { type: "string" }, sampleCopy: { type: "string" } }, required: ["product", "improvement", "sampleCopy"], additionalProperties: false } },
+                pricingPsychology: { type: "array", items: { type: "object", properties: { product: { type: "string" }, currentPrice: { type: "string" }, suggestedPrice: { type: "string" }, tactic: { type: "string" } }, required: ["product", "currentPrice", "suggestedPrice", "tactic"], additionalProperties: false } },
+                crossSellMap: { type: "array", items: { type: "object", properties: { product: { type: "string" }, pairWith: { type: "array", items: { type: "string" } }, bundleDiscount: { type: "string" } }, required: ["product", "pairWith", "bundleDiscount"], additionalProperties: false } },
+                deadProducts: { type: "array", items: { type: "object", properties: { product: { type: "string" }, reason: { type: "string" }, recommendation: { type: "string" } }, required: ["product", "reason", "recommendation"], additionalProperties: false } },
+                estimatedRevenueImpact: { type: "string" },
+                summary: { type: "string" },
+              },
+              required: ["titleOptimizations", "descriptionEnhancements", "pricingPsychology", "crossSellMap", "deadProducts", "estimatedRevenueImpact", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Optimizations",
+      description: "Review product optimization recommendations before applying changes",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Product Optimization Complete",
+      description: "Product catalog optimization analysis ready",
+      input: {
+        title: "Product Optimization Complete",
+        message: `The Architect has analyzed your entire product catalog and generated optimization recommendations for titles, descriptions, pricing, cross-sells, and dead product cleanup.`,
         agentType: "architect",
         notificationType: "success",
         notifyOwner: true,

@@ -1,0 +1,8 @@
+Rebrand Status:
+- Sidebar header shows "Beast Bots - Autono..." because VITE_APP_TITLE is a built-in secret set to "Beast Bots"
+- Cannot override built-in secrets via webdev_request_secrets
+- DashboardLayout fallback is set to "ShopBot" but env var takes precedence
+- Sidebar group label correctly says "BOTS" (not "AGENTS")
+- All body copy, notifications, and comments say "ShopBot" and "bot" (not "agent")
+- The dashboard says "unleash the ShopBot bots" correctly
+- Need to update VITE_APP_TITLE through platform settings

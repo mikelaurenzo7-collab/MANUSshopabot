@@ -1,4 +1,4 @@
-# Beast Bots — SDK Research: All Platform Connectors
+# ShopBot — SDK Research: All Platform Connectors
 
 ## E-Commerce Platform SDKs
 

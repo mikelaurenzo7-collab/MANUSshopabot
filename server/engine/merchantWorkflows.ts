@@ -1,5 +1,5 @@
 /**
- * The Merchant Agent — Workflow Definitions
+ * The Merchant Bot — Workflow Definitions
  * 
  * Workflows:
  * 1. inventory_audit — Cross-store inventory analysis, low stock alerts, restock recommendations
@@ -255,6 +255,273 @@ Return as structured JSON.`,
         message: `The Merchant has completed a competitive analysis for the "${niche}" niche. Review the intelligence report.`,
         agentType: "merchant",
         notificationType: "info",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Supply Chain Intelligence Workflow ───────────────────────────────────────
+
+registerWorkflow("supply_chain_intelligence", (input): WorkflowStepDefinition[] => {
+  const scope = input.scope ?? "all_stores";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Supplier Performance Analysis",
+      description: "Evaluating supplier reliability, lead times, and cost efficiency",
+      input: {
+        systemPrompt: "You are a supply chain optimization expert for e-commerce. You've managed logistics for brands doing $50M+ in annual revenue.",
+        userPrompt: `Conduct a comprehensive supply chain intelligence analysis:
+
+1. Supplier Scorecard:
+   - Reliability score (on-time delivery rate)
+   - Quality score (defect/return rate by supplier)
+   - Cost competitiveness (price vs. market average)
+   - Communication responsiveness
+   - Minimum order quantities and flexibility
+   
+2. Lead Time Optimization:
+   - Current average lead times by supplier
+   - Bottleneck identification
+   - Recommended buffer stock levels
+   - Express shipping cost-benefit analysis
+   
+3. Cost Reduction Opportunities:
+   - Volume discount thresholds
+   - Alternative supplier recommendations
+   - Consolidation opportunities (fewer suppliers, larger orders)
+   - Shipping route optimization
+   
+4. Risk Assessment:
+   - Single-source dependency risks
+   - Geographic concentration risks
+   - Seasonal capacity constraints
+   - Currency/tariff exposure
+   
+5. Automation Opportunities:
+   - Auto-reorder triggers
+   - Predictive demand forecasting integration
+   - Supplier API integration possibilities
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "supply_chain_intelligence",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                supplierScorecard: { type: "array", items: { type: "object", properties: { supplier: { type: "string" }, reliabilityScore: { type: "number" }, qualityScore: { type: "number" }, costScore: { type: "number" }, overallGrade: { type: "string" }, recommendation: { type: "string" } }, required: ["supplier", "reliabilityScore", "qualityScore", "costScore", "overallGrade", "recommendation"], additionalProperties: false } },
+                leadTimeOptimization: { type: "object", properties: { averageLeadTime: { type: "string" }, bottlenecks: { type: "array", items: { type: "string" } }, bufferRecommendations: { type: "string" }, expressShippingROI: { type: "string" } }, required: ["averageLeadTime", "bottlenecks", "bufferRecommendations", "expressShippingROI"], additionalProperties: false },
+                costReductions: { type: "array", items: { type: "object", properties: { opportunity: { type: "string" }, estimatedSavings: { type: "string" }, implementation: { type: "string" } }, required: ["opportunity", "estimatedSavings", "implementation"], additionalProperties: false } },
+                risks: { type: "array", items: { type: "object", properties: { risk: { type: "string" }, severity: { type: "string" }, mitigation: { type: "string" } }, required: ["risk", "severity", "mitigation"], additionalProperties: false } },
+                automationOpportunities: { type: "array", items: { type: "string" } },
+                summary: { type: "string" },
+              },
+              required: ["supplierScorecard", "leadTimeOptimization", "costReductions", "risks", "automationOpportunities", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Supply Chain Report Ready",
+      description: "Supply chain intelligence analysis complete",
+      input: {
+        title: "Supply Chain Intelligence Report",
+        message: "The Merchant has completed a full supply chain analysis with supplier scorecards, cost reduction opportunities, and risk assessments.",
+        agentType: "merchant",
+        notificationType: "info",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Profit & Loss Analysis Workflow ─────────────────────────────────────────
+
+registerWorkflow("profit_loss_analysis", (input): WorkflowStepDefinition[] => {
+  const period = input.period ?? "last_30_days";
+  return [
+    {
+      stepType: "analysis",
+      title: "Revenue & Cost Aggregation",
+      description: `Aggregating financial data for ${period}`,
+      input: {
+        analysisPrompt: `Compile a comprehensive profit & loss analysis for ${period}:
+1. Total revenue by store and product category
+2. Cost of goods sold (COGS) breakdown
+3. Shipping costs and fulfillment expenses
+4. Platform fees (Shopify, Etsy, payment processing)
+5. Marketing spend by channel
+6. Return/refund costs
+7. Net profit by store and overall`,
+        data: { period },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Financial Intelligence Report",
+      description: "Generating actionable financial insights and projections",
+      input: {
+        systemPrompt: "You are a CFO-level financial analyst for e-commerce businesses. You turn raw financial data into strategic decisions.",
+        userPrompt: `Based on the financial data, generate a comprehensive P&L intelligence report:
+
+1. Profitability Analysis:
+   - Gross margin by product/category
+   - Net margin after all expenses
+   - Contribution margin per unit
+   - Break-even analysis per product
+   
+2. Revenue Trends:
+   - Growth rate (week-over-week, month-over-month)
+   - Revenue per visitor
+   - Average order value trends
+   - Customer lifetime value estimate
+   
+3. Cost Optimization:
+   - Highest cost centers
+   - Cost-per-acquisition by channel
+   - Shipping cost as % of revenue
+   - Platform fee optimization opportunities
+   
+4. Cash Flow Projections:
+   - 30/60/90 day cash flow forecast
+   - Inventory investment requirements
+   - Marketing budget recommendations
+   
+5. Strategic Recommendations:
+   - Products to scale (high margin, growing demand)
+   - Products to cut (low margin, declining)
+   - Pricing adjustments for profitability
+   - Marketing budget reallocation
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "profit_loss_analysis",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                profitability: { type: "object", properties: { grossMargin: { type: "string" }, netMargin: { type: "string" }, topProducts: { type: "array", items: { type: "string" } }, bottomProducts: { type: "array", items: { type: "string" } } }, required: ["grossMargin", "netMargin", "topProducts", "bottomProducts"], additionalProperties: false },
+                revenueTrends: { type: "object", properties: { growthRate: { type: "string" }, revenuePerVisitor: { type: "string" }, averageOrderValue: { type: "string" }, customerLifetimeValue: { type: "string" } }, required: ["growthRate", "revenuePerVisitor", "averageOrderValue", "customerLifetimeValue"], additionalProperties: false },
+                costOptimization: { type: "array", items: { type: "object", properties: { area: { type: "string" }, currentCost: { type: "string" }, recommendation: { type: "string" }, estimatedSavings: { type: "string" } }, required: ["area", "currentCost", "recommendation", "estimatedSavings"], additionalProperties: false } },
+                cashFlowForecast: { type: "object", properties: { thirtyDay: { type: "string" }, sixtyDay: { type: "string" }, ninetyDay: { type: "string" } }, required: ["thirtyDay", "sixtyDay", "ninetyDay"], additionalProperties: false },
+                strategicRecommendations: { type: "array", items: { type: "object", properties: { recommendation: { type: "string" }, impact: { type: "string" }, timeline: { type: "string" } }, required: ["recommendation", "impact", "timeline"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["profitability", "revenueTrends", "costOptimization", "cashFlowForecast", "strategicRecommendations", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "P&L Report Ready",
+      description: "Profit & Loss analysis complete with projections",
+      input: {
+        title: "Profit & Loss Report Ready",
+        message: "The Merchant has completed a comprehensive P&L analysis with cash flow projections and strategic recommendations.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Customer Segmentation Workflow ──────────────────────────────────────────
+
+registerWorkflow("customer_segmentation", (input): WorkflowStepDefinition[] => {
+  const scope = input.scope ?? "all_stores";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Customer Behavior Analysis",
+      description: "Analyzing customer purchase patterns and segmentation",
+      input: {
+        systemPrompt: "You are a customer analytics expert specializing in e-commerce. You use RFM analysis, cohort analysis, and behavioral segmentation to drive retention and revenue.",
+        userPrompt: `Generate a comprehensive customer segmentation analysis:
+
+1. RFM Segmentation (Recency, Frequency, Monetary):
+   - Champions: High value, frequent, recent buyers
+   - Loyal Customers: Regular purchasers
+   - Potential Loyalists: Recent customers with growth potential
+   - At-Risk: Previously active, declining engagement
+   - Lost: No activity in 90+ days
+   - New Customers: First purchase in last 30 days
+   
+2. Behavioral Segments:
+   - Bargain Hunters (only buy on sale)
+   - Brand Loyalists (repeat same products)
+   - Explorers (try different categories)
+   - One-and-Done (single purchase, never return)
+   - High-Value (top 10% by LTV)
+   
+3. For Each Segment:
+   - Estimated size (% of customer base)
+   - Average order value
+   - Purchase frequency
+   - Recommended marketing strategy
+   - Retention tactics
+   - Predicted lifetime value
+   
+4. Actionable Campaigns:
+   - Win-back campaign for At-Risk/Lost segments
+   - Upsell campaign for Loyal/Champions
+   - Welcome series optimization for New Customers
+   - VIP program design for High-Value
+   
+5. Churn Prediction:
+   - Early warning signals
+   - Intervention triggers
+   - Automated retention flows
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "customer_segmentation",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                rfmSegments: { type: "array", items: { type: "object", properties: { segment: { type: "string" }, size: { type: "string" }, avgOrderValue: { type: "string" }, frequency: { type: "string" }, marketingStrategy: { type: "string" }, retentionTactic: { type: "string" }, predictedLTV: { type: "string" } }, required: ["segment", "size", "avgOrderValue", "frequency", "marketingStrategy", "retentionTactic", "predictedLTV"], additionalProperties: false } },
+                behavioralSegments: { type: "array", items: { type: "object", properties: { segment: { type: "string" }, characteristics: { type: "string" }, size: { type: "string" }, strategy: { type: "string" } }, required: ["segment", "characteristics", "size", "strategy"], additionalProperties: false } },
+                campaigns: { type: "array", items: { type: "object", properties: { name: { type: "string" }, targetSegment: { type: "string" }, channel: { type: "string" }, message: { type: "string" }, expectedImpact: { type: "string" } }, required: ["name", "targetSegment", "channel", "message", "expectedImpact"], additionalProperties: false } },
+                churnPrediction: { type: "object", properties: { warningSignals: { type: "array", items: { type: "string" } }, interventionTriggers: { type: "array", items: { type: "string" } }, automatedFlows: { type: "array", items: { type: "string" } } }, required: ["warningSignals", "interventionTriggers", "automatedFlows"], additionalProperties: false },
+                summary: { type: "string" },
+              },
+              required: ["rfmSegments", "behavioralSegments", "campaigns", "churnPrediction", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Segmentation & Campaigns",
+      description: "Review customer segments and proposed campaigns before activation",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Customer Segmentation Complete",
+      description: "Customer analysis and campaign recommendations ready",
+      input: {
+        title: "Customer Segmentation Complete",
+        message: "The Merchant has completed customer segmentation with RFM analysis, behavioral segments, and targeted campaign recommendations.",
+        agentType: "merchant",
+        notificationType: "success",
         notifyOwner: true,
       },
     },

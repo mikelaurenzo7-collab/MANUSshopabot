@@ -1,10 +1,10 @@
-# Beast Bots — Collected API Credentials
+# ShopBot — Collected API Credentials
 > ⚠️ SENSITIVE — Do not commit this file to git. Add to .gitignore immediately.
 
 ---
 
 ## ✅ Platform 1: X (Twitter) — DONE
-**App Name:** Beast Bots  
+**App Name:** ShopBot  
 **App ID:** (created Apr 12, 2026)  
 **Environment:** Production  
 
@@ -14,7 +14,7 @@
 | Consumer Secret (API Secret) | `RJRpyK22h7Ft4aCF2N54H9qgLHUQuC19OwscIGOLQTCRofZIHp` |
 | Bearer Token | `AAAAAAAAAAAAAAAAAAAAAKXQ8wEAAAAAIHoCDkAWccEzPedT2f8HZB2Z54c%3DIVpJQuyPc47bZXGd3lwCf5LUUppqdYGjJJIruWHd0pC83ZbnxA` |
 
-**Secrets to add to Beast Bots:**
+**Secrets to add to ShopBot:**
 - `TWITTER_API_KEY` = `53MmFtdz8EAtuF6dFX1VDpl8d`
 - `TWITTER_API_SECRET` = `RJRpyK22h7Ft4aCF2N54H9qgLHUQuC19OwscIGOLQTCRofZIHp`
 - `TWITTER_BEARER_TOKEN` = `AAAAAAAAAAAAAAAAAAAAAKXQ8wEAAAAAIHoCDkAWccEzPedT2f8HZB2Z54c%3DIVpJQuyPc47bZXGd3lwCf5LUUppqdYGjJJIruWHd0pC83ZbnxA`
@@ -32,7 +32,7 @@
 ## ⏳ Platform 8: WooCommerce — Per-store (user provides)
 ## ⏳ Platform 9: Amazon SP-API — PENDING (browser blocked)
 ## ✅ Platform 10: Etsy — DONE
-**App Name:** Beast Bots  
+**App Name:** ShopBot  
 **Rate Limit:** 5 QPS / 5K QPD  
 
 | Key | Secret Name |

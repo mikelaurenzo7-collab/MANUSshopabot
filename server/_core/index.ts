@@ -63,10 +63,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    // Start the agent task scheduler
+    // Start the bot task scheduler
     registerDefaultTasks();
     agentScheduler.start();
-    console.log(`[Beast Bots] Agent scheduler started with ${agentScheduler.getStatus().length} tasks`);
+    console.log(`[ShopBot] Bot scheduler started with ${agentScheduler.getStatus().length} tasks`);
   });
 }
 

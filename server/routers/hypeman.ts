@@ -538,4 +538,199 @@ export const hypemanRouter = router({
     .query(async ({ ctx }) => {
       return getCrossPlatformSocialAnalytics(ctx.user.id);
     }),
+
+  // ─── A/B Test Copy Generator ───────────────────────────────────────────
+  abTestCopyGenerator: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      originalCopy: z.string(),
+      copyType: z.enum(["headline", "description", "cta", "email_subject", "ad_copy"]),
+      numberOfVariants: z.number().min(2).max(10).default(5),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "ab_test_copy",
+        title: `A/B test variants for ${input.copyType}`,
+        description: `Generating ${input.numberOfVariants} copy variants for testing`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a conversion copywriter and A/B testing expert. Generate copy variants designed to test specific psychological triggers. Return JSON with:
+- originalCopy: string
+- variants: array of { variant (string), hypothesis (string), psychologicalTrigger (string), expectedLift (string), confidence (string) }
+- testingPlan: object { sampleSize (string), duration (string), successMetric (string), statisticalSignificance (string) }
+- winnerPrediction: object { variant (number), reasoning (string) }`
+            },
+            {
+              role: "user",
+              content: `Copy type: ${input.copyType}\nOriginal: "${input.originalCopy}"\nGenerate ${input.numberOfVariants} A/B test variants.`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "ab_test_copy",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  originalCopy: { type: "string" },
+                  variants: { type: "array", items: { type: "object", properties: { variant: { type: "string" }, hypothesis: { type: "string" }, psychologicalTrigger: { type: "string" }, expectedLift: { type: "string" }, confidence: { type: "string" } }, required: ["variant", "hypothesis", "psychologicalTrigger", "expectedLift", "confidence"], additionalProperties: false } },
+                  testingPlan: { type: "object", properties: { sampleSize: { type: "string" }, duration: { type: "string" }, successMetric: { type: "string" }, statisticalSignificance: { type: "string" } }, required: ["sampleSize", "duration", "successMetric", "statisticalSignificance"], additionalProperties: false },
+                  winnerPrediction: { type: "object", properties: { variant: { type: "number" }, reasoning: { type: "string" } }, required: ["variant", "reasoning"], additionalProperties: false },
+                },
+                required: ["originalCopy", "variants", "testingPlan", "winnerPrediction"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  // ─── SMS Recovery Flow Generator ───────────────────────────────────────
+  smsRecoveryFlow: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      flowType: z.enum(["abandoned_cart", "browse_abandonment", "winback", "post_purchase_upsell", "review_request"]),
+      brandName: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "sms_recovery",
+        title: `SMS ${input.flowType} flow`,
+        description: `Generating automated SMS recovery sequence`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an SMS marketing expert for e-commerce. Generate compliant, high-converting SMS flows. All messages must be under 160 characters and include opt-out language. Return JSON with:
+- flowName: string
+- messages: array of { messageNumber (number), timing (string), content (string), characterCount (number), includesLink (boolean), personalizations (array of strings) }
+- complianceNotes: array of strings
+- expectedMetrics: object { deliveryRate (string), clickRate (string), conversionRate (string), revenuePerMessage (string) }
+- segmentation: string
+- bestPractices: array of strings`
+            },
+            {
+              role: "user",
+              content: `Flow type: ${input.flowType}\nBrand: ${input.brandName || "Our Store"}\nGenerate a complete SMS automation flow.`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "sms_recovery",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  flowName: { type: "string" },
+                  messages: { type: "array", items: { type: "object", properties: { messageNumber: { type: "number" }, timing: { type: "string" }, content: { type: "string" }, characterCount: { type: "number" }, includesLink: { type: "boolean" }, personalizations: { type: "array", items: { type: "string" } } }, required: ["messageNumber", "timing", "content", "characterCount", "includesLink", "personalizations"], additionalProperties: false } },
+                  complianceNotes: { type: "array", items: { type: "string" } },
+                  expectedMetrics: { type: "object", properties: { deliveryRate: { type: "string" }, clickRate: { type: "string" }, conversionRate: { type: "string" }, revenuePerMessage: { type: "string" } }, required: ["deliveryRate", "clickRate", "conversionRate", "revenuePerMessage"], additionalProperties: false },
+                  segmentation: { type: "string" },
+                  bestPractices: { type: "array", items: { type: "string" } },
+                },
+                required: ["flowName", "messages", "complianceNotes", "expectedMetrics", "segmentation", "bestPractices"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  // ─── Social Proof Generator ────────────────────────────────────────────
+  socialProofGenerator: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      productName: z.string(),
+      proofType: z.enum(["testimonials", "urgency_notifications", "trust_badges", "review_responses", "ugc_prompts"]),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "social_proof",
+        title: `${input.proofType} for "${input.productName}"`,
+        description: `Generating social proof content`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const llmResult = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are a social proof and conversion optimization expert. Generate authentic-feeling social proof elements. Return JSON with:
+- proofType: string
+- elements: array of { content (string), placement (string), trigger (string), format (string) }
+- implementationGuide: string
+- psychologyBehind: string
+- expectedConversionLift: string
+- warnings: array of strings (ethical considerations)`
+            },
+            {
+              role: "user",
+              content: `Product: "${input.productName}"\nProof type: ${input.proofType}\nGenerate social proof elements.`
+            }
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "social_proof",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  proofType: { type: "string" },
+                  elements: { type: "array", items: { type: "object", properties: { content: { type: "string" }, placement: { type: "string" }, trigger: { type: "string" }, format: { type: "string" } }, required: ["content", "placement", "trigger", "format"], additionalProperties: false } },
+                  implementationGuide: { type: "string" },
+                  psychologyBehind: { type: "string" },
+                  expectedConversionLift: { type: "string" },
+                  warnings: { type: "array", items: { type: "string" } },
+                },
+                required: ["proofType", "elements", "implementationGuide", "psychologyBehind", "expectedConversionLift", "warnings"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
 });

@@ -44,7 +44,7 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* Beast Bots — Dark Elegant Premium Theme */
+/* ShopBot — Dark Elegant Premium Theme */
 :root {
   --radius: 0.625rem;
   /* Dark base */
@@ -177,8 +177,8 @@
     }
   }
 
-  /* Agent status indicator pulse */
-  .agent-pulse {
+  /* Bot status indicator pulse */
+  .bot-pulse {
     animation: pulse-glow 2s ease-in-out infinite;
   }
 

@@ -19,11 +19,13 @@ import {
   Truck, Target, Megaphone, Calendar, Globe, Mail, Image, FileText,
   Loader2, CheckCircle2, XCircle, Clock, AlertTriangle, Pause,
   ChevronRight, Zap, Eye, X as XIcon, RotateCcw, ArrowRight,
+  ShieldCheck, Sparkles, Link, TrendingUp, Users, Star, Filter,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
   Search, Package, LayoutGrid, Store, ClipboardCheck, DollarSign,
   Truck, Target, Megaphone, Calendar, Globe, Mail, Image, FileText,
+  ShieldCheck, Sparkles, Link, TrendingUp, Users, Zap, Star, Filter,
 };
 
 const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
@@ -200,8 +202,8 @@ export default function Workflows() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Agent Workflows</h1>
-          <p className="text-sm text-muted-foreground mt-1">Launch, monitor, and manage AI agent workflows across all your stores</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Bot Workflows</h1>
+          <p className="text-sm text-muted-foreground mt-1">Launch, monitor, and manage AI bot workflows across all your stores</p>
         </div>
         <div className="flex items-center gap-3">
           {counts && (
@@ -225,7 +227,7 @@ export default function Workflows() {
                 </div>
                 <div>
                   <p className="font-medium text-amber-200">{pendingApprovals.length} Approval{pendingApprovals.length > 1 ? "s" : ""} Pending</p>
-                  <p className="text-xs text-amber-400/70">Agent workflows are paused waiting for your review</p>
+                  <p className="text-xs text-amber-400/70">Bot workflows are paused waiting for your review</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10" onClick={() => setActiveTab("approvals")}>
@@ -312,10 +314,10 @@ export default function Workflows() {
           <div className="flex items-center gap-3 mb-4">
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
               <SelectTrigger className="w-48 bg-zinc-900/50 border-zinc-800">
-                <SelectValue placeholder="All Agents" />
+                <SelectValue placeholder="All Bots" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Agents</SelectItem>
+                <SelectItem value="all">All Bots</SelectItem>
                 <SelectItem value="architect">The Architect</SelectItem>
                 <SelectItem value="merchant">The Merchant</SelectItem>
                 <SelectItem value="hypeman">The Hype-Man</SelectItem>

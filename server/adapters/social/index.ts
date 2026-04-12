@@ -1,8 +1,8 @@
 /**
- * Beast Bots — Social Media Platform Adapter Registry
+ * ShopBot — Social Media Platform Adapter Registry
  *
  * The central factory for all social media adapters.
- * The Hype-Man Agent uses this registry to post content,
+ * The Hype-Man Bot uses this registry to post content,
  * manage ads, and pull analytics across all 7 platforms.
  *
  * Usage:

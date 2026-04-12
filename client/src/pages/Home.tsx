@@ -90,7 +90,7 @@ function MetricCard({
   );
 }
 
-function AgentStatusCard({
+function BotStatusCard({
   name,
   type,
   icon: Icon,
@@ -116,7 +116,7 @@ function AgentStatusCard({
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-foreground truncate">{name}</h3>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-400 agent-pulse" : "bg-muted-foreground/40"}`} />
+              <div className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-emerald-400 bot-pulse" : "bg-muted-foreground/40"}`} />
               <span className="text-xs text-muted-foreground">{isActive ? "Active" : "Idle"}</span>
             </div>
           </div>
@@ -320,7 +320,7 @@ function CrossStoreIntelligence() {
           {/* Scheduler status */}
           <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Timer className="h-3.5 w-3.5" /> Agent Scheduler
+              <Timer className="h-3.5 w-3.5" /> Bot Scheduler
             </h4>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -394,9 +394,9 @@ export default function Home() {
   const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
 
   const agentConfigs = [
-    { name: "The Architect Agent", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
-    { name: "The Merchant Agent", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
-    { name: "The Hype-Man Agent", type: "hypeman", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
+    { name: "The Architect Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
+    { name: "The Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
+    { name: "The Hype-Man Bot", type: "hypeman", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
   ];
 
   return (
@@ -408,7 +408,7 @@ export default function Home() {
             Welcome back{user?.name ? `, ${user.name}` : ""}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Your autonomous commerce agents are working around the clock.
+          Your autonomous commerce bots are working around the clock.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -519,8 +519,7 @@ export default function Home() {
               <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No stores connected yet</p>
               <p className="text-xs text-muted-foreground/60 mt-1 mb-4">
-                Connect your first e-commerce store to unleash the Beast Bots agents
-              </p>
+              Connect your first e-commerce store to unleash the ShopBot bots             </p>
               <Button
                 variant="outline"
                 size="sm"
@@ -542,11 +541,11 @@ export default function Home() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Agent Status */}
         <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Agent Status</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Bot Status</h2>
           {agentConfigs.map((agent) => {
             const stats = agentStatus?.find((s: any) => s.agentType === agent.type);
             return (
-              <AgentStatusCard
+              <BotStatusCard
                 key={agent.type}
                 name={agent.name}
                 type={agent.type}
@@ -565,8 +564,7 @@ export default function Home() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Recent Agent Activity
-                </CardTitle>
+                  Recent Bot Activity               </CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -599,7 +597,7 @@ export default function Home() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Zap className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No agent activity yet</p>
+                  <p className="text-sm text-muted-foreground">No bot activity yet</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">
                     Start by connecting a store or running niche research
                   </p>

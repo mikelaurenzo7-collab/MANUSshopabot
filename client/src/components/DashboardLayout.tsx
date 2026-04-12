@@ -44,14 +44,14 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
-const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "Beast Bots";
-const APP_LOGO = import.meta.env.VITE_APP_LOGO as string | undefined || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beast_bots_logo_v2_ef62dc0f.png";
+const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "ShopBot";
+const APP_LOGO = import.meta.env.VITE_APP_LOGO as string | undefined;
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
-  { icon: Bot, label: "The Architect", path: "/architect", group: "agents", color: "text-violet-400", adminOnly: false },
-  { icon: Package, label: "The Merchant", path: "/merchant", group: "agents", color: "text-cyan-400", adminOnly: false },
-  { icon: Megaphone, label: "The Hype-Man", path: "/hypeman", group: "agents", color: "text-amber-400", adminOnly: false },
+  { icon: Bot, label: "The Architect", path: "/architect", group: "bots", color: "text-violet-400", adminOnly: false },
+  { icon: Package, label: "The Merchant", path: "/merchant", group: "bots", color: "text-cyan-400", adminOnly: false },
+  { icon: Megaphone, label: "The Hype-Man", path: "/hypeman", group: "bots", color: "text-amber-400", adminOnly: false },
   { icon: Activity, label: "Activity Log", path: "/activity", group: "operations", adminOnly: false },
   { icon: BarChart3, label: "Analytics", path: "/analytics", group: "operations", adminOnly: false },
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
@@ -61,7 +61,7 @@ const allMenuItems = [
 
 const groupLabels: Record<string, string> = {
   overview: "OVERVIEW",
-  agents: "AGENTS",
+  bots: "BOTS",
   operations: "OPERATIONS",
   settings: "SETTINGS",
 };
@@ -107,7 +107,7 @@ export default function DashboardLayout({
               Sign in to your Command Center
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access your autonomous e-commerce orchestration platform. Your AI agents are standing by.
+              Access your autonomous e-commerce orchestration platform. Your AI bots are standing by.
             </p>
           </div>
           <Button
@@ -316,7 +316,7 @@ function DashboardLayoutContent({
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold tracking-tight text-foreground">
-                {activeMenuItem?.label ?? "Beast Bots"}
+                {activeMenuItem?.label ?? "ShopBot"}
               </h1>
             </div>
           </div>

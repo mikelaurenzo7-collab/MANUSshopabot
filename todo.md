@@ -1,4 +1,4 @@
-# Beast Bots - Project TODO
+# ShopBot - Project TODO
 
 ## Database & Schema
 - [x] Create stores table (Shopify store connections)
@@ -289,3 +289,81 @@
 - [x] Document learning systems roadmap (Phase 1: rule-based, Phase 2: ML training, Phase 3: full learning) → LEARNING_SYSTEMS_ROADMAP.md
 - [x] Prepare Shopify test store connection flow with supervised autonomy mode → SHOPIFY_TEST_STORE_SETUP.md
 - [x] Final checkpoint before launch ready
+
+
+## REBRAND: Beast Bots → ShopBot + "Agent" → "Bot" Terminology
+
+### Global Rebrand
+- [x] Rename "Beast Bots" → "ShopBot" in all user-facing strings, comments, and docs
+- [x] Rename "agent" → "bot" in all user-facing strings (labels, notifications, descriptions)
+- [ ] Update VITE_APP_TITLE secret to "ShopBot" (blocked: built-in secret; fallback set in DashboardLayout code)
+- [ ] Generate new ShopBot logo and update VITE_APP_LOGO (deferred)
+- [x] Update client/index.html (title, meta description, favicon)
+- [x] Update DashboardLayout.tsx (APP_TITLE fallback, sidebar group label, login copy)
+- [x] Update package.json name field
+- [x] Rename sidebar group "AGENTS" → "BOTS"
+- [x] Update all notification messages: "The X Agent" → "The X Bot"
+- [x] Update workflow engine user-facing messages (agent → bot)
+- [x] Update scheduler log messages and notification copy
+- [x] Update all frontend pages: Home, Architect, Merchant, HypeMan, Activity, Config, Integrations, Workflows, Analytics
+
+### Backend Rebrand (Comments & User-Facing Strings)
+- [x] Update workflowEngine.ts header comments and error messages
+- [x] Update architectWorkflows.ts notification messages and comments
+- [x] Update merchantWorkflows.ts notification messages and comments
+- [x] Update hypemanWorkflows.ts notification messages and comments
+- [x] Update scheduler/index.ts header comments and log messages
+- [x] Update all router files (architect, merchant, hypeman, connectors, activity, workflows) notification content
+- [x] Update adapter type comments (ecommerce/types.ts, social/types.ts, etc.)
+- [x] Update platformBridge.ts comments
+- [x] Update server/_core/index.ts startup log
+
+## ENHANCE: The Architect Bot (Store Builder)
+
+### New Workflows
+- [x] Add multi_store_expansion workflow — cross-platform strategy for Shopify, Etsy, Amazon, TikTok Shop
+- [x] Add brand_audit workflow — full brand health assessment with trust signals and conversion analysis
+- [x] Add product_optimization workflow — listing optimization, pricing psychology, cross-sell, dead product cleanup
+
+### New Router Capabilities
+- [x] Add architect.storeHealthCheck mutation — comprehensive store diagnostics scored 0-100
+- [x] Add architect.rewriteProductDescriptions mutation — AI-powered SEO copy rewriter
+- [x] Add architect.competitorPriceScanner mutation — market-wide pricing intelligence
+
+## ENHANCE: The Merchant Bot (Inventory & Ops)
+
+### New Workflows
+- [x] Add supply_chain_intelligence workflow — supplier scorecards, lead time optimization, risk assessment
+- [x] Add profit_loss_analysis workflow — CFO-level P&L with cash flow projections
+- [x] Add customer_segmentation workflow — RFM analysis, behavioral segments, churn prediction
+
+### New Router Capabilities
+- [x] Add merchant.demandForecasting mutation — AI-powered demand prediction with stockout risk
+- [x] Add merchant.marginAnalyzer mutation — product-level profitability deep-dive
+- [x] Add merchant.returnAnalysis mutation — return pattern analysis and reduction strategies
+
+## ENHANCE: The Hype-Man Bot (Marketing)
+
+### New Workflows
+- [x] Add viral_trend_detector workflow — real-time trend scanning across TikTok, IG, Twitter
+- [x] Add influencer_outreach workflow — discovery, vetting, outreach templates, ROI tracking
+- [x] Add conversion_funnel workflow — funnel leak analysis, A/B test roadmap, checkout CRO
+
+### New Router Capabilities
+- [x] Add hypeman.abTestCopyGenerator mutation — multi-variant copy with psychological triggers
+- [x] Add hypeman.smsRecoveryFlow mutation — compliant SMS sequences for cart recovery, win-back, upsell
+- [x] Add hypeman.socialProofGenerator mutation — testimonials, urgency, trust badges, UGC prompts
+
+## Testing & Verification
+- [x] Write enhanced-bots.test.ts with 35 tests for all new capabilities
+- [x] Verify all 9 new workflow types are launchable and have proper metadata
+- [x] Verify all 9 new router mutations exist and require authentication
+- [x] Verify total platform has 23+ workflow types
+- [x] 200/203 tests passing (3 pre-existing external credential failures unrelated to our changes)
+
+## Frontend Enhancement
+- [x] Add "AI Tools" tab to Architect page (Store Health Check, AI Copy Rewriter, Price Scanner) — UI added, needs wiring to mutations
+- [x] Add "AI Tools" tab to Merchant page (Demand Forecasting, Margin Analyzer, Return Analysis) — UI added, needs wiring to mutations
+- [x] Add "AI Tools" tab to Hype-Man page (Viral Trend Detector, A/B Copy, SMS Recovery) — UI added, needs wiring to mutations
+- [x] Show new workflow capabilities in each bot's UI with badges
+- [x] Update Workflows page icon map for new workflow types

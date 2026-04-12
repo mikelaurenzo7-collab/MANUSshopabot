@@ -30,7 +30,7 @@ type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 const agents = [
   {
     key: "architect" as const,
-    name: "The Architect Agent",
+    name: "The Architect Bot",
     description: "Niche research, product sourcing, and store setup",
     icon: Bot,
     color: "text-violet-400",
@@ -38,7 +38,7 @@ const agents = [
   },
   {
     key: "merchant" as const,
-    name: "The Merchant Agent",
+    name: "The Merchant Bot",
     description: "Inventory monitoring, pricing, and fulfillment",
     icon: Package,
     color: "text-cyan-400",
@@ -46,7 +46,7 @@ const agents = [
   },
   {
     key: "hypeman" as const,
-    name: "The Hype-Man Agent",
+    name: "The Hype-Man Bot",
     description: "Ad copy, social media, SEO, and email campaigns",
     icon: Megaphone,
     color: "text-amber-400",
@@ -58,21 +58,21 @@ const autonomyOptions: { value: AutonomyLevel; label: string; description: strin
   {
     value: "fully_autonomous",
     label: "Fully Autonomous",
-    description: "Agent executes all actions without approval. Zero-touch operation.",
+    description: "Bot executes all actions without approval. Zero-touch operation.",
     icon: Zap,
     color: "text-emerald-400",
   },
   {
     value: "supervised",
     label: "Supervised",
-    description: "Agent executes low-impact actions automatically; pauses for high-impact decisions.",
+    description: "Bot executes low-impact actions automatically; pauses for high-impact decisions.",
     icon: Eye,
     color: "text-amber-400",
   },
   {
     value: "manual",
     label: "Manual",
-    description: "Agent suggests actions but waits for human approval before executing anything.",
+    description: "Bot suggests actions but waits for human approval before executing anything.",
     icon: Hand,
     color: "text-red-400",
   },
@@ -354,7 +354,7 @@ export default function ConfigPage() {
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                 <div>
                   <p className="text-sm font-medium text-foreground">Require Approval for Critical Decisions</p>
-                  <p className="text-xs text-muted-foreground">Even fully autonomous agents will pause before executing critical actions (e.g., spending over $500, deleting products)</p>
+                  <p className="text-xs text-muted-foreground">Even fully autonomous bots will pause before executing critical actions (e.g., spending over $500, deleting products)</p>
                 </div>
                 <Switch checked={approvalRequired} onCheckedChange={setApprovalRequired} />
               </div>

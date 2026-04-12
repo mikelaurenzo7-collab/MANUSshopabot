@@ -1,8 +1,8 @@
-# Beast Bots — Shopify Test Store Setup Guide
+# ShopBot — Shopify Test Store Setup Guide
 
 ## Overview
 
-This guide walks you through connecting your personal Shopify store to Beast Bots for pre-launch testing. You'll run the three agents (Architect, Merchant, Hype-Man) in **supervised mode** — they'll suggest actions, you'll approve them before execution.
+This guide walks you through connecting your personal Shopify store to ShopBot for pre-launch testing. You'll run the three bots (Architect, Merchant, Hype-Man) in **supervised mode** — they'll suggest actions, you'll approve them before execution.
 
 ---
 
@@ -10,33 +10,33 @@ This guide walks you through connecting your personal Shopify store to Beast Bot
 
 - ✅ Shopify Partner App credentials configured (SHOPIFY_PARTNER_CLIENT_ID, SHOPIFY_PARTNER_CLIENT_SECRET)
 - ✅ Active Shopify store (or create a test store)
-- ✅ Beast Bots platform running and accessible
+- ✅ ShopBot platform running and accessible
 - ✅ Admin access to your Shopify store
 
 ---
 
 ## Step 1: Connect Your Shopify Store
 
-### In Beast Bots:
+### In ShopBot:
 
 1. Go to **Integrations** → **E-Commerce Platforms** → **Shopify**
 2. Click **"Connect Your Store"**
 3. You'll be redirected to Shopify's OAuth login
 4. Log in with your Shopify account
-5. Click **"Install App"** to authorize Beast Bots
-6. You'll be redirected back to Beast Bots with your store connected ✅
+5. Click **"Install App"** to authorize ShopBot
+6. You'll be redirected back to ShopBot with your store connected ✅
 
 ### What Just Happened:
 
-- Beast Bots received a **permanent access token** from Shopify
-- Your store is now linked to your Beast Bots account
-- The three agents can now read/write to your store
+- ShopBot received a **permanent access token** from Shopify
+- Your store is now linked to your ShopBot account
+- The three bots can now read/write to your store
 
 ---
 
 ## Step 2: Configure Autonomy Levels (Supervised Mode)
 
-### In Beast Bots:
+### In ShopBot:
 
 1. Go to **Settings** → **Bot Config**
 2. Set autonomy levels for each agent:
@@ -58,7 +58,7 @@ This guide walks you through connecting your personal Shopify store to Beast Bot
 
 ---
 
-## Step 3: Test The Architect Agent
+## Step 3: Test The Architect Bot
 
 ### Niche Research:
 
@@ -92,7 +92,7 @@ This guide walks you through connecting your personal Shopify store to Beast Bot
 
 ---
 
-## Step 4: Test The Merchant Agent
+## Step 4: Test The Merchant Bot
 
 ### Inventory Monitoring:
 
@@ -132,7 +132,7 @@ This guide walks you through connecting your personal Shopify store to Beast Bot
 
 ---
 
-## Step 5: Test The Hype-Man Agent
+## Step 5: Test The Hype-Man Bot
 
 ### Social Media Posting:
 
@@ -259,4 +259,4 @@ Questions or issues? Check:
 - **Bot Config** for autonomy level settings
 - **Integrations** for credential status
 
-For technical support, contact the Beast Bots team.
+For technical support, contact the ShopBot team.

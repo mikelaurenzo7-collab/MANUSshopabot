@@ -1,5 +1,5 @@
 /**
- * Beast Bots — E-Commerce Platform Adapter Registry
+ * ShopBot — E-Commerce Platform Adapter Registry
  *
  * The central factory that returns the correct adapter for any platform.
  * All three agents (Architect, Merchant, Hype-Man) use this registry

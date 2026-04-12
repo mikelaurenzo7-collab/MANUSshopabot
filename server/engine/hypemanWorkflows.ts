@@ -1,5 +1,5 @@
 /**
- * The Hype-Man Agent — Workflow Definitions
+ * The Hype-Man Bot — Workflow Definitions
  * 
  * Workflows:
  * 1. ad_campaign — Full ad campaign creation (copy + creatives + targeting)
@@ -491,6 +491,292 @@ Return as JSON.`,
       input: {
         title: `Brand Content Ready: ${topic}`,
         message: `The Hype-Man has created a complete content package for "${topic}" — blog post, social snippets, email version, and product description tips.`,
+        agentType: "hypeman",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Viral Trend Detector Workflow ───────────────────────────────────────────
+
+registerWorkflow("viral_trend_detector", (input): WorkflowStepDefinition[] => {
+  const niche = input.niche ?? "general";
+  const platforms = input.platforms ?? ["tiktok", "instagram", "twitter"];
+  return [
+    {
+      stepType: "llm_call",
+      title: "Trend Intelligence Scan",
+      description: `Scanning viral trends across ${platforms.join(", ")} for "${niche}"`,
+      input: {
+        systemPrompt: "You are a viral content strategist and trend forecaster. You've predicted and capitalized on trends that generated millions of views and six-figure revenue spikes for e-commerce brands.",
+        userPrompt: `Conduct a comprehensive viral trend analysis for the "${niche}" niche across ${platforms.join(", ")}:
+
+1. Currently Viral Trends (Top 10):
+   - Trend name/hashtag
+   - Platform(s) where it's trending
+   - Estimated reach/views
+   - Trend lifecycle stage (emerging, peak, declining)
+   - Relevance score to our niche (0-100)
+   - How to adapt it for our brand
+   
+2. Emerging Trends (Next 30 Days):
+   - Early signals detected
+   - Predicted peak timing
+   - First-mover advantage opportunity
+   - Content format recommendation
+   
+3. Evergreen Content Opportunities:
+   - Topics with consistent search/engagement
+   - Content formats that always perform
+   - Seasonal trends to prepare for
+   
+4. Sound/Audio Trends (TikTok/Reels):
+   - Trending sounds to use
+   - Audio-visual pairing recommendations
+   
+5. Hashtag Strategy:
+   - Trending hashtags (high volume)
+   - Niche hashtags (targeted reach)
+   - Branded hashtag recommendations
+   
+6. Content Templates:
+   - 5 ready-to-film video concepts based on current trends
+   - Caption templates for each
+   - Posting schedule for maximum virality
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "viral_trend_detector",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                currentTrends: { type: "array", items: { type: "object", properties: { trend: { type: "string" }, platforms: { type: "array", items: { type: "string" } }, estimatedReach: { type: "string" }, lifecycle: { type: "string" }, relevanceScore: { type: "number" }, adaptation: { type: "string" } }, required: ["trend", "platforms", "estimatedReach", "lifecycle", "relevanceScore", "adaptation"], additionalProperties: false } },
+                emergingTrends: { type: "array", items: { type: "object", properties: { signal: { type: "string" }, predictedPeak: { type: "string" }, opportunity: { type: "string" }, contentFormat: { type: "string" } }, required: ["signal", "predictedPeak", "opportunity", "contentFormat"], additionalProperties: false } },
+                evergreenOpportunities: { type: "array", items: { type: "string" } },
+                audioTrends: { type: "array", items: { type: "object", properties: { sound: { type: "string" }, platform: { type: "string" }, pairingIdea: { type: "string" } }, required: ["sound", "platform", "pairingIdea"], additionalProperties: false } },
+                hashtagStrategy: { type: "object", properties: { trending: { type: "array", items: { type: "string" } }, niche: { type: "array", items: { type: "string" } }, branded: { type: "array", items: { type: "string" } } }, required: ["trending", "niche", "branded"], additionalProperties: false },
+                contentTemplates: { type: "array", items: { type: "object", properties: { concept: { type: "string" }, format: { type: "string" }, caption: { type: "string" }, bestTime: { type: "string" } }, required: ["concept", "format", "caption", "bestTime"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["currentTrends", "emergingTrends", "evergreenOpportunities", "audioTrends", "hashtagStrategy", "contentTemplates", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "image_generation",
+      title: "Generate Trend-Inspired Creative",
+      description: "Creating a visual based on the top trending content format",
+      input: {
+        prompt: `Viral social media content creative for ${niche}, trending aesthetic, eye-catching scroll-stopping design, bold typography, vibrant colors, Instagram Reels / TikTok style, modern and youthful, high engagement visual`,
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Trend Report Ready",
+      description: "Viral trend intelligence report complete",
+      input: {
+        title: `Viral Trend Report: ${niche}`,
+        message: `The Hype-Man has detected ${platforms.length} platform trends for "${niche}" with ready-to-use content templates and hashtag strategies.`,
+        agentType: "hypeman",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Influencer Outreach Workflow ────────────────────────────────────────────
+
+registerWorkflow("influencer_outreach", (input): WorkflowStepDefinition[] => {
+  const niche = input.niche ?? "general";
+  const budget = input.budget ?? "$500-$2000";
+  const platform = input.platform ?? "instagram";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Influencer Discovery & Vetting",
+      description: `Finding and vetting influencers for "${niche}" on ${platform}`,
+      input: {
+        systemPrompt: "You are an influencer marketing strategist who has managed $5M+ in influencer campaigns. You know how to find authentic creators, negotiate deals, and measure ROI.",
+        userPrompt: `Create a comprehensive influencer outreach strategy for the "${niche}" niche on ${platform}:
+
+Budget: ${budget}
+
+1. Influencer Tiers to Target:
+   - Nano (1K-10K followers): Best for authentic engagement
+   - Micro (10K-100K): Sweet spot for ROI
+   - Mid-tier (100K-500K): Brand awareness
+   - Macro (500K+): Only if budget allows
+   
+2. For Each Recommended Influencer Profile (generate 10):
+   - Influencer type/persona description
+   - Ideal follower count range
+   - Content style that aligns with our brand
+   - Estimated cost per post/story/reel
+   - Expected engagement rate
+   - Expected ROI
+   - Red flags to watch for (fake followers, brand safety)
+   
+3. Outreach Templates:
+   - Initial DM template (casual, authentic)
+   - Email pitch template (professional)
+   - Follow-up template (after no response)
+   - Negotiation framework (rates, deliverables, usage rights)
+   
+4. Campaign Structure:
+   - Content brief template for influencers
+   - Posting schedule and coordination
+   - Tracking links and promo codes setup
+   - Performance measurement framework
+   
+5. Contract Essentials:
+   - Key terms to include
+   - Usage rights and exclusivity
+   - Payment structure (upfront vs. performance)
+   - FTC compliance requirements
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "influencer_outreach",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                influencerProfiles: { type: "array", items: { type: "object", properties: { persona: { type: "string" }, tier: { type: "string" }, followerRange: { type: "string" }, contentStyle: { type: "string" }, estimatedCost: { type: "string" }, expectedEngagement: { type: "string" }, expectedROI: { type: "string" }, redFlags: { type: "array", items: { type: "string" } } }, required: ["persona", "tier", "followerRange", "contentStyle", "estimatedCost", "expectedEngagement", "expectedROI", "redFlags"], additionalProperties: false } },
+                outreachTemplates: { type: "object", properties: { dmTemplate: { type: "string" }, emailTemplate: { type: "string" }, followUpTemplate: { type: "string" }, negotiationFramework: { type: "string" } }, required: ["dmTemplate", "emailTemplate", "followUpTemplate", "negotiationFramework"], additionalProperties: false },
+                campaignStructure: { type: "object", properties: { contentBrief: { type: "string" }, postingSchedule: { type: "string" }, trackingSetup: { type: "string" }, measurementFramework: { type: "string" } }, required: ["contentBrief", "postingSchedule", "trackingSetup", "measurementFramework"], additionalProperties: false },
+                contractEssentials: { type: "array", items: { type: "string" } },
+                budgetAllocation: { type: "string" },
+                summary: { type: "string" },
+              },
+              required: ["influencerProfiles", "outreachTemplates", "campaignStructure", "contractEssentials", "budgetAllocation", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Influencer Strategy",
+      description: "Review influencer selections and outreach plan before execution",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Influencer Strategy Ready",
+      description: "Influencer outreach plan complete",
+      input: {
+        title: `Influencer Strategy Ready: ${niche}`,
+        message: `The Hype-Man has created a complete influencer outreach strategy for "${niche}" on ${platform} with ${budget} budget — 10 influencer profiles, outreach templates, and campaign structure.`,
+        agentType: "hypeman",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Conversion Funnel Optimization Workflow ─────────────────────────────────
+
+registerWorkflow("conversion_funnel", (input): WorkflowStepDefinition[] => {
+  const storeName = input.storeName ?? "the store";
+  const currentConversionRate = input.currentConversionRate ?? "unknown";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Funnel Leak Analysis",
+      description: `Analyzing conversion funnel for "${storeName}"`,
+      input: {
+        systemPrompt: "You are a conversion rate optimization (CRO) expert who has increased e-commerce conversion rates by 50-300%. You think in funnels, test hypotheses, and optimize every micro-interaction.",
+        userPrompt: `Conduct a comprehensive conversion funnel optimization analysis for "${storeName}" (current conversion rate: ${currentConversionRate}):
+
+1. Funnel Stage Analysis:
+   - Awareness → Interest (ad click-through optimization)
+   - Interest → Consideration (landing page optimization)
+   - Consideration → Intent (product page optimization)
+   - Intent → Purchase (cart & checkout optimization)
+   - Purchase → Loyalty (post-purchase optimization)
+   
+2. For Each Stage:
+   - Common leak points
+   - Optimization tactics (specific, actionable)
+   - A/B test ideas (hypothesis, variant, expected lift)
+   - Quick wins (implement in <1 hour)
+   - Strategic improvements (1-2 week projects)
+   
+3. Checkout Optimization:
+   - Cart abandonment reduction tactics
+   - Trust signal placement
+   - Payment option optimization
+   - Shipping cost presentation strategy
+   - Urgency/scarcity elements
+   
+4. Mobile Optimization:
+   - Mobile-specific friction points
+   - Thumb-zone optimization
+   - Mobile payment integration priorities
+   - Page speed recommendations
+   
+5. Psychological Triggers:
+   - Social proof implementation plan
+   - Scarcity/urgency framework
+   - Anchoring and decoy pricing
+   - Loss aversion copy techniques
+   
+6. A/B Testing Roadmap:
+   - Priority tests ranked by expected impact
+   - Sample size requirements
+   - Test duration recommendations
+   - Statistical significance thresholds
+
+Return as JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "conversion_funnel",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                funnelStages: { type: "array", items: { type: "object", properties: { stage: { type: "string" }, leakPoints: { type: "array", items: { type: "string" } }, quickWins: { type: "array", items: { type: "string" } }, strategicImprovements: { type: "array", items: { type: "string" } }, expectedLift: { type: "string" } }, required: ["stage", "leakPoints", "quickWins", "strategicImprovements", "expectedLift"], additionalProperties: false } },
+                checkoutOptimization: { type: "object", properties: { abandonmentTactics: { type: "array", items: { type: "string" } }, trustSignals: { type: "array", items: { type: "string" } }, paymentOptimization: { type: "string" }, shippingStrategy: { type: "string" } }, required: ["abandonmentTactics", "trustSignals", "paymentOptimization", "shippingStrategy"], additionalProperties: false },
+                mobileOptimization: { type: "array", items: { type: "object", properties: { issue: { type: "string" }, fix: { type: "string" }, priority: { type: "string" } }, required: ["issue", "fix", "priority"], additionalProperties: false } },
+                psychologicalTriggers: { type: "array", items: { type: "object", properties: { trigger: { type: "string" }, implementation: { type: "string" }, placement: { type: "string" } }, required: ["trigger", "implementation", "placement"], additionalProperties: false } },
+                abTestRoadmap: { type: "array", items: { type: "object", properties: { test: { type: "string" }, hypothesis: { type: "string" }, expectedLift: { type: "string" }, priority: { type: "number" } }, required: ["test", "hypothesis", "expectedLift", "priority"], additionalProperties: false } },
+                estimatedOverallLift: { type: "string" },
+                summary: { type: "string" },
+              },
+              required: ["funnelStages", "checkoutOptimization", "mobileOptimization", "psychologicalTriggers", "abTestRoadmap", "estimatedOverallLift", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review CRO Plan",
+      description: "Review conversion optimization recommendations before implementation",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "CRO Analysis Complete",
+      description: "Conversion funnel optimization plan ready",
+      input: {
+        title: `Conversion Funnel Analysis: ${storeName}`,
+        message: `The Hype-Man has completed a comprehensive conversion funnel analysis for "${storeName}" with A/B test roadmap and quick wins.`,
         agentType: "hypeman",
         notificationType: "success",
         notifyOwner: true,

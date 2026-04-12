@@ -1,5 +1,5 @@
 /**
- * Beast Bots — Agent Task Scheduler
+ * ShopBot — Bot Task Scheduler
  *
  * Uses node-cron to run recurring agent tasks with real platform adapter calls:
  * - Merchant: inventory checks, order fulfillment, pricing optimization
@@ -485,7 +485,7 @@ async function handleCompetitorScan(): Promise<void> {
 // ─── Register Default Tasks ─────────────────────────────────────────────
 
 export function registerDefaultTasks(): void {
-  // ─── Merchant Agent Tasks ────────────────────────────────────────
+  // ─── Merchant Bot Tasks ────────────────────────────────────────
   agentScheduler.register({
     id: "merchant:inventory-check",
     name: "Inventory Level Monitor",
@@ -516,7 +516,7 @@ export function registerDefaultTasks(): void {
     handler: handleProductSync,
   });
 
-  // ─── Hype-Man Agent Tasks ────────────────────────────────────────
+  // ─── Hype-Man Bot Tasks ────────────────────────────────────────
   agentScheduler.register({
     id: "hypeman:scheduled-posts",
     name: "Scheduled Post Publisher",
@@ -557,7 +557,7 @@ export function registerDefaultTasks(): void {
     handler: handleEmailRecovery,
   });
 
-  // ─── Architect Agent Tasks ───────────────────────────────────────
+  // ─── Architect Bot Tasks ───────────────────────────────────────
   agentScheduler.register({
     id: "architect:store-health",
     name: "Store Health Monitor",
