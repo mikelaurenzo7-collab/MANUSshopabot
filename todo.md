@@ -280,8 +280,8 @@
 - [x] Expand job queue to support multiple job types — DONE Sprint 12
 - [x] Extend bot coordination events beyond 3 current types — DONE Sprint 12 (12 event types)
 - [x] Add request correlation/tracing IDs to structured logger — DONE Sprint 12
-- [ ] Add rate limiting per platform to prevent API throttling — future work
-- [ ] Refactor scheduler into separate task modules — future work
+- [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
+- [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
 - [x] Add saga pattern for multi-step workflows with rollback — DONE Sprint 12
 - [x] Implement idempotency keys for duplicate operation prevention — DONE Sprint 12
 - [x] Replace console.log with structured logger throughout scheduler — DONE Sprint 12
@@ -317,5 +317,10 @@
 - [x] Add unit tests for all 7 job handlers: success, retry, exhaustion, invalid payload paths — server/engine/jobQueue.test.ts (34 tests)
 - [x] Add test proving JOB_PRIORITY ordering is enforced when mixed job types are runnable
 - [x] Add test proving CONCURRENCY_LIMITS are enforced per job type (jobs beyond limit are deferred, not dropped)
-- [ ] Add rate limiting per platform to prevent API throttling (token bucket per adapter) — future Sprint 14
-- [ ] Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — future Sprint 14
+
+## Sprint 14: Visual Polish (visual-polish branch)
+
+- [x] First-pass visual polish: deepened background (#0A0A0C), Quantum Violet (#9D4EDD), Cyber Cyan (#00E0FF), Amber Flare (#FFC107), glass cards with backdrop-filter blur(12px), pulsing bot status indicators, Outfit font for headings, hero gradient text, CTA button glow, page fade-in animation
+- [x] Second-pass visual polish: richer glass-card system, stronger glow utilities, premium gradient tokens, Landing.tsx dramatic hero, Home.tsx MetricCard/BotStatusCard/CrossStoreIntelligence upgrades, DashboardLayout active nav glow (shadow + border + dot indicator), user avatar glow, Intelligence.tsx slate normalization (21 replacements), all pages normalized to glass token system
+- [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
+- [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
