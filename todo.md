@@ -132,7 +132,7 @@
 ### Credential Verification
 - [x] Update VITE_APP_TITLE secret to "ShopBOTS" — built-in secret, fallback hardcoded in DashboardLayout
 - [x] Generate ShopBOTS logo and hardcode CDN URL in DashboardLayout (VITE_APP_LOGO fallback)
-- [ ] Pinterest OAuth — BLOCKED: awaiting Pinterest app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured. Will add PINTEREST_APP_SECRET once approved.
+- [ ] Pinterest OAuth — BLOCKED: awaiting Pinterest app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured. Will add PINTEREST_APP_SECRET once approved. (All code is ready; just needs app approval to activate)
 - [x] Build runtime credential diagnostics endpoint — admin-only panel in Config page shows live status of all 29 credentials
 
 ### UI/UX Enhancements
