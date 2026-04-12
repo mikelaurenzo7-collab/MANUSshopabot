@@ -10,6 +10,7 @@ import { getDb } from "./db";
 import { socialAccounts } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
+import { logAgentAction } from "./telemetry";
 
 interface TokenResponse {
   access_token: string;
@@ -157,6 +158,7 @@ interface ParsedState {
   userId: number;
   platform: string;
   origin: string;
+  returnTo?: string;
 }
 
 function parseState(state: string): ParsedState | null {
@@ -165,7 +167,7 @@ function parseState(state: string): ParsedState | null {
     const decoded = Buffer.from(state, "base64url").toString("utf-8");
     const payload = JSON.parse(decoded);
     if (payload.u && payload.p && payload.o) {
-      return { userId: payload.u, platform: payload.p, origin: payload.o };
+      return { userId: payload.u, platform: payload.p, origin: payload.o, returnTo: payload.r };
     }
   } catch {
     // Fall through to legacy format
@@ -288,11 +290,31 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
     }
 
     console.log(`[SocialOAuth] Connected ${platform} account "${profile.accountName}" for user ${userId}`);
-    return res.redirect(`${origin}/integrations?connected=${platform}&account=${encodeURIComponent(profile.accountName)}`);
+    logAgentAction({
+      agentType: "hypeman",
+      actionType: "social_oauth_connect",
+      triggerSource: "manual",
+      input: { platform, userId },
+      output: { accountId: profile.accountId, accountName: profile.accountName, hasRefreshToken: !!tokenData.refresh_token },
+      success: true,
+    }).catch(err => console.error("[SocialOAuth] Telemetry error:", err.message));
+    const redirectPath = parsed.returnTo || "/integrations";
+    const connectedParam = parsed.returnTo ? `social_connected=${platform}` : `connected=${platform}&account=${encodeURIComponent(profile.accountName)}`;
+    return res.redirect(`${origin}${redirectPath}?${connectedParam}`);
 
   } catch (err: any) {
     console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
-    return res.redirect(`${origin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
+    logAgentAction({
+      agentType: "hypeman",
+      actionType: "social_oauth_connect",
+      triggerSource: "manual",
+      input: { platform, userId },
+      output: { error: err.message },
+      success: false,
+      errorMessage: err.message,
+    }).catch(telErr => console.error("[SocialOAuth] Telemetry error:", telErr.message));
+    const redirectPath = parsed?.returnTo || "/integrations";
+    return res.redirect(`${origin}${redirectPath}?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }
 

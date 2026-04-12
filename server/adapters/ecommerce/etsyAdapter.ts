@@ -16,6 +16,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 const ETSY_API_BASE = "https://openapi.etsy.com/v3";
 
@@ -25,21 +26,25 @@ export class EtsyAdapter implements EcommercePlatformAdapter {
 
   private async fetch(path: string, credentials: AdapterCredentials, options?: { method?: string; body?: any }) {
     const { default: axios } = await import("axios");
-    try {
-      const response = await axios({
-        url: `${ETSY_API_BASE}${path}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${credentials.accessToken}`,
-          "x-api-key": credentials.apiKey || "",
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Etsy API error: ${err.response?.data?.error_description || err.message}`);
-    }
+    await platformRateLimiters.etsy.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${ETSY_API_BASE}${path}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "x-api-key": credentials.apiKey || "",
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Etsy API error: ${err.response?.data?.error_description || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
@@ -134,11 +139,24 @@ export class EtsyAdapter implements EcommercePlatformAdapter {
   async fulfillOrder(credentials: AdapterCredentials, orderId: string, fulfillment: FulfillmentInput): Promise<void> {
     const shopId = credentials.metadata?.shopId || credentials.platformAccountId;
     if (!shopId) throw new Error("Etsy shopId required");
+    // Validate tracking number format (alphanumeric, 6-40 chars)
+    if (fulfillment.trackingNumber) {
+      const cleaned = fulfillment.trackingNumber.trim();
+      if (cleaned.length < 6 || cleaned.length > 40) {
+        throw new Error(`Invalid tracking number length (${cleaned.length}). Must be 6-40 characters.`);
+      }
+      if (!/^[A-Za-z0-9]+$/.test(cleaned)) {
+        throw new Error("Tracking number must contain only alphanumeric characters.");
+      }
+    }
+    // Validate carrier name
+    const validCarriers = ["usps", "ups", "fedex", "dhl", "canada-post", "royal-mail", "other"];
+    const carrier = (fulfillment.carrier || "other").toLowerCase();
     await this.fetch(`/application/shops/${shopId}/receipts/${orderId}/tracking`, credentials, {
       method: "POST",
       body: {
-        tracking_code: fulfillment.trackingNumber,
-        carrier_name: fulfillment.carrier || "other",
+        tracking_code: fulfillment.trackingNumber?.trim(),
+        carrier_name: validCarriers.includes(carrier) ? carrier : "other",
         send_bcc: fulfillment.notifyCustomer ?? true,
       },
     });
@@ -203,5 +221,15 @@ export class EtsyAdapter implements EcommercePlatformAdapter {
       } : undefined,
       createdAt: new Date((r.create_timestamp || Date.now() / 1000) * 1000),
     };
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

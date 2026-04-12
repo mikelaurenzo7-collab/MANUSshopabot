@@ -7,14 +7,15 @@
  * 4. Launch — pick a niche and fire the Architect Bot
  */
 
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Bot,
   Package,
@@ -29,6 +30,7 @@ import {
   Sparkles,
   ShoppingBag,
   Globe,
+  AlertCircle,
 } from "lucide-react";
 
 const STEPS = [
@@ -125,27 +127,85 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 
 function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
   const [shopDomain, setShopDomain] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
-  const { data: stores } = trpc.stores.list.useQuery();
-  const hasStore = stores && stores.length > 0;
+  const [error, setError] = useState("");
+  const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
+  const activeStores = stores?.filter((s: any) => s.status === "active") ?? [];
+  const hasActiveStore = activeStores.length > 0;
 
-  const generateOAuthUrl = trpc.connectors.generateOAuthUrl.useMutation({
-    onSuccess: (data) => {
-      setIsConnecting(false);
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        onNext();
-      }
+  // Check if we just returned from a successful OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "true") {
+      toast.success("Store connected successfully!");
+      refetchStores();
+      // Clean URL
+      window.history.replaceState({}, "", "/onboarding");
+    }
+    if (params.get("error")) {
+      setError("Connection failed. Please try again.");
+      window.history.replaceState({}, "", "/onboarding");
+    }
+  }, []);
+
+  // Step 1: Create store record, then Step 2: Get OAuth URL
+  const createStoreForOAuth = trpc.stores.create.useMutation({
+    onSuccess: (newStore) => {
+      // Now get the Shopify OAuth URL using the new store's ID
+      shopifyOAuthUrl.mutate({
+        shopDomain: shopDomain.trim(),
+        storeId: newStore.id,
+        origin: window.location.origin,
+        returnTo: "/onboarding",
+      });
     },
-    onError: () => setIsConnecting(false),
+    onError: (err) => {
+      setIsConnecting(false);
+      setError(err.message);
+    },
+  });
+
+  const shopifyOAuthUrl = trpc.stores.shopifyOAuthUrl.useMutation({
+    onSuccess: (data) => {
+      // Redirect to Shopify OAuth consent screen
+      window.location.href = data.url;
+    },
+    onError: (err) => {
+      setIsConnecting(false);
+      setError(err.message);
+    },
   });
 
   const handleConnect = () => {
-    if (!shopDomain.trim()) return;
-    const domain = shopDomain.replace(/https?:\/\//, "").replace(/\/$/, "");
+    setError("");
+    if (!shopDomain.trim()) {
+      setError("Please enter your Shopify store domain");
+      return;
+    }
+
+    // Clean and validate the domain
+    let domain = shopDomain.trim().toLowerCase();
+    domain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    if (!domain.includes(".")) domain = `${domain}.myshopify.com`;
+
+    // Basic validation
+    if (!domain.match(/^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/)) {
+      setError("Invalid domain format. Use: your-store or your-store.myshopify.com");
+      return;
+    }
+
     setIsConnecting(true);
-    generateOAuthUrl.mutate({ platform: "shopify", shopDomain: domain, origin: window.location.origin });
+
+    // Derive store name from domain if not provided
+    const name = storeName.trim() || domain.replace(".myshopify.com", "");
+
+    // Create store record first, then OAuth URL is generated in onSuccess
+    createStoreForOAuth.mutate({
+      name,
+      platform: "shopify",
+      platformDomain: domain,
+    });
   };
 
   return (
@@ -160,15 +220,15 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
         </p>
       </div>
 
-      {hasStore ? (
+      {hasActiveStore ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {stores.length} store{stores.length > 1 ? "s" : ""} connected
+                {activeStores.length} store{activeStores.length > 1 ? "s" : ""} connected
               </p>
-              <p className="text-xs text-muted-foreground">{stores.map(s => s.name).join(", ")}</p>
+              <p className="text-xs text-muted-foreground">{activeStores.map((s: any) => s.name).join(", ")}</p>
             </div>
           </div>
           <Button onClick={onNext} className="w-full gap-2">
@@ -177,47 +237,82 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="shopDomain" className="text-sm text-foreground">Shopify Store Domain</Label>
-            <div className="flex gap-2">
-              <Input
-                id="shopDomain"
-                placeholder="your-store.myshopify.com"
-                value={shopDomain}
-                onChange={e => setShopDomain(e.target.value)}
-                className="flex-1"
-                onKeyDown={e => e.key === "Enter" && handleConnect()}
-              />
-              <Button onClick={handleConnect} disabled={isConnecting || !shopDomain.trim()} className="gap-2">
-                {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-                Connect
-              </Button>
+          {error && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
             </div>
-            <p className="text-xs text-muted-foreground">
-              You'll be redirected to Shopify to authorize access.
-            </p>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="storeName" className="text-sm text-foreground">Store Name <span className="text-muted-foreground">(optional)</span></Label>
+              <Input
+                id="storeName"
+                placeholder="My Awesome Store"
+                value={storeName}
+                onChange={e => { setStoreName(e.target.value); setError(""); }}
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="shopDomain" className="text-sm text-foreground">Shopify Store Domain</Label>
+              <div className="flex gap-2 mt-1.5">
+                <Input
+                  id="shopDomain"
+                  placeholder="your-store.myshopify.com"
+                  value={shopDomain}
+                  onChange={e => { setShopDomain(e.target.value); setError(""); }}
+                  className="flex-1"
+                  onKeyDown={e => e.key === "Enter" && handleConnect()}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Enter your store name (e.g., <span className="font-mono text-foreground/70">my-store</span>) or full domain (<span className="font-mono text-foreground/70">my-store.myshopify.com</span>)
+              </p>
+            </div>
           </div>
+
+          <Button
+            onClick={handleConnect}
+            disabled={isConnecting || !shopDomain.trim()}
+            className="w-full gap-2"
+            size="lg"
+          >
+            {isConnecting ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Shopify...</>
+            ) : (
+              <><ExternalLink className="h-4 w-4" /> Connect Shopify Store</>
+            )}
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/50" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-2 text-muted-foreground">or</span>
+              <span className="bg-card px-2 text-muted-foreground">other platforms</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {["WooCommerce", "Etsy", "Amazon", "TikTok Shop"].map(platform => (
+            {[
+              { name: "WooCommerce", emoji: "🌐" },
+              { name: "Etsy", emoji: "🧡" },
+              { name: "Amazon", emoji: "📦" },
+              { name: "TikTok Shop", emoji: "🎵" },
+            ].map(platform => (
               <Button
-                key={platform}
+                key={platform.name}
                 variant="outline"
                 className="text-xs h-9 gap-1.5"
-                onClick={() => onSkip()}
+                onClick={() => {
+                  toast.info(`${platform.name} can be connected after onboarding in the Integrations page.`);
+                }}
               >
-                <Globe className="h-3.5 w-3.5" />
-                {platform}
-                <Badge variant="outline" className="text-[9px] ml-auto">Soon</Badge>
+                <span>{platform.emoji}</span>
+                {platform.name}
+                <Badge variant="outline" className="text-[9px] ml-auto">After Setup</Badge>
               </Button>
             ))}
           </div>
@@ -232,8 +327,11 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
 }
 
 function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
-  const connectedCount = typeof connSummary?.socialAccounts === 'number' ? connSummary.socialAccounts : 0;
+  const { data: socialAccounts, refetch: refetchSocial } = trpc.connectors.listSocialAccounts.useQuery();
+  const connectedPlatforms = new Set(
+    (socialAccounts ?? []).filter((a: any) => a.status === "active").map((a: any) => a.platform)
+  );
+  const connectedCount = connectedPlatforms.size;
 
   const platforms = [
     { name: "Meta (Facebook + Instagram)", key: "meta", color: "text-blue-400", emoji: "📘" },
@@ -244,9 +342,26 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
 
   const generateOAuthUrl = trpc.connectors.generateSocialOAuthUrl.useMutation({
     onSuccess: (data) => {
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else if ((data as any).message) {
+        toast.info((data as any).message);
+      }
+    },
+    onError: (err) => {
+      toast.error(`Connection failed: ${err.message}`);
     },
   });
+
+  // Check if we just returned from a successful social OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("social_connected")) {
+      toast.success(`${params.get("social_connected")} connected successfully!`);
+      refetchSocial();
+      window.history.replaceState({}, "", "/onboarding");
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -267,13 +382,19 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-2">
         {platforms.map(({ name, key, color, emoji }) => {
-              const isConnected = false; // Will show as connected after OAuth callback
+          const isConnected = connectedPlatforms.has(key);
+          const isLoading = generateOAuthUrl.isPending && generateOAuthUrl.variables?.platform === key;
           return (
             <button
               key={key}
-              onClick={() => !isConnected && generateOAuthUrl.mutate({ platform: key as any, origin: window.location.origin })}
+              onClick={() => {
+                if (!isConnected && !isLoading) {
+                  generateOAuthUrl.mutate({ platform: key as any, origin: window.location.origin, returnTo: "/onboarding" });
+                }
+              }}
+              disabled={isLoading}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                 isConnected
                   ? "bg-emerald-500/10 border-emerald-500/20 cursor-default"
@@ -282,7 +403,9 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
             >
               <span className="text-xl">{emoji}</span>
               <span className={`text-sm font-medium flex-1 text-left ${color}`}>{name}</span>
-              {isConnected ? (
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+              ) : isConnected ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
               ) : (
                 <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -314,7 +437,10 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
       setIsLaunching(false);
       setLaunched(true);
     },
-    onError: () => setIsLaunching(false),
+    onError: (err) => {
+      setIsLaunching(false);
+      toast.error(`Launch failed: ${err.message}`);
+    },
   });
 
   const nicheExamples = [
@@ -443,6 +569,17 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [, setLocation] = useLocation();
+
+  // If returning from OAuth, jump to the right step
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "true" || params.get("error")) {
+      setCurrentStep(2); // Go back to Connect Store step to show success/error
+    }
+    if (params.get("social_connected")) {
+      setCurrentStep(3); // Go back to Connect Socials step
+    }
+  }, []);
 
   const handleComplete = () => {
     // Mark onboarding as done in localStorage so we don't show it again

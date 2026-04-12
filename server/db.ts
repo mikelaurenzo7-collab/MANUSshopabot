@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte, count, sum } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, count, sum, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -123,6 +123,35 @@ export async function getProductsByStore(storeId: number) {
   return db.select().from(products).where(eq(products.storeId, storeId)).orderBy(desc(products.createdAt));
 }
 
+/**
+ * Batch helper: get low-stock product counts for multiple stores in a single query.
+ * Returns a map of storeId -> lowStockCount.
+ */
+export async function getLowStockCountsByStores(storeIds: number[]): Promise<Record<number, number>> {
+  if (storeIds.length === 0) return {};
+  const db = await getDb();
+  if (!db) return {};
+  const result = await db.select({
+    storeId: products.storeId,
+    lowStockCount: count(),
+  })
+    .from(products)
+    .where(
+      and(
+        inArray(products.storeId, storeIds),
+        sql`${products.stockLevel} <= ${products.lowStockThreshold}`,
+        isNotNull(products.stockLevel),
+        isNotNull(products.lowStockThreshold),
+      )
+    )
+    .groupBy(products.storeId);
+  const map: Record<number, number> = {};
+  for (const row of result) {
+    map[row.storeId] = row.lowStockCount;
+  }
+  return map;
+}
+
 export async function updateProduct(id: number, data: Partial<InsertProduct>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -180,7 +209,7 @@ export async function createAgentTask(data: InsertAgentTask) {
   return { id: result[0].insertId };
 }
 
-export async function getAgentTasks(filters?: { agentType?: string; storeId?: number; limit?: number }) {
+export async function getAgentTasks(filters?: { agentType?: string; storeId?: number; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   let query = db.select().from(agentTasks);
@@ -188,7 +217,7 @@ export async function getAgentTasks(filters?: { agentType?: string; storeId?: nu
   if (filters?.agentType) conditions.push(eq(agentTasks.agentType, filters.agentType as any));
   if (filters?.storeId) conditions.push(eq(agentTasks.storeId, filters.storeId));
   if (conditions.length > 0) query = query.where(and(...conditions)) as any;
-  return (query as any).orderBy(desc(agentTasks.createdAt)).limit(filters?.limit ?? 100);
+  return (query as any).orderBy(desc(agentTasks.createdAt)).limit(filters?.limit ?? 20).offset(filters?.offset ?? 0);
 }
 
 export async function updateAgentTask(id: number, data: Partial<InsertAgentTask>) {
@@ -601,7 +630,7 @@ export async function getWorkflowById(id: number) {
   return result[0];
 }
 
-export async function getWorkflowsByUser(userId: number, filters?: { agentType?: string; status?: string; storeId?: number; limit?: number }) {
+export async function getWorkflowsByUser(userId: number, filters?: { agentType?: string; status?: string; storeId?: number; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   const conditions: any[] = [eq(agentWorkflows.userId, userId)];
@@ -611,7 +640,8 @@ export async function getWorkflowsByUser(userId: number, filters?: { agentType?:
   return db.select().from(agentWorkflows)
     .where(and(...conditions))
     .orderBy(desc(agentWorkflows.createdAt))
-    .limit(filters?.limit ?? 50);
+    .limit(filters?.limit ?? 20)
+    .offset(filters?.offset ?? 0);
 }
 
 export async function getActiveWorkflows(userId: number) {

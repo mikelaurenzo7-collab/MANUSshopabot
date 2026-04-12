@@ -21,6 +21,7 @@ import {
   Package,
   Megaphone,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 
 const agentIcons: Record<string, any> = {
@@ -39,13 +40,23 @@ const agentNames: Record<string, string> = {
   hypeman: "The Hype-Man Bot",
 };
 
+const PAGE_SIZE = 20;
+
 export default function ActivityPage() {
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [reviewNote, setReviewNote] = useState<Record<number, string>>({});
+  const [page, setPage] = useState(0);
 
-  const { data: tasks, isLoading: tasksLoading } = trpc.activity.list.useQuery({
+  // Reset page when filter changes
+  const handleFilterChange = (val: string) => {
+    setAgentFilter(val);
+    setPage(0);
+  };
+
+  const { data: tasks, isLoading: tasksLoading, error: tasksError } = trpc.activity.list.useQuery({
     agentType: agentFilter === "all" ? undefined : (agentFilter as any),
-    limit: 100,
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
   });
   const { data: pendingApprovals, isLoading: approvalsLoading } = trpc.approvals.pending.useQuery();
   const { data: allApprovals } = trpc.approvals.all.useQuery({ limit: 50 });
@@ -99,7 +110,7 @@ export default function ActivityPage() {
         <TabsContent value="activity" className="space-y-4">
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={agentFilter} onValueChange={setAgentFilter}>
+            <Select value={agentFilter} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-48 bg-input/50">
                 <SelectValue />
               </SelectTrigger>
@@ -111,6 +122,28 @@ export default function ActivityPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Error state with retry */}
+          {tasksError && (
+            <Card className="bg-red-500/5 border-red-500/20">
+              <CardContent className="p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-400">Failed to load activity</p>
+                  <p className="text-xs text-red-400/70 mt-1">{tasksError.message}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  onClick={() => utils.activity.list.invalidate()}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                  Retry
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {tasksLoading ? (
             <div className="space-y-2">
@@ -180,6 +213,29 @@ export default function ActivityPage() {
                 <p className="text-sm text-muted-foreground">No bot activity recorded yet</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination */}
+          {tasks && tasks.length > 0 && (
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">Page {page + 1}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={tasks.length < PAGE_SIZE}
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
           )}
         </TabsContent>
 

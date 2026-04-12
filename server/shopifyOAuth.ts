@@ -67,7 +67,7 @@ function generateNonce(): string {
 }
 
 // In-memory nonce store with storeId for pre-created store records
-const nonceStore = new Map<string, { userId: number; storeId?: number; timestamp: number }>();
+const nonceStore = new Map<string, { userId: number; storeId?: number; returnTo?: string; timestamp: number }>();
 
 // Clean up expired nonces every 10 minutes
 setInterval(() => {
@@ -114,7 +114,8 @@ export function registerShopifyOAuthRoutes(app: Express) {
 
       // Store nonce with user ID (and optional storeId) for verification in callback
       const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
-      nonceStore.set(nonce, { userId: user.id, storeId, timestamp: Date.now() });
+      const returnTo = (req.query.returnTo as string) || undefined;
+      nonceStore.set(nonce, { userId: user.id, storeId, returnTo, timestamp: Date.now() });
 
       // Determine the redirect URI based on the request origin
       const protocol = req.headers["x-forwarded-proto"] || req.protocol;
@@ -242,11 +243,13 @@ export function registerShopifyOAuthRoutes(app: Express) {
         storeId: existingStore?.id,
       });
 
-      // Redirect back to the Architect page
-      res.redirect(302, "/architect?connected=true");
+      // Redirect back to the originating page
+      const returnPath = nonceData.returnTo || "/architect";
+      res.redirect(302, `${returnPath}?connected=true`);
     } catch (error) {
       console.error("[Shopify OAuth] Callback error:", error);
-      res.redirect(302, "/architect?error=connection_failed");
+      const returnPath = "/architect";
+      res.redirect(302, `${returnPath}?error=connection_failed`);
     }
   });
 

@@ -169,4 +169,7 @@ export interface EcommercePlatformAdapter {
 
   /** Get store information */
   getStoreInfo(credentials: AdapterCredentials): Promise<StoreInfo>;
+
+  /** Health check — verify credentials are still valid without heavy API calls */
+  healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }>;
 }

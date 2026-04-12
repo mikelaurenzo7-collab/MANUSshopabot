@@ -5,6 +5,7 @@
  */
 
 import crypto from "crypto";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import type {
   EcommercePlatformAdapter,
   AdapterCredentials,
@@ -48,20 +49,24 @@ export class TikTokShopAdapter implements EcommercePlatformAdapter {
     const sign = this.sign(path, queryParams, appSecret);
     const queryString = new URLSearchParams({ ...queryParams, sign }).toString();
 
-    try {
-      const response = await axios({
-        url: `${TIKTOK_SHOP_BASE}${path}?${queryString}`,
-        method: (options?.method || "GET") as any,
-        headers: { "Content-Type": "application/json" },
-        data: options?.body,
-      });
-      if (response.data.code !== 0) {
-        throw new Error(`TikTok Shop API error: ${response.data.message}`);
+    await platformRateLimiters.tiktok.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${TIKTOK_SHOP_BASE}${path}?${queryString}`,
+          method: (options?.method || "GET") as any,
+          headers: { "Content-Type": "application/json" },
+          data: options?.body,
+        });
+        if (response.data.code !== 0) {
+          throw new Error(`TikTok Shop API error: ${response.data.message}`);
+        }
+        return response.data.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`TikTok Shop API error: ${err.response?.data?.message || err.message}`);
       }
-      return response.data.data;
-    } catch (err: any) {
-      throw new Error(`TikTok Shop API error: ${err.response?.data?.message || err.message}`);
-    }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
@@ -243,6 +248,16 @@ export class TikTokShopAdapter implements EcommercePlatformAdapter {
       case "COMPLETED": return "fulfilled";
       case "CANCELLED": return "cancelled";
       default: return "pending";
+    }
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
     }
   }
 }

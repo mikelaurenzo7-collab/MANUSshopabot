@@ -4,6 +4,7 @@
  * OAuth 2.0 with refresh token for access.
  */
 
+import { withRetry } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
@@ -40,22 +41,25 @@ export class GoogleAdsAdapter implements SocialPlatformAdapter {
     const customerId = credentials.adAccountId || credentials.accountId || "";
     const devToken = credentials.metadata?.developerToken || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || "";
 
-    try {
-      const response = await axios({
-        url: `${GOOGLE_ADS_BASE}${path}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "developer-token": devToken,
-          "login-customer-id": customerId,
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Google Ads API error: ${err.response?.data?.error?.message || err.message}`);
-    }
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${GOOGLE_ADS_BASE}${path}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "developer-token": devToken,
+            "login-customer-id": customerId,
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Google Ads API error: ${err.response?.data?.error?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo> {
@@ -290,5 +294,15 @@ export class GoogleAdsAdapter implements SocialPlatformAdapter {
         }],
       },
     });
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

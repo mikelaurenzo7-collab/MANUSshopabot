@@ -522,6 +522,7 @@ export const connectorsRouter = router({
     .input(z.object({
       platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "linkedin"]),
       origin: z.string(),
+      returnTo: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const platformConfig = SOCIAL_PLATFORMS[input.platform];
@@ -555,7 +556,8 @@ export const connectorsRouter = router({
       // Encode origin in state so callback can reconstruct redirect_uri (no Referer header on OAuth redirects)
       const crypto = await import("crypto");
       const nonce = crypto.randomBytes(16).toString("hex");
-      const statePayload = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin };
+      const statePayload: Record<string, any> = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin };
+      if (input.returnTo) statePayload.r = input.returnTo;
       const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
 
       // Build the redirect URI — callback endpoint on our server

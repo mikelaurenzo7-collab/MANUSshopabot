@@ -78,6 +78,7 @@ export const storesRouter = router({
       shopDomain: z.string().min(1).max(255),
       storeId: z.number(),
       origin: z.string(),
+      returnTo: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       // Verify store ownership
@@ -108,7 +109,8 @@ export const storesRouter = router({
       ].join(",");
 
       // Use the Express install route which handles nonce generation and stores storeId
-      const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}`;
+      const returnToParam = input.returnTo ? `&returnTo=${encodeURIComponent(input.returnTo)}` : '';
+      const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}${returnToParam}`;
 
       // Update store with the shop domain
       await db.updateStore(input.storeId, { platformDomain: shop });

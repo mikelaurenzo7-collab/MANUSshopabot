@@ -20,7 +20,7 @@ import { createOrder, updateOrder, getBotConfigs, createAgentTask } from "./db";
 import { launchWorkflow } from "./engine/workflowEngine";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
-import { logAgentAction } from "./telemetry";
+import { logAgentAction, logTimeToFulfill } from "./telemetry";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
 
@@ -220,7 +220,15 @@ async function handleOrderFulfilled(shopDomain: string, payload: any) {
       input: { platformOrderId, topic: "orders/fulfilled" },
       output: { trackingNumber, trackingUrl },
       success: true,
-    }).catch(() => {});
+    }).catch((err) => console.error("[Telemetry] order_fulfilled log failed:", err));
+
+    // Business metric: time-to-fulfill
+    const orderCreatedAt = existing[0].createdAt ? new Date(existing[0].createdAt) : null;
+    if (orderCreatedAt) {
+      logTimeToFulfill(store.id, platformOrderId, orderCreatedAt).catch(
+        (err) => console.error("[Telemetry] time_to_fulfill log failed:", err)
+      );
+    }
   }
 }
 

@@ -16,7 +16,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
-
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import { ENV } from "../../_core/env";
 
 const IG_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
@@ -36,17 +36,21 @@ export class InstagramAdapter implements SocialPlatformAdapter {
       access_token: credentials.accessToken,
       ...options?.params,
     });
-    try {
-      const response = await axios({
-        url: `${base}${path}?${params.toString()}`,
-        method: (options?.method || "GET") as any,
-        data: options?.body,
-        headers: { "Content-Type": "application/json" },
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Instagram API error: ${err.response?.data?.error?.message || err.message}`);
-    }
+    await platformRateLimiters.meta.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${base}${path}?${params.toString()}`,
+          method: (options?.method || "GET") as any,
+          data: options?.body,
+          headers: { "Content-Type": "application/json" },
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Instagram API error: ${err.response?.data?.error?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   private getIgUserId(credentials: SocialCredentials): string {
@@ -226,5 +230,15 @@ export class InstagramAdapter implements SocialPlatformAdapter {
       caption += "\n\n" + post.hashtags.map(h => `#${h.replace(/^#/, "")}`).join(" ");
     }
     return caption.substring(0, 2200);
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

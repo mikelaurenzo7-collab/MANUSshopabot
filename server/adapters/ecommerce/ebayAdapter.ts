@@ -222,4 +222,14 @@ export class EbayAdapter implements EcommercePlatformAdapter {
       default: return "pending";
     }
   }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
+  }
 }

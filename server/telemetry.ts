@@ -151,6 +151,81 @@ export async function collectOutcome(
 }
 
 /**
+ * Calculate time-to-fulfill metric for a specific order.
+ * Measures from order creation to fulfillment completion.
+ */
+export async function logTimeToFulfill(
+  storeId: number,
+  orderId: string,
+  orderCreatedAt: Date,
+  fulfilledAt: Date = new Date(),
+): Promise<void> {
+  const timeToFulfillMs = fulfilledAt.getTime() - orderCreatedAt.getTime();
+  const timeToFulfillMinutes = Math.round(timeToFulfillMs / 60000);
+
+  await logAgentAction({
+    agentType: "merchant",
+    actionType: "time_to_fulfill",
+    storeId,
+    triggerSource: "webhook",
+    input: { orderId, orderCreatedAt: orderCreatedAt.toISOString() },
+    output: {
+      fulfilledAt: fulfilledAt.toISOString(),
+      timeToFulfillMs,
+      timeToFulfillMinutes,
+      isZeroTouch: timeToFulfillMinutes < 5,
+    },
+    success: true,
+    durationMs: timeToFulfillMs,
+    metadata: { metric: "time_to_fulfill", minutes: timeToFulfillMinutes },
+  });
+}
+
+/**
+ * Log LLM cost per workflow execution.
+ * Tracks token usage and estimated cost for each workflow run.
+ */
+export async function logLlmWorkflowCost(
+  agentType: "architect" | "merchant" | "hypeman",
+  workflowType: string,
+  storeId: number | undefined,
+  stats: {
+    totalTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+    llmCalls: number;
+    totalLatencyMs: number;
+    model?: string;
+  },
+): Promise<void> {
+  // Estimated cost per 1K tokens (conservative estimate)
+  const costPer1kTokens = 0.003;
+  const estimatedCostCents = Math.round((stats.totalTokens / 1000) * costPer1kTokens * 100);
+
+  await logAgentAction({
+    agentType,
+    actionType: "llm_workflow_cost",
+    storeId,
+    triggerSource: "workflow",
+    input: { workflowType },
+    output: {
+      totalTokens: stats.totalTokens,
+      promptTokens: stats.promptTokens,
+      completionTokens: stats.completionTokens,
+      llmCalls: stats.llmCalls,
+      estimatedCostCents,
+      avgLatencyPerCall: stats.llmCalls > 0 ? Math.round(stats.totalLatencyMs / stats.llmCalls) : 0,
+    },
+    success: true,
+    durationMs: stats.totalLatencyMs,
+    llmModel: stats.model,
+    llmTokensUsed: stats.totalTokens,
+    llmLatencyMs: stats.totalLatencyMs,
+    metadata: { metric: "llm_cost", estimatedCostCents },
+  });
+}
+
+/**
  * Summarize large outputs to avoid bloating the telemetry table.
  * Keeps the first 5 items of arrays, truncates long strings.
  */

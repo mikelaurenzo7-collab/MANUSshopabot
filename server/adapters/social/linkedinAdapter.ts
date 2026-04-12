@@ -15,6 +15,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { withRetry } from "../../utils/rateLimiter";
 
 const LINKEDIN_BASE = "https://api.linkedin.com/v2";
 
@@ -25,22 +26,25 @@ export class LinkedInAdapter implements SocialPlatformAdapter {
   private async fetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");
     const params = options?.params ? `?${new URLSearchParams(options.params).toString()}` : "";
-    try {
-      const response = await axios({
-        url: `${LINKEDIN_BASE}${path}${params}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${credentials.accessToken}`,
-          "Content-Type": "application/json",
-          "X-Restli-Protocol-Version": "2.0.0",
-          "LinkedIn-Version": "202401",
-        },
-        data: options?.body,
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`LinkedIn API error: ${err.response?.data?.message || err.message}`);
-    }
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${LINKEDIN_BASE}${path}${params}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
+            "LinkedIn-Version": "202401",
+          },
+          data: options?.body,
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`LinkedIn API error: ${err.response?.data?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo> {
@@ -279,5 +283,15 @@ export class LinkedInAdapter implements SocialPlatformAdapter {
       sales: "WEBSITE_CONVERSIONS",
     };
     return map[objective] || "WEBSITE_VISITS";
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

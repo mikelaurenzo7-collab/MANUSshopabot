@@ -154,4 +154,7 @@ export interface SocialPlatformAdapter {
 
   /** Pause an active ad campaign */
   pauseAdCampaign(credentials: SocialCredentials, campaignId: string): Promise<void>;
+
+  /** Health check — verify credentials are still valid without heavy API calls */
+  healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }>;
 }

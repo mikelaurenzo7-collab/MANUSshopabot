@@ -11,6 +11,7 @@ import { platformCredentials } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import { ecomOAuthStateStore, pkceStore } from "./routers/connectors";
+import { logAgentAction } from "./telemetry";
 
 interface TokenResponse {
   access_token: string;
@@ -203,10 +204,29 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
     };
 
     console.log(`[EcomOAuth] Connected ${platform} for user ${userId}`);
+    logAgentAction({
+      agentType: "architect",
+      actionType: "oauth_connect",
+      storeId: storeId || undefined,
+      triggerSource: "manual",
+      input: { platform, storeId, userId },
+      output: { status: "connected", hasRefreshToken: !!tokenData.refresh_token },
+      success: true,
+    }).catch(err => console.error("[EcomOAuth] Telemetry error:", err.message));
     return res.redirect(`${origin}/integrations?connected=${platform}&name=${encodeURIComponent(platformNames[platform] || platform)}`);
 
   } catch (err: any) {
     console.error(`[EcomOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
+    logAgentAction({
+      agentType: "architect",
+      actionType: "oauth_connect",
+      storeId: storeId || undefined,
+      triggerSource: "manual",
+      input: { platform, storeId, userId },
+      output: { error: err.message },
+      success: false,
+      errorMessage: err.message,
+    }).catch(telErr => console.error("[EcomOAuth] Telemetry error:", telErr.message));
     return res.redirect(`${origin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }

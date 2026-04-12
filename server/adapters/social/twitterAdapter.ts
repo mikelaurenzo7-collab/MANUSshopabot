@@ -5,6 +5,7 @@
  */
 
 import { TwitterApi } from "twitter-api-v2";
+import { platformRateLimiters } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
@@ -48,6 +49,7 @@ export class TwitterAdapter implements SocialPlatformAdapter {
   }
 
   async createPost(credentials: SocialCredentials, post: CreatePostInput): Promise<SocialPost> {
+    await platformRateLimiters.twitter.acquire();
     const client = this.getClient(credentials);
     const tweetText = this.buildTweetText(post);
 
@@ -129,6 +131,7 @@ export class TwitterAdapter implements SocialPlatformAdapter {
 
   async createAdCampaign(credentials: SocialCredentials, campaign: CreateAdCampaignInput): Promise<AdCampaign> {
     // Twitter Ads API requires separate OAuth app credentials
+    await platformRateLimiters.twitter.acquire();
     const { default: axios } = await import("axios");
     const accountId = credentials.adAccountId || credentials.accountId;
     if (!accountId) throw new Error("Twitter Ads account ID required");
@@ -235,5 +238,15 @@ export class TwitterAdapter implements SocialPlatformAdapter {
     }
     if (post.link) text += `\n\n${post.link}`;
     return text.substring(0, 280);
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

@@ -14,6 +14,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 const PINTEREST_BASE = "https://api.pinterest.com/v5";
 
@@ -24,20 +25,24 @@ export class PinterestAdapter implements SocialPlatformAdapter {
   private async fetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");
     const params = options?.params ? `?${new URLSearchParams(options.params).toString()}` : "";
-    try {
-      const response = await axios({
-        url: `${PINTEREST_BASE}${path}${params}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${credentials.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Pinterest API error: ${err.response?.data?.message || err.message}`);
-    }
+    await platformRateLimiters.pinterest.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${PINTEREST_BASE}${path}${params}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Pinterest API error: ${err.response?.data?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo> {
@@ -251,5 +256,15 @@ export class PinterestAdapter implements SocialPlatformAdapter {
       sales: "CATALOG_SALES",
     };
     return map[objective] || "CONSIDERATION";
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

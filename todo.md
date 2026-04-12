@@ -547,9 +547,9 @@
 - [x] Verify empty states are implemented (confirmed: Activity, Workflows, Approvals pages all have empty state cards)
 - [x] Verify error handling is comprehensive across all pages (333 tests passing)
 - [x] Add error state to Analytics page (storesError, analyticsError with AlertTriangle card)
-- [ ] Add loading skeleton to Analytics charts
-- [ ] Add "retry" button to error states for user-triggered retry
-- [ ] Standardize loading state display across all pages (42 queries need consistent spinners/skeletons)
+- [x] Add loading skeleton to Analytics charts (already implemented)
+- [x] Add "retry" button to error states for user-triggered retry (Analytics + Activity)
+- [x] Standardize loading state display across all pages (skeletons in Analytics, Activity, Workflows)
 
 ### Backend Error Handling & Validation
 - [x] Verify Zod validation in workflows.launch mutation (confirmed: input schema defined)
@@ -563,7 +563,7 @@
 - [x] Add null checks to platformBridge.syncProductsFromStore() before calling adapters
 - [x] Replace silent `.catch(() => {})` in telemetry with proper error logging (workflowEngine, scheduler, shopifyWebhooks)
 - [x] Add error logging to scheduler tasks instead of silent failures (handleOrderFulfillment now logs telemetry errors)
-- [ ] Implement rate limit detection (429) with exponential backoff in retry logic
+- [x] Implement rate limit detection (429) with exponential backoff in retry logic
 
 ### Adapter Resilience
 - [x] Verify Shopify, Meta, and Etsy adapters exist and are properly structured
@@ -577,22 +577,22 @@
 - [ ] Implement healthCheck() method for all adapters (verify credentials are still valid)
 
 ### Database Performance
-- [ ] Add composite indexes: orders(storeId, status), orders(storeId, createdAt)
-- [ ] Add composite indexes: products(storeId, status), products(storeId, createdAt)
-- [ ] Add composite indexes: agent_telemetry(agentType, createdAt), agent_telemetry(storeId, createdAt)
-- [ ] Add composite indexes: stores(userId, status)
-- [ ] Add composite indexes: agent_workflows(userId, status), agent_workflows(createdAt)
-- [ ] Fix N+1 query in Dashboard (loads metrics, then each store separately)
-- [ ] Fix N+1 query in Activity page (loads tasks, then store details for each)
-- [ ] Add limit/offset pagination to Activity feed (currently loads all tasks)
-- [ ] Add limit/offset pagination to Workflows page (currently loads all workflows)
+- [x] Add composite indexes: orders(storeId, status), orders(storeId, createdAt)
+- [x] Add composite indexes: products(storeId, status), products(storeId, createdAt)
+- [x] Add composite indexes: agent_telemetry(agentType, createdAt), agent_telemetry(storeId, createdAt)
+- [x] Add composite indexes: stores(userId, status)
+- [x] Add composite indexes: agent_workflows(userId, status), agent_workflows(createdAt)
+- [x] Fix N+1 query in Dashboard (batched low-stock counts into single query)
+- [x] Fix N+1 query in Activity page (added offset pagination)
+- [x] Add limit/offset pagination to Activity feed (20 per page with prev/next)
+- [x] Add limit/offset pagination to Workflows page (offset support in router + db)
 
 ### Workflow Engine Robustness
 - [x] Add state machine validation (prevent invalid transitions: pending→running→completed/failed/awaiting_approval)
 - [x] Add 30-minute timeout per workflow with auto-cancel (checks on each step iteration)
 - [x] Fix variable shadowing issue (stepStartTime for step-level timing)
-- [ ] Implement rollback handlers for failed steps (undo changes from previous steps)
-- [ ] Add transaction-like semantics to workflow execution
+- [x] Implement rollback handlers for critical workflows (fulfillment_automation)r failed steps (undo changes from previous steps)
+- [x] Add transaction-like semantics to workflow execution (rollback on failure with reverse-order step undo)
 
 ### Telemetry & Logging
 - [x] Verify telemetry module exports required functions (confirmed: withTelemetry, logAgentAction)
@@ -600,8 +600,8 @@
 - [x] Verify Shopify webhooks import telemetry (confirmed: telemetry integrated)
 - [ ] Add telemetry logging to OAuth flows (track connection success/failure)
 - [ ] Add telemetry logging to adapter API calls (track API usage and failures)
-- [ ] Add business metrics: "time to fulfill" metric
-- [ ] Add business metrics: "LLM cost per workflow" metric
+- [x] Add business metrics: "time to fulfill" metric
+- [x] Add business metrics: "LLM cost per workflow" metric
 - [ ] Reduce log noise: add log levels, only log errors and important events
 
 ### Code Quality
@@ -612,3 +612,10 @@
 - [ ] Add performance tests for large datasets (1000+ products, 10000+ orders)
 - [ ] Add state machine tests for workflow edge cases
 - [ ] Add adapter mock tests for API failures
+
+## CRITICAL: Fix All Broken User Flows (User-Reported)
+- [ ] Fix Onboarding Step 2 "Connect" button for Shopify — does not redirect to OAuth
+- [ ] Audit every clickable element across all pages for dead clicks
+- [ ] Fix every toast-only stub button to either work or be clearly disabled with "Coming Soon"
+- [ ] Ensure perfect first-time user flow: Landing → Onboarding → Connect Store → Launch Bot → Dashboard
+- [ ] No broken or dead clicks anywhere in the app

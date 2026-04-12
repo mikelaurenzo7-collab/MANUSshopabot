@@ -48,7 +48,8 @@ export const workflowRouter = router({
       agentType: z.enum(["architect", "merchant", "hypeman"]).optional(),
       status: z.string().optional(),
       storeId: z.number().optional(),
-      limit: z.number().optional(),
+      limit: z.number().default(20),
+      offset: z.number().default(0),
     }).optional())
     .query(async ({ ctx, input }) => {
       return getWorkflowsByUser(ctx.user.id, input ?? {});

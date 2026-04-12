@@ -33,27 +33,29 @@ export const dashboardRouter = router({
     const stores = await db.getStoresByUser(userId);
     const activeStores = stores.filter(s => s.status === "active");
 
-    // Aggregate per-store metrics
-    const storeMetrics = await Promise.all(
-      activeStores.map(async (store) => {
-        const metrics = await db.getDashboardMetrics(store.id);
-        const products = await db.getProductsByStore(store.id);
-        const lowStock = products.filter((p: any) => p.stockLevel !== null && p.lowStockThreshold !== null && p.stockLevel <= p.lowStockThreshold);
-        return {
-          storeId: store.id,
-          storeName: store.name,
-          platform: store.platform,
-          status: store.status,
-          revenue: metrics.totalRevenue ?? 0,
-          orders: metrics.totalOrders ?? 0,
-          products: metrics.activeProducts ?? 0,
-          lowStockCount: lowStock.length,
-          conversionRate: metrics.totalOrders && metrics.activeProducts
-            ? Math.round((metrics.totalOrders / Math.max(metrics.activeProducts, 1)) * 100) / 100
-            : 0,
-        };
-      })
-    );
+    // Batch: fetch all metrics and low-stock counts in parallel (2 queries total instead of 2*N)
+    const [allMetrics, allLowStockCounts] = await Promise.all([
+      Promise.all(activeStores.map(s => db.getDashboardMetrics(s.id))),
+      db.getLowStockCountsByStores(activeStores.map(s => s.id)),
+    ]);
+
+    const storeMetrics = activeStores.map((store, i) => {
+      const metrics = allMetrics[i];
+      const lowStockCount = allLowStockCounts[store.id] ?? 0;
+      return {
+        storeId: store.id,
+        storeName: store.name,
+        platform: store.platform,
+        status: store.status,
+        revenue: metrics.totalRevenue ?? 0,
+        orders: metrics.totalOrders ?? 0,
+        products: metrics.activeProducts ?? 0,
+        lowStockCount,
+        conversionRate: metrics.totalOrders && metrics.activeProducts
+          ? Math.round((metrics.totalOrders / Math.max(metrics.activeProducts, 1)) * 100) / 100
+          : 0,
+      };
+    });
 
     // Cross-store aggregates
     const totalRevenue = storeMetrics.reduce((sum, s) => sum + s.revenue, 0);

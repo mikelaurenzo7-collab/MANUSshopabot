@@ -2,6 +2,7 @@
  * WooCommerce Platform Adapter
  * Uses @woocommerce/woocommerce-rest-api for REST API v3 access.
  * Connects via Consumer Key + Consumer Secret (API key auth).
+ * Rate-limited with exponential backoff on 429 responses.
  */
 
 import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
@@ -17,6 +18,9 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
+
+const limiter = platformRateLimiters.woocommerce;
 
 export class WooCommerceAdapter implements EcommercePlatformAdapter {
   readonly platform = "woocommerce";
@@ -32,9 +36,15 @@ export class WooCommerceAdapter implements EcommercePlatformAdapter {
     });
   }
 
-  async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
+  /** Rate-limited API call wrapper */
+  private async callApi<T>(credentials: AdapterCredentials, fn: (api: WooCommerceRestApi) => Promise<T>): Promise<T> {
+    await limiter.acquire();
     const api = this.getClient(credentials);
-    const response = await api.get("system_status");
+    return withRetry(() => fn(api), { maxRetries: 3, initialDelayMs: 1000 });
+  }
+
+  async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
+    const response = await this.callApi(credentials, (api) => api.get("system_status"));
     const data = response.data;
     return {
       platformId: data.environment?.site_url || credentials.storeUrl || "unknown",
@@ -47,79 +57,78 @@ export class WooCommerceAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
-    const api = this.getClient(credentials);
-    const response = await api.get("products", {
-      per_page: params?.limit || 50,
-      page: params?.page || 1,
-      status: params?.status || "publish",
-    });
+    const response = await this.callApi(credentials, (api) =>
+      api.get("products", {
+        per_page: params?.limit || 50,
+        page: params?.page || 1,
+        status: params?.status || "publish",
+      })
+    );
     return (response.data || []).map((p: any) => this.mapProduct(p));
   }
 
   async getProduct(credentials: AdapterCredentials, productId: string): Promise<PlatformProduct> {
-    const api = this.getClient(credentials);
-    const response = await api.get(`products/${productId}`);
+    const response = await this.callApi(credentials, (api) => api.get(`products/${productId}`));
     return this.mapProduct(response.data);
   }
 
   async createProduct(credentials: AdapterCredentials, product: CreateProductInput): Promise<PlatformProduct> {
-    const api = this.getClient(credentials);
-    const response = await api.post("products", {
-      name: product.title,
-      description: product.description,
-      regular_price: (product.priceCents / 100).toFixed(2),
-      sale_price: product.comparePriceCents ? (product.comparePriceCents / 100).toFixed(2) : undefined,
-      sku: product.sku,
-      images: product.imageUrl ? [{ src: product.imageUrl }] : [],
-      categories: product.category ? [{ name: product.category }] : [],
-      manage_stock: true,
-      stock_quantity: product.stockLevel || 0,
-      status: "draft",
-    });
+    const response = await this.callApi(credentials, (api) =>
+      api.post("products", {
+        name: product.title,
+        description: product.description,
+        regular_price: (product.priceCents / 100).toFixed(2),
+        sale_price: product.comparePriceCents ? (product.comparePriceCents / 100).toFixed(2) : undefined,
+        sku: product.sku,
+        images: product.imageUrl ? [{ src: product.imageUrl }] : [],
+        categories: product.category ? [{ name: product.category }] : [],
+        manage_stock: true,
+        stock_quantity: product.stockLevel || 0,
+        status: "draft",
+      })
+    );
     return this.mapProduct(response.data);
   }
 
   async updateProduct(credentials: AdapterCredentials, productId: string, updates: UpdateProductInput): Promise<PlatformProduct> {
-    const api = this.getClient(credentials);
     const body: any = {};
     if (updates.title) body.name = updates.title;
     if (updates.description) body.description = updates.description;
     if (updates.priceCents !== undefined) body.regular_price = (updates.priceCents / 100).toFixed(2);
     if (updates.stockLevel !== undefined) body.stock_quantity = updates.stockLevel;
     if (updates.status) body.status = updates.status === "active" ? "publish" : updates.status;
-    const response = await api.put(`products/${productId}`, body);
+    const response = await this.callApi(credentials, (api) => api.put(`products/${productId}`, body));
     return this.mapProduct(response.data);
   }
 
   async deleteProduct(credentials: AdapterCredentials, productId: string): Promise<void> {
-    const api = this.getClient(credentials);
-    await api.delete(`products/${productId}`, { force: true });
+    await this.callApi(credentials, (api) => api.delete(`products/${productId}`, { force: true }));
   }
 
   async listOrders(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformOrder[]> {
-    const api = this.getClient(credentials);
-    const response = await api.get("orders", {
-      per_page: params?.limit || 50,
-      page: params?.page || 1,
-    });
+    const response = await this.callApi(credentials, (api) =>
+      api.get("orders", {
+        per_page: params?.limit || 50,
+        page: params?.page || 1,
+      })
+    );
     return (response.data || []).map((o: any) => this.mapOrder(o));
   }
 
   async getOrder(credentials: AdapterCredentials, orderId: string): Promise<PlatformOrder> {
-    const api = this.getClient(credentials);
-    const response = await api.get(`orders/${orderId}`);
+    const response = await this.callApi(credentials, (api) => api.get(`orders/${orderId}`));
     return this.mapOrder(response.data);
   }
 
   async fulfillOrder(credentials: AdapterCredentials, orderId: string, fulfillment: FulfillmentInput): Promise<void> {
-    const api = this.getClient(credentials);
-    // Update order status to completed + add tracking note
-    await api.put(`orders/${orderId}`, {
-      status: "completed",
-      customer_note: fulfillment.trackingNumber
-        ? `Tracking: ${fulfillment.trackingNumber}${fulfillment.carrier ? ` via ${fulfillment.carrier}` : ""}`
-        : "Order fulfilled",
-    });
+    await this.callApi(credentials, (api) =>
+      api.put(`orders/${orderId}`, {
+        status: "completed",
+        customer_note: fulfillment.trackingNumber
+          ? `Tracking: ${fulfillment.trackingNumber}${fulfillment.carrier ? ` via ${fulfillment.carrier}` : ""}`
+          : "Order fulfilled",
+      })
+    );
   }
 
   async getInventory(credentials: AdapterCredentials, productId: string): Promise<InventoryLevel> {
@@ -131,11 +140,12 @@ export class WooCommerceAdapter implements EcommercePlatformAdapter {
   }
 
   async updateInventory(credentials: AdapterCredentials, productId: string, quantity: number): Promise<void> {
-    const api = this.getClient(credentials);
-    await api.put(`products/${productId}`, {
-      manage_stock: true,
-      stock_quantity: quantity,
-    });
+    await this.callApi(credentials, (api) =>
+      api.put(`products/${productId}`, {
+        manage_stock: true,
+        stock_quantity: quantity,
+      })
+    );
   }
 
   async getStoreInfo(credentials: AdapterCredentials): Promise<StoreInfo> {
@@ -195,6 +205,16 @@ export class WooCommerceAdapter implements EcommercePlatformAdapter {
       case "refunded": return "refunded";
       case "shipped": return "shipped";
       default: return "pending";
+    }
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
     }
   }
 }

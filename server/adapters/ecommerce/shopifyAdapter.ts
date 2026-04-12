@@ -16,6 +16,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 export class ShopifyAdapter implements EcommercePlatformAdapter {
   readonly platform = "shopify";
@@ -36,18 +37,23 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
 
   private async shopifyFetch(url: string, headers: Record<string, string>, options?: { method?: string; body?: string }) {
     const { default: axios } = await import("axios");
-    try {
-      const response = await axios({
-        url,
-        headers,
-        method: (options?.method || "GET") as any,
-        data: options?.body ? JSON.parse(options.body) : undefined,
-      });
-      return response.data;
-    } catch (err: any) {
-      const msg = err.response?.data?.errors || err.message;
-      throw new Error(`Shopify API error: ${JSON.stringify(msg)}`);
-    }
+    await platformRateLimiters.shopify.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url,
+          headers,
+          method: (options?.method || "GET") as any,
+          data: options?.body ? JSON.parse(options.body) : undefined,
+        });
+        return response.data;
+      } catch (err: any) {
+        // Re-throw with status for rate limiter detection
+        if (err.response?.status === 429) throw err;
+        const msg = err.response?.data?.errors || err.message;
+        throw new Error(`Shopify API error: ${JSON.stringify(msg)}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
@@ -291,6 +297,16 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
       case "refunded": return "refunded";
       case "voided": return "cancelled";
       default: return "pending";
+    }
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
     }
   }
 }

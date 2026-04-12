@@ -45,6 +45,8 @@ export interface WorkflowStepDefinition {
   requiresApproval?: boolean;
   input?: Record<string, any>;
   handler?: (context: StepContext) => Promise<any>;
+  /** Optional rollback handler — called when a later step fails to undo this step's side effects */
+  rollback?: (context: StepContext, output: any) => Promise<void>;
 }
 
 export interface WorkflowDefinition {
@@ -316,6 +318,29 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
       }).catch((telemetryErr: any) => {
         console.error(`[Workflow] Failed to log telemetry for failed step ${i}:`, telemetryErr.message);
       });
+
+      // Attempt rollback of previously completed steps (reverse order)
+      for (let r = i - 1; r >= 0; r--) {
+        const rollbackDef = stepDefinitions[r];
+        if (rollbackDef.rollback) {
+          try {
+            const rollbackCtx: StepContext = {
+              workflowId,
+              stepId: dbSteps[r].id,
+              stepIndex: r,
+              userId,
+              storeId: workflow.storeId ?? undefined,
+              input: { ...(dbSteps[r].input as Record<string, any> ?? {}), ...(rollbackDef.input ?? {}) },
+              previousOutputs,
+              allStores,
+            };
+            await rollbackDef.rollback(rollbackCtx, previousOutputs[r] ?? {});
+            console.log(`[WorkflowEngine] Rolled back step ${r}: ${rollbackDef.title}`);
+          } catch (rollbackErr: any) {
+            console.error(`[WorkflowEngine] Rollback failed for step ${r} (${rollbackDef.title}):`, rollbackErr.message);
+          }
+        }
+      }
 
       // Fail the entire workflow
       await updateWorkflow(workflowId, {

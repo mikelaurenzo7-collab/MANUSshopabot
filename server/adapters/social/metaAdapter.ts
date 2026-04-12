@@ -17,6 +17,7 @@ import type {
 } from "./types";
 
 import { ENV } from "../../_core/env";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 const GRAPH_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
 
@@ -35,17 +36,21 @@ export class MetaAdapter implements SocialPlatformAdapter {
       access_token: credentials.accessToken,
       ...options?.params,
     });
-    try {
-      const response = await axios({
-        url: `${graphBase}${path}?${params.toString()}`,
-        method: (options?.method || "GET") as any,
-        data: options?.body,
-        headers: { "Content-Type": "application/json" },
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Meta API error: ${err.response?.data?.error?.message || err.message}`);
-    }
+    await platformRateLimiters.meta.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${graphBase}${path}?${params.toString()}`,
+          method: (options?.method || "GET") as any,
+          data: options?.body,
+          headers: { "Content-Type": "application/json" },
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Meta API error: ${err.response?.data?.error?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 2000 });
   }
 
   async verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo> {
@@ -63,7 +68,9 @@ export class MetaAdapter implements SocialPlatformAdapter {
 
   async createPost(credentials: SocialCredentials, post: CreatePostInput): Promise<SocialPost> {
     const pageId = credentials.pageId || credentials.accountId;
-    if (!pageId) throw new Error("Meta pageId required in credentials");
+    if (!pageId) throw new Error("Meta pageId required in credentials. Connect a Facebook Page first in Integrations > Social.");
+    if (!credentials.accessToken) throw new Error("Meta access token is missing or expired. Reconnect your Meta account in Integrations.");
+    if (!post.content || post.content.trim().length === 0) throw new Error("Post content cannot be empty.");
 
     const body: any = { message: post.content };
     if (post.link) body.link = post.link;
@@ -159,7 +166,22 @@ export class MetaAdapter implements SocialPlatformAdapter {
 
   async createAdCampaign(credentials: SocialCredentials, campaign: CreateAdCampaignInput): Promise<AdCampaign> {
     const adAccountId = credentials.adAccountId;
-    if (!adAccountId) throw new Error("Meta adAccountId required for ad campaigns");
+    if (!adAccountId) throw new Error("Meta adAccountId required for ad campaigns. Connect a Meta Ads account first in Integrations.");
+    if (!credentials.accessToken) throw new Error("Meta access token is missing or expired. Reconnect your Meta account in Integrations.");
+    // Budget validation: Meta requires minimum $1/day (100 cents)
+    const dailyBudget = campaign.dailyBudgetCents || Math.floor(campaign.budgetCents / 30);
+    if (dailyBudget < 100) {
+      throw new Error(`Daily budget too low ($${(dailyBudget / 100).toFixed(2)}). Meta Ads requires a minimum of $1.00/day.`);
+    }
+    if (campaign.budgetCents < 500) {
+      throw new Error(`Total budget too low ($${(campaign.budgetCents / 100).toFixed(2)}). Minimum recommended budget is $5.00 for meaningful results.`);
+    }
+    if (!campaign.name || campaign.name.trim().length === 0) {
+      throw new Error("Campaign name is required.");
+    }
+    if (!campaign.targetUrl) {
+      throw new Error("Target URL is required for ad campaigns.");
+    }
 
     // Step 1: Create campaign
     const campaignData = await this.graphFetch(`/act_${adAccountId}/campaigns`, credentials, {
@@ -289,5 +311,15 @@ export class MetaAdapter implements SocialPlatformAdapter {
       sales: "PRODUCT_CATALOG_SALES",
     };
     return map[objective] || "LINK_CLICKS";
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

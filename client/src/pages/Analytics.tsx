@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import {
   BarChart3,
   TrendingUp,
@@ -14,6 +15,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import {
   AreaChart,
@@ -35,6 +37,7 @@ const CHART_COLORS = ["#a78bfa", "#22d3ee", "#fbbf24", "#f87171", "#34d399", "#8
 export default function AnalyticsPage() {
   const [selectedStore, setSelectedStore] = useState<string>("all");
 
+  const utils = trpc.useUtils();
   const { data: stores, error: storesError } = trpc.stores.list.useQuery();
   const { data: analytics, isLoading, error: analyticsError } = trpc.analytics.overview.useQuery({
     storeId: selectedStore !== "all" ? Number(selectedStore) : undefined,
@@ -84,8 +87,22 @@ export default function AnalyticsPage() {
             <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-red-400">Analytics Error</p>
-              <p className="text-xs text-red-400/70 mt-1">Failed to load analytics data. Retrying...</p>
+              <p className="text-xs text-red-400/70 mt-1">
+                {storesError?.message || analyticsError?.message || "Failed to load analytics data."}
+              </p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
+              onClick={() => {
+                utils.stores.list.invalidate();
+                utils.analytics.overview.invalidate();
+              }}
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Retry
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -197,6 +214,11 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-semibold text-foreground">Revenue Trend (30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
+            {isLoading ? (
+              <div className="h-64 flex flex-col gap-2">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData}>
@@ -218,6 +240,7 @@ export default function AnalyticsPage() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            )}
           </CardContent>
         </Card>
 
@@ -227,6 +250,13 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-semibold text-foreground">Traffic Sources</CardTitle>
           </CardHeader>
           <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-48 w-full rounded-lg" />
+                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-4 w-full" />)}
+              </div>
+            ) : (
+            <>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -260,6 +290,8 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -270,6 +302,11 @@ export default function AnalyticsPage() {
           <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="h-52">
+              <Skeleton className="h-full w-full rounded-lg" />
+            </div>
+          ) : (
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topProducts} layout="vertical">
@@ -284,6 +321,7 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </CardContent>
       </Card>
     </div>

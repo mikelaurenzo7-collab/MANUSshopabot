@@ -2,6 +2,7 @@
  * Amazon Selling Partner (SP-API) Adapter
  * Uses amazon-sp-api package for SP-API access.
  * Handles listings, orders, inventory, and fulfillment.
+ * Rate-limited with exponential backoff on 429 responses.
  */
 
 import type {
@@ -16,6 +17,9 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
+
+const limiter = platformRateLimiters.amazon;
 
 export class AmazonAdapter implements EcommercePlatformAdapter {
   readonly platform = "amazon";
@@ -34,12 +38,20 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
     });
   }
 
-  async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
+  /** Rate-limited API call wrapper */
+  private async callApi(credentials: AdapterCredentials, fn: (client: any) => Promise<any>): Promise<any> {
+    await limiter.acquire();
     const client = await this.getClient(credentials);
-    const result = await client.callAPI({
-      operation: "getMarketplaceParticipations",
-      endpoint: "sellers",
-    });
+    return withRetry(() => fn(client), { maxRetries: 3, initialDelayMs: 1000 });
+  }
+
+  async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getMarketplaceParticipations",
+        endpoint: "sellers",
+      })
+    );
     const participation = result?.[0];
     return {
       platformId: credentials.sellerId || participation?.seller?.sellerId || "amazon",
@@ -51,36 +63,38 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
-    const client = await this.getClient(credentials);
-    const result = await client.callAPI({
-      operation: "searchCatalogItems",
-      endpoint: "catalogItems",
-      query: {
-        marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
-        keywords: ["*"],
-        includedData: ["summaries", "attributes"],
-      },
-    });
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "searchCatalogItems",
+        endpoint: "catalogItems",
+        query: {
+          marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
+          keywords: ["*"],
+          includedData: ["summaries", "attributes"],
+        },
+      })
+    );
     return (result?.items || []).slice(0, params?.limit || 50).map((item: any) => this.mapProduct(item));
   }
 
   async getProduct(credentials: AdapterCredentials, productId: string): Promise<PlatformProduct> {
-    const client = await this.getClient(credentials);
-    const result = await client.callAPI({
-      operation: "getCatalogItem",
-      endpoint: "catalogItems",
-      path: { asin: productId },
-      query: {
-        marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
-        includedData: ["summaries", "attributes"],
-      },
-    });
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getCatalogItem",
+        endpoint: "catalogItems",
+        path: { asin: productId },
+        query: {
+          marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
+          includedData: ["summaries", "attributes"],
+        },
+      })
+    );
     return this.mapProduct(result);
   }
 
-  async createProduct(credentials: AdapterCredentials, product: CreateProductInput): Promise<PlatformProduct> {
+  async createProduct(_credentials: AdapterCredentials, product: CreateProductInput): Promise<PlatformProduct> {
     // Amazon product creation requires complex feed submissions
-    // For now, return a structured draft that can be submitted via Seller Central
+    // Return a structured draft that can be submitted via Seller Central
     return {
       platformId: `draft_${Date.now()}`,
       title: product.title,
@@ -96,106 +110,114 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
   }
 
   async updateProduct(credentials: AdapterCredentials, productId: string, updates: UpdateProductInput): Promise<PlatformProduct> {
-    // Price updates via Listings API
     if (updates.priceCents !== undefined) {
-      const client = await this.getClient(credentials);
-      await client.callAPI({
-        operation: "patchListingsItem",
+      const priceValue = updates.priceCents / 100;
+      await this.callApi(credentials, (client) =>
+        client.callAPI({
+          operation: "patchListingsItem",
+          endpoint: "listings",
+          path: {
+            sellerId: credentials.sellerId || "",
+            sku: productId,
+          },
+          query: { marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"] },
+          body: {
+            productType: "PRODUCT",
+            patches: [{
+              op: "replace",
+              path: "/attributes/purchasable_offer",
+              value: [{ currency: "USD", our_price: [{ schedule: [{ value_with_tax: priceValue }] }] }],
+            }],
+          },
+        })
+      );
+    }
+    return this.getProduct(credentials, productId);
+  }
+
+  async deleteProduct(credentials: AdapterCredentials, productId: string): Promise<void> {
+    await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "deleteListingsItem",
         endpoint: "listings",
         path: {
           sellerId: credentials.sellerId || "",
           sku: productId,
         },
         query: { marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"] },
-        body: {
-          productType: "PRODUCT",
-          patches: [{
-            op: "replace",
-            path: "/attributes/purchasable_offer",
-            value: [{ currency: "USD", our_price: [{ schedule: [{ value_with_tax: updates.priceCents / 100 }] }] }],
-          }],
-        },
-      });
-    }
-    return this.getProduct(credentials, productId);
-  }
-
-  async deleteProduct(credentials: AdapterCredentials, productId: string): Promise<void> {
-    const client = await this.getClient(credentials);
-    await client.callAPI({
-      operation: "deleteListingsItem",
-      endpoint: "listings",
-      path: {
-        sellerId: credentials.sellerId || "",
-        sku: productId,
-      },
-      query: { marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"] },
-    });
+      })
+    );
   }
 
   async listOrders(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformOrder[]> {
-    const client = await this.getClient(credentials);
     const since = params?.since || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const result = await client.callAPI({
-      operation: "getOrders",
-      endpoint: "orders",
-      query: {
-        MarketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
-        CreatedAfter: since.toISOString(),
-        MaxResultsPerPage: params?.limit || 50,
-      },
-    });
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getOrders",
+        endpoint: "orders",
+        query: {
+          MarketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
+          CreatedAfter: since.toISOString(),
+          MaxResultsPerPage: params?.limit || 50,
+        },
+      })
+    );
     return (result?.Orders || []).map((o: any) => this.mapOrder(o));
   }
 
   async getOrder(credentials: AdapterCredentials, orderId: string): Promise<PlatformOrder> {
-    const client = await this.getClient(credentials);
-    const result = await client.callAPI({
-      operation: "getOrder",
-      endpoint: "orders",
-      path: { orderId },
-    });
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getOrder",
+        endpoint: "orders",
+        path: { orderId },
+      })
+    );
     return this.mapOrder(result);
   }
 
   async fulfillOrder(credentials: AdapterCredentials, orderId: string, fulfillment: FulfillmentInput): Promise<void> {
-    const client = await this.getClient(credentials);
     // Get order items first
-    const itemsResult = await client.callAPI({
-      operation: "getOrderItems",
-      endpoint: "orders",
-      path: { orderId },
-    });
+    const itemsResult = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getOrderItems",
+        endpoint: "orders",
+        path: { orderId },
+      })
+    );
     const items = itemsResult?.OrderItems || [];
 
-    await client.callAPI({
-      operation: "submitFeed",
-      endpoint: "feeds",
-      body: {
-        feedType: "POST_ORDER_FULFILLMENT_DATA",
-        marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
-        inputFeedDocument: JSON.stringify({
-          orderId,
-          trackingNumber: fulfillment.trackingNumber,
-          carrier: fulfillment.carrier || "Other",
-          items: items.map((i: any) => ({ orderItemId: i.OrderItemId, quantity: i.QuantityOrdered })),
-        }),
-      },
-    });
+    await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "submitFeed",
+        endpoint: "feeds",
+        body: {
+          feedType: "POST_ORDER_FULFILLMENT_DATA",
+          marketplaceIds: [credentials.marketplaceId || "ATVPDKIKX0DER"],
+          inputFeedDocument: JSON.stringify({
+            orderId,
+            trackingNumber: fulfillment.trackingNumber,
+            carrier: fulfillment.carrier || "Other",
+            items: items.map((i: any) => ({ orderItemId: i.OrderItemId, quantity: i.QuantityOrdered })),
+          }),
+        },
+      })
+    );
   }
 
   async getInventory(credentials: AdapterCredentials, productId: string): Promise<InventoryLevel> {
-    const client = await this.getClient(credentials);
-    const result = await client.callAPI({
-      operation: "getInventorySummaries",
-      endpoint: "fba/inventory",
-      query: {
-        details: true,
-        granularityType: "Marketplace",
-        granularityId: credentials.marketplaceId || "ATVPDKIKX0DER",
-        sellerSkus: [productId],
-      },
-    });
+    const result = await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "getInventorySummaries",
+        endpoint: "fba/inventory",
+        query: {
+          details: true,
+          granularityType: "Marketplace",
+          granularityId: credentials.marketplaceId || "ATVPDKIKX0DER",
+          sellerSkus: [productId],
+        },
+      })
+    );
     const summary = result?.inventorySummaries?.[0];
     return {
       productId,
@@ -207,7 +229,6 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
   }
 
   async updateInventory(_credentials: AdapterCredentials, _productId: string, _quantity: number): Promise<void> {
-    // Amazon FBA inventory is managed by Amazon; MFN sellers update via feeds
     throw new Error("Amazon inventory updates must be done via Seller Central or FBA inbound shipments");
   }
 
@@ -221,10 +242,10 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
       platformId: item.asin || String(item.id || ""),
       title: summary.itemName || summary.title || "Unknown Product",
       description: item.attributes?.product_description?.[0]?.value,
-      priceCents: 0, // Price comes from listings, not catalog
+      priceCents: 0,
       imageUrl: summary.mainImage?.link,
       category: summary.productType,
-      stockLevel: 0, // Requires separate inventory call
+      stockLevel: 0,
       status: "active",
     };
   }
@@ -262,6 +283,16 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
       case "Delivered": return "delivered";
       case "Canceled": return "cancelled";
       default: return "pending";
+    }
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
     }
   }
 }

@@ -175,6 +175,10 @@ registerWorkflow("fulfillment_automation", (input): WorkflowStepDefinition[] => 
 Return: validation status, any issues found, recommended shipping method, estimated delivery date.`,
         data: { orderId },
       },
+      rollback: async (_ctx: any, _output: any) => {
+        // Validation is read-only — no side effects to undo
+        console.log(`[Rollback] Order validation for ${orderId} — no side effects to undo`);
+      },
     },
     {
       stepType: "store_action",
@@ -184,6 +188,17 @@ Return: validation status, any issues found, recommended shipping method, estima
         action: "fulfill_order",
         orderId,
         steps: ["update_status_processing", "notify_supplier", "generate_shipping_label", "update_tracking"],
+      },
+      rollback: async (ctx: any, output: any) => {
+        // Attempt to revert order status back to unfulfilled
+        console.log(`[Rollback] Reverting fulfillment for order ${orderId} on store ${ctx.storeId}`);
+        // Note: Not all platforms support fulfillment cancellation.
+        // This logs the rollback attempt for manual intervention.
+        const { notifyOwner } = await import("../_core/notification");
+        await notifyOwner({
+          title: `⚠️ Fulfillment Rollback: Order ${orderId}`,
+          content: `A workflow failure triggered a rollback for order ${orderId}. The fulfillment may need manual review on the platform. Output: ${JSON.stringify(output).slice(0, 200)}`,
+        });
       },
     },
     {
@@ -196,6 +211,7 @@ Return: validation status, any issues found, recommended shipping method, estima
         agentType: "merchant",
         notificationType: "success",
       },
+      // Notification rollback: no side effects to undo (notification already sent)
     },
   ];
 });

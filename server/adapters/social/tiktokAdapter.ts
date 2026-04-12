@@ -5,6 +5,7 @@
  */
 
 import crypto from "crypto";
+import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
@@ -27,44 +28,52 @@ export class TikTokAdapter implements SocialPlatformAdapter {
   private async contentFetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");
     const params = options?.params ? `?${new URLSearchParams(options.params).toString()}` : "";
-    try {
-      const response = await axios({
-        url: `${TIKTOK_CONTENT_BASE}${path}${params}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${credentials.accessToken}`,
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      if (response.data.error?.code !== "ok" && response.data.error?.code !== undefined) {
-        throw new Error(response.data.error.message);
+    await platformRateLimiters.tiktok.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${TIKTOK_CONTENT_BASE}${path}${params}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        if (response.data.error?.code !== "ok" && response.data.error?.code !== undefined) {
+          throw new Error(response.data.error.message);
+        }
+        return response.data.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`TikTok API error: ${err.response?.data?.error?.message || err.message}`);
       }
-      return response.data.data;
-    } catch (err: any) {
-      throw new Error(`TikTok API error: ${err.response?.data?.error?.message || err.message}`);
-    }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   private async adsFetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any }) {
     const { default: axios } = await import("axios");
-    try {
-      const response = await axios({
-        url: `${TIKTOK_ADS_BASE}${path}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          "Access-Token": credentials.accessToken,
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      if (response.data.code !== 0) {
-        throw new Error(response.data.message);
+    await platformRateLimiters.tiktok.acquire();
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${TIKTOK_ADS_BASE}${path}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            "Access-Token": credentials.accessToken,
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        if (response.data.code !== 0) {
+          throw new Error(response.data.message);
+        }
+        return response.data.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`TikTok Ads API error: ${err.response?.data?.message || err.message}`);
       }
-      return response.data.data;
-    } catch (err: any) {
-      throw new Error(`TikTok Ads API error: ${err.response?.data?.message || err.message}`);
-    }
+    }, { maxRetries: 3, initialDelayMs: 1000 });
   }
 
   async verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo> {
@@ -337,5 +346,15 @@ export class TikTokAdapter implements SocialPlatformAdapter {
       const [lo, hi] = r.replace("AGE_", "").split("_").map(Number);
       return (!min || lo >= min) && (!max || hi <= max);
     });
+  }
+
+  async healthCheck(credentials: SocialCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
+    }
   }
 }

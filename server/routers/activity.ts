@@ -7,13 +7,15 @@ export const activityRouter = router({
     .input(z.object({
       agentType: z.enum(["architect", "merchant", "hypeman"]).optional(),
       storeId: z.number().optional(),
-      limit: z.number().min(1).max(200).default(100),
+      limit: z.number().min(1).max(200).default(20),
+      offset: z.number().default(0),
     }).optional())
     .query(async ({ input }) => {
       return db.getAgentTasks({
         agentType: input?.agentType,
         storeId: input?.storeId,
-        limit: input?.limit ?? 100,
+        limit: input?.limit ?? 20,
+        offset: input?.offset ?? 0,
       });
     }),
 });

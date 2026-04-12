@@ -16,6 +16,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { withRetry } from "../../utils/rateLimiter";
 
 const WALMART_API_BASE = "https://marketplace.walmartapis.com/v3";
 
@@ -49,23 +50,26 @@ export class WalmartAdapter implements EcommercePlatformAdapter {
     const token = credentials.accessToken || await this.getAccessToken(credentials);
     const queryString = options?.query ? `?${new URLSearchParams(options.query).toString()}` : "";
 
-    try {
-      const response = await axios({
-        url: `${WALMART_API_BASE}${path}${queryString}`,
-        method: (options?.method || "GET") as any,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "WM_SVC.NAME": "Walmart Marketplace",
-          "WM_QOS.CORRELATION_ID": `bb-${Date.now()}`,
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-        },
-        data: options?.body,
-      });
-      return response.data;
-    } catch (err: any) {
-      throw new Error(`Walmart API error: ${err.response?.data?.errors?.[0]?.message || err.message}`);
-    }
+    return withRetry(async () => {
+      try {
+        const response = await axios({
+          url: `${WALMART_API_BASE}${path}${queryString}`,
+          method: (options?.method || "GET") as any,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "WM_SVC.NAME": "Walmart Marketplace",
+            "WM_QOS.CORRELATION_ID": `bb-${Date.now()}`,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+          },
+          data: options?.body,
+        });
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 429) throw err;
+        throw new Error(`Walmart API error: ${err.response?.data?.errors?.[0]?.message || err.message}`);
+      }
+    }, { maxRetries: 3, initialDelayMs: 2000 });
   }
 
   async verifyConnection(credentials: AdapterCredentials): Promise<StoreInfo> {
@@ -274,6 +278,16 @@ export class WalmartAdapter implements EcommercePlatformAdapter {
       case "Delivered": return "delivered";
       case "Cancelled": return "cancelled";
       default: return "pending";
+    }
+  }
+
+  async healthCheck(credentials: AdapterCredentials): Promise<{ healthy: boolean; message: string; latencyMs: number }> {
+    const start = Date.now();
+    try {
+      await this.verifyConnection(credentials);
+      return { healthy: true, message: "Connection verified", latencyMs: Date.now() - start };
+    } catch (err: any) {
+      return { healthy: false, message: err.message || "Connection failed", latencyMs: Date.now() - start };
     }
   }
 }
