@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,6 @@ import {
   ShoppingCart,
   Users,
   Package,
-  ArrowUpRight,
-  ArrowDownRight,
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
@@ -34,49 +31,136 @@ import {
 
 const CHART_COLORS = ["#a78bfa", "#22d3ee", "#fbbf24", "#f87171", "#34d399", "#818cf8"];
 
+type AnalyticsSnapshot = {
+  date: string;
+  revenue: number;
+  orders: number;
+  visitors: number;
+  conversionRate: number;
+  avgOrderValue: number;
+  topProducts?: unknown;
+  trafficSources?: unknown;
+};
+
+type TrafficSourceDatum = {
+  name: string;
+  value: number;
+  color: string;
+};
+
+type TopProductDatum = {
+  name: string;
+  revenue: number;
+  orders: number;
+};
+
+function EmptyAnalyticsState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="h-full min-h-52 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-secondary/20 px-6 text-center">
+      <Package className="h-8 w-8 text-muted-foreground/60 mb-3" />
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1 max-w-sm">{description}</p>
+    </div>
+  );
+}
+
+function normalizeTrafficSources(value: unknown): TrafficSourceDatum[] {
+  if (!value) return [];
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item, index) => {
+        if (!item || typeof item !== "object") return null;
+        const entry = item as Record<string, unknown>;
+        const rawName = entry.name;
+        const rawValue = entry.value;
+        if (typeof rawName !== "string" || typeof rawValue !== "number") return null;
+        return {
+          name: rawName,
+          value: rawValue,
+          color: CHART_COLORS[index % CHART_COLORS.length],
+        };
+      })
+      .filter((item): item is TrafficSourceDatum => item !== null);
+  }
+
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([, rawValue]) => typeof rawValue === "number")
+      .map(([name, rawValue], index) => ({
+        name,
+        value: rawValue as number,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }));
+  }
+
+  return [];
+}
+
+function normalizeTopProducts(value: unknown): TopProductDatum[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const entry = item as Record<string, unknown>;
+      const rawName = entry.name ?? entry.title;
+      const rawRevenue = entry.revenue;
+      const rawOrders = entry.orders;
+      if (typeof rawName !== "string" || typeof rawRevenue !== "number") return null;
+      return {
+        name: rawName,
+        revenue: rawRevenue,
+        orders: typeof rawOrders === "number" ? rawOrders : 0,
+      };
+    })
+    .filter((item): item is TopProductDatum => item !== null);
+}
+
 export default function AnalyticsPage() {
   const [selectedStore, setSelectedStore] = useState<string>("all");
+  const selectedStoreId = selectedStore !== "all" ? Number(selectedStore) : undefined;
 
   const utils = trpc.useUtils();
   const { data: stores, error: storesError } = trpc.stores.list.useQuery();
   const { data: analytics, isLoading, error: analyticsError } = trpc.analytics.overview.useQuery({
-    storeId: selectedStore !== "all" ? Number(selectedStore) : undefined,
+    storeId: selectedStoreId,
   });
+  const { data: snapshots } = trpc.analytics.snapshots.useQuery(
+    { storeId: selectedStoreId ?? 0, days: 30 },
+    { enabled: selectedStoreId !== undefined }
+  );
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
+  const snapshotSeries = useMemo(() => (snapshots ?? []) as AnalyticsSnapshot[], [snapshots]);
+  const latestSnapshot = snapshotSeries.length > 0 ? snapshotSeries[snapshotSeries.length - 1] : undefined;
 
-  // Generate mock chart data based on analytics
   const revenueData = useMemo(() => {
-    const days = 30;
-    const data = [];
-    const baseRevenue = analytics?.totalRevenue ? analytics.totalRevenue / days : 500;
-    for (let i = days; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      data.push({
-        date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        revenue: Math.round(baseRevenue * (0.7 + Math.random() * 0.6)),
-        orders: Math.round((analytics?.totalOrders || 10) / days * (0.5 + Math.random())),
-      });
-    }
-    return data;
-  }, [analytics]);
+    return snapshotSeries.map((snapshot) => ({
+      date: new Date(snapshot.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      revenue: snapshot.revenue / 100,
+      orders: snapshot.orders,
+    }));
+  }, [snapshotSeries]);
 
-  const trafficSources = useMemo(() => [
-    { name: "Organic Search", value: 35, color: CHART_COLORS[0] },
-    { name: "Social Media", value: 28, color: CHART_COLORS[1] },
-    { name: "Direct", value: 20, color: CHART_COLORS[2] },
-    { name: "Email", value: 12, color: CHART_COLORS[3] },
-    { name: "Referral", value: 5, color: CHART_COLORS[4] },
-  ], []);
+  const trafficSources = useMemo(
+    () => normalizeTrafficSources(latestSnapshot?.trafficSources),
+    [latestSnapshot]
+  );
 
-  const topProducts = useMemo(() => [
-    { name: "Bamboo Desk Organizer", revenue: 4250, orders: 85 },
-    { name: "Minimalist Wall Clock", revenue: 3180, orders: 53 },
-    { name: "Eco Plant Pot Set", revenue: 2890, orders: 72 },
-    { name: "LED Desk Lamp", revenue: 2340, orders: 39 },
-    { name: "Cork Yoga Mat", revenue: 1950, orders: 26 },
-  ], []);
+  const topProducts = useMemo(
+    () => normalizeTopProducts(latestSnapshot?.topProducts),
+    [latestSnapshot]
+  );
+
+  const hasSnapshotData = revenueData.length > 0;
+  const showStoreSelectionHint = selectedStoreId === undefined;
 
   return (
     <div className="space-y-6">
@@ -154,10 +238,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-foreground">
                 ${((analytics?.totalRevenue || 0) / 100).toLocaleString()}
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="h-3 w-3 text-emerald-400" />
-                <span className="text-xs text-emerald-400">+12.5%</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
             </CardContent>
           </Card>
           <Card className="bg-card border-border/50">
@@ -167,10 +248,7 @@ export default function AnalyticsPage() {
                 <ShoppingCart className="h-4 w-4 text-cyan-400" />
               </div>
               <p className="text-2xl font-bold text-foreground">{analytics?.totalOrders || 0}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="h-3 w-3 text-emerald-400" />
-                <span className="text-xs text-emerald-400">+8.3%</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
             </CardContent>
           </Card>
           <Card className="bg-card border-border/50">
@@ -182,10 +260,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-foreground">
                 ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="h-3 w-3 text-emerald-400" />
-                <span className="text-xs text-emerald-400">+3.2%</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
             </CardContent>
           </Card>
           <Card className="bg-card border-border/50">
@@ -197,10 +272,7 @@ export default function AnalyticsPage() {
               <p className="text-2xl font-bold text-foreground">
                 {analytics?.totalOrders ? ((analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10).toFixed(1) : "0.0"}%
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowDownRight className="h-3 w-3 text-destructive" />
-                <span className="text-xs text-destructive">-0.5%</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">Heuristic based on recorded orders and active products</p>
             </CardContent>
           </Card>
         </div>
@@ -218,6 +290,16 @@ export default function AnalyticsPage() {
               <div className="h-64 flex flex-col gap-2">
                 <Skeleton className="h-full w-full rounded-lg" />
               </div>
+            ) : showStoreSelectionHint ? (
+              <EmptyAnalyticsState
+                title="Select a Store for Trend Data"
+                description="Revenue trends are only shown when a specific store has recorded analytics snapshots."
+              />
+            ) : !hasSnapshotData ? (
+              <EmptyAnalyticsState
+                title="No Revenue Snapshots Yet"
+                description="This store does not have 30-day analytics snapshots yet, so trend charts stay empty instead of using simulated values."
+              />
             ) : (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -255,6 +337,16 @@ export default function AnalyticsPage() {
                 <Skeleton className="h-48 w-full rounded-lg" />
                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-4 w-full" />)}
               </div>
+            ) : showStoreSelectionHint ? (
+              <EmptyAnalyticsState
+                title="Store Snapshot Required"
+                description="Traffic-source breakdown comes from the latest analytics snapshot for a selected store."
+              />
+            ) : trafficSources.length === 0 ? (
+              <EmptyAnalyticsState
+                title="No Traffic Source Data"
+                description="The latest analytics snapshot for this store does not contain a traffic-source breakdown yet."
+              />
             ) : (
             <>
             <div className="h-48">
@@ -306,6 +398,16 @@ export default function AnalyticsPage() {
             <div className="h-52">
               <Skeleton className="h-full w-full rounded-lg" />
             </div>
+          ) : showStoreSelectionHint ? (
+            <EmptyAnalyticsState
+              title="Select a Store for Product Ranking"
+              description="Top-product rankings come from a store's latest analytics snapshot rather than placeholder data."
+            />
+          ) : topProducts.length === 0 ? (
+            <EmptyAnalyticsState
+              title="No Top Product Data"
+              description="This store has no product-level revenue data in its latest analytics snapshot yet."
+            />
           ) : (
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">

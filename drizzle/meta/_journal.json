@@ -71,6 +71,34 @@
       "when": 1775999441092,
       "tag": "0009_spotty_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1776001800000,
+      "tag": "0010_fair_firebrand",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1776003600000,
+      "tag": "0011_noble_coordination",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1776005400000,
+      "tag": "0012_quiet_queue",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1776091800000,
+      "tag": "0013_keen_indexes",
+      "breakpoints": true
     }
   ]
 }

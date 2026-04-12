@@ -18,6 +18,9 @@ import {
   analyticsSnapshots, InsertAnalyticsSnapshot,
   platformCredentials, InsertPlatformCredential,
   socialAccounts, InsertSocialAccount,
+  oauthStateTokens, InsertOAuthStateToken,
+  botEvents, InsertBotEvent,
+  jobQueue, InsertJobQueueItem,
   agentWorkflows, InsertAgentWorkflow,
   workflowSteps, InsertWorkflowStep,
   agentTelemetry, InsertAgentTelemetry,
@@ -594,6 +597,13 @@ export async function getSocialAccountsByPlatform(userId: number, platform: stri
     .where(and(eq(socialAccounts.userId, userId), eq(socialAccounts.platform, platform as any)));
 }
 
+export async function getSocialPostById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(socialPosts).where(eq(socialPosts.id, id)).limit(1);
+  return result[0] ?? undefined;
+}
+
 export async function updateSocialAccount(id: number, data: Partial<InsertSocialAccount>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -620,6 +630,157 @@ export async function getConnectedPlatformSummary(userId: number) {
     credentials: credCount?.count ?? 0,
     socialAccounts: socialCount?.count ?? 0,
   };
+}
+
+// ─── OAuth State helpers ───────────────────────────────────────────────────
+
+export async function createOAuthStateToken(data: InsertOAuthStateToken) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(oauthStateTokens).values(data);
+  return { id: result[0].insertId };
+}
+
+export async function getOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify") {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const conditions = [eq(oauthStateTokens.state, state)];
+  if (flowType) conditions.push(eq(oauthStateTokens.flowType, flowType));
+
+  const result = await db.select().from(oauthStateTokens)
+    .where(and(...conditions))
+    .limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function consumeOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify") {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const now = new Date();
+  const conditions = [eq(oauthStateTokens.state, state), gte(oauthStateTokens.expiresAt, now)];
+  if (flowType) conditions.push(eq(oauthStateTokens.flowType, flowType));
+
+  const result = await db.select().from(oauthStateTokens)
+    .where(and(...conditions))
+    .limit(1);
+
+  const token = result[0];
+  if (!token) return undefined;
+
+  await db.delete(oauthStateTokens).where(eq(oauthStateTokens.id, token.id));
+  return token;
+}
+
+export async function deleteExpiredOAuthStateTokens() {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(oauthStateTokens).where(lte(oauthStateTokens.expiresAt, new Date()));
+}
+
+// ─── Bot Event helpers ─────────────────────────────────────────────────────
+
+export async function createBotEvent(data: InsertBotEvent) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(botEvents).values(data);
+  return { id: result[0].insertId };
+}
+
+export async function getPendingBotEvents(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(botEvents)
+    .where(eq(botEvents.status, "pending"))
+    .orderBy(botEvents.createdAt)
+    .limit(limit);
+}
+
+export async function updateBotEvent(id: number, data: Partial<InsertBotEvent>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(botEvents).set(data).where(eq(botEvents.id, id));
+}
+
+// ─── Job Queue helpers ─────────────────────────────────────────────────────
+
+export async function createJob(data: InsertJobQueueItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(jobQueue).values(data);
+  return { id: result[0].insertId };
+}
+
+export async function getJobByDedupeKey(dedupeKey: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(jobQueue).where(eq(jobQueue.dedupeKey, dedupeKey)).limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function getRunnableJobs(limit = 25) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(jobQueue)
+    .where(and(eq(jobQueue.status, "pending"), lte(jobQueue.runAt, new Date())))
+    .orderBy(jobQueue.runAt)
+    .limit(limit);
+}
+
+export async function getJobById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(jobQueue).where(eq(jobQueue.id, id)).limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function updateJob(id: number, data: Partial<InsertJobQueueItem>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(jobQueue).set(data).where(eq(jobQueue.id, id));
+}
+
+export async function getJobQueueStats() {
+  const db = await getDb();
+  if (!db) return { pending: 0, running: 0, completed24h: 0, failed: 0 };
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const [stats] = await db.select({
+    pending: sql<number>`SUM(CASE WHEN ${jobQueue.status} = 'pending' THEN 1 ELSE 0 END)`,
+    running: sql<number>`SUM(CASE WHEN ${jobQueue.status} = 'running' THEN 1 ELSE 0 END)`,
+    completed24h: sql<number>`SUM(CASE WHEN ${jobQueue.status} = 'completed' AND ${jobQueue.completedAt} >= ${since} THEN 1 ELSE 0 END)`,
+    failed: sql<number>`SUM(CASE WHEN ${jobQueue.status} = 'failed' THEN 1 ELSE 0 END)`,
+  }).from(jobQueue);
+
+  return stats ?? { pending: 0, running: 0, completed24h: 0, failed: 0 };
+}
+
+export async function getBotEventStats() {
+  const db = await getDb();
+  if (!db) return { pending: 0, processed24h: 0, failed: 0 };
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const [stats] = await db.select({
+    pending: sql<number>`SUM(CASE WHEN ${botEvents.status} = 'pending' THEN 1 ELSE 0 END)`,
+    processed24h: sql<number>`SUM(CASE WHEN ${botEvents.status} = 'processed' AND ${botEvents.processedAt} >= ${since} THEN 1 ELSE 0 END)`,
+    failed: sql<number>`SUM(CASE WHEN ${botEvents.status} = 'failed' THEN 1 ELSE 0 END)`,
+  }).from(botEvents);
+
+  return stats ?? { pending: 0, processed24h: 0, failed: 0 };
+}
+
+export async function getOAuthStateStats() {
+  const db = await getDb();
+  if (!db) return { active: 0, expired: 0 };
+
+  const now = new Date();
+  const [stats] = await db.select({
+    active: sql<number>`SUM(CASE WHEN ${oauthStateTokens.expiresAt} >= ${now} THEN 1 ELSE 0 END)`,
+    expired: sql<number>`SUM(CASE WHEN ${oauthStateTokens.expiresAt} < ${now} THEN 1 ELSE 0 END)`,
+  }).from(oauthStateTokens);
+
+  return stats ?? { active: 0, expired: 0 };
 }
 
 // ─── Agent Workflow helpers ────────────────────────────────────────────────

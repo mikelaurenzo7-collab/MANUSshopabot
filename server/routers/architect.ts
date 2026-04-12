@@ -4,6 +4,7 @@ import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { pushProductToStore, syncProductsFromStore } from "../engine/platformBridge";
+import { getRenderedStoreContext } from "../utils/userContext";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -30,11 +31,14 @@ export const architectRouter = router({
       });
 
       try {
+        // Fetch personalised store context for smarter recommendations
+        const storeContext = input.storeId ? await getRenderedStoreContext(input.storeId) : "";
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an expert e-commerce niche analyst. Analyze the given niche keyword and provide a comprehensive report. Return a JSON object with these fields:
+              content: `You are an expert e-commerce niche analyst. Analyze the given niche keyword and provide a comprehensive report. ${storeContext ? "Use the store context below to tailor recommendations to this specific merchant's product mix, price range, and past niche exploration." : ""} Return a JSON object with these fields:
 - marketSize: string (estimated market size)
 - competition: string (low/medium/high)
 - trendDirection: string (growing/stable/declining)
@@ -46,7 +50,7 @@ export const architectRouter = router({
 - viabilityScore: number (0-100)
 - summary: string (2-3 sentence executive summary)`
             },
-            { role: "user", content: `Analyze this e-commerce niche: "${input.keyword}"` }
+            { role: "user", content: `${storeContext ? storeContext + "\n\n" : ""}Analyze this e-commerce niche: "${input.keyword}"` }
           ],
           response_format: {
             type: "json_schema",
@@ -118,11 +122,14 @@ export const architectRouter = router({
       });
 
       try {
+        // Fetch personalised store context so catalog matches the user's price tier & categories
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an expert e-commerce product curator. Generate a product catalog for the given niche. Return a JSON object with a "products" array. Each product should have:
+              content: `You are an expert e-commerce product curator. Generate a product catalog for the given niche. ${storeContext ? "Use the store context below to match the merchant's existing price range, margin targets, and product mix. Suggest complementary products that fill gaps in their current catalog." : ""} Return a JSON object with a "products" array. Each product should have:
 - title: string (compelling product name)
 - description: string (persuasive 2-3 sentence description)
 - price: number (retail price in cents, e.g., 2999 for $29.99)
@@ -131,7 +138,7 @@ export const architectRouter = router({
 - sku: string (generated SKU code)
 - supplier: string (suggested supplier name)`
             },
-            { role: "user", content: `Generate ${input.count} products for the "${input.keyword}" niche.` }
+            { role: "user", content: `${storeContext ? storeContext + "\n\n" : ""}Generate ${input.count} products for the "${input.keyword}" niche.` }
           ],
           response_format: {
             type: "json_schema",
@@ -263,12 +270,13 @@ export const architectRouter = router({
       try {
         const store = await db.getStoreById(input.storeId);
         const products = await db.getProductsByStore(input.storeId);
+        const storeContext = await getRenderedStoreContext(input.storeId);
 
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an e-commerce store diagnostics expert. Analyze the store data and provide a health report. Return JSON with:
+              content: `You are an e-commerce store diagnostics expert. Analyze the store data and provide a health report. ${storeContext ? "Use the store context to give specific, actionable advice based on the merchant's actual product mix, revenue, and order patterns." : ""} Return JSON with:
 - overallScore: number (0-100)
 - productHealth: object { activeCount, draftCount, outOfStockCount, avgMargin, issues: string[] }
 - seoHealth: object { score: number, issues: string[], recommendations: string[] }
@@ -279,7 +287,7 @@ export const architectRouter = router({
             },
             {
               role: "user",
-              content: `Store: ${store?.name || "Unknown"} (${store?.platform || "unknown"} platform)\nTotal products: ${products.length}\nProducts data sample: ${JSON.stringify(products.slice(0, 5).map((p: any) => ({ title: p.title, price: p.price, status: p.status, stockLevel: p.stockLevel })))}`
+              content: `${storeContext ? storeContext + "\n\n" : ""}Store: ${store?.name || "Unknown"} (${store?.platform || "unknown"} platform)\nTotal products: ${products.length}\nProducts data sample: ${JSON.stringify(products.slice(0, 5).map((p: any) => ({ title: p.title, price: p.price, status: p.status, stockLevel: p.stockLevel })))}`
             }
           ],
           response_format: {
@@ -335,12 +343,13 @@ export const architectRouter = router({
       try {
         const products = await db.getProductsByStore(input.storeId);
         const targetProducts = products.filter((p: any) => input.productIds.includes(p.id));
+        const storeContext = await getRenderedStoreContext(input.storeId);
 
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a world-class e-commerce copywriter. Rewrite product descriptions to maximize conversions. Tone: ${input.tone}. ${input.seoOptimize ? "Optimize for SEO with natural keyword integration." : ""} Return JSON with a "products" array, each having: id (number), originalTitle (string), optimizedTitle (string), optimizedDescription (string), bulletPoints (array of strings), seoKeywords (array of strings).`
+              content: `You are a world-class e-commerce copywriter. Rewrite product descriptions to maximize conversions. Tone: ${input.tone}. ${input.seoOptimize ? "Optimize for SEO with natural keyword integration." : ""} ${storeContext ? "Use the store context to match the brand's voice, price positioning, and target audience." : ""} Return JSON with a "products" array, each having: id (number), originalTitle (string), optimizedTitle (string), optimizedDescription (string), bulletPoints (array of strings), seoKeywords (array of strings).`
             },
             {
               role: "user",
@@ -412,11 +421,13 @@ export const architectRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a competitive pricing intelligence analyst. Analyze competitor pricing for the given products in the specified niche. Return JSON with:
+              content: `You are a competitive pricing intelligence analyst. Analyze competitor pricing for the given products in the specified niche. ${storeContext ? "Use the store context to factor in the merchant's current price range, margins, and positioning." : ""} Return JSON with:
 - products: array of { productName, ourSuggestedPrice (string), competitorPrices: array of { competitor, price, url }, averageMarketPrice (string), pricePosition (string: "below_market" | "at_market" | "above_market"), recommendation (string) }
 - overallStrategy: string
 - pricingOpportunities: array of strings`

@@ -34,7 +34,10 @@ export const stores = mysqlTable("stores", {
   currency: varchar("currency", { length: 10 }).default("USD"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("stores_user_id_idx").on(table.userId),
+  platformDomainIdx: index("stores_platform_domain_idx").on(table.platform, table.platformDomain),
+}));
 
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = typeof stores.$inferInsert;
@@ -61,7 +64,10 @@ export const products = mysqlTable("products", {
   platformProductId: varchar("platformProductId", { length: 100 }), // platform-agnostic product ID (was shopifyProductId)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("products_store_id_idx").on(table.storeId),
+  storeStatusIdx: index("products_store_status_idx").on(table.storeId, table.status),
+}));
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
@@ -85,7 +91,11 @@ export const orders = mysqlTable("orders", {
   orderData: json("orderData"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("orders_store_id_idx").on(table.storeId),
+  storeStatusIdx: index("orders_store_status_idx").on(table.storeId, table.status),
+  createdAtIdx: index("orders_created_at_idx").on(table.createdAt),
+}));
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
@@ -105,7 +115,10 @@ export const agentTasks = mysqlTable("agent_tasks", {
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("agent_tasks_store_id_idx").on(table.storeId),
+  agentTypeIdx: index("agent_tasks_agent_type_idx").on(table.agentType, table.createdAt),
+}));
 
 export type AgentTask = typeof agentTasks.$inferSelect;
 export type InsertAgentTask = typeof agentTasks.$inferInsert;
@@ -126,7 +139,9 @@ export const approvalQueue = mysqlTable("approval_queue", {
   reviewedAt: timestamp("reviewedAt"),
   reviewNote: text("reviewNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  statusIdx: index("approval_queue_status_idx").on(table.status, table.createdAt),
+}));
 
 export type ApprovalItem = typeof approvalQueue.$inferSelect;
 export type InsertApprovalItem = typeof approvalQueue.$inferInsert;
@@ -149,7 +164,9 @@ export const botConfig = mysqlTable("bot_config", {
   approvalRequired: boolean("approvalRequired").default(false).notNull(), // require human approval for high-impact actions
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userAgentIdx: index("bot_config_user_agent_idx").on(table.userId, table.agentType),
+}));
 
 export type BotConfig = typeof botConfig.$inferSelect;
 export type InsertBotConfig = typeof botConfig.$inferInsert;
@@ -165,7 +182,9 @@ export const nicheReports = mysqlTable("niche_reports", {
   score: int("score"), // 0-100 viability score
   status: mysqlEnum("status", ["generating", "completed", "failed"]).default("generating").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("niche_reports_store_id_idx").on(table.storeId),
+}));
 
 export type NicheReport = typeof nicheReports.$inferSelect;
 export type InsertNicheReport = typeof nicheReports.$inferInsert;
@@ -190,7 +209,9 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   scheduledAt: timestamp("scheduledAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("ad_campaigns_store_id_idx").on(table.storeId),
+}));
 
 export type AdCampaign = typeof adCampaigns.$inferSelect;
 export type InsertAdCampaign = typeof adCampaigns.$inferInsert;
@@ -208,7 +229,9 @@ export const pricingRules = mysqlTable("pricing_rules", {
   productsAffected: int("productsAffected").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("pricing_rules_store_id_idx").on(table.storeId),
+}));
 
 export type PricingRule = typeof pricingRules.$inferSelect;
 export type InsertPricingRule = typeof pricingRules.$inferInsert;
@@ -227,7 +250,9 @@ export const notifications = mysqlTable("notifications", {
   actionUrl: varchar("actionUrl", { length: 500 }),
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userReadIdx: index("notifications_user_id_idx").on(table.userId, table.isRead, table.createdAt),
+}));
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
@@ -244,7 +269,9 @@ export const seoKeywords = mysqlTable("seo_keywords", {
   relevanceScore: int("relevanceScore"),
   status: mysqlEnum("status", ["suggested", "active", "rejected"]).default("suggested").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("seo_keywords_store_id_idx").on(table.storeId),
+}));
 
 export type SeoKeyword = typeof seoKeywords.$inferSelect;
 export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
@@ -264,7 +291,10 @@ export const socialPosts = mysqlTable("social_posts", {
   status: mysqlEnum("status", ["draft", "scheduled", "published", "failed"]).default("draft").notNull(),
   engagement: json("engagement"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("social_posts_store_id_idx").on(table.storeId),
+  scheduledIdx: index("social_posts_scheduled_idx").on(table.status, table.scheduledAt),
+}));
 
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = typeof socialPosts.$inferInsert;
@@ -286,7 +316,9 @@ export const emailCampaigns = mysqlTable("email_campaigns", {
   scheduledAt: timestamp("scheduledAt"),
   sentAt: timestamp("sentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  storeIdIdx: index("email_campaigns_store_id_idx").on(table.storeId),
+}));
 
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailCampaign = typeof emailCampaigns.$inferInsert;
@@ -306,7 +338,9 @@ export const analyticsSnapshots = mysqlTable("analytics_snapshots", {
   topProducts: json("topProducts"),
   trafficSources: json("trafficSources"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  storeDateIdx: index("analytics_snapshots_store_date_idx").on(table.storeId, table.date),
+}));
 
 export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 export type InsertAnalyticsSnapshot = typeof analyticsSnapshots.$inferInsert;
@@ -332,7 +366,10 @@ export const platformCredentials = mysqlTable("platform_credentials", {
   metadata: json("metadata"), // platform-specific extra data
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("platform_creds_user_id_idx").on(table.userId),
+  userPlatformIdx: index("platform_creds_user_platform_idx").on(table.userId, table.platform),
+}));
 
 export type PlatformCredential = typeof platformCredentials.$inferSelect;
 export type InsertPlatformCredential = typeof platformCredentials.$inferInsert;
@@ -359,10 +396,86 @@ export const socialAccounts = mysqlTable("social_accounts", {
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("social_accounts_user_id_idx").on(table.userId),
+  userPlatformIdx: index("social_accounts_user_platform_idx").on(table.userId, table.platform),
+}));
 
 export type SocialAccount = typeof socialAccounts.$inferSelect;
 export type InsertSocialAccount = typeof socialAccounts.$inferInsert;
+
+/**
+ * OAuth state tokens — durable CSRF/PKCE state for OAuth redirects.
+ * Keeps callback continuity in the database instead of process memory.
+ */
+export const oauthStateTokens = mysqlTable("oauth_state_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  state: varchar("state", { length: 255 }).notNull().unique(),
+  flowType: mysqlEnum("flowType", ["ecommerce", "social", "shopify"]).notNull(),
+  userId: int("userId").notNull(),
+  platform: varchar("platform", { length: 50 }).notNull(),
+  storeId: int("storeId"),
+  origin: text("origin").notNull(),
+  returnTo: varchar("returnTo", { length: 255 }),
+  codeVerifier: text("codeVerifier"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  expiresIdx: index("oauth_state_tokens_expires_idx").on(table.expiresAt),
+  flowPlatformIdx: index("oauth_state_tokens_flow_platform_idx").on(table.flowType, table.platform),
+}));
+
+export type OAuthStateToken = typeof oauthStateTokens.$inferSelect;
+export type InsertOAuthStateToken = typeof oauthStateTokens.$inferInsert;
+
+/**
+ * Bot Events — durable cross-bot coordination messages.
+ * Used to hand off opportunities and follow-up actions between agents.
+ */
+export const botEvents = mysqlTable("bot_events", {
+  id: int("id").autoincrement().primaryKey(),
+  fromBot: mysqlEnum("fromBot", ["architect", "merchant", "social"]).notNull(),
+  toBot: mysqlEnum("toBot", ["architect", "merchant", "social", "all"]).notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  userId: int("userId").notNull(),
+  storeId: int("storeId"),
+  payload: json("payload").notNull(),
+  status: mysqlEnum("status", ["pending", "processed", "ignored", "failed"]).default("pending").notNull(),
+  error: text("error"),
+  processedAt: timestamp("processedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  statusCreatedIdx: index("bot_events_status_created_idx").on(table.status, table.createdAt),
+  routingIdx: index("bot_events_routing_idx").on(table.toBot, table.eventType),
+}));
+
+export type BotEvent = typeof botEvents.$inferSelect;
+export type InsertBotEvent = typeof botEvents.$inferInsert;
+
+/**
+ * Job Queue — durable async execution for external operations.
+ * Supports retries, delayed execution, and idempotent dedupe keys.
+ */
+export const jobQueue = mysqlTable("job_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  jobType: varchar("jobType", { length: 100 }).notNull(),
+  dedupeKey: varchar("dedupeKey", { length: 255 }).unique(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  payload: json("payload").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  maxAttempts: int("maxAttempts").default(3).notNull(),
+  runAt: timestamp("runAt").defaultNow().notNull(),
+  lastError: text("lastError"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  statusRunAtIdx: index("job_queue_status_run_at_idx").on(table.status, table.runAt),
+  typeStatusIdx: index("job_queue_type_status_idx").on(table.jobType, table.status),
+}));
+
+export type JobQueueItem = typeof jobQueue.$inferSelect;
+export type InsertJobQueueItem = typeof jobQueue.$inferInsert;
 
 /**
  * Agent Workflows — multi-step pipelines executed by agents.
@@ -392,7 +505,10 @@ export const agentWorkflows = mysqlTable("agent_workflows", {
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userStatusIdx: index("agent_workflows_user_id_idx").on(table.userId, table.status),
+  storeIdIdx: index("agent_workflows_store_id_idx").on(table.storeId),
+}));
 
 export type AgentWorkflow = typeof agentWorkflows.$inferSelect;
 export type InsertAgentWorkflow = typeof agentWorkflows.$inferInsert;
@@ -422,7 +538,9 @@ export const workflowSteps = mysqlTable("workflow_steps", {
   completedAt: timestamp("completedAt"),
   durationMs: int("durationMs"), // execution time in milliseconds
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  workflowStepIdx: index("workflow_steps_workflow_id_idx").on(table.workflowId, table.stepIndex),
+}));
 
 export type WorkflowStep = typeof workflowSteps.$inferSelect;
 export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;
@@ -452,7 +570,10 @@ export const agentTelemetry = mysqlTable("agent_telemetry", {
   durationMs: int("durationMs"),
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  agentTypeIdx: index("agent_telemetry_agent_type_idx").on(table.agentType, table.createdAt),
+  storeIdIdx: index("agent_telemetry_store_id_idx").on(table.storeId),
+}));
 export type AgentTelemetry = typeof agentTelemetry.$inferSelect;
 export type InsertAgentTelemetry = typeof agentTelemetry.$inferInsert;
 

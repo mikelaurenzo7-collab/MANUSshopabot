@@ -5,6 +5,7 @@ import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
+import { getRenderedStoreContext } from "../utils/userContext";
 
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
@@ -27,11 +28,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an expert e-commerce copywriter specializing in ${input.platform} ads. Generate compelling ad copy. Return JSON with:
+              content: `You are an expert e-commerce copywriter specializing in ${input.platform} ads. Generate compelling ad copy. ${storeContext ? "Use the store context to match the brand's voice, reference actual products, and target the right audience for this merchant's price tier." : ""} Return JSON with:
 - headline: string (attention-grabbing headline, max 40 chars)
 - primaryText: string (main ad body, 2-3 sentences)
 - callToAction: string (CTA text)
@@ -41,7 +44,7 @@ export const socialRouter = router({
             },
             {
               role: "user",
-              content: `Product: "${input.productName}"\nDescription: ${input.productDescription || "N/A"}\nPlatform: ${input.platform}\nTone: ${input.tone}`
+              content: `${storeContext ? storeContext + "\n\n" : ""}Product: "${input.productName}"\nDescription: ${input.productDescription || "N/A"}\nPlatform: ${input.platform}\nTone: ${input.tone}`
             }
           ],
           response_format: {
@@ -138,11 +141,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an SEO expert for e-commerce. Suggest high-value keywords. Return JSON with a "keywords" array. Each keyword object should have:
+              content: `You are an SEO expert for e-commerce. Suggest high-value keywords. ${storeContext ? "Use the store context to prioritise keywords relevant to this merchant's actual products and price range." : ""} Return JSON with a "keywords" array. Each keyword object should have:
 - keyword: string
 - volume: number (estimated monthly search volume)
 - difficulty: number (1-100 difficulty score)
@@ -241,11 +246,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a social media expert for e-commerce brands. Generate a ${input.platform} post. Return JSON with:
+              content: `You are a social media expert for e-commerce brands. Generate a ${input.platform} post. ${storeContext ? "Use the store context to craft authentic content that references the merchant's actual products and brand identity." : ""} Return JSON with:
 - content: string (the post text, platform-appropriate length and style)
 - hashtags: array of strings
 - bestTimeToPost: string (suggested posting time)
@@ -318,11 +325,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an email marketing expert for e-commerce. Generate a ${input.campaignType} email campaign. Return JSON with:
+              content: `You are an email marketing expert for e-commerce. Generate a ${input.campaignType} email campaign. ${storeContext ? "Use the store context to personalise copy with the merchant's brand name, top products, and price points." : ""} Return JSON with:
 - subject: string (compelling subject line)
 - preheader: string (email preheader text)
 - body: string (full email body in HTML format, professional and clean)
@@ -558,11 +567,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a conversion copywriter and A/B testing expert. Generate copy variants designed to test specific psychological triggers. Return JSON with:
+              content: `You are a conversion copywriter and A/B testing expert. Generate copy variants designed to test specific psychological triggers. ${storeContext ? "Use the store context to tailor variants to this merchant's audience and product positioning." : ""} Return JSON with:
 - originalCopy: string
 - variants: array of { variant (string), hypothesis (string), psychologicalTrigger (string), expectedLift (string), confidence (string) }
 - testingPlan: object { sampleSize (string), duration (string), successMetric (string), statisticalSignificance (string) }
@@ -620,11 +631,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an SMS marketing expert for e-commerce. Generate compliant, high-converting SMS flows. All messages must be under 160 characters and include opt-out language. Return JSON with:
+              content: `You are an SMS marketing expert for e-commerce. Generate compliant, high-converting SMS flows. All messages must be under 160 characters and include opt-out language. ${storeContext ? "Use the store context to personalise messages with the merchant's brand name and top products." : ""} Return JSON with:
 - flowName: string
 - messages: array of { messageNumber (number), timing (string), content (string), characterCount (number), includesLink (boolean), personalizations (array of strings) }
 - complianceNotes: array of strings
@@ -686,11 +699,13 @@ export const socialRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a social proof and conversion optimization expert. Generate authentic-feeling social proof elements. Return JSON with:
+              content: `You are a social proof and conversion optimization expert. Generate authentic-feeling social proof elements. ${storeContext ? "Use the store context to make proof elements feel specific to this merchant's brand and product line." : ""} Return JSON with:
 - proofType: string
 - elements: array of { content (string), placement (string), trigger (string), format (string) }
 - implementationGuide: string

@@ -16,7 +16,7 @@ import crypto from "crypto";
 import { getDb } from "./db";
 import { stores, orders, products } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { createOrder, updateOrder, getBotConfigs, createAgentTask } from "./db";
+import { createBotEvent, createOrder, updateOrder, getBotConfigs, createAgentTask } from "./db";
 import { launchWorkflow } from "./engine/workflowEngine";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
@@ -229,6 +229,23 @@ async function handleOrderFulfilled(shopDomain: string, payload: any) {
         (err) => console.error("[Telemetry] time_to_fulfill log failed:", err)
       );
     }
+
+    await createBotEvent({
+      fromBot: "merchant",
+      toBot: "social",
+      eventType: "order_fulfilled_review_request",
+      userId: store.userId,
+      storeId: store.id,
+      payload: {
+        orderId: existing[0].id,
+        platformOrderId,
+        orderNumber: payload.order_number ? String(payload.order_number) : undefined,
+        totalAmountCents: existing[0].totalAmount,
+        currency: existing[0].currency || store.currency || "USD",
+        customerName: existing[0].customerName || undefined,
+      },
+      status: "pending",
+    });
   }
 }
 

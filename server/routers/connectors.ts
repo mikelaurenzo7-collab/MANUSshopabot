@@ -5,8 +5,8 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 
 /**
- * PKCE code_verifier store for Etsy OAuth (and Twitter if needed).
- * Keyed by state parameter, auto-expires after 10 minutes.
+ * Legacy in-memory fallback for pre-deployment OAuth callbacks.
+ * New flows persist state in the database.
  */
 export const pkceStore = new Map<string, { codeVerifier: string; timestamp: number }>();
 setInterval(() => {
@@ -17,8 +17,8 @@ setInterval(() => {
 }, 60 * 1000);
 
 /**
- * E-commerce OAuth state store for non-Shopify platforms.
- * Keyed by state parameter, stores userId + storeId + platform.
+ * Legacy in-memory fallback for pre-deployment OAuth callbacks.
+ * New flows persist state in the database.
  */
 export const ecomOAuthStateStore = new Map<string, { userId: number; storeId?: number; platform: string; timestamp: number }>();
 setInterval(() => {
@@ -474,35 +474,36 @@ export const connectorsRouter = router({
 
       // Generate CSRF state parameter with origin encoded
       const crypto = await import("crypto");
-      const nonce = crypto.randomBytes(16).toString("hex");
-      const statePayload = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin, s: input.storeId, t: "ecom" };
-      const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+      const state = crypto.randomBytes(24).toString("hex");
       const redirectUri = `${input.origin}/api/ecommerce/oauth/callback`;
       const scopes = platformConfig.oauthConfig.scopes;
 
-      // Store state for callback verification
-      ecomOAuthStateStore.set(state, {
-        userId: ctx.user.id,
-        storeId: input.storeId,
-        platform: input.platform,
-        timestamp: Date.now(),
-      });
-
       // For Etsy, generate PKCE code_challenge (RFC 7636: S256)
       let url: string;
+      let codeVerifier: string | undefined;
       if (input.platform === "etsy") {
-        const codeVerifier = crypto.randomBytes(32).toString("base64url");
+        codeVerifier = crypto.randomBytes(32).toString("base64url");
         // RFC 7636 requires code_verifier to be 43-128 characters
         if (codeVerifier.length < 43 || codeVerifier.length > 128) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "PKCE code_verifier generation failed: invalid length" });
         }
         const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
-        pkceStore.set(state, { codeVerifier, timestamp: Date.now() });
         url = `https://www.etsy.com/oauth/connect?response_type=code&client_id=${ecomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
       } else {
         // Generic e-commerce OAuth URL (Amazon, eBay, TikTok Shop)
         url = platformConfig.oauthConfig.authUrl("", ecomClientId, scopes, redirectUri, state);
       }
+
+      await db.createOAuthStateToken({
+        state,
+        flowType: "ecommerce",
+        userId: ctx.user.id,
+        platform: input.platform,
+        storeId: input.storeId,
+        origin: input.origin,
+        codeVerifier,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
 
       return { url, platform: input.platform };
     }),
@@ -541,13 +542,20 @@ export const connectorsRouter = router({
         };
       }
 
-      // Generate a random state parameter for CSRF protection
-      // Encode origin in state so callback can reconstruct redirect_uri (no Referer header on OAuth redirects)
+      // Generate a random state parameter for CSRF protection.
+      // Context is persisted in the database so callbacks survive process restarts.
       const crypto = await import("crypto");
-      const nonce = crypto.randomBytes(16).toString("hex");
-      const statePayload: Record<string, any> = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin };
-      if (input.returnTo) statePayload.r = input.returnTo;
-      const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+      const state = crypto.randomBytes(24).toString("hex");
+
+      await db.createOAuthStateToken({
+        state,
+        flowType: "social",
+        userId: ctx.user.id,
+        platform: input.platform,
+        origin: input.origin,
+        returnTo: input.returnTo,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
 
       // Build the redirect URI — callback endpoint on our server
       const redirectUri = `${input.origin}/api/social/oauth/callback`;

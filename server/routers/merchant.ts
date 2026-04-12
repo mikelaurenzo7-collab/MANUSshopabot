@@ -9,6 +9,7 @@ import {
   fulfillOrderOnPlatform,
   checkInventoryAcrossStores,
 } from "../engine/platformBridge";
+import { getRenderedStoreContext } from "../utils/userContext";
 
 export const merchantRouter = router({
   // ─── Inventory ────────────────────────────────────────────────────────
@@ -204,11 +205,13 @@ export const merchantRouter = router({
       });
 
       try {
+        const storeContext = await getRenderedStoreContext(input.storeId);
+
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are an expert e-commerce pricing strategist. Analyze the product and suggest optimal pricing. Return JSON with:
+              content: `You are an expert e-commerce pricing strategist. Analyze the product and suggest optimal pricing. ${storeContext ? "Use the store context to align with the merchant's existing price tier, margin targets, and competitive position." : ""} Return JSON with:
 - suggestedPrice: number (in cents)
 - compareAtPrice: number (in cents, for showing "was" price)
 - strategy: string (brief strategy name)
@@ -218,7 +221,7 @@ export const merchantRouter = router({
             },
             {
               role: "user",
-              content: `Product: "${product.title}"\nCurrent price: $${(product.price / 100).toFixed(2)}\nCost: $${((product.costPrice ?? 0) / 100).toFixed(2)}\nCategory: ${product.category || "General"}\nDescription: ${product.description || "N/A"}`
+              content: `${storeContext ? storeContext + "\n\n" : ""}Product: "${product.title}"\nCurrent price: $${(product.price / 100).toFixed(2)}\nCost: $${((product.costPrice ?? 0) / 100).toFixed(2)}\nCategory: ${product.category || "General"}\nDescription: ${product.description || "N/A"}`
             }
           ],
           response_format: {
@@ -291,12 +294,13 @@ export const merchantRouter = router({
       try {
         const products = await db.getProductsByStore(input.storeId);
         const orders = await db.getOrdersByStore(input.storeId);
+        const storeContext = await getRenderedStoreContext(input.storeId);
 
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a demand forecasting AI for e-commerce. Analyze sales patterns and predict future demand. Return JSON with:
+              content: `You are a demand forecasting AI for e-commerce. Analyze sales patterns and predict future demand. ${storeContext ? "Use the store context to factor in the merchant's actual revenue velocity, order patterns, and low-stock exposure." : ""} Return JSON with:
 - forecasts: array of { productName, currentStock, predictedDemand, recommendedReorder, confidence ("high"|"medium"|"low"), trend ("rising"|"stable"|"declining") }
 - seasonalInsights: array of strings
 - stockoutRisks: array of { product, daysUntilStockout, urgency ("critical"|"warning"|"safe") }
@@ -353,12 +357,13 @@ export const merchantRouter = router({
 
       try {
         const products = await db.getProductsByStore(input.storeId);
+        const storeContext = await getRenderedStoreContext(input.storeId);
 
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a financial analyst specializing in e-commerce unit economics. Analyze product margins and identify profit optimization opportunities. Return JSON with:
+              content: `You are a financial analyst specializing in e-commerce unit economics. Analyze product margins and identify profit optimization opportunities. ${storeContext ? "Use the store context to ground your analysis in actual revenue, order volume, and pricing rules already in play." : ""} Return JSON with:
 - productMargins: array of { product, revenue (string), cost (string), margin (string), marginPercent (number), status ("healthy"|"warning"|"critical") }
 - categoryBreakdown: array of { category, avgMargin (string), totalRevenue (string), recommendation (string) }
 - profitLeaks: array of { issue, estimatedLoss (string), fix (string) }
@@ -420,12 +425,13 @@ export const merchantRouter = router({
       try {
         const orders = await db.getOrdersByStore(input.storeId);
         const products = await db.getProductsByStore(input.storeId);
+        const storeContext = await getRenderedStoreContext(input.storeId);
 
         const llmResult = await invokeLLM({
           messages: [
             {
               role: "system",
-              content: `You are a returns management specialist for e-commerce. Analyze return patterns and identify root causes. Return JSON with:
+              content: `You are a returns management specialist for e-commerce. Analyze return patterns and identify root causes. ${storeContext ? "Use the store context to calibrate your analysis against the merchant's actual order volume and product mix." : ""} Return JSON with:
 - returnRate: string (overall percentage)
 - returnsByReason: array of { reason, count (number), percentage (string), trend (string) }
 - problematicProducts: array of { product, returnRate (string), topReason (string), recommendation (string) }

@@ -66,10 +66,11 @@ function generateNonce(): string {
   return crypto.randomBytes(16).toString("hex");
 }
 
-// In-memory nonce store with storeId for pre-created store records
+/**
+ * Legacy in-memory nonce store — kept as fallback for in-flight OAuth redirects
+ * created before DB persistence was deployed. New flows write to oauthStateTokens table.
+ */
 const nonceStore = new Map<string, { userId: number; storeId?: number; returnTo?: string; timestamp: number }>();
-
-// Clean up expired nonces every 10 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [nonce, data] of Array.from(nonceStore.entries())) {
@@ -115,12 +116,27 @@ export function registerShopifyOAuthRoutes(app: Express) {
       // Store nonce with user ID (and optional storeId) for verification in callback
       const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
       const returnTo = (req.query.returnTo as string) || undefined;
-      nonceStore.set(nonce, { userId: user.id, storeId, returnTo, timestamp: Date.now() });
 
       // Determine the redirect URI based on the request origin
       const protocol = req.headers["x-forwarded-proto"] || req.protocol;
       const host = req.headers["x-forwarded-host"] || req.headers.host;
-      const redirectUri = `${protocol}://${host}/api/shopify/callback`;
+      const origin = `${protocol}://${host}`;
+      const redirectUri = `${origin}/api/shopify/callback`;
+
+      // Persist state in DB for durability across restarts (Manus compatibility)
+      await db.createOAuthStateToken({
+        state: nonce,
+        flowType: "shopify",
+        userId: user.id,
+        platform: "shopify",
+        storeId,
+        origin,
+        returnTo,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
+
+      // Also write to legacy in-memory store for backward compatibility
+      nonceStore.set(nonce, { userId: user.id, storeId, returnTo, timestamp: Date.now() });
 
       const installUrl = `https://${shop}/admin/oauth/authorize?` +
         `client_id=${clientId}` +
@@ -148,13 +164,20 @@ export function registerShopifyOAuthRoutes(app: Express) {
         return;
       }
 
-      // Verify the nonce
-      const nonceData = nonceStore.get(state);
-      if (!nonceData) {
+      // Verify the nonce — try durable DB state first, then legacy in-memory fallback
+      const dbState = await db.consumeOAuthStateToken(state, "shopify");
+      const legacyState = dbState ? undefined : nonceStore.get(state);
+      if (!dbState && !legacyState) {
         res.status(403).json({ error: "Invalid or expired state parameter" });
         return;
       }
-      nonceStore.delete(state);
+      if (legacyState) {
+        nonceStore.delete(state);
+      }
+
+      const nonceData = dbState
+        ? { userId: dbState.userId, storeId: dbState.storeId ?? undefined, returnTo: dbState.returnTo ?? undefined }
+        : legacyState!;
 
       // Verify HMAC signature
       const { clientSecret, clientId } = getShopifyCredentials();

@@ -113,4 +113,21 @@ export const healthRouter = router({
   summary: protectedProcedure.query(async ({ ctx }) => {
     return db.getConnectedPlatformSummary(ctx.user.id);
   }),
+
+  /**
+   * Background systems summary for durable automation layers.
+   */
+  backgroundSystems: protectedProcedure.query(async () => {
+    const [jobQueue, botCoordination, oauthState] = await Promise.all([
+      db.getJobQueueStats(),
+      db.getBotEventStats(),
+      db.getOAuthStateStats(),
+    ]);
+
+    return {
+      jobQueue,
+      botCoordination,
+      oauthState,
+    };
+  }),
 });

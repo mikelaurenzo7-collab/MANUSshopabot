@@ -87,6 +87,7 @@ export default function PlatformHealth() {
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const { data: summary } = trpc.health.summary.useQuery();
+  const { data: backgroundSystems } = trpc.health.backgroundSystems.useQuery(undefined, { refetchInterval: 30000 });
 
   const checkMutation = trpc.health.checkAll.useMutation({
     onSuccess: (data) => {
@@ -182,6 +183,41 @@ export default function PlatformHealth() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {backgroundSystems && (
+        <Card className="border-zinc-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Background Systems
+            </CardTitle>
+            <CardDescription className="text-xs">Durable automation layers running behind Manus and the command center</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-500/5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Job Queue</p>
+              <p className="text-lg font-bold text-violet-400 mt-1">{backgroundSystems.jobQueue.pending} pending</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {backgroundSystems.jobQueue.running} running · {backgroundSystems.jobQueue.failed} failed · {backgroundSystems.jobQueue.completed24h} completed / 24h
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">Bot Coordination</p>
+              <p className="text-lg font-bold text-cyan-400 mt-1">{backgroundSystems.botCoordination.pending} pending</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {backgroundSystems.botCoordination.failed} failed · {backgroundSystems.botCoordination.processed24h} processed / 24h
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">OAuth State</p>
+              <p className="text-lg font-bold text-emerald-400 mt-1">{backgroundSystems.oauthState.active} active</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {backgroundSystems.oauthState.expired} expired tokens awaiting cleanup
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* No Platforms State */}

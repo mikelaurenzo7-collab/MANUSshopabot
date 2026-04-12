@@ -259,9 +259,9 @@ describe("enhanced Merchant Bot capabilities", () => {
   });
 });
 
-// ─── ENHANCED HYPE-MAN BOT ─────────────────────────────────────────────────
+// ─── ENHANCED SOCIAL BOT ────────────────────────────────────────────────────
 
-describe("enhanced Social Bot Bot capabilities", () => {
+describe("enhanced Social Bot capabilities", () => {
   describe("new workflow types", () => {
     it("social has viral_trend_detector workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());

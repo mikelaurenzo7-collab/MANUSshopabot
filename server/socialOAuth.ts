@@ -6,7 +6,7 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { getDb } from "./db";
+import { consumeOAuthStateToken, getDb, getOAuthStateToken } from "./db";
 import { socialAccounts } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
@@ -195,11 +195,15 @@ function parseState(state: string): ParsedState | null {
 async function handleSocialOAuthCallback(req: Request, res: Response) {
   const { code, state, error, error_description } = req.query as Record<string, string>;
 
+  const persistedState = state ? await getOAuthStateToken(state, "social") : undefined;
   const parsed = parseState(state || "");
-  const origin = parsed?.origin || req.headers.origin as string || "";
+  const origin = persistedState?.origin || parsed?.origin || req.headers.origin as string || "";
 
   if (error) {
     console.error(`[SocialOAuth] OAuth error: ${error} - ${error_description}`);
+    if (state) {
+      await consumeOAuthStateToken(state, "social");
+    }
     return res.redirect(`${origin}/integrations?error=${encodeURIComponent(error_description || error)}`);
   }
 
@@ -207,12 +211,23 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
     return res.redirect(`${origin}/integrations?error=missing_code_or_state`);
   }
 
-  if (!parsed) {
+  const consumedState = await consumeOAuthStateToken(state, "social");
+  const effectiveState = consumedState
+    ? {
+        userId: consumedState.userId,
+        platform: consumedState.platform,
+        origin: consumedState.origin,
+        returnTo: consumedState.returnTo ?? undefined,
+      }
+    : parsed;
+
+  if (!effectiveState) {
     return res.redirect(`${origin}/integrations?error=invalid_state`);
   }
 
-  const { userId, platform } = parsed;
-  const redirectUri = `${origin}/api/social/oauth/callback`;
+  const { userId, platform } = effectiveState;
+  const callbackOrigin = effectiveState.origin || origin;
+  const redirectUri = `${callbackOrigin}/api/social/oauth/callback`;
 
   try {
     let tokenData: TokenResponse;
@@ -237,7 +252,7 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
         profile = await fetchPinterestProfile(tokenData.access_token);
         break;
       default:
-        return res.redirect(`${origin}/integrations?error=unsupported_platform`);
+        return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);
     }
 
     const tokenExpiresAt = tokenData.expires_in
@@ -298,9 +313,9 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       output: { accountId: profile.accountId, accountName: profile.accountName, hasRefreshToken: !!tokenData.refresh_token },
       success: true,
     }).catch(err => console.error("[SocialOAuth] Telemetry error:", err.message));
-    const redirectPath = parsed.returnTo || "/integrations";
-    const connectedParam = parsed.returnTo ? `social_connected=${platform}` : `connected=${platform}&account=${encodeURIComponent(profile.accountName)}`;
-    return res.redirect(`${origin}${redirectPath}?${connectedParam}`);
+    const redirectPath = effectiveState.returnTo || "/integrations";
+    const connectedParam = effectiveState.returnTo ? `social_connected=${platform}` : `connected=${platform}&account=${encodeURIComponent(profile.accountName)}`;
+    return res.redirect(`${callbackOrigin}${redirectPath}?${connectedParam}`);
 
   } catch (err: any) {
     console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
@@ -313,8 +328,8 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       success: false,
       errorMessage: err.message,
     }).catch(telErr => console.error("[SocialOAuth] Telemetry error:", telErr.message));
-    const redirectPath = parsed?.returnTo || "/integrations";
-    return res.redirect(`${origin}${redirectPath}?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
+    const redirectPath = effectiveState?.returnTo || "/integrations";
+    return res.redirect(`${callbackOrigin}${redirectPath}?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }
 

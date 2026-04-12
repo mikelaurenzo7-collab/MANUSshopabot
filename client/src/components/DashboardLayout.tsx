@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -45,6 +46,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { ScrollArea } from "./ui/scroll-area";
 
 const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "ShopBOTS";
 const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/shopbots-logo-jtbPJz7S5VtEogc7An2qZH.webp";
@@ -126,6 +128,24 @@ type DashboardLayoutContentProps = {
   setSidebarWidth: (width: number) => void;
 };
 
+function formatRelativeNotificationTime(value: Date | string) {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+
+  if (diffMs < 60_000) return "Just now";
+
+  const diffMinutes = Math.floor(diffMs / 60_000);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString();
+}
+
 function DashboardLayoutContent({
   children,
   setSidebarWidth,
@@ -140,9 +160,30 @@ function DashboardLayoutContent({
   const menuItems = allMenuItems.filter((item) => !item.adminOnly || isAdmin);
   const activeMenuItem = menuItems.find((item) => item.path === location);
   const isMobile = useIsMobile();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
     refetchInterval: 30000,
+  });
+  const { data: notifications, isLoading: notificationsLoading } = trpc.notifications.list.useQuery(
+    { limit: 12 },
+    {
+      refetchInterval: 30000,
+      enabled: notificationsOpen,
+    }
+  );
+  const utils = trpc.useUtils();
+  const markRead = trpc.notifications.markRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
+  });
+  const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
   });
 
   useEffect(() => {
@@ -303,20 +344,118 @@ function DashboardLayoutContent({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9"
-              aria-label="Notifications"
-              onClick={() => setLocation("/activity")}
-            >
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              {(unreadCount ?? 0) > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground border-0">
-                  {unreadCount}
-                </Badge>
-              )}
-            </Button>
+              <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative h-9 w-9"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    {(unreadCount ?? 0) > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-primary-foreground border-0">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[360px] p-0">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                    <DropdownMenuLabel className="p-0 text-sm font-semibold">Notifications</DropdownMenuLabel>
+                    <div className="flex items-center gap-2">
+                      {(unreadCount ?? 0) > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-[11px]"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            markAllRead.mutate();
+                          }}
+                          disabled={markAllRead.isPending}
+                        >
+                          Mark all read
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {notificationsLoading ? (
+                    <div className="p-3 space-y-2">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <div key={index} className="rounded-md border border-border/40 p-3 space-y-2">
+                          <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                          <div className="h-4 w-full rounded bg-muted animate-pulse" />
+                          <div className="h-3 w-32 rounded bg-muted animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : notifications && notifications.length > 0 ? (
+                    <>
+                      <ScrollArea className="max-h-[420px]">
+                        <div className="p-2 space-y-1">
+                          {notifications.map((notification: any) => (
+                            <DropdownMenuItem
+                              key={notification.id}
+                              className="items-start gap-3 rounded-md border border-transparent p-3 focus:bg-secondary/60 cursor-pointer"
+                              onClick={() => {
+                                if (!notification.isRead) {
+                                  markRead.mutate({ id: notification.id });
+                                }
+                                setNotificationsOpen(false);
+                                setLocation(notification.actionUrl || "/activity");
+                              }}
+                            >
+                              <div className="pt-0.5 shrink-0">
+                                <div className={`h-2 w-2 rounded-full ${notification.isRead ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <p className={`text-sm leading-snug ${notification.isRead ? "text-muted-foreground" : "text-foreground font-medium"}`}>
+                                    {notification.title}
+                                  </p>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">
+                                    {formatRelativeNotificationTime(notification.createdAt)}
+                                  </span>
+                                </div>
+                                {notification.message && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                    {notification.message}
+                                  </p>
+                                )}
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <DropdownMenuSeparator />
+                      <div className="p-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-center"
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            setLocation("/activity");
+                          }}
+                        >
+                          View all activity
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-foreground">No notifications yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Bot activity and approval alerts will appear here.
+                      </p>
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
           </div>
         </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>

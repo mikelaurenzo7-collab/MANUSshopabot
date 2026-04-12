@@ -197,15 +197,15 @@ export default function ConfigPage() {
     if (configs && configs.length > 0) {
       const archConf = configs.find((c: any) => c.agentType === "architect");
       const merchConf = configs.find((c: any) => c.agentType === "merchant");
-      const hypeConf = configs.find((c: any) => c.agentType === "social");
+      const socialConf = configs.find((c: any) => c.agentType === "social");
 
       setArchitectEnabled(archConf?.enabled ?? true);
       setMerchantEnabled(merchConf?.enabled ?? true);
-      setSocialEnabled(hypeConf?.enabled ?? true);
+      setSocialEnabled(socialConf?.enabled ?? true);
 
       setArchitectAutonomy((archConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
       setMerchantAutonomy((merchConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
-      setSocialAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
+      setSocialAutonomy((socialConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
 
       setAutoFulfill(merchConf?.autoApprove ?? true);
 
@@ -219,8 +219,8 @@ export default function ConfigPage() {
         setApprovalRequired(archConf.approvalRequired);
       }
 
-      if (hypeConf?.maxBudgetCents) {
-        setMaxDailySpend(String(hypeConf.maxBudgetCents / 100));
+      if (socialConf?.maxBudgetCents) {
+        setMaxDailySpend(String(socialConf.maxBudgetCents / 100));
       }
     }
   }, [configs]);

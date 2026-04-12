@@ -6,7 +6,7 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { getDb } from "./db";
+import { consumeOAuthStateToken, getDb, getOAuthStateToken } from "./db";
 import { platformCredentials } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
@@ -93,7 +93,9 @@ async function exchangeTikTokShopCode(code: string): Promise<TokenResponse> {
 async function handleEcommerceOAuthCallback(req: Request, res: Response) {
   const { code, state, error, error_description } = req.query as Record<string, string>;
 
-  // Parse state to extract origin (encoded during authorization URL generation)
+  const persistedState = state ? await getOAuthStateToken(state, "ecommerce") : undefined;
+
+  // Legacy state parsing fallback for in-flight OAuth redirects created before DB persistence.
   let stateOrigin = "";
   try {
     const decoded = Buffer.from(state || "", "base64url").toString("utf-8");
@@ -101,37 +103,53 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
     if (payload.o) stateOrigin = payload.o;
   } catch { /* ignore */ }
   const origin = stateOrigin || req.headers.origin as string || "";
+  const resolvedOrigin = persistedState?.origin || origin;
 
   if (error) {
     console.error(`[EcomOAuth] OAuth error: ${error} — ${error_description}`);
-    return res.redirect(`${origin}/integrations?error=${encodeURIComponent(error_description || error)}`);
+    if (state) {
+      await consumeOAuthStateToken(state, "ecommerce");
+    }
+    return res.redirect(`${resolvedOrigin}/integrations?error=${encodeURIComponent(error_description || error)}`);
   }
 
   if (!code || !state) {
-    return res.redirect(`${origin}/integrations?error=missing_code_or_state`);
+    return res.redirect(`${resolvedOrigin}/integrations?error=missing_code_or_state`);
   }
 
-  // Verify state from our store
-  const stateData = ecomOAuthStateStore.get(state);
+  // Verify state from durable storage first, then fall back to legacy in-memory state.
+  const stateData = await consumeOAuthStateToken(state, "ecommerce");
+  const legacyStateData = stateData ? undefined : ecomOAuthStateStore.get(state);
   if (!stateData) {
-    return res.redirect(`${origin}/integrations?error=invalid_or_expired_state`);
+    if (!legacyStateData) {
+      return res.redirect(`${resolvedOrigin}/integrations?error=invalid_or_expired_state`);
+    }
   }
-  ecomOAuthStateStore.delete(state);
+  if (legacyStateData) {
+    ecomOAuthStateStore.delete(state);
+  }
 
-  const { userId, storeId, platform } = stateData;
-  const redirectUri = `${origin}/api/ecommerce/oauth/callback`;
+  const effectiveState = stateData ?? legacyStateData;
+  if (!effectiveState) {
+    return res.redirect(`${resolvedOrigin}/integrations?error=invalid_or_expired_state`);
+  }
+  const userId = effectiveState.userId;
+  const storeId = effectiveState.storeId;
+  const platform = effectiveState.platform;
+  const callbackOrigin = stateData?.origin || resolvedOrigin;
+  const redirectUri = `${callbackOrigin}/api/ecommerce/oauth/callback`;
 
   try {
     let tokenData: TokenResponse;
 
     switch (platform) {
       case "etsy": {
-        const pkceData = pkceStore.get(state);
-        if (!pkceData) {
-          return res.redirect(`${origin}/integrations?error=pkce_verifier_missing`);
+        const codeVerifier = stateData?.codeVerifier || pkceStore.get(state)?.codeVerifier;
+        if (!codeVerifier) {
+          return res.redirect(`${callbackOrigin}/integrations?error=pkce_verifier_missing`);
         }
         pkceStore.delete(state);
-        tokenData = await exchangeEtsyCode(code, redirectUri, pkceData.codeVerifier);
+        tokenData = await exchangeEtsyCode(code, redirectUri, codeVerifier);
         break;
       }
       case "amazon":
@@ -144,7 +162,7 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
         tokenData = await exchangeTikTokShopCode(code);
         break;
       default:
-        return res.redirect(`${origin}/integrations?error=unsupported_platform`);
+        return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);
     }
 
     // Calculate token expiry
@@ -213,7 +231,7 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       output: { status: "connected", hasRefreshToken: !!tokenData.refresh_token },
       success: true,
     }).catch(err => console.error("[EcomOAuth] Telemetry error:", err.message));
-    return res.redirect(`${origin}/integrations?connected=${platform}&name=${encodeURIComponent(platformNames[platform] || platform)}`);
+    return res.redirect(`${callbackOrigin}/integrations?connected=${platform}&name=${encodeURIComponent(platformNames[platform] || platform)}`);
 
   } catch (err: any) {
     console.error(`[EcomOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
@@ -227,7 +245,7 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       success: false,
       errorMessage: err.message,
     }).catch(telErr => console.error("[EcomOAuth] Telemetry error:", telErr.message));
-    return res.redirect(`${origin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
+    return res.redirect(`${callbackOrigin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }
 

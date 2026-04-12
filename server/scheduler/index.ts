@@ -18,7 +18,6 @@ import {
   checkInventoryAcrossStores,
   fulfillOrderOnPlatform,
   getCrossPlatformSocialAnalytics,
-  publishSocialPost,
 } from "../engine/platformBridge";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { logAgentAction } from "../telemetry";
@@ -29,6 +28,8 @@ import {
   detectAnomalies,
   processDLQ,
 } from "../engine/eliteOrchestrator";
+import { processPendingBotEvents } from "../engine/botCoordination";
+import { enqueueDueScheduledPosts, processRunnableJobs } from "../engine/jobQueue";
 
 export interface ScheduledTask {
   id: string;
@@ -288,113 +289,16 @@ async function handleAdMonitoring(): Promise<void> {
 }
 
 async function handleScheduledPosts(): Promise<void> {
-  const now = new Date();
-  const duePosts = await db.getDueScheduledPosts(now);
+  const result = await enqueueDueScheduledPosts(new Date());
+  if (result.duePosts > 0) {
+    console.log(`[Scheduler] Enqueued ${result.enqueued} scheduled social publishing jobs from ${result.duePosts} due posts`);
+  }
+}
 
-  for (const post of duePosts) {
-    try {
-      // Resolve the store owner to find the linked social account for this platform
-      const store = await db.getStoreById(post.storeId);
-      if (!store) {
-        console.warn(`[Scheduler] Post #${post.id}: store #${post.storeId} not found, skipping`);
-        continue;
-      }
-
-      // Map DB platform enum to social_accounts platform enum
-      const platformMap: Record<string, string> = {
-        facebook: "meta",
-        meta: "meta",
-        instagram: "instagram",
-        tiktok: "tiktok",
-        twitter: "twitter",
-        pinterest: "pinterest",
-        google_ads: "google_ads",
-      };
-      const socialPlatform = platformMap[post.platform] || post.platform;
-
-      // Find the user's connected social account for this platform
-      const accounts = await db.getSocialAccountsByPlatform(store.userId, socialPlatform);
-      const activeAccount = accounts.find((a: any) => a.status === "active");
-
-      if (!activeAccount) {
-        // No connected account — mark as failed and notify
-        await db.updateSocialPost(post.id, { status: "failed" });
-        await db.createNotification({
-          userId: store.userId,
-          agentType: "social",
-          type: "warning",
-          title: `Scheduled post failed: no active ${post.platform} account`,
-          message: `Post #${post.id} could not be published. Connect a ${post.platform} account in Integrations.`,
-          actionUrl: "/integrations",
-        });
-        await db.createAgentTask({
-          agentType: "social",
-          taskType: "scheduled_post",
-          title: `Failed: no active ${post.platform} account`,
-          description: `Post #${post.id} — no connected ${post.platform} account for user #${store.userId}`,
-          status: "failed",
-          storeId: post.storeId,
-        });
-        continue;
-      }
-
-      // Build the post input from the stored post data
-      const postInput = {
-        content: post.content || "",
-        imageUrl: post.imageUrl || undefined,
-        metadata: typeof post.engagement === "object" && post.engagement !== null
-          ? (post.engagement as Record<string, any>)
-          : undefined,
-      };
-
-      // Actually publish to the external platform via the adapter
-      await publishSocialPost(activeAccount.id, postInput, post.storeId);
-
-      // Mark as published in local DB
-      await db.updateSocialPost(post.id, {
-        status: "published",
-        publishedAt: now,
-      });
-
-      await db.createAgentTask({
-        agentType: "social",
-        taskType: "scheduled_post",
-        title: `Published scheduled ${post.platform} post`,
-        description: `Post #${post.id} published via ${activeAccount.accountName || activeAccount.platform} account`,
-        status: "completed",
-        storeId: post.storeId,
-      });
-
-      console.log(`[Scheduler] Published post #${post.id} to ${post.platform} via account #${activeAccount.id}`);
-    } catch (err: any) {
-      // On API failure: mark the post as failed (not published) and notify the owner
-      console.error(`[Scheduler] Failed to publish post ${post.id}:`, err.message);
-      try {
-        await db.updateSocialPost(post.id, { status: "failed" });
-        // Get store for userId (may already be fetched above, but handle re-fetch safely)
-        const store = await db.getStoreById(post.storeId);
-        if (store) {
-          await db.createNotification({
-            userId: store.userId,
-            agentType: "social",
-            type: "error",
-            title: `Scheduled post failed: ${post.platform}`,
-            message: `Post #${post.id} could not be published: ${err.message}`,
-            actionUrl: "/social",
-          });
-        }
-        await db.createAgentTask({
-          agentType: "social",
-          taskType: "scheduled_post",
-          title: `Failed to publish ${post.platform} post`,
-          description: `Post #${post.id} error: ${err.message}`,
-          status: "failed",
-          storeId: post.storeId,
-        });
-      } catch (innerErr: any) {
-        console.error(`[Scheduler] Could not update failed post status for #${post.id}:`, innerErr.message);
-      }
-    }
+async function handleJobQueue(): Promise<void> {
+  const result = await processRunnableJobs(10);
+  if (result.total > 0) {
+    console.log(`[Scheduler] Job queue processed ${result.processed}, failed ${result.failed}`);
   }
 }
 
@@ -603,6 +507,17 @@ async function handleCompetitorScan(): Promise<void> {
   }
 }
 
+async function handleBotCoordination(): Promise<void> {
+  const result = await processPendingBotEvents(25);
+  if (result.total > 0) {
+    console.log(`[Scheduler] Bot coordination processed ${result.processed}, failed ${result.failed}, ignored ${result.ignored}`);
+  }
+}
+
+async function handleOAuthStateCleanup(): Promise<void> {
+  await db.deleteExpiredOAuthStateTokens();
+}
+
 // ─── Register Default Tasks ─────────────────────────────────────────────
 
 export function registerDefaultTasks(): void {
@@ -640,12 +555,32 @@ export function registerDefaultTasks(): void {
   // ─── Social Bot Bot Tasks ────────────────────────────────────────
   agentScheduler.register({
     id: "social:scheduled-posts",
-    name: "Scheduled Post Publisher",
+    name: "Scheduled Post Queue Enqueuer",
     cronExpression: "*/5 * * * *", // Every 5 minutes
     agentType: "social",
     taskType: "scheduled_posts",
     enabled: true,
     handler: handleScheduledPosts,
+  });
+
+  agentScheduler.register({
+    id: "system:job-queue",
+    name: "Durable Job Queue Processor",
+    cronExpression: "*/2 * * * *", // Every 2 minutes
+    agentType: "social",
+    taskType: "job_queue",
+    enabled: true,
+    handler: handleJobQueue,
+  });
+
+  agentScheduler.register({
+    id: "system:oauth-state-cleanup",
+    name: "OAuth State Cleanup",
+    cronExpression: "0 * * * *", // Every hour
+    agentType: "architect",
+    taskType: "oauth_state_cleanup",
+    enabled: true,
+    handler: handleOAuthStateCleanup,
   });
 
   agentScheduler.register({
@@ -828,5 +763,15 @@ export function registerDefaultTasks(): void {
         console.log(`[DLQ] Processed ${processed}, failed ${failed}`);
       }
     },
+  });
+
+  agentScheduler.register({
+    id: "system:bot-coordination",
+    name: "Bot Coordination Engine",
+    cronExpression: "*/5 * * * *", // Every 5 minutes
+    agentType: "social",
+    taskType: "bot_coordination",
+    enabled: true,
+    handler: handleBotCoordination,
   });
 }
