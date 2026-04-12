@@ -38,6 +38,7 @@ export const ENV = {
 
   // Pinterest
   pinterestAppId: process.env.PINTEREST_APP_ID ?? "",
+  pinterestAppSecret: process.env.PINTEREST_APP_SECRET ?? "",
   pinterestAccessToken: process.env.PINTEREST_ACCESS_TOKEN ?? "",
 
   // Etsy

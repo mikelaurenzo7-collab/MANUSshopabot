@@ -14,7 +14,8 @@ import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearch } from "wouter";
 
 const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
@@ -51,6 +52,25 @@ export default function IntegrationsPage() {
   const { data: summary } = trpc.connectors.connectionSummary.useQuery();
   const { data: stores } = trpc.stores.list.useQuery();
 
+  // Handle OAuth redirect query params (success/error)
+  const searchString = useSearch();
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const connected = params.get("connected");
+    const account = params.get("account");
+    const name = params.get("name");
+    const errorMsg = params.get("error");
+    if (connected) {
+      toast.success(`Successfully connected ${name || account || connected}!`);
+      refetchCreds();
+      refetchSocial();
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (errorMsg) {
+      toast.error(`Connection failed: ${errorMsg}`);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [searchString]);
+
   // Mutations
   const connectApiKey = trpc.connectors.connectWithApiKey.useMutation({
     onSuccess: () => { toast.success("Platform connected successfully"); refetchCreds(); },
@@ -74,6 +94,16 @@ export default function IntegrationsPage() {
         window.location.href = data.url;
       } else if (data.setupRequired) {
         toast.info(data.message);
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const generateSocialOAuth = trpc.connectors.generateSocialOAuthUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.setupRequired) {
+        toast.info(data.message || `Platform requires app credentials. Check Settings > Secrets.`);
       }
     },
     onError: (err) => toast.error(err.message),
@@ -263,9 +293,19 @@ export default function IntegrationsPage() {
                         size="sm"
                         className="w-full"
                         variant="outline"
-                        onClick={() => toast.info(`${platform.name} OAuth requires app credentials. Add your ${platform.name} App ID and Secret in Settings > Secrets to enable this connection.`)}
+                        disabled={generateSocialOAuth.isPending}
+                        onClick={() => {
+                          generateSocialOAuth.mutate({
+                            platform: platform.id as any,
+                            origin: window.location.origin,
+                          });
+                        }}
                       >
-                        <Plus className="h-3 w-3 mr-1" />
+                        {generateSocialOAuth.isPending ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Plus className="h-3 w-3 mr-1" />
+                        )}
                         Connect {platform.name}
                       </Button>
                     )}
@@ -577,16 +617,55 @@ function ConnectPlatformButton({
     );
   }
 
-  // Other OAuth platforms — show setup instructions
+  // Other OAuth platforms (Etsy, Amazon, eBay, TikTok Shop) — call generateOAuthUrl
   return (
-    <Button
-      size="sm"
-      className="w-full"
-      variant="outline"
-      onClick={() => toast.info(`${platform.name} OAuth requires app credentials. Add your ${platform.name} API credentials in Settings > Secrets to enable this connection.`)}
-    >
-      <Plus className="h-3 w-3 mr-1" />
-      Connect {platform.name}
-    </Button>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="sm" className="w-full" variant="outline">
+          <Plus className="h-3 w-3 mr-1" />
+          Connect via OAuth
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-border">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="text-xl">{platform.icon}</span>
+            Connect {platform.name}
+          </DialogTitle>
+          <DialogDescription>
+            Select a store to link with your {platform.name} account via OAuth.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div>
+            <Label>Select Store</Label>
+            <Select value={selectedStore} onValueChange={setSelectedStore}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a store..." /></SelectTrigger>
+              <SelectContent>
+                {activeStores.map((s: any) => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Cancel</Button>
+          </DialogClose>
+          <Button
+            disabled={!selectedStore || isLoading}
+            onClick={() => {
+              if (selectedStore) {
+                onConnectOAuth(Number(selectedStore));
+              }
+            }}
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ExternalLink className="h-3 w-3 mr-1" />}
+            Authorize on {platform.name}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

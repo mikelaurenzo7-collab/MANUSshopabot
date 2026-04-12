@@ -86,15 +86,15 @@ async function fetchTikTokProfile(accessToken: string): Promise<UserProfile> {
   };
 }
 
-async function exchangeTwitterCode(code: string, redirectUri: string, codeVerifier?: string): Promise<TokenResponse> {
+async function exchangeTwitterCode(code: string, redirectUri: string): Promise<TokenResponse> {
   const { default: axios } = await import("axios");
   const credentials = Buffer.from(`${ENV.twitterClientId}:${ENV.twitterClientSecret}`).toString("base64");
   const params: Record<string, string> = {
     code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri,
+    code_verifier: "challenge",
   };
-  if (codeVerifier) params.code_verifier = codeVerifier;
   const res = await axios.post("https://api.twitter.com/2/oauth2/token", new URLSearchParams(params).toString(), {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -122,7 +122,9 @@ async function fetchTwitterProfile(accessToken: string): Promise<UserProfile> {
 
 async function exchangePinterestCode(code: string, redirectUri: string): Promise<TokenResponse> {
   const { default: axios } = await import("axios");
-  const credentials = Buffer.from(`${ENV.pinterestAppId}:`).toString("base64"); // Pinterest uses App ID only for basic OAuth
+  const appId = ENV.pinterestAppId;
+  const appSecret = ENV.pinterestAppSecret;
+  const credentials = Buffer.from(`${appId}:${appSecret}`).toString("base64");
   const res = await axios.post("https://api.pinterest.com/v5/oauth/token", new URLSearchParams({
     code,
     grant_type: "authorization_code",
@@ -149,12 +151,28 @@ async function fetchPinterestProfile(accessToken: string): Promise<UserProfile> 
   };
 }
 
-// ─── State Validation ──────────────────────────────────────────────────────
+// ─── State Parsing ──────────────────────────────────────────────────────
 
-function parseState(state: string): { userId: number; platform: string; origin: string } | null {
+interface ParsedState {
+  userId: number;
+  platform: string;
+  origin: string;
+}
+
+function parseState(state: string): ParsedState | null {
   try {
-    // State format: "<random>_<userId>_<platform>" with origin encoded separately
-    // We also support base64-encoded JSON state for richer data
+    // Try base64url-encoded JSON state first (new format)
+    const decoded = Buffer.from(state, "base64url").toString("utf-8");
+    const payload = JSON.parse(decoded);
+    if (payload.u && payload.p && payload.o) {
+      return { userId: payload.u, platform: payload.p, origin: payload.o };
+    }
+  } catch {
+    // Fall through to legacy format
+  }
+
+  try {
+    // Legacy format: "<random>_<userId>_<platform>"
     const parts = state.split("_");
     if (parts.length >= 3) {
       const platform = parts[parts.length - 1];
@@ -163,10 +181,11 @@ function parseState(state: string): { userId: number; platform: string; origin: 
         return { userId, platform, origin: "" };
       }
     }
-    return null;
   } catch {
-    return null;
+    // ignore
   }
+
+  return null;
 }
 
 // ─── Main Callback Handler ─────────────────────────────────────────────────
@@ -174,11 +193,11 @@ function parseState(state: string): { userId: number; platform: string; origin: 
 async function handleSocialOAuthCallback(req: Request, res: Response) {
   const { code, state, error, error_description } = req.query as Record<string, string>;
 
-  // Determine origin for redirect — use Referer or default to relative path
-  const origin = req.headers.origin || req.headers.referer?.split("/api")[0] || "";
+  const parsed = parseState(state || "");
+  const origin = parsed?.origin || req.headers.origin as string || "";
 
   if (error) {
-    console.error(`[SocialOAuth] OAuth error: ${error} — ${error_description}`);
+    console.error(`[SocialOAuth] OAuth error: ${error} - ${error_description}`);
     return res.redirect(`${origin}/integrations?error=${encodeURIComponent(error_description || error)}`);
   }
 
@@ -186,7 +205,6 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
     return res.redirect(`${origin}/integrations?error=missing_code_or_state`);
   }
 
-  const parsed = parseState(state);
   if (!parsed) {
     return res.redirect(`${origin}/integrations?error=invalid_state`);
   }
@@ -220,12 +238,10 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
         return res.redirect(`${origin}/integrations?error=unsupported_platform`);
     }
 
-    // Calculate token expiry
     const tokenExpiresAt = tokenData.expires_in
       ? new Date(Date.now() + tokenData.expires_in * 1000)
       : undefined;
 
-    // Upsert the social account (update if already exists for this user+platform+accountId)
     const db = await getDb();
     if (db) {
       const existing = await db.select()
@@ -275,7 +291,7 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
     return res.redirect(`${origin}/integrations?connected=${platform}&account=${encodeURIComponent(profile.accountName)}`);
 
   } catch (err: any) {
-    console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.message);
+    console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
     return res.redirect(`${origin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }
@@ -283,7 +299,6 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
 // ─── Route Registration ────────────────────────────────────────────────────
 
 export function registerSocialOAuthRoutes(app: Express) {
-  // Single callback endpoint — platform determined from state parameter
   app.get("/api/social/oauth/callback", handleSocialOAuthCallback);
   console.log("[SocialOAuth] Callback route registered: GET /api/social/oauth/callback");
 }

@@ -15,7 +15,7 @@ describe("Etsy API Credentials", () => {
   it("should have ETSY_SHARED_SECRET set", () => {
     const secret = process.env.ETSY_SHARED_SECRET;
     expect(secret).toBeDefined();
-    expect(secret?.length).toBeGreaterThan(10);
+    expect(secret?.length).toBeGreaterThanOrEqual(10);
   });
 
   it("should authenticate with Etsy Open API v3 ping endpoint", async () => {

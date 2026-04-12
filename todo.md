@@ -422,50 +422,69 @@
 ## Sprint 1: Critical Infrastructure (Make It Real)
 
 ### Social OAuth Callback
-- [ ] Create server/socialOAuth.ts with Express callback routes for Meta, TikTok, Twitter, Pinterest
-- [ ] Handle authorization code exchange for access tokens per platform
-- [ ] Store tokens in social_accounts table with proper platform field
-- [ ] Redirect user back to /integrations after successful connection
-- [ ] Handle OAuth errors gracefully (user denied, invalid state, etc.)
-- [ ] Register /api/social/oauth/callback route in server/_core/index.ts
+- [x] Create server/socialOAuth.ts with Express callback routes for Meta, TikTok, Twitter, Pinterest
+- [x] Handle authorization code exchange for access tokens per platform
+- [x] Store tokens in social_accounts table with proper platform field
+- [x] Redirect user back to /integrations after successful connection
+- [x] Handle OAuth errors gracefully (user denied, invalid state, etc.)
+- [x] Register /api/social/oauth/callback route in server/_core/index.ts
 
 ### Shopify Webhooks
-- [ ] Create server/shopifyWebhooks.ts with HMAC verification middleware
-- [ ] Handle orders/create webhook → trigger immediate auto-fulfillment workflow
-- [ ] Handle orders/paid webhook → update order status in DB
-- [ ] Handle orders/fulfilled webhook → update order status + notify user
-- [ ] Handle products/update webhook → sync product changes to DB
-- [ ] Handle inventory_levels/update webhook → trigger low-stock alerts
-- [ ] Register webhook routes in server/_core/index.ts
-- [ ] Add Shopify webhook registration to store connection flow
+- [x] Create server/shopifyWebhooks.ts with HMAC verification middleware
+- [x] Handle orders/create webhook → trigger immediate auto-fulfillment workflow
+- [x] Handle orders/paid webhook → update order status in DB
+- [x] Handle orders/fulfilled webhook → update order status + notify user
+- [x] Handle products/update webhook → sync product changes to DB
+- [x] Handle inventory_levels/update webhook → trigger low-stock alerts
+- [x] Register webhook routes in server/_core/index.ts
+- [x] Add Shopify webhook registration to store connection flow
 
 ### Retry Logic & Resilience
-- [ ] Create server/_core/retry.ts with exponential backoff utility
-- [ ] Wrap all LLM calls (invokeLLM) with retry logic (3 attempts, 1s/2s/4s backoff)
-- [ ] Wrap all external API calls in adapters with retry logic
-- [ ] Add circuit breaker pattern for repeatedly failing platforms
+- [x] Create server/_core/retry.ts with exponential backoff utility
+- [x] Wrap all LLM calls (invokeLLM) with retry logic (3 attempts, 1s/2s/4s backoff)
+- [x] Wrap all external API calls in adapters with retry logic
+- [x] Add circuit breaker pattern for repeatedly failing platforms
 
 ### Rate Limiting
-- [ ] Install express-rate-limit package
-- [ ] Add global rate limit: 100 req/min per user on /api/trpc
-- [ ] Add strict rate limit: 10 req/min per user on LLM-heavy procedures
-- [ ] Return proper 429 responses with retry-after headers
+- [x] Install express-rate-limit package
+- [x] Add global rate limit: 100 req/min per user on /api/trpc
+- [x] Add strict rate limit: 10 req/min per user on LLM-heavy procedures
+- [x] Return proper 429 responses with retry-after headers
 
 ### Real-Time UI
-- [ ] Add refetchInterval: 30000 on dashboard metrics query
-- [ ] Add refetchInterval: 15000 on active workflows query
-- [ ] Add refetchInterval: 60000 on orders query
-- [ ] Add refetchInterval: 30000 on activity feed query
+- [x] Add refetchInterval: 30000 on dashboard metrics query
+- [x] Add refetchInterval: 15000 on active workflows query
+- [x] Add refetchInterval: 60000 on orders query
+- [x] Add refetchInterval: 30000 on activity feed query
 
 ### Onboarding Wizard
-- [ ] Create client/src/pages/Onboarding.tsx with multi-step wizard
+- [x] Create client/src/pages/Onboarding.tsx with multi-step wizard
 - [ ] Step 1: Welcome + connect first store (Shopify OAuth or API key)
 - [ ] Step 2: Choose primary niche / let Architect analyze
 - [ ] Step 3: Configure bot autonomy level
 - [ ] Step 4: Launch first workflow
 - [ ] Show wizard to new users who have no stores connected
-- [ ] Add /onboarding route to App.tsx
-- [ ] Auto-redirect new users to /onboarding after first login
+- [x] Add /onboarding route to App.tsx
+- [x] Auto-redirect new users to /onboarding after first login
 
 ## Bot Capability & Proactiveness Enhancement Analysis
-- [ ] Write SHOPBOT_BOT_ENHANCEMENT_ANALYSIS.md with full proactiveness roadmap
+- [x] Write SHOPBOT_BOT_ENHANCEMENT_ANALYSIS.md with full proactiveness roadmap
+
+## Fix All OAuth Connector Flows (End-to-End)
+- [x] Fix social media Connect buttons to call generateSocialOAuthUrl instead of showing toast stubs
+- [x] Fix e-commerce non-Shopify OAuth buttons (Etsy, Amazon, eBay, TikTok Shop) to call generateOAuthUrl
+- [x] Add PINTEREST_APP_SECRET to env.ts and secrets
+- [x] Fix Pinterest token exchange to use AppId:AppSecret in Basic auth
+- [x] Fix Etsy OAuth to generate proper PKCE code_challenge and code_verifier
+- [x] Store PKCE code_verifier server-side for Etsy token exchange
+- [x] Add Etsy + e-commerce OAuth callback handler (server/ecommerceOAuth.ts)
+- [x] Wire generateSocialOAuthUrl mutation into Integrations.tsx social tab
+- [x] Wire generateOAuthUrl for e-commerce OAuth platforms (Etsy, Amazon, eBay, TikTok Shop)
+- [x] Encode origin in state parameter (base64url JSON) so callbacks can reconstruct redirect_uri
+- [x] Rewrite socialOAuth.ts with proper state parsing (base64url JSON with origin recovery)
+- [x] Register ecommerceOAuth callback route in server/_core/index.ts
+- [x] Add success/error toast on OAuth redirect return (?connected= / ?error= query params)
+- [x] Verify all callback routes handle state parsing and redirect correctly
+- [x] Confirm Etsy keys (ETSY_API_KEY, ETSY_SHARED_SECRET) are properly wired in env.ts
+- [x] Run tests after all OAuth fixes — 283 tests passing (15 files, 0 failures)
+- [ ] Add PINTEREST_APP_SECRET value (user will provide tomorrow from laptop)

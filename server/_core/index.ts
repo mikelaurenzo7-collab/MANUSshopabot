@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
 import { registerSocialOAuthRoutes } from "../socialOAuth";
+import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
 import { appRouter } from "../routers";
@@ -47,6 +48,8 @@ async function startServer() {
   registerShopifyOAuthRoutes(app);
   // Social platform OAuth callbacks (Meta, TikTok, Twitter, Pinterest)
   registerSocialOAuthRoutes(app);
+  // E-commerce platform OAuth callbacks (Etsy, Amazon, eBay, TikTok Shop)
+  registerEcommerceOAuthRoutes(app);
   // Shopify webhook handlers (orders/create, orders/paid, products/update, inventory)
   registerShopifyWebhookRoutes(app);
   // tRPC API

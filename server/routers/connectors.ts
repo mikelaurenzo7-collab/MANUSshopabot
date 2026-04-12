@@ -5,6 +5,30 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 
 /**
+ * PKCE code_verifier store for Etsy OAuth (and Twitter if needed).
+ * Keyed by state parameter, auto-expires after 10 minutes.
+ */
+export const pkceStore = new Map<string, { codeVerifier: string; timestamp: number }>();
+setInterval(() => {
+  const now = Date.now();
+  pkceStore.forEach((val, key) => {
+    if (now - val.timestamp > 10 * 60 * 1000) pkceStore.delete(key);
+  });
+}, 60 * 1000);
+
+/**
+ * E-commerce OAuth state store for non-Shopify platforms.
+ * Keyed by state parameter, stores userId + storeId + platform.
+ */
+export const ecomOAuthStateStore = new Map<string, { userId: number; storeId?: number; platform: string; timestamp: number }>();
+setInterval(() => {
+  const now = Date.now();
+  ecomOAuthStateStore.forEach((val, key) => {
+    if (now - val.timestamp > 10 * 60 * 1000) ecomOAuthStateStore.delete(key);
+  });
+}, 60 * 1000);
+
+/**
  * Platform connector configurations — defines OAuth/API details for each e-commerce platform.
  * Each platform has: OAuth URLs, scopes, connection type, and required fields.
  */
@@ -445,14 +469,52 @@ export const connectorsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: `${platformConfig.name} uses API key connection, not OAuth` });
       }
 
-      // Return a placeholder URL — in production, each platform's client ID would be stored as a secret
-      // and the real OAuth URL would be generated here
-      return {
-        url: null,
-        platform: input.platform,
-        message: `${platformConfig.name} OAuth integration requires app credentials. Go to Settings > Secrets to add your ${platformConfig.name} API credentials, then reconnect.`,
-        setupRequired: true,
+      // Resolve the correct client ID for each e-commerce platform from ENV
+      const ecomClientIdMap: Record<string, string> = {
+        etsy: ENV.etsyApiKey,
+        amazon: ENV.amazonSpClientId,
+        ebay: ENV.ebayAppId,
+        tiktok_shop: ENV.tiktokAppId || ENV.tiktokClientKey,
       };
+      const ecomClientId = ecomClientIdMap[input.platform];
+      if (!ecomClientId) {
+        return {
+          url: null,
+          platform: input.platform,
+          message: `${platformConfig.name} OAuth integration requires app credentials. Go to Settings > Secrets to add your ${platformConfig.name} API credentials, then reconnect.`,
+          setupRequired: true,
+        };
+      }
+
+      // Generate CSRF state parameter with origin encoded
+      const crypto = await import("crypto");
+      const nonce = crypto.randomBytes(16).toString("hex");
+      const statePayload = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin, s: input.storeId, t: "ecom" };
+      const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
+      const redirectUri = `${input.origin}/api/ecommerce/oauth/callback`;
+      const scopes = platformConfig.oauthConfig.scopes;
+
+      // Store state for callback verification
+      ecomOAuthStateStore.set(state, {
+        userId: ctx.user.id,
+        storeId: input.storeId,
+        platform: input.platform,
+        timestamp: Date.now(),
+      });
+
+      // For Etsy, generate PKCE code_challenge
+      let url: string;
+      if (input.platform === "etsy") {
+        const codeVerifier = crypto.randomBytes(32).toString("base64url");
+        const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+        pkceStore.set(state, { codeVerifier, timestamp: Date.now() });
+        url = `https://www.etsy.com/oauth/connect?response_type=code&client_id=${ecomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      } else {
+        // Generic e-commerce OAuth URL (Amazon, eBay, TikTok Shop)
+        url = platformConfig.oauthConfig.authUrl("", ecomClientId, scopes, redirectUri, state);
+      }
+
+      return { url, platform: input.platform };
     }),
 
   /** Generate OAuth URL for a social media platform */
@@ -490,8 +552,11 @@ export const connectorsRouter = router({
       }
 
       // Generate a random state parameter for CSRF protection
+      // Encode origin in state so callback can reconstruct redirect_uri (no Referer header on OAuth redirects)
       const crypto = await import("crypto");
-      const state = crypto.randomBytes(16).toString("hex") + `_${ctx.user.id}_${input.platform}`;
+      const nonce = crypto.randomBytes(16).toString("hex");
+      const statePayload = { n: nonce, u: ctx.user.id, p: input.platform, o: input.origin };
+      const state = Buffer.from(JSON.stringify(statePayload)).toString("base64url");
 
       // Build the redirect URI — callback endpoint on our server
       const redirectUri = `${input.origin}/api/social/oauth/callback`;
