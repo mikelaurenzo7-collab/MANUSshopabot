@@ -459,11 +459,11 @@
 
 ### Onboarding Wizard
 - [x] Create client/src/pages/Onboarding.tsx with multi-step wizard
-- [ ] Step 1: Welcome + connect first store (Shopify OAuth or API key)
-- [ ] Step 2: Choose primary niche / let Architect analyze
-- [ ] Step 3: Configure bot autonomy level
-- [ ] Step 4: Launch first workflow
-- [ ] Show wizard to new users who have no stores connected
+- [x] Step 1: Welcome — shows 3 bots with descriptions + "Let's Get Started" CTA
+- [x] Step 2: Connect Store — Shopify OAuth with real generateOAuthUrl mutation + skip option
+- [x] Step 3: Connect Socials — Meta/TikTok/Twitter/Pinterest with real generateSocialOAuthUrl + skip option
+- [x] Step 4: Launch First Bot — niche input with examples, launches niche_research workflow
+- [x] Show wizard to new users (OnboardingGuard in App.tsx checks localStorage shopbot_onboarded)
 - [x] Add /onboarding route to App.tsx
 - [x] Auto-redirect new users to /onboarding after first login
 
