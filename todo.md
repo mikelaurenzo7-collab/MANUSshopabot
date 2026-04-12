@@ -567,8 +567,9 @@
 
 ### Adapter Resilience
 - [x] Verify Shopify, Meta, and Etsy adapters exist and are properly structured
-- [ ] Add idempotency check to Shopify fulfillOrder (prevent duplicate fulfillments)
-- [ ] Add pagination support to Shopify getProducts (handle 100+ products)
+- [x] Add idempotency check to Shopify fulfillOrder (prevent duplicate fulfillments)
+- [x] Add pagination support to Shopify listProducts (handle 100+ products, cursor-based)
+- [x] Add offset parameter to ListParams type for pagination support
 - [ ] Add PKCE code_verifier validation to Etsy token exchange
 - [ ] Add tracking number validation to Etsy fulfillOrder
 - [ ] Add prerequisite checks to Meta adapter (page connected before posting)
@@ -587,8 +588,9 @@
 - [ ] Add limit/offset pagination to Workflows page (currently loads all workflows)
 
 ### Workflow Engine Robustness
-- [ ] Add state machine validation (prevent invalid transitions)
-- [ ] Add 30-minute timeout per workflow with auto-cancel
+- [x] Add state machine validation (prevent invalid transitions: pending→running→completed/failed/awaiting_approval)
+- [x] Add 30-minute timeout per workflow with auto-cancel (checks on each step iteration)
+- [x] Fix variable shadowing issue (stepStartTime for step-level timing)
 - [ ] Implement rollback handlers for failed steps (undo changes from previous steps)
 - [ ] Add transaction-like semantics to workflow execution
 

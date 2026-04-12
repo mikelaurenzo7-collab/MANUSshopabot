@@ -68,12 +68,32 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
-    const limit = params?.limit || 50;
-    const data = await this.shopifyFetch(
-      `${this.baseUrl(credentials)}/products.json?limit=${limit}&status=${params?.status || "active"}`,
-      this.buildHeaders(credentials)
-    );
-    return (data.products || []).map((p: any) => this.mapProduct(p));
+    const limit = Math.min(params?.limit || 50, 250); // Shopify max is 250
+    const offset = params?.offset || 0;
+    const allProducts: PlatformProduct[] = [];
+    
+    let cursor: string | undefined;
+    let hasMore = true;
+    let pageCount = 0;
+    const maxPages = Math.ceil((params?.limit || 50) / 250);
+    
+    while (hasMore && pageCount < maxPages) {
+      const url = new URL(`${this.baseUrl(credentials)}/products.json`);
+      url.searchParams.set("limit", String(limit));
+      url.searchParams.set("status", params?.status || "active");
+      if (cursor) url.searchParams.set("cursor", cursor);
+      
+      const data = await this.shopifyFetch(url.toString(), this.buildHeaders(credentials));
+      const products = (data.products || []).map((p: any) => this.mapProduct(p));
+      allProducts.push(...products);
+      
+      // Check for pagination link in response
+      cursor = data.cursor;
+      hasMore = !!cursor && allProducts.length < (params?.limit || 50);
+      pageCount++;
+    }
+    
+    return allProducts.slice(offset, offset + (params?.limit || 50));
   }
 
   async getProduct(credentials: AdapterCredentials, productId: string): Promise<PlatformProduct> {
@@ -150,6 +170,18 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
   }
 
   async fulfillOrder(credentials: AdapterCredentials, orderId: string, fulfillment: FulfillmentInput): Promise<void> {
+    // Check if order is already fulfilled (idempotency)
+    const orderData = await this.shopifyFetch(
+      `${this.baseUrl(credentials)}/orders/${orderId}.json`,
+      this.buildHeaders(credentials)
+    );
+    
+    const order = orderData.order;
+    if (order?.fulfillment_status === "fulfilled" || order?.fulfillment_status === "partially_fulfilled") {
+      console.warn(`Order ${orderId} is already fulfilled. Skipping duplicate fulfillment.`);
+      return; // Idempotent: skip if already fulfilled
+    }
+
     const body = {
       fulfillment: {
         tracking_number: fulfillment.trackingNumber,

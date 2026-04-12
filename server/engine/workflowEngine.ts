@@ -154,10 +154,28 @@ export async function launchWorkflow(userId: number, definition: WorkflowDefinit
  * Execute a workflow step by step.
  */
 async function executeWorkflow(workflowId: number, userId: number, stepDefinitions: WorkflowStepDefinition[]) {
-  await updateWorkflow(workflowId, { status: "running", startedAt: new Date() });
-
+  // Validate state machine transition
   const workflow = await getWorkflowById(workflowId);
   if (!workflow) throw new Error(`Workflow ${workflowId} not found`);
+  
+  const validTransitions: Record<string, string[]> = {
+    pending: ["running"],
+    running: ["awaiting_approval", "completed", "failed", "cancelled"],
+    awaiting_approval: ["running", "failed", "cancelled"],
+    completed: [],
+    failed: ["running"], // Allow retry
+    cancelled: [],
+  };
+  
+  if (!validTransitions[workflow.status as string]?.includes("running")) {
+    throw new Error(`Invalid state transition: ${workflow.status} -> running`);
+  }
+  
+  // Set 30-minute timeout
+  const timeoutMs = 30 * 60 * 1000;
+  const startTime = Date.now();
+  
+  await updateWorkflow(workflowId, { status: "running", startedAt: new Date() });
 
   const dbSteps = await getWorkflowSteps(workflowId);
   const previousOutputs: Record<string, any>[] = [];
@@ -169,6 +187,12 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
   }
 
   for (let i = workflow.currentStepIndex; i < dbSteps.length; i++) {
+    // Check timeout (startTime is in outer scope)
+    if (Date.now() - startTime > timeoutMs) {
+      await updateWorkflow(workflowId, { status: "failed" });
+      throw new Error(`Workflow ${workflowId} exceeded 30-minute timeout`);
+    }
+    
     const dbStep = dbSteps[i];
     const stepDef = stepDefinitions[i];
 
@@ -221,7 +245,7 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
     }
 
     // Execute the step
-    const startTime = Date.now();
+    const stepStartTime = Date.now();
     await updateWorkflowStep(dbStep.id, { status: "running", startedAt: new Date() });
 
     try {
@@ -245,7 +269,7 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         output = await executeStepByType(dbStep.stepType as StepType, context);
       }
 
-      const durationMs = Date.now() - startTime;
+      const durationMs = Date.now() - stepStartTime;
       await updateWorkflowStep(dbStep.id, {
         status: "completed",
         output,
@@ -268,7 +292,7 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
       }).catch(() => {}); // fire-and-forget
     } catch (error: any) {
-      const durationMs = Date.now() - startTime;
+      const durationMs = Date.now() - stepStartTime;
       await updateWorkflowStep(dbStep.id, {
         status: "failed",
         error: error.message ?? String(error),

@@ -108,6 +108,7 @@ export interface StoreInfo {
 
 export interface ListParams {
   limit?: number;
+  offset?: number;
   page?: number;
   status?: string;
   since?: Date;
