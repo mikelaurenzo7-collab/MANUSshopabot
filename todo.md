@@ -246,4 +246,4 @@
 - [x] Audit Operator pages: upgrade section headers and descriptions (Social Bot Power Features, etc.)
 - [x] Ensure consistent premium typography hierarchy across all pages
 - [x] Ensure consistent color usage (accent colors, gradients) across all pages
-- [ ] Add pricing tier section to landing page (Starter/Growth/Pro/Scale) — NEXT SPRINT
+- [x] Add pricing tier section to landing page (Starter $49, Growth $149, Pro $299, Scale $599) with Pro highlighted as Best Value
