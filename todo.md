@@ -250,3 +250,38 @@
 - [x] Real-time anomaly alerts in Intelligence Center dashboard
 - [x] Cross-platform metrics comparison table in Intelligence Center
 - [x] Buy Box win rate and IPI score widgets in Intelligence Center
+
+## Sprint 11: Comprehensive Codebase Audit & Stabilization
+
+### Database Schema Sync
+- [x] Create 8 missing database tables (workflow_pause_points, execution_overrides, bot_plugins, installed_plugins, purchase_orders, po_line_items, prompt_variants, prompt_metrics)
+- [x] Create 3 previously missing tables (oauth_state_tokens, bot_events, job_queue)
+- [x] Verify all 35 tables exist and match schema.ts definitions
+
+### Test Suite Fixes
+- [x] Fix 8 failing oauth-flows tests (Table 'oauth_state_tokens' doesn't exist + stale in-memory store refs)
+- [x] Migrate oauth-flows.test.ts from deprecated in-memory stores (pkceStore, ecomOAuthStateStore) to DB-backed state tokens
+- [x] Add vitest imports to oauth-flows.test.ts
+- [x] Add new DB integration tests for OAuth state token CRUD
+- [x] Verify all 449 tests pass across 25 test files
+
+### Dependency Fixes
+- [x] Install missing `reactflow` dependency for OrchestratorGraph page
+- [x] Verify 0 TypeScript errors
+
+### GitHub Sync Integration
+- [x] Integrate 3 new commits from GitHub (LLM config fix, image import fix, Prompt RL injection engine)
+- [x] Verify new forgeModel env var in server/_core/env.ts
+- [x] Verify corrected import path in imageGeneration.ts
+- [x] Verify getBestPromptVariant function in db.ts
+
+### Production Readiness Gaps Identified (Future Work)
+- [ ] Add circuit breaker to platform adapter calls (prevent cascading failures)
+- [ ] Expand job queue to support multiple job types beyond social posts
+- [ ] Extend bot coordination events beyond 3 current types
+- [ ] Add request correlation/tracing IDs to structured logger
+- [ ] Add rate limiting per platform to prevent API throttling
+- [ ] Refactor scheduler into separate task modules (currently 700+ lines)
+- [ ] Add saga pattern for multi-step workflows with rollback
+- [ ] Implement idempotency keys for duplicate operation prevention
+- [ ] Replace console.log with structured logger throughout scheduler

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { pkceStore, ecomOAuthStateStore } from "./routers/connectors";
+import * as db from "./db";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -102,7 +102,7 @@ describe("Social OAuth URL Generation", () => {
     }
   });
 
-  it("encodes origin in the state parameter (base64url JSON)", async () => {
+  it("persists social OAuth state in the database", async () => {
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.connectors.generateSocialOAuthUrl({
@@ -114,12 +114,14 @@ describe("Social OAuth URL Generation", () => {
       const urlObj = new URL(result.url);
       const state = urlObj.searchParams.get("state");
       expect(state).toBeTruthy();
-      // Decode the state
-      const decoded = JSON.parse(Buffer.from(state!, "base64url").toString("utf-8"));
-      expect(decoded.u).toBe(42); // userId
-      expect(decoded.p).toBe("meta"); // platform
-      expect(decoded.o).toBe("https://beastbots.test"); // origin
-      expect(decoded.n).toBeTruthy(); // nonce
+
+      // Verify state was persisted to DB (not in-memory)
+      const dbToken = await db.getOAuthStateToken(state!, "social");
+      expect(dbToken).toBeTruthy();
+      expect(dbToken!.userId).toBe(42);
+      expect(dbToken!.platform).toBe("meta");
+      expect(dbToken!.flowType).toBe("social");
+      expect(dbToken!.origin).toBe("https://beastbots.test");
     }
   });
 
@@ -155,23 +157,20 @@ describe("E-Commerce OAuth URL Generation", () => {
       expect(result.url).toContain(`client_id=${process.env.ETSY_API_KEY}`);
       expect(result.url).toContain(encodeURIComponent("https://beastbots.test/api/ecommerce/oauth/callback"));
 
-      // Verify PKCE code_verifier was stored
+      // Verify PKCE code_verifier was persisted to DB
       const urlObj = new URL(result.url!);
       const state = urlObj.searchParams.get("state");
       expect(state).toBeTruthy();
-      const pkceData = pkceStore.get(state!);
-      expect(pkceData).toBeTruthy();
-      expect(pkceData!.codeVerifier).toBeTruthy();
-      expect(pkceData!.codeVerifier.length).toBeGreaterThan(20);
-
-      // Clean up
-      pkceStore.delete(state!);
+      const dbToken = await db.getOAuthStateToken(state!, "ecommerce");
+      expect(dbToken).toBeTruthy();
+      expect(dbToken!.codeVerifier).toBeTruthy();
+      expect(dbToken!.codeVerifier!.length).toBeGreaterThan(20);
     } else {
       expect(result.setupRequired).toBe(true);
     }
   });
 
-  it("stores state data in ecomOAuthStateStore for Etsy", async () => {
+  it("stores state data in database for Etsy", async () => {
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.connectors.generateOAuthUrl({
@@ -185,19 +184,16 @@ describe("E-Commerce OAuth URL Generation", () => {
       const state = urlObj.searchParams.get("state");
       expect(state).toBeTruthy();
 
-      const stateData = ecomOAuthStateStore.get(state!);
-      expect(stateData).toBeTruthy();
-      expect(stateData!.userId).toBe(42);
-      expect(stateData!.storeId).toBe(99);
-      expect(stateData!.platform).toBe("etsy");
-
-      // Clean up
-      ecomOAuthStateStore.delete(state!);
-      pkceStore.delete(state!);
+      const dbToken = await db.getOAuthStateToken(state!, "ecommerce");
+      expect(dbToken).toBeTruthy();
+      expect(dbToken!.userId).toBe(42);
+      expect(dbToken!.storeId).toBe(99);
+      expect(dbToken!.platform).toBe("etsy");
+      expect(dbToken!.flowType).toBe("ecommerce");
     }
   });
 
-  it("encodes origin in e-commerce state parameter", async () => {
+  it("uses hex state parameter (not base64url JSON)", async () => {
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.connectors.generateOAuthUrl({
@@ -208,14 +204,11 @@ describe("E-Commerce OAuth URL Generation", () => {
     if (result.url) {
       const urlObj = new URL(result.url);
       const state = urlObj.searchParams.get("state");
-      const decoded = JSON.parse(Buffer.from(state!, "base64url").toString("utf-8"));
-      expect(decoded.o).toBe("https://beastbots.test");
-      expect(decoded.t).toBe("ecom");
-      expect(decoded.p).toBe("etsy");
-
-      // Clean up
-      ecomOAuthStateStore.delete(state!);
-      pkceStore.delete(state!);
+      expect(state).toBeTruthy();
+      // State is now a random hex string (not base64url JSON)
+      // It should be a 48-char hex string (24 random bytes)
+      expect(state!.length).toBe(48);
+      expect(/^[0-9a-f]+$/.test(state!)).toBe(true);
     }
   });
 
@@ -256,14 +249,42 @@ describe("E-Commerce OAuth Callback Route Registration", () => {
   });
 });
 
-describe("PKCE Store", () => {
-  it("stores and retrieves code_verifier by state key", () => {
-    const testState = "test_pkce_state_123";
-    pkceStore.set(testState, { codeVerifier: "test_verifier_abc", timestamp: Date.now() });
-    const data = pkceStore.get(testState);
-    expect(data).toBeTruthy();
-    expect(data!.codeVerifier).toBe("test_verifier_abc");
-    pkceStore.delete(testState);
+describe("OAuth State Token DB Operations", () => {
+  it("creates and retrieves an OAuth state token from DB", async () => {
+    const state = `test_state_${Date.now()}`;
+    await db.createOAuthStateToken({
+      state,
+      flowType: "social",
+      userId: 42,
+      platform: "meta",
+      origin: "https://beastbots.test",
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    const token = await db.getOAuthStateToken(state, "social");
+    expect(token).toBeTruthy();
+    expect(token!.state).toBe(state);
+    expect(token!.userId).toBe(42);
+    expect(token!.platform).toBe("meta");
+    expect(token!.flowType).toBe("social");
+  });
+
+  it("stores and retrieves PKCE code_verifier in DB", async () => {
+    const state = `test_pkce_${Date.now()}`;
+    const codeVerifier = "test_verifier_abc_123_very_long_enough";
+    await db.createOAuthStateToken({
+      state,
+      flowType: "ecommerce",
+      userId: 42,
+      platform: "etsy",
+      origin: "https://beastbots.test",
+      codeVerifier,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    const token = await db.getOAuthStateToken(state, "ecommerce");
+    expect(token).toBeTruthy();
+    expect(token!.codeVerifier).toBe(codeVerifier);
   });
 });
 
