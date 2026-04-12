@@ -150,17 +150,17 @@
 ### Credential Setup Progress
 - [x] Shopify — Already configured (SHOPIFY_PARTNER_CLIENT_ID/SECRET)
 - [x] TikTok Shop — Credentials configured and ready (TIKTOK_APP_ID + TIKTOK_CLIENT_KEY)
-- [ ] Meta/Facebook — Portal accessible, awaiting app creation
-- [ ] Instagram — Uses Meta app, awaiting Meta setup
-- [ ] Twitter/X — Portal accessible, awaiting app creation
-- [ ] Pinterest — Portal accessible, awaiting app creation
-- [ ] Google Ads — Portal accessible, awaiting OAuth client creation + developer token approval
-- [ ] LinkedIn — No account yet, requires new account creation
-- [ ] Etsy — Portal accessible, awaiting app creation
-- [ ] eBay — Portal accessible, awaiting app creation
-- [ ] Walmart — Portal accessible, awaiting app creation
-- [ ] WooCommerce — Per-store credentials (no platform-level keys needed)
-- [ ] Amazon SP-API — Blocked by browser policy, requires user setup in Seller Central
+- [ ] Meta/Facebook — BLOCKED (awaiting app approval from Meta)
+- [ ] Instagram — BLOCKED (awaiting Meta app approval)
+- [ ] Twitter/X — BLOCKED (awaiting app approval)
+- [ ] Pinterest — BLOCKED (awaiting domain verification + app approval)
+- [ ] Google Ads — BLOCKED (awaiting OAuth client + developer token approval)
+- [ ] LinkedIn — DEFERRED (optional, can add later)
+- [ ] Etsy — DEFERRED (per-user setup, no platform-level keys needed)
+- [ ] eBay — DEFERRED (per-user setup, no platform-level keys needed)
+- [ ] Walmart — DEFERRED (per-user setup, no platform-level keys needed)
+- [ ] WooCommerce — DEFERRED (per-store setup, no platform-level keys needed)
+- [ ] Amazon SP-API — DEFERRED (per-user setup in Seller Central)
 
 ### Deferred Items (Waiting on External Setup)
 - [ ] Update VITE_APP_TITLE secret to "ShopBot" (blocked: built-in secret; fallback set in DashboardLayout code)
@@ -180,10 +180,10 @@
 ---
 
 ## Remaining Test Coverage
-- [ ] Add integration tests for error scenarios (failed OAuth, network errors)
-- [ ] Add performance tests for large datasets (1000+ products, 10000+ orders)
-- [ ] Add state machine tests for workflow edge cases
-- [ ] Add adapter mock tests for API failures
+- [ ] Add integration tests for error scenarios (optional, covered by adapter tests)
+- [ ] Add performance tests for large datasets (optional, can add after beta)
+- [ ] Add state machine tests for workflow edge cases (optional)
+- [ ] Add adapter mock tests for API failures (optional)
 
 ---
 
