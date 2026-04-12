@@ -16,6 +16,7 @@ import ConfigPage from "./pages/Config";
 import IntegrationsPage from "./pages/Integrations";
 import WorkflowsPage from "./pages/Workflows";
 import OnboardingPage from "./pages/Onboarding";
+import LandingPage from "./pages/Landing";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function OnboardingGuard() {
@@ -40,6 +41,8 @@ function OnboardingGuard() {
 function Router() {
   return (
     <Switch>
+      {/* Public marketing landing page */}
+      <Route path="/landing" component={LandingPage} />
       {/* Onboarding is full-screen, outside DashboardLayout */}
       <Route path="/onboarding" component={OnboardingPage} />
       <Route>

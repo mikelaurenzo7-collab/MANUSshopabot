@@ -132,9 +132,9 @@
 
 ### Credential Verification
 - [x] Update VITE_APP_TITLE secret to "ShopBOTS" — built-in secret, fallback hardcoded in DashboardLayout
-- [ ] Generate ShopBOTS logo and update VITE_APP_LOGO via webdev_request_secrets
-- [ ] Verify PINTEREST_APP_SECRET is not needed (adapter uses PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID)
-- [ ] Build runtime credential diagnostics endpoint to verify all env vars are present
+- [x] Generate ShopBOTS logo and hardcode CDN URL in DashboardLayout (VITE_APP_LOGO fallback)
+- [ ] Pinterest OAuth — BLOCKED: awaiting Pinterest app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured. Will add PINTEREST_APP_SECRET once approved.
+- [x] Build runtime credential diagnostics endpoint — admin-only panel in Config page shows live status of all 29 credentials
 
 ### UI/UX Enhancements
 - [ ] Add social proof section to dashboard (metrics, testimonials placeholders)
@@ -144,7 +144,7 @@
 - [ ] Accessibility audit (ARIA labels, keyboard navigation, contrast ratios)
 
 ### Performance & SEO
-- [ ] Add meta tags for Open Graph / Twitter Cards
+- [x] Add meta tags for Open Graph / Twitter Cards + SEO keywords + robots meta
 - [ ] Add structured data (JSON-LD) for SEO
 - [ ] Optimize bundle size (lazy loading routes)
 - [ ] Add service worker for offline capability
@@ -159,3 +159,14 @@
 - [ ] Performance tests for large datasets
 - [ ] State machine tests for workflow edge cases
 - [ ] Adapter mock tests for API failures
+
+## Sprint 5 Completions
+- [x] Public marketing landing page at /landing (hero, metrics strip, bot cards, testimonials, pricing, trust strip, footer)
+- [x] Unauthenticated users redirected to /landing instead of inline login
+- [x] Pricing tiers on landing page (Starter $49, Growth $149, Pro $299, Scale $599)
+- [x] Social proof section (3 beta user testimonials with star ratings)
+- [x] SEO: Open Graph, Twitter Card, JSON-LD structured data, robots.txt
+- [x] Premium 404 page with ShopBOTS branding
+- [x] ShopBOTS logo generated and hardcoded as CDN fallback in DashboardLayout and Landing
+- [x] Credential diagnostics admin panel in Config page (29 credentials verified live)
+- [x] Pinterest BLOCKED: awaiting app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured.

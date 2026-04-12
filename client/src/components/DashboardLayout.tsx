@@ -81,50 +81,25 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
+
+  // Redirect unauthenticated users to the public landing page
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/landing");
+    }
+  }, [loading, user, setLocation]);
 
   if (loading) {
     return <DashboardLayoutSkeleton />;
   }
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-2">
-              <div className="flex flex-col items-center gap-4 mb-4">
-              {APP_LOGO ? (
-                <img src={APP_LOGO} alt={APP_TITLE} className="h-20 w-64 object-contain" />
-              ) : (
-                <Zap className="h-12 w-12 text-primary" />
-              )}
-            </div>
-            <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
-              Your Bots Are Standing By
-            </h1>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Builder Bot, Merchant Bot, and Social Bot are ready to build, sell, and market your store — 24/7, fully autonomous.
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              window.location.href = getLoginUrl();
-            }}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90 btn-glow"
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            Launch Command Center
-          </Button>
-          <p className="text-xs text-muted-foreground/50 text-center">
-            Autonomous e-commerce. Zero manual work.
-          </p>
-        </div>
-      </div>
-    );
+    return <DashboardLayoutSkeleton />; // Brief skeleton while redirect fires
   }
 
   return (
