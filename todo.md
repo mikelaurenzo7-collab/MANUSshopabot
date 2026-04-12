@@ -324,3 +324,15 @@
 - [x] Second-pass visual polish: richer glass-card system, stronger glow utilities, premium gradient tokens, Landing.tsx dramatic hero, Home.tsx MetricCard/BotStatusCard/CrossStoreIntelligence upgrades, DashboardLayout active nav glow (shadow + border + dot indicator), user avatar glow, Intelligence.tsx slate normalization (21 replacements), all pages normalized to glass token system
 - [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
 - [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
+
+## Sprint 15: Brand Rename → Beast Bots
+
+- [ ] Update package.json name field to "beast-bots"
+- [ ] Update index.html title, meta description, og:title, og:site_name, twitter:title to "Beast Bots"
+- [ ] Update Landing.tsx company/brand references from "ShopBOTS" to "Beast Bots" (nav logo, footer, hero tagline)
+- [ ] Update DashboardLayout.tsx sidebar logo/brand from "ShopBOTS" to "Beast Bots"
+- [ ] Update server file headers and LLM system prompts referencing old brand
+- [ ] Update README.md and any documentation files
+- [ ] Update VITE_APP_TITLE secret to "Beast Bots"
+- [ ] Verify 0 TypeScript errors and 512 tests still passing
+- [ ] Commit to visual-polish branch and checkpoint

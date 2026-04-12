@@ -1,5 +1,5 @@
 /**
- * ShopBOTS — Structured Logger
+ * Beast Bots — Structured Logger
  *
  * A production-grade structured logger that emits JSON log lines with:
  * - ISO timestamps

@@ -1,7 +1,7 @@
 /**
  * Bot Coordination Engine
  *
- * Durable handoff layer between ShopBOTS agents.
+ * Durable handoff layer between Beast Bots agents.
  * Processes queued bot events and converts them into internal tasks,
  * notifications, or draft follow-up actions.
  *

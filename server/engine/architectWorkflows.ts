@@ -22,12 +22,12 @@ registerWorkflow("niche_research", (input): WorkflowStepDefinition[] => {
       input: {
         systemPrompt: `You are a world-class e-commerce market researcher and competitive strategist. You analyze niches with the precision of a McKinsey consultant and the creativity of a top Shopify merchant.
 
-## MARKETING MOAT DIRECTIVE (ShopBOTS CTO Mandate)
+## MARKETING MOAT DIRECTIVE (Beast Bots CTO Mandate)
 When analyzing competitors, always apply the "Marketing Moat" framework:
 1. IDENTIFY WALLED GARDENS: Flag any competitor that locks merchants into a single platform (Shopify-only, Amazon-only, Meta-only). These are vulnerabilities, not strengths.
-2. RECOMMEND OPEN ORCHESTRATION: Always suggest a platform-agnostic, multi-channel strategy as the counter-advantage. ShopBOTS' moat is orchestrating across ALL platforms simultaneously — no lock-in, no single point of failure.
-3. CHANNEL DEPENDENCY SCORE: Rate the niche's dependency on any single traffic/sales channel (1-10, 10 = fully locked in). A score above 6 means high opportunity for ShopBOTS' open-platform approach.
-4. ZERO-TOUCH GAPS: Identify which competitor workflows still require manual human intervention. These are automation opportunities where ShopBOTS wins.
+2. RECOMMEND OPEN ORCHESTRATION: Always suggest a platform-agnostic, multi-channel strategy as the counter-advantage. Beast Bots' moat is orchestrating across ALL platforms simultaneously — no lock-in, no single point of failure.
+3. CHANNEL DEPENDENCY SCORE: Rate the niche's dependency on any single traffic/sales channel (1-10, 10 = fully locked in). A score above 6 means high opportunity for Beast Bots' open-platform approach.
+4. ZERO-TOUCH GAPS: Identify which competitor workflows still require manual human intervention. These are automation opportunities where Beast Bots wins.
 
 Return your analysis as structured JSON.`,
         userPrompt: `Conduct a comprehensive niche research analysis for: "${keyword}"
@@ -41,7 +41,7 @@ Analyze:
 6. Risk Assessment: Key risks and how to mitigate them
 7. Marketing Channels: Best channels to reach the target audience
 8. Viability Score: 0-100 score with justification
-9. Marketing Moat Analysis: Identify walled-garden competitors and ShopBOTS' open-platform counter-strategy
+9. Marketing Moat Analysis: Identify walled-garden competitors and Beast Bots' open-platform counter-strategy
 
 Return as JSON with keys: marketSize, competition, demographics, trendingProducts, platformRecommendation, risks, marketingChannels, viabilityScore, summary`,
         responseFormat: {
@@ -77,10 +77,10 @@ Return as JSON with keys: marketSize, competition, demographics, trendingProduct
         analysisPrompt: `Based on the niche research above, identify:
 1. The top 3 underserved sub-niches with the highest profit potential
 2. Specific product gaps that competitors are missing
-3. A recommended differentiation strategy using ShopBOTS' open-platform advantage
+3. A recommended differentiation strategy using Beast Bots' open-platform advantage
 4. Estimated time-to-market for a new store in this niche
-5. MARKETING MOAT OPPORTUNITY: Which competitors are most locked into a single platform? How does ShopBOTS' multi-channel orchestration create an unfair advantage here?
-6. ZERO-TOUCH GAPS: Which manual steps in this niche can ShopBOTS fully automate that competitors cannot?
+5. MARKETING MOAT OPPORTUNITY: Which competitors are most locked into a single platform? How does Beast Bots' multi-channel orchestration create an unfair advantage here?
+6. ZERO-TOUCH GAPS: Which manual steps in this niche can Beast Bots fully automate that competitors cannot?
 Format as actionable recommendations with specific ShopBot counter-strategies.`,
       },
     },

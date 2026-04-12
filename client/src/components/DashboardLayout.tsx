@@ -52,7 +52,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 
-const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "ShopBOTS";
+const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "Beast Bots";
 const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/shopbots-logo-jtbPJz7S5VtEogc7An2qZH.webp";
 
 const allMenuItems = [
@@ -354,7 +354,7 @@ function DashboardLayoutContent({
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold tracking-tight text-foreground">
-                {activeMenuItem?.label ?? "ShopBOTS"}
+                {activeMenuItem?.label ?? "Beast Bots"}
               </h1>
             </div>
           </div>

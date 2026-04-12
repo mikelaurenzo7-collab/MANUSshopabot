@@ -1,5 +1,5 @@
 /**
- * ShopBOTS — Elite Orchestration Engine
+ * Beast Bots — Elite Orchestration Engine
  *
  * Cross-platform intelligence layer implementing:
  * 1. Anomaly Detection — detect inventory crashes, fulfillment delays, ROAS drops

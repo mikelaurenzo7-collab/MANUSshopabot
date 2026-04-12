@@ -161,8 +161,8 @@ const plugins = [
     registerType: "autoUpdate",
     includeAssets: ["favicon.ico", "robots.txt"],
     manifest: {
-      name: "ShopBOTS — Autonomous E-Commerce",
-      short_name: "ShopBOTS",
+      name: "Beast Bots — Autonomous E-Commerce",
+      short_name: "Beast Bots",
       description: "Autonomous AI bots that build, run, and grow your e-commerce store 24/7.",
       theme_color: "#0a0a0f",
       background_color: "#0a0a0f",
