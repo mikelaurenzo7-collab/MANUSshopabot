@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, index } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, bigint, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -113,11 +113,13 @@ export const agentTasks = mysqlTable("agent_tasks", {
   result: json("result"),
   storeId: int("storeId"),
   metadata: json("metadata"),
+  idempotencyKey: varchar("idempotencyKey", { length: 255 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   storeIdIdx: index("agent_tasks_store_id_idx").on(table.storeId),
   agentTypeIdx: index("agent_tasks_agent_type_idx").on(table.agentType, table.createdAt),
+  idempotencyKeyIdx: uniqueIndex("agent_tasks_idempotency_key_idx").on(table.idempotencyKey),
 }));
 
 export type AgentTask = typeof agentTasks.$inferSelect;

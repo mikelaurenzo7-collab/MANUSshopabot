@@ -11,6 +11,7 @@
  */
 
 import cron from "node-cron";
+import { logger } from "../_core/logger";
 import * as db from "../db";
 import { notifyOwner } from "../_core/notification";
 import {
@@ -56,7 +57,7 @@ class AgentScheduler {
   start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
-    console.log("[Scheduler] Starting agent task scheduler...");
+    logger.info("scheduler_starting", { message: "Starting agent task scheduler" });
 
     Array.from(this.taskConfigs.values()).forEach(config => {
       if (config.enabled) {
@@ -64,11 +65,11 @@ class AgentScheduler {
       }
     });
 
-    console.log(`[Scheduler] ${this.tasks.size} tasks scheduled`);
+    logger.info("scheduler_started", { taskCount: this.tasks.size });
   }
 
   stop(): void {
-    console.log("[Scheduler] Stopping all scheduled tasks...");
+    logger.info("scheduler_stopping", { message: "Stopping all scheduled tasks" });
     Array.from(this.tasks.entries()).forEach(([id, task]) => {
       task.stop();
     });
@@ -115,7 +116,7 @@ class AgentScheduler {
   async triggerNow(taskId: string): Promise<void> {
     const config = this.taskConfigs.get(taskId);
     if (!config) throw new Error(`Task ${taskId} not found`);
-    console.log(`[Scheduler] Manual trigger: ${config.name}`);
+      logger.info("scheduler_manual_trigger", { taskId, taskName: config.name });
     await config.handler();
   }
 
@@ -124,22 +125,22 @@ class AgentScheduler {
     if (existing) existing.stop();
 
     if (!cron.validate(config.cronExpression)) {
-      console.error(`[Scheduler] Invalid cron expression for ${config.id}: ${config.cronExpression}`);
+      logger.error("scheduler_invalid_cron", { taskId: config.id, cronExpression: config.cronExpression });
       return;
     }
 
     const task = cron.schedule(config.cronExpression, async () => {
-      console.log(`[Scheduler] Running: ${config.name} (${config.id})`);
+      logger.info("scheduler_task_start", { taskId: config.id, taskName: config.name });
       try {
         await config.handler();
-        console.log(`[Scheduler] Completed: ${config.name}`);
+        logger.info("scheduler_task_complete", { taskId: config.id, taskName: config.name });
       } catch (err) {
-        console.error(`[Scheduler] Failed: ${config.name}`, err);
+        logger.error("scheduler_task_failed", { taskId: config.id, taskName: config.name, error: (err as any)?.message ?? String(err) });
       }
     });
 
     this.tasks.set(config.id, task);
-    console.log(`[Scheduler] Scheduled: ${config.name} (${config.cronExpression})`);
+    logger.info("scheduler_task_registered", { taskId: config.id, taskName: config.name, cron: config.cronExpression });
   }
 }
 
@@ -179,7 +180,7 @@ async function handleInventoryCheck(): Promise<void> {
         result: { totalLowStock, storeResults: results },
       });
     } catch (err: any) {
-      console.error(`[Scheduler] Inventory check failed for user ${userId}:`, err.message);
+      logger.error("scheduler_error", { event: "Inventory check failed", userId, error: err.message });
     }
   }
 }
@@ -217,10 +218,10 @@ async function handleOrderFulfillment(): Promise<void> {
         output: { fulfilled: true },
         success: true,
       }).catch((telemetryErr: any) => {
-        console.error(`[Scheduler] Failed to log telemetry for order ${order.id}:`, telemetryErr.message);
+        logger.warn("scheduler_telemetry_failed", { orderId: order.id, error: telemetryErr.message });
       });
     } catch (err: any) {
-      console.error(`[Scheduler] Auto-fulfill failed for order ${order.id}:`, err.message);
+      logger.error("scheduler_error", { event: "Auto-fulfill failed", orderId: order.id, error: err.message });
 
       // Telemetry: log scheduler fulfillment failure
       logAgentAction({
@@ -232,7 +233,7 @@ async function handleOrderFulfillment(): Promise<void> {
         success: false,
         errorMessage: err.message,
       }).catch((telemetryErr: any) => {
-        console.error(`[Scheduler] Failed to log telemetry for failed fulfillment ${order.id}:`, telemetryErr.message);
+        logger.warn("scheduler_telemetry_failed", { orderId: order.id, context: "failed_fulfillment", error: telemetryErr.message });
       });
     }
   }
@@ -244,9 +245,9 @@ async function handleProductSync(): Promise<void> {
   for (const store of allStores) {
     try {
       const result = await syncProductsFromStore(store.id, store.userId);
-      console.log(`[Scheduler] Synced ${result.synced} products from ${store.name} (${store.platform})`);
+      logger.info("scheduler_product_sync", { storeName: store.name, platform: store.platform, synced: result.synced });
     } catch (err: any) {
-      console.error(`[Scheduler] Product sync failed for store ${store.name}:`, err.message);
+      logger.error("scheduler_error", { event: "Product sync failed", storeName: store.name, error: err.message });
     }
   }
 }
@@ -283,7 +284,7 @@ async function handleAdMonitoring(): Promise<void> {
         result: { accounts: analytics.length, errors: analytics.filter(a => a.error).length },
       });
     } catch (err: any) {
-      console.error(`[Scheduler] Ad monitoring failed for user ${userId}:`, err.message);
+      logger.error("scheduler_error", { event: "Ad monitoring failed", userId, error: err.message });
     }
   }
 }
@@ -291,14 +292,14 @@ async function handleAdMonitoring(): Promise<void> {
 async function handleScheduledPosts(): Promise<void> {
   const result = await enqueueDueScheduledPosts(new Date());
   if (result.duePosts > 0) {
-    console.log(`[Scheduler] Enqueued ${result.enqueued} scheduled social publishing jobs from ${result.duePosts} due posts`);
+    logger.info("scheduler_event", { message: `Enqueued ${result.enqueued} scheduled social publishing jobs from ${result.duePosts} due posts` });
   }
 }
 
 async function handleJobQueue(): Promise<void> {
   const result = await processRunnableJobs(10);
   if (result.total > 0) {
-    console.log(`[Scheduler] Job queue processed ${result.processed}, failed ${result.failed}`);
+    logger.info("scheduler_event", { message: `Job queue processed ${result.processed}, failed ${result.failed}` });
   }
 }
 
@@ -358,7 +359,7 @@ async function handleTokenRefresh(): Promise<void> {
         actionUrl: "/integrations",
       });
     } catch (err: any) {
-      console.error(`[Scheduler] Token refresh failed for credential ${cred.id}:`, err.message);
+      logger.error("scheduler_error", { event: "Token refresh failed", credId: cred.id, error: err.message });
     }
   }
 }
@@ -398,7 +399,7 @@ async function handleSeoAudit(): Promise<void> {
         });
       }
     } catch (err: any) {
-      console.error(`[Scheduler] SEO audit failed for store ${store.name}:`, err.message);
+      logger.error("scheduler_error", { event: "SEO audit failed", storeName: store.name, error: err.message });
     }
   }
 }
@@ -447,7 +448,7 @@ async function handleEmailRecovery(): Promise<void> {
         });
       }
     } catch (err: any) {
-      console.error(`[Scheduler] Email recovery scan failed for store ${store.name}:`, err.message);
+      logger.error("scheduler_error", { event: "Email recovery scan failed", storeName: store.name, error: err.message });
     }
   }
 }
@@ -502,7 +503,7 @@ async function handleCompetitorScan(): Promise<void> {
         });
       }
     } catch (err: any) {
-      console.error(`[Scheduler] Competitor scan failed for user ${userId}:`, err.message);
+      logger.error("scheduler_error", { event: "Competitor scan failed", userId, error: err.message });
     }
   }
 }
@@ -510,7 +511,7 @@ async function handleCompetitorScan(): Promise<void> {
 async function handleBotCoordination(): Promise<void> {
   const result = await processPendingBotEvents(25);
   if (result.total > 0) {
-    console.log(`[Scheduler] Bot coordination processed ${result.processed}, failed ${result.failed}, ignored ${result.ignored}`);
+    logger.info("scheduler_event", { message: `Bot coordination processed ${result.processed}, failed ${result.failed}, ignored ${result.ignored}` });
   }
 }
 
@@ -659,10 +660,10 @@ export function registerDefaultTasks(): void {
         try {
           const result = await pauseAdsForOutOfStockProducts(userId);
           if (result.paused > 0) {
-            console.log(`[Scheduler] Paused ${result.paused} ads for OOS products (user ${userId})`);
+            logger.info("scheduler_ad_pause", { userId, paused: result.paused });
           }
         } catch (err: any) {
-          console.error(`[Scheduler] Inventory-aware ad pause failed for user ${userId}:`, err.message);
+          logger.error("scheduler_error", { event: "Inventory-aware ad pause failed", userId, error: err.message });
         }
       }
     },
@@ -684,10 +685,10 @@ export function registerDefaultTasks(): void {
           const autoApplied = results.filter(r => r.approved).length;
           const queued = results.filter(r => r.requiresApproval).length;
           if (results.length > 0) {
-            console.log(`[Scheduler] Dynamic pricing: ${autoApplied} auto-applied, ${queued} queued for approval (user ${userId})`);
+            logger.info("scheduler_dynamic_pricing", { userId, autoApplied, queued });
           }
         } catch (err: any) {
-          console.error(`[Scheduler] Dynamic pricing failed for user ${userId}:`, err.message);
+          logger.error("scheduler_error", { event: "Dynamic pricing failed", userId, error: err.message });
         }
       }
     },
@@ -707,10 +708,10 @@ export function registerDefaultTasks(): void {
         try {
           const result = await runCreativeVelocityOptimization(userId);
           if (result.paused + result.scaled > 0) {
-            console.log(`[Scheduler] Creative velocity: ${result.paused} paused, ${result.scaled} scaled (user ${userId})`);
+            logger.info("scheduler_creative_velocity", { userId, paused: result.paused, scaled: result.scaled });
           }
         } catch (err: any) {
-          console.error(`[Scheduler] Creative velocity failed for user ${userId}:`, err.message);
+          logger.error("scheduler_error", { event: "Creative velocity failed", userId, error: err.message });
         }
       }
     },
@@ -741,7 +742,7 @@ export function registerDefaultTasks(): void {
             });
           }
         } catch (err: any) {
-          console.error(`[Scheduler] Anomaly detection failed for user ${userId}:`, err.message);
+          logger.error("scheduler_error", { event: "Anomaly detection failed", userId, error: err.message });
         }
       }
     },
@@ -756,11 +757,11 @@ export function registerDefaultTasks(): void {
     enabled: true,
     handler: async () => {
       const { processed, failed } = await processDLQ(async (entry) => {
-        console.log(`[DLQ] Retrying event: ${entry.event} on ${entry.platform}`);
+        logger.info("scheduler_log", { message: `[DLQ] Retrying event: ${entry.event} on ${entry.platform}` });
         // In production, re-dispatch to the appropriate webhook handler
       });
       if (processed + failed > 0) {
-        console.log(`[DLQ] Processed ${processed}, failed ${failed}`);
+        logger.info("scheduler_log", { message: `[DLQ] Processed ${processed}, failed ${failed}` });
       }
     },
   });

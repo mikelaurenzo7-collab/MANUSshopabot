@@ -4,6 +4,8 @@
  * Used to make LLM calls and external API calls resilient.
  */
 
+import { logger } from "./logger";
+
 export interface RetryOptions {
   /** Maximum number of attempts (default: 3) */
   maxAttempts?: number;
@@ -121,7 +123,7 @@ export async function withCircuitBreaker<T>(
   if (breaker.state === "open") {
     if (now - breaker.lastFailureTime > CIRCUIT_BREAKER_TIMEOUT_MS) {
       breaker.state = "half-open";
-      console.log(`[CircuitBreaker:${key}] Half-open — testing service...`);
+      logger.info("circuit_breaker_half_open", { key });
     } else {
       throw new Error(`[CircuitBreaker:${key}] Circuit is OPEN — service unavailable. Try again in ${Math.round((CIRCUIT_BREAKER_TIMEOUT_MS - (now - breaker.lastFailureTime)) / 1000)}s`);
     }
@@ -131,7 +133,7 @@ export async function withCircuitBreaker<T>(
     const result = await fn();
     // Success — reset circuit
     if (breaker.state === "half-open") {
-      console.log(`[CircuitBreaker:${key}] Service recovered — circuit CLOSED`);
+      logger.info("circuit_breaker_closed", { key });
     }
     breaker.failures = 0;
     breaker.state = "closed";
@@ -141,7 +143,7 @@ export async function withCircuitBreaker<T>(
     breaker.lastFailureTime = now;
     if (breaker.failures >= CIRCUIT_BREAKER_THRESHOLD) {
       breaker.state = "open";
-      console.error(`[CircuitBreaker:${key}] OPENED after ${breaker.failures} failures`);
+      logger.warn("circuit_breaker_opened", { key, failures: breaker.failures });
     }
     throw err;
   }

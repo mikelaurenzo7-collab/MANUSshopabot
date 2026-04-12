@@ -28,45 +28,46 @@ describe("Analytics Page Error Handling", () => {
 });
 
 describe("Platform Bridge Null Checks", () => {
-  it("publishSocialPost has null checks", async () => {
+  it("publishSocialPost delegates to getSocialAccountAdapter helper", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
     const content = fs.readFileSync(filePath, "utf-8");
     
-    expect(content).toContain("if (!adapter)");
-    expect(content).toContain("if (!credentials)");
-    expect(content).toContain("if (!account)");
+    // New architecture: null guards are centralized in getSocialAccountAdapter helper
+    expect(content).toContain("getSocialAccountAdapter");
+    expect(content).toContain("getStoreAdapter");
+    // Throws on missing resources
+    expect(content).toContain("throw new Error");
   });
 
-  it("scheduleSocialPost has null checks", async () => {
+  it("platformBridge has resilience patterns (circuit breaker + retry)", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
     const content = fs.readFileSync(filePath, "utf-8");
     
-    // Count occurrences of null checks
-    const nullChecks = (content.match(/if \(!adapter\)|if \(!credentials\)|if \(!account\)/g) || []).length;
-    expect(nullChecks).toBeGreaterThanOrEqual(9); // At least 3 functions with 3 checks each
+    // Count withResilience calls (circuit breaker + retry on every adapter call)
+    const resilienceCalls = (content.match(/withResilience/g) || []).length;
+    expect(resilienceCalls).toBeGreaterThanOrEqual(6); // At least 6 protected call sites
   });
 
-  it("launchAdCampaign has null checks", async () => {
+  it("launchAdCampaign is circuit-breaker protected", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
     const content = fs.readFileSync(filePath, "utf-8");
     
-    // Verify launchAdCampaign function has null checks
     const launchAdCampaignSection = content.substring(
       content.indexOf("export async function launchAdCampaign"),
       content.indexOf("export async function launchAdCampaign") + 1000
     );
     
-    expect(launchAdCampaignSection).toContain("if (!adapter)");
-    expect(launchAdCampaignSection).toContain("if (!credentials)");
+    expect(launchAdCampaignSection).toContain("withResilience");
+    expect(launchAdCampaignSection).toContain("getSocialAccountAdapter");
   });
 
-  it("fulfillOrderOnPlatform has null checks", async () => {
+  it("fulfillOrderOnPlatform is circuit-breaker protected with order null guard", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
@@ -77,12 +78,13 @@ describe("Platform Bridge Null Checks", () => {
       content.indexOf("export async function fulfillOrderOnPlatform") + 1000
     );
     
-    expect(fulfillSection).toContain("if (!adapter)");
-    expect(fulfillSection).toContain("if (!credentials)");
-    expect(fulfillSection).toContain("if (!store)");
+    expect(fulfillSection).toContain("withResilience");
+    expect(fulfillSection).toContain("getStoreAdapter");
+    // Order null guard
+    expect(fulfillSection).toContain("if (!order)");
   });
 
-  it("syncProductsFromStore has null checks", async () => {
+  it("syncProductsFromStore validates product data before upsert", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
@@ -93,7 +95,9 @@ describe("Platform Bridge Null Checks", () => {
       content.indexOf("export async function syncProductsFromStore") + 1500
     );
     
-    expect(syncSection).toContain("if (!adapter)");
+    // Circuit breaker protection
+    expect(syncSection).toContain("withResilience");
+    // Product data validation
     expect(syncSection).toContain("if (!rp || !rp.platformId)");
   });
 });

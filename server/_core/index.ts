@@ -9,6 +9,7 @@ import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
+import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -36,6 +37,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Inject requestId + child logger into every request for distributed tracing
+  app.use(correlationMiddleware);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -71,16 +74,16 @@ async function startServer() {
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    logger.warn("server_port_fallback", { preferredPort, actualPort: port });
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    logger.info("server_started", { port, url: `http://localhost:${port}/` });
     // Start the bot task scheduler
     registerDefaultTasks();
     agentScheduler.start();
-    console.log(`[ShopBOTS] Bot scheduler started with ${agentScheduler.getStatus().length} tasks`);
+    logger.info("scheduler_initialized", { taskCount: agentScheduler.getStatus().length });
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => logger.error("server_fatal", { error: err?.message ?? String(err) }));

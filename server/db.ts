@@ -237,6 +237,13 @@ export async function updateAgentTask(id: number, data: Partial<InsertAgentTask>
   await db.update(agentTasks).set(data).where(eq(agentTasks.id, id));
 }
 
+export async function getAgentTaskByIdempotencyKey(idempotencyKey: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(agentTasks).where(eq(agentTasks.idempotencyKey, idempotencyKey)).limit(1);
+  return rows[0] ?? null;
+}
+
 // ─── Approval Queue helpers ─────────────────────────────────────────────────
 
 export async function createApprovalItem(data: InsertApprovalItem) {

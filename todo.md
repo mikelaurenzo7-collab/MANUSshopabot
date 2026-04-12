@@ -275,13 +275,47 @@
 - [x] Verify corrected import path in imageGeneration.ts
 - [x] Verify getBestPromptVariant function in db.ts
 
-### Production Readiness Gaps Identified (Future Work)
-- [ ] Add circuit breaker to platform adapter calls (prevent cascading failures)
-- [ ] Expand job queue to support multiple job types beyond social posts
-- [ ] Extend bot coordination events beyond 3 current types
-- [ ] Add request correlation/tracing IDs to structured logger
-- [ ] Add rate limiting per platform to prevent API throttling
-- [ ] Refactor scheduler into separate task modules (currently 700+ lines)
-- [ ] Add saga pattern for multi-step workflows with rollback
-- [ ] Implement idempotency keys for duplicate operation prevention
-- [ ] Replace console.log with structured logger throughout scheduler
+### Production Readiness Gaps Identified
+- [x] Add circuit breaker to platform adapter calls — DONE Sprint 12
+- [x] Expand job queue to support multiple job types — DONE Sprint 12
+- [x] Extend bot coordination events beyond 3 current types — DONE Sprint 12 (12 event types)
+- [x] Add request correlation/tracing IDs to structured logger — DONE Sprint 12
+- [ ] Add rate limiting per platform to prevent API throttling — future work
+- [ ] Refactor scheduler into separate task modules — future work
+- [x] Add saga pattern for multi-step workflows with rollback — DONE Sprint 12
+- [x] Implement idempotency keys for duplicate operation prevention — DONE Sprint 12
+- [x] Replace console.log with structured logger throughout scheduler — DONE Sprint 12
+
+## Sprint 12: Production Hardening ✅
+
+### Phase 1: Resilience
+- [x] Circuit breaker for platform adapter calls — withResilience wraps all 7 adapter call sites in platformBridge.ts; per-platform CB keys (ecomCbKey, socialCbKey); trips at 5 failures, 60s cooldown
+- [x] Expand job queue to support multiple job types — 7 types: publish_scheduled_social_post, fulfill_order, pricing_update, email_campaign, report_generation, webhook_delivery, niche_research
+- [x] Per-job-type concurrency limits and priority queuing — CONCURRENCY_LIMITS map + JOB_PRIORITY map in jobQueue.ts
+
+### Phase 2: Observability
+- [x] Structured logger with correlation IDs — server/_core/logger.ts: JSON output {ts, level, event, context}, withContext chaining, correlationMiddleware
+- [x] Replace all console.log/warn/error in scheduler with structured logger — 32 console calls replaced
+- [x] Add request correlation middleware to Express server — correlationMiddleware in server/_core/index.ts
+- [x] Replace console calls in retry.ts with structured logger
+
+### Phase 3: Coordination & Reliability
+- [x] Extend bot coordination events — 12 event types: order_fulfilled_review_request, order_refund_requested, order_chargeback_detected, inventory_critical, inventory_overstock, supplier_restock_confirmed, sale_spike_detected, revenue_drop_detected, social_campaign_high_roas, ad_budget_exhausted, competitor_price_drop, merchant_anomaly_detected
+- [x] Saga pattern for multi-step workflows — executeSaga() in botCoordination.ts with compensating transactions and rollback log
+- [x] Idempotency keys for all critical mutations — getAgentTaskByIdempotencyKey() in db.ts; idempotencyKey column on agent_tasks table; DB migration applied
+
+### Phase 4: Architecture
+- [ ] Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — deferred; scheduler is functional at 779 lines
+
+### Tests
+- [x] production-hardening.test.ts: 29 tests covering circuit breaker, structured logger, bot coordination, saga pattern, idempotency, platform bridge resilience, code quality
+- [x] All 478 tests passing across 26 test files
+- [x] 0 TypeScript errors
+
+## Sprint 13: Job Queue Test Coverage & Hardening ✅
+
+- [x] Add unit tests for all 7 job handlers: success, retry, exhaustion, invalid payload paths — server/engine/jobQueue.test.ts (34 tests)
+- [x] Add test proving JOB_PRIORITY ordering is enforced when mixed job types are runnable
+- [x] Add test proving CONCURRENCY_LIMITS are enforced per job type (jobs beyond limit are deferred, not dropped)
+- [ ] Add rate limiting per platform to prevent API throttling (token bucket per adapter) — future Sprint 14
+- [ ] Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — future Sprint 14

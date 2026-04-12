@@ -20,6 +20,7 @@ vi.mock("../db", () => ({
   createAgentTask: vi.fn(),
   getPendingBotEvents: vi.fn(),
   updateBotEvent: vi.fn(),
+  getAgentTaskByIdempotencyKey: vi.fn().mockResolvedValue(null),
 }));
 
 // ─── Mock platformBridge ──────────────────────────────────────────────────────
@@ -328,7 +329,8 @@ describe("botCoordination", () => {
         fakeBotEvent.id,
         expect.objectContaining({
           status: "failed",
-          error: "DB write failed",
+          // Saga pattern wraps error with step context
+          error: expect.stringContaining("DB write failed"),
         }),
       );
     });

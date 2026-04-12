@@ -8,14 +8,28 @@
  * 1. Resolves the correct adapter (ecommerce or social) for a given store/account
  * 2. Builds credentials from DB records
  * 3. Provides high-level operations that agents call
- * 4. Handles errors, retries, and credential refresh
+ * 4. Wraps every external API call with circuit breaker + retry for maximum resilience
  */
 
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { getSocialAdapter, buildSocialCredentials } from "../adapters/social";
 import type { AdapterCredentials, CreateProductInput, FulfillmentInput, PlatformProduct } from "../adapters/ecommerce/types";
 import type { SocialCredentials, CreatePostInput, CreateAdCampaignInput, SocialPost, AdCampaign, SocialAnalytics } from "../adapters/social/types";
+import { withResilience } from "../_core/retry";
+import { logger } from "../_core/logger";
 import * as db from "../db";
+
+// ─── Circuit Breaker Key Helpers ──────────────────────────────────────────
+
+/** Generate a per-platform circuit breaker key for e-commerce adapters */
+function ecomCbKey(platform: string, storeId: number): string {
+  return `ecom:${platform}:store:${storeId}`;
+}
+
+/** Generate a per-platform circuit breaker key for social adapters */
+function socialCbKey(platform: string, accountId: number): string {
+  return `social:${platform}:account:${accountId}`;
+}
 
 // ─── E-Commerce Bridge ────────────────────────────────────────────────────
 
@@ -28,7 +42,6 @@ export async function getStoreAdapter(storeId: number) {
 
   const adapter = getEcommerceAdapter(store.platform);
 
-  // Try to find platform credentials for this store
   const creds = await db.getCredentialsByStoreId(storeId);
   const credentials: AdapterCredentials = creds
     ? buildCredentials(creds, store)
@@ -44,19 +57,21 @@ export async function getStoreAdapter(storeId: number) {
 
 /**
  * Sync products from a remote platform store into the local DB.
+ * Wrapped with circuit breaker — if the platform API is failing, stops hammering it.
  */
 export async function syncProductsFromStore(storeId: number, userId: number): Promise<{ synced: number; errors: string[] }> {
   const { adapter, credentials, store } = await getStoreAdapter(storeId);
-  
-  if (!adapter) throw new Error(`No adapter found for store ${storeId}`);
-  if (!credentials) throw new Error(`No credentials found for store ${storeId}`);
-  if (!store) throw new Error(`Store ${storeId} not found`);
-  
+  const cbKey = ecomCbKey(store.platform, storeId);
+
   const errors: string[] = [];
   let synced = 0;
 
   try {
-    const remoteProducts = await adapter.listProducts(credentials, { limit: 250 });
+    const remoteProducts = await withResilience(
+      cbKey,
+      () => adapter.listProducts(credentials, { limit: 250 }),
+      { maxAttempts: 3, label: `sync_products:${store.platform}:${storeId}` }
+    );
 
     for (const rp of remoteProducts) {
       try {
@@ -64,10 +79,8 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
           errors.push(`Invalid product data: missing platformId`);
           continue;
         }
-        // Check if product already exists by platform ID
         const existing = await db.getProductByPlatformId(storeId, rp.platformId);
         if (existing) {
-          // Update existing product
           await db.updateProduct(existing.id, {
             title: rp.title,
             price: rp.priceCents,
@@ -76,7 +89,6 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
             imageUrl: rp.imageUrl || existing.imageUrl,
           });
         } else {
-          // Create new product
           await db.createProduct({
             storeId,
             title: rp.title,
@@ -86,7 +98,7 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
             imageUrl: rp.imageUrl || undefined,
             stockLevel: rp.stockLevel ?? 0,
             status: rp.status === "active" ? "active" : "draft",
-            platformProductId: rp.platformId, 
+            platformProductId: rp.platformId,
           });
         }
         synced++;
@@ -95,28 +107,32 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
       }
     }
 
-    // Log the sync task
     await db.createAgentTask({
       agentType: "merchant",
       taskType: "product_sync",
       title: `Synced ${synced} products from ${store.platform}`,
       description: `Store: ${store.name}. ${errors.length} errors.`,
-      status: errors.length === 0 ? "completed" : "completed",
+      status: "completed",
       storeId,
       result: { synced, errors },
     });
 
+    logger.info("product_sync_complete", { storeId, platform: store.platform, synced, errorCount: errors.length });
     return { synced, errors };
   } catch (err: any) {
+    logger.error("product_sync_failed", { storeId, platform: store.platform, error: err.message });
     throw new Error(`Failed to sync products from ${store.platform}: ${err.message}`);
   }
 }
 
 /**
  * Push a product to the remote platform store.
+ * Circuit-breaker protected.
  */
 export async function pushProductToStore(storeId: number, productId: number): Promise<PlatformProduct> {
-  const { adapter, credentials } = await getStoreAdapter(storeId);
+  const { adapter, credentials, store } = await getStoreAdapter(storeId);
+  const cbKey = ecomCbKey(store.platform, storeId);
+
   const product = await db.getProductById(productId);
   if (!product) throw new Error(`Product ${productId} not found`);
 
@@ -129,33 +145,40 @@ export async function pushProductToStore(storeId: number, productId: number): Pr
     stockLevel: product.stockLevel,
   };
 
-  const created = await adapter.createProduct(credentials, input);
+  const created = await withResilience(
+    cbKey,
+    () => adapter.createProduct(credentials, input),
+    { maxAttempts: 3, label: `push_product:${store.platform}:${storeId}` }
+  );
 
-  // Update local record with platform ID
   await db.updateProduct(productId, {
     platformProductId: created.platformId,
     status: "active",
   });
 
+  logger.info("product_pushed", { storeId, productId, platform: store.platform, platformProductId: created.platformId });
   return created;
 }
 
 /**
  * Fulfill an order on the remote platform.
+ * Circuit-breaker protected — fulfillment is critical, never retried more than 2x.
  */
-export async function fulfillOrderOnPlatform(storeId: number, orderId: number, trackingNumber?: string, trackingUrl?: string): Promise<boolean> {
+export async function fulfillOrderOnPlatform(
+  storeId: number,
+  orderId: number,
+  trackingNumber?: string,
+  trackingUrl?: string
+): Promise<boolean> {
   const { adapter, credentials, store } = await getStoreAdapter(storeId);
-  
-  if (!adapter) throw new Error(`No adapter found for store ${storeId}`);
-  if (!credentials) throw new Error(`No credentials found for store ${storeId}`);
-  if (!store) throw new Error(`Store ${storeId} not found`);
-  
+  const cbKey = ecomCbKey(store.platform, storeId);
+
   const order = await db.getOrderById(orderId);
   if (!order) throw new Error(`Order ${orderId} not found`);
 
-  const platformOrderId = order.platformOrderId; 
+  const platformOrderId = order.platformOrderId;
   if (!platformOrderId) {
-    // No platform order ID — just update locally
+    // No platform order ID — update locally only
     await db.updateOrder(orderId, {
       status: "fulfilled",
       fulfillmentStatus: "fulfilled",
@@ -172,7 +195,11 @@ export async function fulfillOrderOnPlatform(storeId: number, orderId: number, t
     notifyCustomer: true,
   };
 
-  await adapter.fulfillOrder(credentials, platformOrderId, fulfillment);
+  await withResilience(
+    cbKey,
+    () => adapter.fulfillOrder(credentials, platformOrderId, fulfillment),
+    { maxAttempts: 2, label: `fulfill_order:${store.platform}:${orderId}` }
+  );
 
   await db.updateOrder(orderId, {
     status: "fulfilled",
@@ -181,6 +208,7 @@ export async function fulfillOrderOnPlatform(storeId: number, orderId: number, t
     trackingUrl,
   });
 
+  logger.info("order_fulfilled", { storeId, orderId, platform: store.platform, trackingNumber: fulfillment.trackingNumber });
   return true;
 }
 
@@ -198,7 +226,6 @@ export async function checkInventoryAcrossStores(userId: number): Promise<{
 
   for (const store of stores) {
     if (store.status !== "active") continue;
-
     const lowStock = await db.getLowStockProducts(store.id);
     results.push({
       storeId: store.id,
@@ -239,6 +266,7 @@ export async function getSocialAccountAdapter(accountId: number) {
 
 /**
  * Publish a post to a social media platform.
+ * Circuit-breaker protected per platform+account.
  */
 export async function publishSocialPost(
   accountId: number,
@@ -246,30 +274,22 @@ export async function publishSocialPost(
   storeId?: number,
 ): Promise<SocialPost> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
+  const cbKey = socialCbKey(account.platform, accountId);
 
-  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
-  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
-  if (!account) throw new Error(`Account ${accountId} not found`);
+  const post = await withResilience(
+    cbKey,
+    () => adapter.createPost(credentials, postInput),
+    { maxAttempts: 3, label: `publish_post:${account.platform}:${accountId}` }
+  );
 
-  const post = await adapter.createPost(credentials, postInput);
-
-  // Save to local DB
   if (storeId) {
-    // Map platform names to DB enum values
     const platformMap: Record<string, string> = {
-      meta: "facebook",
-      twitter: "twitter",
-      instagram: "instagram",
-      tiktok: "tiktok",
-      pinterest: "pinterest",
-      google_ads: "facebook", // fallback for DB enum
+      meta: "facebook", twitter: "twitter", instagram: "instagram",
+      tiktok: "tiktok", pinterest: "pinterest", google_ads: "facebook",
     };
-
-    const dbPlatform = platformMap[account.platform] || "facebook";
-
     await db.createSocialPost({
       storeId,
-      platform: dbPlatform as any,
+      platform: (platformMap[account.platform] || "facebook") as any,
       content: postInput.content,
       imageUrl: postInput.imageUrl,
       status: "published",
@@ -278,11 +298,13 @@ export async function publishSocialPost(
     });
   }
 
+  logger.info("social_post_published", { accountId, platform: account.platform, storeId, platformPostId: post.platformId });
   return post;
 }
 
 /**
  * Schedule a post for later publishing.
+ * Circuit-breaker protected.
  */
 export async function scheduleSocialPost(
   accountId: number,
@@ -291,28 +313,22 @@ export async function scheduleSocialPost(
   storeId?: number,
 ): Promise<SocialPost> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
+  const cbKey = socialCbKey(account.platform, accountId);
 
-  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
-  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
-  if (!account) throw new Error(`Account ${accountId} not found`);
-
-  const post = await adapter.schedulePost(credentials, postInput, scheduledAt);
+  const post = await withResilience(
+    cbKey,
+    () => adapter.schedulePost(credentials, postInput, scheduledAt),
+    { maxAttempts: 3, label: `schedule_post:${account.platform}:${accountId}` }
+  );
 
   if (storeId) {
     const platformMap: Record<string, string> = {
-      meta: "facebook",
-      twitter: "twitter",
-      instagram: "instagram",
-      tiktok: "tiktok",
-      pinterest: "pinterest",
-      google_ads: "facebook",
+      meta: "facebook", twitter: "twitter", instagram: "instagram",
+      tiktok: "tiktok", pinterest: "pinterest", google_ads: "facebook",
     };
-
-    const dbPlatform = platformMap[account.platform] || "facebook";
-
     await db.createSocialPost({
       storeId,
-      platform: dbPlatform as any,
+      platform: (platformMap[account.platform] || "facebook") as any,
       content: postInput.content,
       imageUrl: postInput.imageUrl,
       status: "scheduled",
@@ -321,11 +337,13 @@ export async function scheduleSocialPost(
     });
   }
 
+  logger.info("social_post_scheduled", { accountId, platform: account.platform, scheduledAt });
   return post;
 }
 
 /**
  * Launch an ad campaign on a social platform.
+ * Circuit-breaker protected — ad spend decisions are high-stakes.
  */
 export async function launchAdCampaign(
   accountId: number,
@@ -333,29 +351,23 @@ export async function launchAdCampaign(
   storeId: number,
 ): Promise<AdCampaign> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
+  const cbKey = socialCbKey(account.platform, accountId);
 
-  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
-  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
-  if (!account) throw new Error(`Account ${accountId} not found`);
+  const campaign = await withResilience(
+    cbKey,
+    () => adapter.createAdCampaign(credentials, campaignInput),
+    { maxAttempts: 2, label: `launch_campaign:${account.platform}:${accountId}` }
+  );
 
-  const campaign = await adapter.createAdCampaign(credentials, campaignInput);
-
-  // Map to DB enum
   const platformMap: Record<string, string> = {
-    meta: "meta",
-    instagram: "meta",
-    tiktok: "tiktok",
-    google_ads: "google",
-    twitter: "meta", // fallback
-    pinterest: "meta", // fallback
+    meta: "meta", instagram: "meta", tiktok: "tiktok",
+    google_ads: "google", twitter: "meta", pinterest: "meta",
   };
-
-  const dbPlatform = platformMap[account.platform] || "meta";
 
   await db.createAdCampaign({
     storeId,
     name: campaignInput.name || `${account.platform} campaign`,
-    platform: dbPlatform as any,
+    platform: (platformMap[account.platform] || "meta") as any,
     adCopy: campaignInput.adCopy,
     targetAudience: JSON.stringify(campaignInput.targeting),
     budgetCents: campaignInput.budgetCents,
@@ -363,15 +375,17 @@ export async function launchAdCampaign(
     imageUrl: campaignInput.imageUrl,
   });
 
+  logger.info("ad_campaign_launched", { accountId, platform: account.platform, storeId, campaignName: campaign.name });
   return campaign;
 }
 
 /**
  * Get analytics across all connected social accounts for a user.
+ * Each platform call is circuit-breaker protected independently.
  */
 export async function getCrossPlatformSocialAnalytics(userId: number) {
   const accounts = await db.getSocialAccounts(userId);
-  const results: { platform: string; accountName: string; analytics: any; error?: string }[] = [];
+  const results: { platform: string; accountName: string; analytics: SocialAnalytics | null; error?: string }[] = [];
 
   for (const account of accounts) {
     if (account.status !== "active") continue;
@@ -388,13 +402,17 @@ export async function getCrossPlatformSocialAnalytics(userId: number) {
 
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const analytics = await adapter.getAccountAnalytics(credentials, thirtyDaysAgo, now);
-      results.push({
-        platform: account.platform,
-        accountName: account.accountName || account.platform,
-        analytics,
-      });
+      const cbKey = socialCbKey(account.platform, account.id);
+
+      const analytics = await withResilience(
+        cbKey,
+        () => adapter.getAccountAnalytics(credentials, thirtyDaysAgo, now),
+        { maxAttempts: 2, label: `get_analytics:${account.platform}:${account.id}` }
+      );
+
+      results.push({ platform: account.platform, accountName: account.accountName || account.platform, analytics });
     } catch (err: any) {
+      logger.warn("analytics_fetch_failed", { platform: account.platform, accountId: account.id, error: err.message });
       results.push({
         platform: account.platform,
         accountName: account.accountName || account.platform,
