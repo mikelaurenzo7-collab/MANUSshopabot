@@ -45,7 +45,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "Beast Bots";
-const APP_LOGO = import.meta.env.VITE_APP_LOGO as string | undefined;
+const APP_LOGO = import.meta.env.VITE_APP_LOGO as string | undefined || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beast_bots_logo_v2_ef62dc0f.png";
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
@@ -95,13 +95,13 @@ export default function DashboardLayout({
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex flex-col items-center gap-4 mb-4">
               {APP_LOGO ? (
-                <img src={APP_LOGO} alt={APP_TITLE} className="h-8 w-8 rounded-lg object-contain" />
+                <img src={APP_LOGO} alt={APP_TITLE} className="h-24 w-24 object-contain" />
               ) : (
-                <Zap className="h-8 w-8 text-primary" />
+                <Zap className="h-12 w-12 text-primary" />
               )}
-              <span className="text-2xl font-bold tracking-tight gradient-text">{APP_TITLE}</span>
+              <span className="text-2xl font-bold tracking-tight gradient-text text-center">{APP_TITLE}</span>
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-center text-foreground">
               Sign in to your Command Center
@@ -217,11 +217,11 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   {APP_LOGO ? (
-                    <img src={APP_LOGO} alt={APP_TITLE} className="h-5 w-5 rounded object-contain shrink-0" />
+                    <img src={APP_LOGO} alt={APP_TITLE} className="h-7 w-7 object-contain shrink-0 drop-shadow-lg" />
                   ) : (
                     <Zap className="h-5 w-5 text-primary shrink-0" />
                   )}
-                  <span className="font-bold tracking-tight truncate gradient-text">
+                  <span className="font-bold tracking-tight truncate gradient-text text-sm">
                     {APP_TITLE}
                   </span>
                 </div>

@@ -244,3 +244,48 @@
 - [x] Wire Merchant/Architect workflow definitions to invoke store_action for sync_products/push_product/fulfill_order/check_inventory
 - [x] Complete remaining scheduler placeholder tasks (seo_audit, email_recovery, competitor_scan) with real workflow launches
 - [x] Fix social/ad platform enum mismatches (add linkedin/google_ads to socialPosts and adCampaigns enums) — schema already includes these in social_accounts; adapters handle all 7 platforms
+
+## Platform API Credentials Setup (All 14 Platforms)
+
+### E-Commerce Platforms
+- [x] Shopify Partner App credentials (already have SHOPIFY_PARTNER_CLIENT_ID/SECRET — verified)
+- [ ] WooCommerce REST API credentials (consumer key/secret — per-user, no platform-level keys needed)
+- [ ] Amazon SP-API credentials (LWA Client ID/Secret, SP-API App ID)
+- [ ] Etsy Open API v3 credentials (API Key / Keystring)
+- [ ] eBay Developer credentials (Client ID / Client Secret / Cert ID)
+- [ ] TikTok Shop Partner credentials (App Key / App Secret)
+- [ ] Walmart Marketplace credentials (Client ID / Client Secret)
+
+### Social Media Platforms
+- [ ] Meta/Facebook App credentials (App ID / App Secret)
+- [ ] Instagram (uses Meta App — same credentials)
+- [ ] TikTok for Business credentials (App ID / App Secret)
+- [ ] Twitter/X Developer credentials (API Key / API Secret / Bearer Token)
+- [ ] Pinterest Developer credentials (App ID / App Secret)
+- [ ] Google Ads/OAuth credentials (Client ID / Client Secret / Developer Token)
+- [ ] LinkedIn Developer credentials (Client ID / Client Secret)
+
+
+## Platform Credentials Gathering (Session 2 - In Progress)
+- [x] Shopify — Already configured (SHOPIFY_PARTNER_CLIENT_ID/SECRET)
+- [ ] TikTok Business — Email verification issue, resume with phone SMS or personal email tomorrow
+- [ ] Meta/Facebook — Portal accessible, awaiting app creation
+- [ ] Instagram — Uses Meta app, awaiting Meta setup
+- [ ] Twitter/X — Portal accessible, awaiting app creation
+- [ ] Pinterest — Portal accessible, awaiting app creation
+- [ ] Google Ads — Portal accessible, awaiting OAuth client creation + developer token approval
+- [ ] LinkedIn — No account yet, requires new account creation
+- [ ] Etsy — Portal accessible, awaiting app creation
+- [ ] eBay — Portal accessible, awaiting app creation
+- [ ] TikTok Shop — Portal accessible, awaiting app creation
+- [ ] Walmart — Portal accessible, awaiting app creation
+- [ ] WooCommerce — Per-store credentials (no platform-level keys needed)
+- [ ] Amazon SP-API — Blocked by browser policy, requires user setup in Seller Central
+
+
+## Final Polish & Launch Prep
+
+- [x] Verify Beast Bots logo integrated site-wide (sidebar, header, login page, favicon) → DashboardLayout + index.html favicon + meta tags
+- [x] Document learning systems roadmap (Phase 1: rule-based, Phase 2: ML training, Phase 3: full learning) → LEARNING_SYSTEMS_ROADMAP.md
+- [x] Prepare Shopify test store connection flow with supervised autonomy mode → SHOPIFY_TEST_STORE_SETUP.md
+- [x] Final checkpoint before launch ready
