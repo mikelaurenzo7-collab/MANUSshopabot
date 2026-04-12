@@ -28,7 +28,7 @@ import {
   X,
 } from "lucide-react";
 
-export default function HypeManPage() {
+export default function SocialPage() {
   const [selectedStore, setSelectedStore] = useState<string>("");
   const storeId = selectedStore ? Number(selectedStore) : undefined;
   const [adPrompt, setAdPrompt] = useState("");
@@ -41,23 +41,23 @@ export default function HypeManPage() {
   const [emailTopic, setEmailTopic] = useState("");
 
   const { data: stores } = trpc.stores.list.useQuery();
-  const { data: campaigns } = trpc.hypeman.adCampaigns.useQuery({ storeId: storeId! }, { enabled: !!storeId });
-  const { data: seoKeywords } = trpc.hypeman.seoKeywords.useQuery({ storeId: storeId! }, { enabled: !!storeId });
-  const { data: socialPosts } = trpc.hypeman.socialPosts.useQuery({ storeId: storeId! }, { enabled: !!storeId });
-  const { data: emailCampaigns } = trpc.hypeman.emailCampaigns.useQuery({ storeId: storeId! }, { enabled: !!storeId });
+  const { data: campaigns } = trpc.social.adCampaigns.useQuery({ storeId: storeId! }, { enabled: !!storeId });
+  const { data: seoKeywords } = trpc.social.seoKeywords.useQuery({ storeId: storeId! }, { enabled: !!storeId });
+  const { data: socialPosts } = trpc.social.socialPosts.useQuery({ storeId: storeId! }, { enabled: !!storeId });
+  const { data: emailCampaigns } = trpc.social.emailCampaigns.useQuery({ storeId: storeId! }, { enabled: !!storeId });
   const utils = trpc.useUtils();
 
-  const generateAd = trpc.hypeman.generateAdCopy.useMutation({
+  const generateAd = trpc.social.generateAdCopy.useMutation({
     onSuccess: () => {
       toast.success("Ad copy generated!");
-      utils.hypeman.adCampaigns.invalidate();
+      utils.social.adCampaigns.invalidate();
       utils.dashboard.invalidate();
       setAdPrompt("");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const generateImage = trpc.hypeman.generateAdImage.useMutation({
+  const generateImage = trpc.social.generateAdImage.useMutation({
     onSuccess: () => {
       toast.success("Image generated!");
       setImagePrompt("");
@@ -65,28 +65,28 @@ export default function HypeManPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const suggestSeo = trpc.hypeman.suggestSeoKeywords.useMutation({
+  const suggestSeo = trpc.social.suggestSeoKeywords.useMutation({
     onSuccess: () => {
       toast.success("SEO keywords generated!");
-      utils.hypeman.seoKeywords.invalidate();
+      utils.social.seoKeywords.invalidate();
       setSeoTopic("");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const generateSocial = trpc.hypeman.generateSocialPost.useMutation({
+  const generateSocial = trpc.social.generateSocialPost.useMutation({
     onSuccess: () => {
       toast.success("Social post created!");
-      utils.hypeman.socialPosts.invalidate();
+      utils.social.socialPosts.invalidate();
       setSocialTopic("");
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const generateEmail = trpc.hypeman.generateEmailCampaign.useMutation({
+  const generateEmail = trpc.social.generateEmailCampaign.useMutation({
     onSuccess: () => {
       toast.success("Email campaign created!");
-      utils.hypeman.emailCampaigns.invalidate();
+      utils.social.emailCampaigns.invalidate();
       setEmailTopic("");
     },
     onError: (err) => toast.error(err.message),
@@ -105,7 +105,7 @@ export default function HypeManPage() {
   const [proofType, setProofType] = useState<"testimonials" | "urgency_notifications" | "trust_badges" | "review_responses" | "ugc_prompts">("testimonials");
 
   // AI Tools mutations
-  const abTestCopy = trpc.hypeman.abTestCopyGenerator.useMutation({
+  const abTestCopy = trpc.social.abTestCopyGenerator.useMutation({
     onSuccess: (data) => {
       setAbTestResult(data);
       toast.success("A/B test variants generated!");
@@ -113,7 +113,7 @@ export default function HypeManPage() {
     onError: (err) => toast.error(`A/B test failed: ${err.message}`),
   });
 
-  const smsRecovery = trpc.hypeman.smsRecoveryFlow.useMutation({
+  const smsRecovery = trpc.social.smsRecoveryFlow.useMutation({
     onSuccess: (data) => {
       setSmsResult(data);
       toast.success("SMS recovery flow created!");
@@ -121,7 +121,7 @@ export default function HypeManPage() {
     onError: (err) => toast.error(`SMS flow failed: ${err.message}`),
   });
 
-  const socialProof = trpc.hypeman.socialProofGenerator.useMutation({
+  const socialProof = trpc.social.socialProofGenerator.useMutation({
     onSuccess: (data) => {
       setSocialProofResult(data);
       toast.success("Social proof generated!");
@@ -233,7 +233,7 @@ export default function HypeManPage() {
                           <h4 className="text-sm font-medium text-foreground">{c.name}</h4>
                           <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.createdAt).toLocaleDateString()}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => c.adCopy && copyToClipboard(typeof c.adCopy === "string" ? c.adCopy : JSON.stringify(c.adCopy))}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy ad copy" onClick={() => c.adCopy && copyToClipboard(typeof c.adCopy === "string" ? c.adCopy : JSON.stringify(c.adCopy))}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -408,7 +408,7 @@ export default function HypeManPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <Badge variant="outline" className="text-[10px] capitalize">{p.platform}</Badge>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyToClipboard(p.content || "")}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy post content" onClick={() => copyToClipboard(p.content || "")}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -644,7 +644,7 @@ export default function HypeManPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">A/B Test Variants</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAbTestResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setAbTestResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   {abTestResult.variants ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -671,7 +671,7 @@ export default function HypeManPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">SMS Recovery Flow</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSmsResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setSmsResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   {smsResult.messages ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -697,7 +697,7 @@ export default function HypeManPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Social Proof Content</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSocialProofResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setSocialProofResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   {socialProofResult.items ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">

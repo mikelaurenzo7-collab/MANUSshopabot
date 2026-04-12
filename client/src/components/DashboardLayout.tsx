@@ -52,7 +52,7 @@ const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
   { icon: Bot, label: "Builder Bot", path: "/architect", group: "bots", color: "text-violet-400", adminOnly: false },
   { icon: Package, label: "Merchant Bot", path: "/merchant", group: "bots", color: "text-cyan-400", adminOnly: false },
-  { icon: Megaphone, label: "Social Bot", path: "/hypeman", group: "bots", color: "text-amber-400", adminOnly: false },
+  { icon: Megaphone, label: "Social Bot", path: "/social", group: "bots", color: "text-amber-400", adminOnly: false },
   { icon: Activity, label: "Activity Log", path: "/activity", group: "operations", adminOnly: false },
   { icon: BarChart3, label: "Analytics", path: "/analytics", group: "operations", adminOnly: false },
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
@@ -305,6 +305,7 @@ function DashboardLayoutContent({
               variant="ghost"
               size="icon"
               className="relative h-9 w-9"
+              aria-label="Notifications"
               onClick={() => setLocation("/activity")}
             >
               <Bell className="h-4 w-4 text-muted-foreground" />

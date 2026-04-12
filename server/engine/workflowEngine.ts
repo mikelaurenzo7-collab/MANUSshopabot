@@ -50,7 +50,7 @@ export interface WorkflowStepDefinition {
 }
 
 export interface WorkflowDefinition {
-  agentType: "architect" | "merchant" | "hypeman";
+  agentType: "architect" | "merchant" | "social";
   workflowType: string;
   title: string;
   description?: string;

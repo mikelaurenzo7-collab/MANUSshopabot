@@ -6,7 +6,7 @@ import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
 
-export const hypemanRouter = router({
+export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
   generateAdCopy: protectedProcedure
     .input(z.object({

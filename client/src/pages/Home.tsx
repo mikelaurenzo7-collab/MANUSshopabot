@@ -164,12 +164,12 @@ function RecentActivityItem({
   const agentColors: Record<string, string> = {
     architect: "text-violet-400",
     merchant: "text-cyan-400",
-    hypeman: "text-amber-400",
+    social: "text-amber-400",
   };
   const agentNames: Record<string, string> = {
     architect: "Builder Bot",
     merchant: "Merchant Bot",
-    hypeman: "Social Bot",
+    social: "Social Bot",
   };
   const statusIcons: Record<string, any> = {
     completed: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
@@ -396,7 +396,7 @@ export default function Home() {
   const agentConfigs = [
     { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
     { name: "Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
-    { name: "Social Bot", type: "hypeman", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
+    { name: "Social Bot", type: "social", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
   ];
 
   return (
@@ -438,7 +438,7 @@ export default function Home() {
       )}
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-list">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-list" role="region" aria-label="Key metrics">
         <MetricCard
           title="Total Revenue"
           value={metricsError ? "—" : `$${((metrics?.totalRevenue ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}

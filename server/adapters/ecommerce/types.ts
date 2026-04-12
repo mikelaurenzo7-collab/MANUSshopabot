@@ -2,7 +2,7 @@
  * ShopBOTS — Unified E-Commerce Platform Adapter Interface
  *
  * Every e-commerce platform adapter implements this interface so that
- * The Architect, Merchant, and Hype-Man agents can operate across
+ * The Architect, Merchant, and Social Bot agents can operate across
  * Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, and Walmart
  * through a single, consistent contract.
  */

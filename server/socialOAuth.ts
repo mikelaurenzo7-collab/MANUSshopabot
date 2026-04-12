@@ -291,7 +291,7 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
 
     console.log(`[SocialOAuth] Connected ${platform} account "${profile.accountName}" for user ${userId}`);
     logAgentAction({
-      agentType: "hypeman",
+      agentType: "social",
       actionType: "social_oauth_connect",
       triggerSource: "manual",
       input: { platform, userId },
@@ -305,7 +305,7 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
   } catch (err: any) {
     console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
     logAgentAction({
-      agentType: "hypeman",
+      agentType: "social",
       actionType: "social_oauth_connect",
       triggerSource: "manual",
       input: { platform, userId },

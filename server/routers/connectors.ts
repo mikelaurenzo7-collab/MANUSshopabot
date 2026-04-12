@@ -124,7 +124,7 @@ const ECOMMERCE_PLATFORMS = {
 };
 
 /**
- * Social media platform configurations for the Hype-Man agent.
+ * Social media platform configurations for the Social Bot agent.
  */
 const SOCIAL_PLATFORMS = {
   meta: {
@@ -354,7 +354,7 @@ export const connectorsRouter = router({
       // Log the connection
       const platformName = SOCIAL_PLATFORMS[input.platform]?.name || input.platform;
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "social_connected",
         title: `Connected ${platformName} account${input.accountName ? ` "${input.accountName}"` : ""}`,
         description: `Social media account linked for content publishing`,
@@ -402,7 +402,7 @@ export const connectorsRouter = router({
 
       const platformName = SOCIAL_PLATFORMS[account.platform]?.name || account.platform;
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "social_disconnected",
         title: `Disconnected ${platformName} account${account.accountName ? ` "${account.accountName}"` : ""}`,
         status: "completed",

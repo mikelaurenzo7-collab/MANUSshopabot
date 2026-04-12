@@ -207,12 +207,12 @@ describe("Agent Scheduler", () => {
     expect(inventoryTask?.enabled).toBe(true);
   });
 
-  it("includes hypeman scheduled posts task", () => {
+  it("includes social scheduled posts task", () => {
     registerDefaultTasks();
     const status = agentScheduler.getStatus();
-    const postsTask = status.find((t: any) => t.id === "hypeman:scheduled-posts");
+    const postsTask = status.find((t: any) => t.id === "social:scheduled-posts");
     expect(postsTask).toBeDefined();
-    expect(postsTask?.agentType).toBe("hypeman");
+    expect(postsTask?.agentType).toBe("social");
     expect(postsTask?.enabled).toBe(true);
   });
 
@@ -228,17 +228,17 @@ describe("Agent Scheduler", () => {
   it("includes seo audit task with real handler", () => {
     registerDefaultTasks();
     const status = agentScheduler.getStatus();
-    const seoTask = status.find((t: any) => t.id === "hypeman:seo-audit");
+    const seoTask = status.find((t: any) => t.id === "social:seo-audit");
     expect(seoTask).toBeDefined();
-    expect(seoTask?.agentType).toBe("hypeman");
+    expect(seoTask?.agentType).toBe("social");
   });
 
   it("includes email recovery task with real handler", () => {
     registerDefaultTasks();
     const status = agentScheduler.getStatus();
-    const emailTask = status.find((t: any) => t.id === "hypeman:email-recovery");
+    const emailTask = status.find((t: any) => t.id === "social:email-recovery");
     expect(emailTask).toBeDefined();
-    expect(emailTask?.agentType).toBe("hypeman");
+    expect(emailTask?.agentType).toBe("social");
   });
 
   it("includes competitor scan task with real handler", () => {

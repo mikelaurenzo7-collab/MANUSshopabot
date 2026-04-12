@@ -141,11 +141,11 @@ describe("Beast Bots Routers", () => {
       expect(typeof caller.merchant.autoFulfill).toBe("function");
       expect(typeof caller.merchant.suggestPricing).toBe("function");
       expect(typeof caller.merchant.pricingRules).toBe("function");
-      expect(typeof caller.hypeman.generateAdCopy).toBe("function");
-      expect(typeof caller.hypeman.generateAdImage).toBe("function");
-      expect(typeof caller.hypeman.suggestSeoKeywords).toBe("function");
-      expect(typeof caller.hypeman.generateSocialPost).toBe("function");
-      expect(typeof caller.hypeman.generateEmailCampaign).toBe("function");
+      expect(typeof caller.social.generateAdCopy).toBe("function");
+      expect(typeof caller.social.generateAdImage).toBe("function");
+      expect(typeof caller.social.suggestSeoKeywords).toBe("function");
+      expect(typeof caller.social.generateSocialPost).toBe("function");
+      expect(typeof caller.social.generateEmailCampaign).toBe("function");
       expect(typeof caller.activity.list).toBe("function");
       expect(typeof caller.analytics.overview).toBe("function");
       expect(typeof caller.notifications.list).toBe("function");

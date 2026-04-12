@@ -14,13 +14,13 @@ import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workfl
 // Import workflow registrations (side-effect: registers all workflows)
 import "../engine/architectWorkflows";
 import "../engine/merchantWorkflows";
-import "../engine/hypemanWorkflows";
+import "../engine/socialWorkflows";
 
 export const workflowRouter = router({
   // ─── Launch a workflow ─────────────────────────────────────────────────
   launch: protectedProcedure
     .input(z.object({
-      agentType: z.enum(["architect", "merchant", "hypeman"]),
+      agentType: z.enum(["architect", "merchant", "social"]),
       workflowType: z.string(),
       title: z.string(),
       description: z.string().optional(),
@@ -45,7 +45,7 @@ export const workflowRouter = router({
   // ─── List workflows ────────────────────────────────────────────────────
   list: protectedProcedure
     .input(z.object({
-      agentType: z.enum(["architect", "merchant", "hypeman"]).optional(),
+      agentType: z.enum(["architect", "merchant", "social"]).optional(),
       status: z.string().optional(),
       storeId: z.number().optional(),
       limit: z.number().default(20),
@@ -155,7 +155,7 @@ export const workflowRouter = router({
         { type: "profit_loss_analysis", title: "Profit & Loss Analysis", description: "CFO-level P&L report with margins, cash flow projections, and strategic recommendations", icon: "TrendingUp", scope: "all_stores" },
         { type: "customer_segmentation", title: "Customer Segmentation", description: "RFM analysis, behavioral segments, churn prediction, and targeted campaign recommendations", icon: "Users", scope: "all_stores" },
       ],
-      hypeman: [
+      social: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
         { type: "social_content", title: "Social Content Calendar", description: "Multi-platform content calendar with captions, hashtags, and posting schedule", icon: "Calendar", scope: "all_stores" },
         { type: "seo_audit", title: "SEO Audit", description: "Comprehensive keyword research and on-page optimization recommendations", icon: "Globe", scope: "specific_store" },

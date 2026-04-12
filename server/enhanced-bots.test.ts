@@ -38,7 +38,7 @@ describe("ShopBot rebrand verification", () => {
     const types = await caller.workflows.availableTypes();
     expect(types).toHaveProperty("architect");
     expect(types).toHaveProperty("merchant");
-    expect(types).toHaveProperty("hypeman");
+    expect(types).toHaveProperty("social");
   });
 });
 
@@ -261,33 +261,33 @@ describe("enhanced Merchant Bot capabilities", () => {
 
 // ─── ENHANCED HYPE-MAN BOT ─────────────────────────────────────────────────
 
-describe("enhanced Hype-Man Bot capabilities", () => {
+describe("enhanced Social Bot Bot capabilities", () => {
   describe("new workflow types", () => {
-    it("hypeman has viral_trend_detector workflow", async () => {
+    it("social has viral_trend_detector workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const types = await caller.workflows.availableTypes();
-      const hypemanTypes = types.hypeman.map((t: any) => t.type);
-      expect(hypemanTypes).toContain("viral_trend_detector");
+      const socialTypes = types.social.map((t: any) => t.type);
+      expect(socialTypes).toContain("viral_trend_detector");
     });
 
-    it("hypeman has influencer_outreach workflow", async () => {
+    it("social has influencer_outreach workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const types = await caller.workflows.availableTypes();
-      const hypemanTypes = types.hypeman.map((t: any) => t.type);
-      expect(hypemanTypes).toContain("influencer_outreach");
+      const socialTypes = types.social.map((t: any) => t.type);
+      expect(socialTypes).toContain("influencer_outreach");
     });
 
-    it("hypeman has conversion_funnel workflow", async () => {
+    it("social has conversion_funnel workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const types = await caller.workflows.availableTypes();
-      const hypemanTypes = types.hypeman.map((t: any) => t.type);
-      expect(hypemanTypes).toContain("conversion_funnel");
+      const socialTypes = types.social.map((t: any) => t.type);
+      expect(socialTypes).toContain("conversion_funnel");
     });
 
-    it("new hypeman workflows have proper metadata", async () => {
+    it("new social workflows have proper metadata", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const types = await caller.workflows.availableTypes();
-      const newTypes = types.hypeman.filter((t: any) =>
+      const newTypes = types.social.filter((t: any) =>
         ["viral_trend_detector", "influencer_outreach", "conversion_funnel"].includes(t.type)
       );
       expect(newTypes).toHaveLength(3);
@@ -302,7 +302,7 @@ describe("enhanced Hype-Man Bot capabilities", () => {
     it("can launch viral_trend_detector workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
-        agentType: "hypeman",
+        agentType: "social",
         workflowType: "viral_trend_detector",
         title: "Test Viral Trend Detector",
         scope: "global",
@@ -314,7 +314,7 @@ describe("enhanced Hype-Man Bot capabilities", () => {
     it("can launch influencer_outreach workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
-        agentType: "hypeman",
+        agentType: "social",
         workflowType: "influencer_outreach",
         title: "Test Influencer Outreach",
         scope: "specific_store",
@@ -327,7 +327,7 @@ describe("enhanced Hype-Man Bot capabilities", () => {
     it("can launch conversion_funnel workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
-        agentType: "hypeman",
+        agentType: "social",
         workflowType: "conversion_funnel",
         title: "Test Conversion Funnel",
         scope: "specific_store",
@@ -339,10 +339,10 @@ describe("enhanced Hype-Man Bot capabilities", () => {
   });
 
   describe("new router mutations", () => {
-    it("hypeman.abTestCopyGenerator exists and requires auth", async () => {
+    it("social.abTestCopyGenerator exists and requires auth", async () => {
       const caller = appRouter.createCaller(createAnonContext());
       await expect(
-        caller.hypeman.abTestCopyGenerator({
+        caller.social.abTestCopyGenerator({
           headline: "Test headline",
           platform: "tiktok",
           variants: 3,
@@ -350,10 +350,10 @@ describe("enhanced Hype-Man Bot capabilities", () => {
       ).rejects.toThrow();
     });
 
-    it("hypeman.smsRecoveryFlow exists and requires auth", async () => {
+    it("social.smsRecoveryFlow exists and requires auth", async () => {
       const caller = appRouter.createCaller(createAnonContext());
       await expect(
-        caller.hypeman.smsRecoveryFlow({
+        caller.social.smsRecoveryFlow({
           flowType: "cart_abandonment",
           storeName: "Test Store",
           storeUrl: "https://test.com",
@@ -361,10 +361,10 @@ describe("enhanced Hype-Man Bot capabilities", () => {
       ).rejects.toThrow();
     });
 
-    it("hypeman.socialProofGenerator exists and requires auth", async () => {
+    it("social.socialProofGenerator exists and requires auth", async () => {
       const caller = appRouter.createCaller(createAnonContext());
       await expect(
-        caller.hypeman.socialProofGenerator({
+        caller.social.socialProofGenerator({
           storeId: 1,
           proofTypes: ["testimonials"],
         })
@@ -388,16 +388,16 @@ describe("total platform capabilities", () => {
     expect(types.merchant.length).toBeGreaterThanOrEqual(7);
   });
 
-  it("hypeman has at least 9 workflow types (6 original + 3 new)", async () => {
+  it("social has at least 9 workflow types (6 original + 3 new)", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const types = await caller.workflows.availableTypes();
-    expect(types.hypeman.length).toBeGreaterThanOrEqual(9);
+    expect(types.social.length).toBeGreaterThanOrEqual(9);
   });
 
   it("total platform has at least 23 workflow types", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const types = await caller.workflows.availableTypes();
-    const total = types.architect.length + types.merchant.length + types.hypeman.length;
+    const total = types.architect.length + types.merchant.length + types.social.length;
     expect(total).toBeGreaterThanOrEqual(23);
   });
 });

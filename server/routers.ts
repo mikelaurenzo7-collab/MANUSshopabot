@@ -8,7 +8,7 @@ import { dashboardRouter } from "./routers/dashboard";
 import { storesRouter } from "./routers/stores";
 import { architectRouter } from "./routers/architect";
 import { merchantRouter } from "./routers/merchant";
-import { hypemanRouter } from "./routers/hypeman";
+import { socialRouter } from "./routers/social";
 import { activityRouter } from "./routers/activity";
 import { analyticsRouter } from "./routers/analytics";
 import { connectorsRouter } from "./routers/connectors";
@@ -34,7 +34,7 @@ export const appRouter = router({
   stores: storesRouter,
   architect: architectRouter,
   merchant: merchantRouter,
-  hypeman: hypemanRouter,
+  social: socialRouter,
   activity: activityRouter,
   analytics: analyticsRouter,
   connectors: connectorsRouter,
@@ -102,7 +102,7 @@ export const appRouter = router({
     }),
     upsert: adminProcedure
       .input(z.object({
-        agentType: z.enum(["architect", "merchant", "hypeman"]),
+        agentType: z.enum(["architect", "merchant", "social"]),
         enabled: z.boolean().optional(),
         autoApprove: z.boolean().optional(),
         autonomyLevel: z.enum(["fully_autonomous", "supervised", "manual"]).optional(),

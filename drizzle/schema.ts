@@ -95,7 +95,7 @@ export type InsertOrder = typeof orders.$inferInsert;
  */
 export const agentTasks = mysqlTable("agent_tasks", {
   id: int("id").autoincrement().primaryKey(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   taskType: varchar("taskType", { length: 100 }).notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
@@ -116,7 +116,7 @@ export type InsertAgentTask = typeof agentTasks.$inferInsert;
 export const approvalQueue = mysqlTable("approval_queue", {
   id: int("id").autoincrement().primaryKey(),
   agentTaskId: int("agentTaskId").notNull(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   actionType: varchar("actionType", { length: 100 }).notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
@@ -137,7 +137,7 @@ export type InsertApprovalItem = typeof approvalQueue.$inferInsert;
 export const botConfig = mysqlTable("bot_config", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   enabled: boolean("enabled").default(true).notNull(),
   config: json("config"), // agent-specific settings
   autoApprove: boolean("autoApprove").default(false).notNull(),
@@ -171,7 +171,7 @@ export type NicheReport = typeof nicheReports.$inferSelect;
 export type InsertNicheReport = typeof nicheReports.$inferInsert;
 
 /**
- * Ad campaigns (Hype-Man)
+ * Ad campaigns (Social Bot)
  */
 export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
@@ -219,7 +219,7 @@ export type InsertPricingRule = typeof pricingRules.$inferInsert;
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman", "system"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social", "system"]).notNull(),
   type: mysqlEnum("type", ["info", "warning", "error", "success", "approval_needed"]).default("info").notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   message: text("message"),
@@ -233,7 +233,7 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
 
 /**
- * SEO keywords (Hype-Man)
+ * SEO keywords (Social Bot)
  */
 export const seoKeywords = mysqlTable("seo_keywords", {
   id: int("id").autoincrement().primaryKey(),
@@ -250,7 +250,7 @@ export type SeoKeyword = typeof seoKeywords.$inferSelect;
 export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 
 /**
- * Social media posts (Hype-Man)
+ * Social media posts (Social Bot)
  */
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
@@ -270,7 +270,7 @@ export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = typeof socialPosts.$inferInsert;
 
 /**
- * Email campaigns (Hype-Man)
+ * Email campaigns (Social Bot)
  */
 export const emailCampaigns = mysqlTable("email_campaigns", {
   id: int("id").autoincrement().primaryKey(),
@@ -338,7 +338,7 @@ export type PlatformCredential = typeof platformCredentials.$inferSelect;
 export type InsertPlatformCredential = typeof platformCredentials.$inferInsert;
 
 /**
- * Social media accounts — linked accounts for the Hype-Man agent.
+ * Social media accounts — linked accounts for the Social Bot agent.
  * Supports Meta/Instagram, TikTok, Twitter/X, Pinterest, Google Ads, LinkedIn.
  */
 export const socialAccounts = mysqlTable("social_accounts", {
@@ -372,7 +372,7 @@ export type InsertSocialAccount = typeof socialAccounts.$inferInsert;
 export const agentWorkflows = mysqlTable("agent_workflows", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   workflowType: varchar("workflowType", { length: 100 }).notNull(), // e.g. niche_research, product_sourcing, ad_campaign, inventory_sync
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
@@ -434,7 +434,7 @@ export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;
  */
 export const agentTelemetry = mysqlTable("agent_telemetry", {
   id: int("id").autoincrement().primaryKey(),
-  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   actionType: varchar("actionType", { length: 100 }).notNull(),
   storeId: int("storeId"),
   triggerSource: varchar("triggerSource", { length: 100 }),

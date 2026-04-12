@@ -2,7 +2,7 @@
  * ShopBOTS — Unified Social Media Platform Adapter Interface
  *
  * Every social media platform adapter implements this interface so that
- * The Hype-Man Bot can post content, manage ads, and pull analytics
+ * The Social Bot Bot can post content, manage ads, and pull analytics
  * across Meta, Instagram, TikTok, Twitter/X, Pinterest, Google Ads,
  * and LinkedIn through a single, consistent contract.
  */

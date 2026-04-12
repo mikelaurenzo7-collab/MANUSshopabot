@@ -17,7 +17,7 @@ export const telemetryRouter = router({
   /** Get telemetry entries for a specific agent type */
   byAgent: protectedProcedure
     .input(z.object({
-      agentType: z.enum(["architect", "merchant", "hypeman"]),
+      agentType: z.enum(["architect", "merchant", "social"]),
       limit: z.number().optional(),
     }))
     .query(async ({ input }) => {

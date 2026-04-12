@@ -2,7 +2,7 @@
  * ShopBOTS — E-Commerce Platform Adapter Registry
  *
  * The central factory that returns the correct adapter for any platform.
- * All three agents (Architect, Merchant, Hype-Man) use this registry
+ * All three agents (Architect, Merchant, Social Bot) use this registry
  * to get a platform-specific adapter and call it through the unified interface.
  *
  * Usage:

@@ -48,7 +48,7 @@ describe("Telemetry Module", () => {
     const { logAgentAction } = await import("./telemetry");
     // Should not throw — gracefully handles DB errors
     const result = await logAgentAction({
-      agentType: "hypeman",
+      agentType: "social",
       actionType: "test_no_db",
       success: true,
     });

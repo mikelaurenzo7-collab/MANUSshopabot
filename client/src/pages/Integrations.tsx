@@ -368,6 +368,7 @@ export default function IntegrationsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            aria-label="Check connection health"
                             onClick={() => checkHealth.mutate({ id: cred.id })}
                             disabled={checkHealth.isPending}
                           >
@@ -377,6 +378,7 @@ export default function IntegrationsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
+                            aria-label="Disconnect platform"
                             onClick={() => {
                               if (confirm("Disconnect this platform? The bots will lose access to this store.")) {
                                 disconnectCred.mutate({ id: cred.id });
@@ -431,6 +433,7 @@ export default function IntegrationsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
+                            aria-label="Disconnect social account"
                             onClick={() => {
                               if (confirm("Disconnect this social account?")) {
                                 disconnectSocial.mutate({ id: account.id });

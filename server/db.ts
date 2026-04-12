@@ -813,7 +813,7 @@ export async function getTelemetryByStore(storeId: number, limit = 50) {
     .limit(limit);
 }
 
-export async function getTelemetryByAgent(agentType: "architect" | "merchant" | "hypeman", limit = 50) {
+export async function getTelemetryByAgent(agentType: "architect" | "merchant" | "social", limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(agentTelemetry)

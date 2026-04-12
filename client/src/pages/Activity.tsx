@@ -27,17 +27,17 @@ import {
 const agentIcons: Record<string, any> = {
   architect: Bot,
   merchant: Package,
-  hypeman: Megaphone,
+  social: Megaphone,
 };
 const agentColors: Record<string, string> = {
   architect: "text-violet-400",
   merchant: "text-cyan-400",
-  hypeman: "text-amber-400",
+  social: "text-amber-400",
 };
 const agentNames: Record<string, string> = {
   architect: "Builder Bot",
   merchant: "Merchant Bot",
-  hypeman: "Social Bot",
+  social: "Social Bot",
 };
 
 const PAGE_SIZE = 20;
@@ -118,7 +118,7 @@ export default function ActivityPage() {
                 <SelectItem value="all">All Bots</SelectItem>
                 <SelectItem value="architect">Builder Bot</SelectItem>
                 <SelectItem value="merchant">Merchant Bot</SelectItem>
-                <SelectItem value="hypeman">Social Bot</SelectItem>
+                <SelectItem value="social">Social Bot</SelectItem>
               </SelectContent>
             </Select>
           </div>

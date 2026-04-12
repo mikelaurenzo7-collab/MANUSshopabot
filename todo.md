@@ -185,3 +185,24 @@
 - [ ] Mobile responsiveness audit and fixes
 - [x] Apply page-enter, stagger-list, card-hover animation classes to Home dashboard cards and Workflows history list
 - [x] Add reduced-motion media query fallback for animations
+
+## Sprint 7: Mobile, Accessibility & Service Worker
+
+- [ ] Mobile responsiveness: DashboardLayout sidebar collapses to overlay on mobile (< md breakpoint)
+- [ ] Mobile responsiveness: Home metrics grid 1-col on mobile, 2-col on sm, 4-col on lg
+- [ ] Mobile responsiveness: Workflows page table/cards scroll horizontally on mobile
+- [ ] Accessibility: Add aria-label to all icon-only buttons
+- [ ] Accessibility: Add role="status" to live metric updates
+- [ ] Accessibility: Ensure focus trap in all modals/dialogs
+- [ ] Service worker: Add basic offline fallback page via Vite PWA plugin
+- [ ] Mark structured data (JSON-LD) as done (completed in Sprint 5)
+- [ ] Mark micro-animations as done (completed in Sprint 6)
+
+## Sprint 8: Rename hypeman → social
+
+- [x] Rename HypeMan.tsx → Social.tsx and update all imports/routes
+- [x] Replace all "hypeman" agent type strings with "social" (server routers, workflow engine, DB queries)
+- [x] Replace all "HypeMan" / "Hype-Man" display labels with "Social Bot" in UI
+- [x] Update AGENT_NAMES maps, sidebar nav, and workflow type references
+- [x] Update test files that reference "hypeman"
+- [x] Verify TypeScript 0 errors after rename (401 tests passing)

@@ -44,22 +44,22 @@ describe("Merchant AI Tools Backend Mutations", () => {
   });
 });
 
-describe("HypeMan AI Tools Backend Mutations", () => {
-  it("hypemanRouter has abTestCopyGenerator mutation", async () => {
-    const mod = await import("./routers/hypeman");
-    const procedures = mod.hypemanRouter._def.procedures as Record<string, any>;
+describe("Social Bot AI Tools Backend Mutations", () => {
+  it("socialRouter has abTestCopyGenerator mutation", async () => {
+    const mod = await import("./routers/social");
+    const procedures = mod.socialRouter._def.procedures as Record<string, any>;
     expect(procedures.abTestCopyGenerator).toBeDefined();
   });
 
-  it("hypemanRouter has smsRecoveryFlow mutation", async () => {
-    const mod = await import("./routers/hypeman");
-    const procedures = mod.hypemanRouter._def.procedures as Record<string, any>;
+  it("socialRouter has smsRecoveryFlow mutation", async () => {
+    const mod = await import("./routers/social");
+    const procedures = mod.socialRouter._def.procedures as Record<string, any>;
     expect(procedures.smsRecoveryFlow).toBeDefined();
   });
 
-  it("hypemanRouter has socialProofGenerator mutation", async () => {
-    const mod = await import("./routers/hypeman");
-    const procedures = mod.hypemanRouter._def.procedures as Record<string, any>;
+  it("socialRouter has socialProofGenerator mutation", async () => {
+    const mod = await import("./routers/social");
+    const procedures = mod.socialRouter._def.procedures as Record<string, any>;
     expect(procedures.socialProofGenerator).toBeDefined();
   });
 });

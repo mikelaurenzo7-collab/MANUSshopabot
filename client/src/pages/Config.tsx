@@ -48,7 +48,7 @@ const agents = [
     bgColor: "bg-cyan-500/15",
   },
   {
-    key: "hypeman" as const,
+    key: "social" as const,
     name: "Social Bot",
     description: "Ad copy, social media, SEO, and email campaigns",
     icon: Megaphone,
@@ -177,10 +177,10 @@ export default function ConfigPage() {
   // Per-bot autonomy and enable state
   const [architectEnabled, setArchitectEnabled] = useState(true);
   const [merchantEnabled, setMerchantEnabled] = useState(true);
-  const [hypemanEnabled, setHypemanEnabled] = useState(true);
+  const [socialEnabled, setSocialEnabled] = useState(true);
   const [architectAutonomy, setArchitectAutonomy] = useState<AutonomyLevel>("fully_autonomous");
   const [merchantAutonomy, setMerchantAutonomy] = useState<AutonomyLevel>("fully_autonomous");
-  const [hypemanAutonomy, setHypemanAutonomy] = useState<AutonomyLevel>("fully_autonomous");
+  const [socialAutonomy, setSocialAutonomy] = useState<AutonomyLevel>("fully_autonomous");
 
   // Merchant-specific settings
   const [autoFulfill, setAutoFulfill] = useState(true);
@@ -197,15 +197,15 @@ export default function ConfigPage() {
     if (configs && configs.length > 0) {
       const archConf = configs.find((c: any) => c.agentType === "architect");
       const merchConf = configs.find((c: any) => c.agentType === "merchant");
-      const hypeConf = configs.find((c: any) => c.agentType === "hypeman");
+      const hypeConf = configs.find((c: any) => c.agentType === "social");
 
       setArchitectEnabled(archConf?.enabled ?? true);
       setMerchantEnabled(merchConf?.enabled ?? true);
-      setHypemanEnabled(hypeConf?.enabled ?? true);
+      setSocialEnabled(hypeConf?.enabled ?? true);
 
       setArchitectAutonomy((archConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
       setMerchantAutonomy((merchConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
-      setHypemanAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
+      setSocialAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
 
       setAutoFulfill(merchConf?.autoApprove ?? true);
 
@@ -254,10 +254,10 @@ export default function ConfigPage() {
 
       // Save Social Bot config (carries maxBudgetCents)
       await upsertConfig.mutateAsync({
-        agentType: "hypeman",
-        enabled: hypemanEnabled,
+        agentType: "social",
+        enabled: socialEnabled,
         maxBudgetCents: Number(maxDailySpend) * 100,
-        autonomyLevel: hypemanAutonomy,
+        autonomyLevel: socialAutonomy,
         approvalRequired,
       });
 
@@ -270,13 +270,13 @@ export default function ConfigPage() {
   const getAutonomyState = (key: string) => {
     if (key === "architect") return { value: architectAutonomy, set: setArchitectAutonomy };
     if (key === "merchant") return { value: merchantAutonomy, set: setMerchantAutonomy };
-    return { value: hypemanAutonomy, set: setHypemanAutonomy };
+    return { value: socialAutonomy, set: setSocialAutonomy };
   };
 
   const getEnabledState = (key: string) => {
     if (key === "architect") return { value: architectEnabled, set: setArchitectEnabled };
     if (key === "merchant") return { value: merchantEnabled, set: setMerchantEnabled };
-    return { value: hypemanEnabled, set: setHypemanEnabled };
+    return { value: socialEnabled, set: setSocialEnabled };
   };
 
   return (
@@ -427,7 +427,7 @@ export default function ConfigPage() {
                     )}
 
                     {/* Social Bot-specific settings */}
-                    {agent.key === "hypeman" && (
+                    {agent.key === "social" && (
                       <div className="mt-4 space-y-3">
                         <Separator />
                         <div className="p-3 rounded-lg bg-secondary/30">

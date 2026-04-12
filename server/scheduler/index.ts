@@ -3,7 +3,7 @@
  *
  * Uses node-cron to run recurring agent tasks with real platform adapter calls:
  * - Merchant: inventory checks, order fulfillment, pricing optimization
- * - Hype-Man: scheduled social posts, ad performance monitoring
+ * - Social Bot: scheduled social posts, ad performance monitoring
  * - Architect: store health checks, product catalog refresh, token refresh
  *
  * The scheduler reads bot configs to determine which tasks to run
@@ -27,7 +27,7 @@ export interface ScheduledTask {
   id: string;
   name: string;
   cronExpression: string;
-  agentType: "architect" | "merchant" | "hypeman";
+  agentType: "architect" | "merchant" | "social";
   taskType: string;
   handler: () => Promise<void>;
   enabled: boolean;
@@ -258,7 +258,7 @@ async function handleAdMonitoring(): Promise<void> {
         const errorPlatforms = analytics.filter(a => a.error).map(a => a.platform);
         await db.createNotification({
           userId,
-          agentType: "hypeman",
+          agentType: "social",
           type: "warning",
           title: "Social Account Issues Detected",
           message: `Unable to fetch analytics from: ${errorPlatforms.join(", ")}`,
@@ -267,7 +267,7 @@ async function handleAdMonitoring(): Promise<void> {
       }
 
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "ad_monitoring",
         title: "Social analytics check completed",
         description: `Checked ${analytics.length} connected accounts`,
@@ -315,14 +315,14 @@ async function handleScheduledPosts(): Promise<void> {
         await db.updateSocialPost(post.id, { status: "failed" });
         await db.createNotification({
           userId: store.userId,
-          agentType: "hypeman",
+          agentType: "social",
           type: "warning",
           title: `Scheduled post failed: no active ${post.platform} account`,
           message: `Post #${post.id} could not be published. Connect a ${post.platform} account in Integrations.`,
           actionUrl: "/integrations",
         });
         await db.createAgentTask({
-          agentType: "hypeman",
+          agentType: "social",
           taskType: "scheduled_post",
           title: `Failed: no active ${post.platform} account`,
           description: `Post #${post.id} — no connected ${post.platform} account for user #${store.userId}`,
@@ -351,7 +351,7 @@ async function handleScheduledPosts(): Promise<void> {
       });
 
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "scheduled_post",
         title: `Published scheduled ${post.platform} post`,
         description: `Post #${post.id} published via ${activeAccount.accountName || activeAccount.platform} account`,
@@ -370,15 +370,15 @@ async function handleScheduledPosts(): Promise<void> {
         if (store) {
           await db.createNotification({
             userId: store.userId,
-            agentType: "hypeman",
+            agentType: "social",
             type: "error",
             title: `Scheduled post failed: ${post.platform}`,
             message: `Post #${post.id} could not be published: ${err.message}`,
-            actionUrl: "/hypeman",
+            actionUrl: "/social",
           });
         }
         await db.createAgentTask({
-          agentType: "hypeman",
+          agentType: "social",
           taskType: "scheduled_post",
           title: `Failed to publish ${post.platform} post`,
           description: `Post #${post.id} error: ${err.message}`,
@@ -464,7 +464,7 @@ async function handleSeoAudit(): Promise<void> {
       const lowPerformers = keywords.filter((k: any) => k.relevanceScore && k.relevanceScore < 30);
 
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "seo_audit",
         title: `SEO audit for "${store.name}"`,
         description: `${activeKeywords.length} active keywords, ${lowPerformers.length} low performers`,
@@ -480,11 +480,11 @@ async function handleSeoAudit(): Promise<void> {
       if (lowPerformers.length > 0) {
         await db.createNotification({
           userId: store.userId,
-          agentType: "hypeman",
+          agentType: "social",
           type: "info",
           title: `SEO Audit: ${lowPerformers.length} underperforming keywords`,
           message: `Store "${store.name}" has ${lowPerformers.length} keywords with low relevance scores. Consider refreshing your SEO strategy.`,
-          actionUrl: "/hypeman",
+          actionUrl: "/social",
         });
       }
     } catch (err: any) {
@@ -514,7 +514,7 @@ async function handleEmailRecovery(): Promise<void> {
       const hasRecoveryCampaign = campaigns.some((c: any) => c.campaignType === "abandoned_cart" && c.status === "active");
 
       await db.createAgentTask({
-        agentType: "hypeman",
+        agentType: "social",
         taskType: "email_recovery",
         title: `Abandoned cart scan: ${abandonedCarts.length} carts found`,
         description: `Store "${store.name}" — recovery campaign ${hasRecoveryCampaign ? "active" : "not configured"}`,
@@ -529,11 +529,11 @@ async function handleEmailRecovery(): Promise<void> {
       if (abandonedCarts.length > 3 && !hasRecoveryCampaign) {
         await db.createNotification({
           userId: store.userId,
-          agentType: "hypeman",
+          agentType: "social",
           type: "warning",
           title: `${abandonedCarts.length} abandoned carts detected`,
-          message: `Store "${store.name}" has ${abandonedCarts.length} abandoned carts but no active recovery email campaign. Set one up in the Hype-Man Agent.`,
-          actionUrl: "/hypeman",
+          message: `Store "${store.name}" has ${abandonedCarts.length} abandoned carts but no active recovery email campaign. Set one up in the Social Bot Agent.`,
+          actionUrl: "/social",
         });
       }
     } catch (err: any) {
@@ -631,42 +631,42 @@ export function registerDefaultTasks(): void {
     handler: handleProductSync,
   });
 
-  // ─── Hype-Man Bot Tasks ────────────────────────────────────────
+  // ─── Social Bot Bot Tasks ────────────────────────────────────────
   agentScheduler.register({
-    id: "hypeman:scheduled-posts",
+    id: "social:scheduled-posts",
     name: "Scheduled Post Publisher",
     cronExpression: "*/5 * * * *", // Every 5 minutes
-    agentType: "hypeman",
+    agentType: "social",
     taskType: "scheduled_posts",
     enabled: true,
     handler: handleScheduledPosts,
   });
 
   agentScheduler.register({
-    id: "hypeman:ad-performance",
+    id: "social:ad-performance",
     name: "Ad Performance Monitor",
     cronExpression: "0 */4 * * *", // Every 4 hours
-    agentType: "hypeman",
+    agentType: "social",
     taskType: "ad_monitoring",
     enabled: true,
     handler: handleAdMonitoring,
   });
 
   agentScheduler.register({
-    id: "hypeman:seo-audit",
+    id: "social:seo-audit",
     name: "SEO Health Audit",
     cronExpression: "0 3 * * 1", // Weekly on Monday at 3 AM
-    agentType: "hypeman",
+    agentType: "social",
     taskType: "seo_audit",
     enabled: true,
     handler: handleSeoAudit,
   });
 
   agentScheduler.register({
-    id: "hypeman:email-recovery",
+    id: "social:email-recovery",
     name: "Abandoned Cart Email Recovery",
     cronExpression: "0 */1 * * *", // Every hour
-    agentType: "hypeman",
+    agentType: "social",
     taskType: "email_recovery",
     enabled: true,
     handler: handleEmailRecovery,

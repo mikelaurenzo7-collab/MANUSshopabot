@@ -460,7 +460,7 @@ export default function MerchantPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Demand Forecast Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setForecastResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setForecastResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">{forecastResult.summary || forecastResult.overallInsight || JSON.stringify(forecastResult).slice(0, 300)}</p>
                   {forecastResult.products && (
@@ -485,7 +485,7 @@ export default function MerchantPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Margin Analysis Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMarginResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setMarginResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">{marginResult.summary || marginResult.overallInsight || JSON.stringify(marginResult).slice(0, 300)}</p>
                   {marginResult.products && (
@@ -510,7 +510,7 @@ export default function MerchantPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Return Analysis Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReturnResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setReturnResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">{returnResult.summary || returnResult.overallInsight || JSON.stringify(returnResult).slice(0, 300)}</p>
                   {returnResult.products && (

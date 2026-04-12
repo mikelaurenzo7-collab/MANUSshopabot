@@ -41,13 +41,13 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }>
 const AGENT_COLORS: Record<string, string> = {
   architect: "from-violet-500/20 to-purple-500/20 border-violet-500/30",
   merchant: "from-emerald-500/20 to-teal-500/20 border-emerald-500/30",
-  hypeman: "from-orange-500/20 to-amber-500/20 border-orange-500/30",
+  social: "from-orange-500/20 to-amber-500/20 border-orange-500/30",
 };
 
 const AGENT_NAMES: Record<string, string> = {
   architect: "Builder Bot",
   merchant: "Merchant Bot",
-  hypeman: "Social Bot",
+  social: "Social Bot",
 };
 
 export default function Workflows() {
@@ -132,7 +132,7 @@ export default function Workflows() {
     return [
       ...availableTypes.architect.map(t => ({ ...t, agentType: "architect" as const })),
       ...availableTypes.merchant.map(t => ({ ...t, agentType: "merchant" as const })),
-      ...availableTypes.hypeman.map(t => ({ ...t, agentType: "hypeman" as const })),
+      ...availableTypes.social.map(t => ({ ...t, agentType: "social" as const })),
     ];
   }, [availableTypes]);
 
@@ -272,7 +272,7 @@ export default function Workflows() {
 
         {/* Launch Tab */}
         <TabsContent value="launch" className="space-y-6">
-          {availableTypes && (["architect", "merchant", "hypeman"] as const).map(agent => (
+          {availableTypes && (["architect", "merchant", "social"] as const).map(agent => (
             <div key={agent} className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${agent === "architect" ? "bg-violet-400" : agent === "merchant" ? "bg-emerald-400" : "bg-orange-400"}`} />
@@ -330,7 +330,7 @@ export default function Workflows() {
                 <SelectItem value="all">All Bots</SelectItem>
                 <SelectItem value="architect">Builder Bot</SelectItem>
                 <SelectItem value="merchant">Merchant Bot</SelectItem>
-                <SelectItem value="hypeman">Social Bot</SelectItem>
+                <SelectItem value="social">Social Bot</SelectItem>
               </SelectContent>
             </Select>
           </div>

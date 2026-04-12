@@ -39,7 +39,7 @@ describe("workflows router", () => {
       const types = await caller.workflows.availableTypes();
       expect(types).toHaveProperty("architect");
       expect(types).toHaveProperty("merchant");
-      expect(types).toHaveProperty("hypeman");
+      expect(types).toHaveProperty("social");
     });
 
     it("architect has niche_research, product_sourcing, catalog_generation, store_setup", async () => {
@@ -62,16 +62,16 @@ describe("workflows router", () => {
       expect(merchantTypes).toContain("competitor_analysis");
     });
 
-    it("hypeman has ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content", async () => {
+    it("social has ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const types = await caller.workflows.availableTypes();
-      const hypemanTypes = types.hypeman.map((t: any) => t.type);
-      expect(hypemanTypes).toContain("ad_campaign");
-      expect(hypemanTypes).toContain("social_content");
-      expect(hypemanTypes).toContain("seo_audit");
-      expect(hypemanTypes).toContain("email_flow");
-      expect(hypemanTypes).toContain("product_creative");
-      expect(hypemanTypes).toContain("brand_content");
+      const socialTypes = types.social.map((t: any) => t.type);
+      expect(socialTypes).toContain("ad_campaign");
+      expect(socialTypes).toContain("social_content");
+      expect(socialTypes).toContain("seo_audit");
+      expect(socialTypes).toContain("email_flow");
+      expect(socialTypes).toContain("product_creative");
+      expect(socialTypes).toContain("brand_content");
     });
 
     it("each type has title, description, icon, and scope", async () => {
@@ -248,7 +248,7 @@ describe("agent architecture: 1:N store-aware model", () => {
     const types = await caller.workflows.availableTypes();
     // Each type belongs to an agent, not a store
     for (const [agentType, agentWorkflows] of Object.entries(types)) {
-      expect(["architect", "merchant", "hypeman"]).toContain(agentType);
+      expect(["architect", "merchant", "social"]).toContain(agentType);
       for (const wf of agentWorkflows as any[]) {
         // Workflow types are defined at the agent level
         expect(wf).not.toHaveProperty("storeId");
@@ -268,8 +268,8 @@ describe("agent architecture: 1:N store-aware model", () => {
       { agentType: "architect" as const, workflowType: "product_sourcing", scope: "specific_store" as const },
       { agentType: "merchant" as const, workflowType: "inventory_audit", scope: "all_stores" as const },
       { agentType: "merchant" as const, workflowType: "pricing_optimization", scope: "all_stores" as const },
-      { agentType: "hypeman" as const, workflowType: "ad_campaign", scope: "specific_store" as const },
-      { agentType: "hypeman" as const, workflowType: "seo_audit", scope: "specific_store" as const },
+      { agentType: "social" as const, workflowType: "ad_campaign", scope: "specific_store" as const },
+      { agentType: "social" as const, workflowType: "seo_audit", scope: "specific_store" as const },
     ];
 
     for (const tc of testCases) {

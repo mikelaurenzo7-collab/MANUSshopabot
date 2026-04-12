@@ -25,7 +25,7 @@ import * as db from "./db";
 import type { InsertAgentTelemetry } from "../drizzle/schema";
 
 export interface TelemetryContext {
-  agentType: "architect" | "merchant" | "hypeman";
+  agentType: "architect" | "merchant" | "social";
   actionType: string;
   storeId?: number;
   triggerSource?: "manual" | "workflow" | "scheduler" | "webhook";
@@ -186,7 +186,7 @@ export async function logTimeToFulfill(
  * Tracks token usage and estimated cost for each workflow run.
  */
 export async function logLlmWorkflowCost(
-  agentType: "architect" | "merchant" | "hypeman",
+  agentType: "architect" | "merchant" | "social",
   workflowType: string,
   storeId: number | undefined,
   stats: {

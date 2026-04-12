@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 const Home = lazy(() => import("./pages/Home"));
 const ArchitectPage = lazy(() => import("./pages/Architect"));
 const MerchantPage = lazy(() => import("./pages/Merchant"));
-const HypeManPage = lazy(() => import("./pages/HypeMan"));
+const SocialPage = lazy(() => import("./pages/Social"));
 const ActivityPage = lazy(() => import("./pages/Activity"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const ConfigPage = lazy(() => import("./pages/Config"));
@@ -67,7 +67,7 @@ function Router() {
                   <Route path="/" component={Home} />
                   <Route path="/architect" component={ArchitectPage} />
                   <Route path="/merchant" component={MerchantPage} />
-                  <Route path="/hypeman" component={HypeManPage} />
+                  <Route path="/social" component={SocialPage} />
                   <Route path="/activity" component={ActivityPage} />
                   <Route path="/analytics" component={AnalyticsPage} />
                   <Route path="/integrations" component={IntegrationsPage} />

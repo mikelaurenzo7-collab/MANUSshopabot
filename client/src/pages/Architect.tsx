@@ -753,7 +753,7 @@ export default function ArchitectPage() {
                   <h3 className="text-sm font-semibold text-foreground">Health Check Results</h3>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={`text-sm font-bold ${healthResult.overallScore >= 70 ? 'text-emerald-400 border-emerald-400/30' : healthResult.overallScore >= 40 ? 'text-amber-400 border-amber-400/30' : 'text-red-400 border-red-400/30'}`}>{healthResult.overallScore}/100</Badge>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setHealthResult(null)}><X className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setHealthResult(null)}><X className="h-3 w-3" /></Button>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">{healthResult.summary}</p>
@@ -792,7 +792,7 @@ export default function ArchitectPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-foreground">Rewritten Descriptions ({rewriteResult.products.length} products)</h3>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRewriteResult(null)}><X className="h-3 w-3" /></Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setRewriteResult(null)}><X className="h-3 w-3" /></Button>
                 </div>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {rewriteResult.products.map((p: any) => (
@@ -820,7 +820,7 @@ export default function ArchitectPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-foreground">Price Scan Results</h3>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPriceScanResult(null)}><X className="h-3 w-3" /></Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setPriceScanResult(null)}><X className="h-3 w-3" /></Button>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">{priceScanResult.overallStrategy}</p>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
