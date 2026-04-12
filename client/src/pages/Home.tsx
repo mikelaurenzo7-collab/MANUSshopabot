@@ -400,6 +400,7 @@ export default function Home() {
   const { data: pendingApprovals, error: approvalsError } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 15000 });
   const { data: stores, isLoading: storesLoading, error: storesError } = trpc.stores.list.useQuery();
   const { data: connSummary, error: connError } = trpc.connectors.connectionSummary.useQuery();
+  const { data: recentOrders, isLoading: ordersLoading } = trpc.dashboard.recentOrders.useQuery({ limit: 8 }, { refetchInterval: 15000 });
 
   const agentConfigs = [
     { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
@@ -555,8 +556,100 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Cross-Store Intelligence */}
-      <CrossStoreIntelligence />
+      {/* Live Sales Feed + Cross-Store Intelligence */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Live Sales Feed */}
+        <Card className="glass-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-emerald-400" />
+                Live Sales Feed
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground gap-1"
+                onClick={() => setLocation("/merchant")}
+              >
+                View All <ArrowRight className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {ordersLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-3.5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                ))}
+              </div>
+            ) : recentOrders && recentOrders.length > 0 ? (
+              <div className="space-y-1">
+                {recentOrders.map((order: any) => (
+                  <div
+                    key={order.id}
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors group"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <ShoppingCart className="h-3.5 w-3.5 text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {order.customerName || "Guest"}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] px-1.5 py-0 ${
+                            order.status === "fulfilled" || order.status === "delivered"
+                              ? "text-emerald-400 border-emerald-500/30"
+                              : order.status === "processing" || order.status === "shipped"
+                              ? "text-blue-400 border-blue-500/30"
+                              : order.status === "cancelled" || order.status === "refunded"
+                              ? "text-red-400 border-red-500/30"
+                              : "text-amber-400 border-amber-500/30"
+                          }`}
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {order.itemCount || 1} item{(order.itemCount || 1) > 1 ? "s" : ""}
+                        {" \u00b7 "}
+                        {new Date(order.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-400 tabular-nums shrink-0">
+                      ${((order.totalAmount || 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm text-muted-foreground">No orders yet</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Sales from all connected stores will appear here in real-time
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        {/* Cross-Store Intelligence */}
+        <CrossStoreIntelligence />
+      </div>
 
       {/* Pricing Tiers */}
       <Card className="bg-card border-border/50">

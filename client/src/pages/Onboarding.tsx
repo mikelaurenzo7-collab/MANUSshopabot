@@ -583,7 +583,7 @@ export default function OnboardingPage() {
 
   const handleComplete = () => {
     // Mark onboarding as done in localStorage so we don't show it again
-    localStorage.setItem("shopbots_onboarded", "true");
+    localStorage.setItem("beastbots_onboarded", "true");
     setLocation("/");
   };
 

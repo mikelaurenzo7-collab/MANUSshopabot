@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) ||
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/shopbots-logo-jtbPJz7S5VtEogc7An2qZH.webp";
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beastbots-logo-5mUP2nWBTL76U95J5hXgrq.webp";
 
 const BOTS = [
   {

@@ -55,6 +55,7 @@ export default function Workflows() {
   const [activeTab, setActiveTab] = useState("launch");
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [launchOpen, setLaunchOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number | null>(null);
   const [launchForm, setLaunchForm] = useState({
@@ -444,9 +445,50 @@ export default function Workflows() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setLaunchOpen(false)}>Cancel</Button>
-            <Button onClick={handleLaunch} disabled={launchMutation.isPending || !launchForm.inputText.trim()}>
-              {launchMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-              Launch Workflow
+            <Button onClick={() => { setLaunchOpen(false); setConfirmOpen(true); }} disabled={!launchForm.inputText.trim()}>
+              <Play className="w-4 h-4 mr-2" />
+              Review & Launch
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Launch Confirmation Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              Confirm Workflow Launch
+            </DialogTitle>
+            <DialogDescription>Please review the details before launching this workflow.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Bot</span>
+              <span className="font-medium text-foreground">{AGENT_NAMES[launchForm.agentType] || launchForm.agentType}</span>
+            </div>
+            <Separator className="border-zinc-800" />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Workflow</span>
+              <span className="font-medium text-foreground">{launchForm.workflowType.replace(/_/g, " ")}</span>
+            </div>
+            <Separator className="border-zinc-800" />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Input</span>
+              <span className="font-medium text-foreground truncate max-w-[200px]">{launchForm.inputText || "—"}</span>
+            </div>
+            <Separator className="border-zinc-800" />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Scope</span>
+              <Badge variant="outline" className="text-xs">{launchForm.scope}</Badge>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmOpen(false); setLaunchOpen(true); }}>Back</Button>
+            <Button onClick={() => { setConfirmOpen(false); handleLaunch(); }} disabled={launchMutation.isPending}>
+              {launchMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
+              Confirm & Launch
             </Button>
           </DialogFooter>
         </DialogContent>

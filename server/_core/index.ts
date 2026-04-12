@@ -14,6 +14,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { agentScheduler, registerDefaultTasks } from "../scheduler";
+import { seedDefaultPlugins } from "../seedPlugins";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -83,6 +84,10 @@ async function startServer() {
     registerDefaultTasks();
     agentScheduler.start();
     logger.info("scheduler_initialized", { taskCount: agentScheduler.getStatus().length });
+    // Seed default plugins (idempotent — skips if already populated)
+    seedDefaultPlugins().then((r) => {
+      if (r.seeded) logger.info("plugins_seeded", { count: r.count });
+    });
   });
 }
 

@@ -280,8 +280,8 @@
 - [x] Expand job queue to support multiple job types — DONE Sprint 12
 - [x] Extend bot coordination events beyond 3 current types — DONE Sprint 12 (12 event types)
 - [x] Add request correlation/tracing IDs to structured logger — DONE Sprint 12
-- [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
-- [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
+- [x] Sprint 14: Add rate limiting per platform (token bucket per adapter) — completed Sprint 16
+- [x] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — completed Sprint 16
 - [x] Add saga pattern for multi-step workflows with rollback — DONE Sprint 12
 - [x] Implement idempotency keys for duplicate operation prevention — DONE Sprint 12
 - [x] Replace console.log with structured logger throughout scheduler — DONE Sprint 12
@@ -305,7 +305,7 @@
 - [x] Idempotency keys for all critical mutations — getAgentTaskByIdempotencyKey() in db.ts; idempotencyKey column on agent_tasks table; DB migration applied
 
 ### Phase 4: Architecture
-- [ ] Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — deferred; scheduler is functional at 779 lines
+- [x] Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — completed Sprint 16
 
 ### Tests
 - [x] production-hardening.test.ts: 29 tests covering circuit breaker, structured logger, bot coordination, saga pattern, idempotency, platform bridge resilience, code quality
@@ -322,8 +322,8 @@
 
 - [x] First-pass visual polish: deepened background (#0A0A0C), Quantum Violet (#9D4EDD), Cyber Cyan (#00E0FF), Amber Flare (#FFC107), glass cards with backdrop-filter blur(12px), pulsing bot status indicators, Outfit font for headings, hero gradient text, CTA button glow, page fade-in animation
 - [x] Second-pass visual polish: richer glass-card system, stronger glow utilities, premium gradient tokens, Landing.tsx dramatic hero, Home.tsx MetricCard/BotStatusCard/CrossStoreIntelligence upgrades, DashboardLayout active nav glow (shadow + border + dot indicator), user avatar glow, Intelligence.tsx slate normalization (21 replacements), all pages normalized to glass token system
-- [ ] Sprint 14: Add rate limiting per platform (token bucket per adapter)
-- [ ] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts)
+- [x] Sprint 14: Add rate limiting per platform (token bucket per adapter) — completed Sprint 16
+- [x] Sprint 14: Refactor scheduler into separate task modules (scheduler/tasks/*.ts) — completed Sprint 16
 
 ## Sprint 15: Brand Rename → Beast Bots ✅
 
@@ -345,4 +345,25 @@
 - [x] Rewrite scheduler/index.ts to import from task modules instead of inline handlers
 - [x] Write tests for token bucket rate limiter
 - [x] Write tests for scheduler task modules
+- [x] Verify 0 TypeScript errors and all 538 tests passing
+
+## Sprint 17: Full App Buildout & Polish
+
+### Brand Consistency
+- [x] Generate BeastBots logo and update CDN URLs in DashboardLayout.tsx and Landing.tsx
+- [x] Update localStorage onboarding key to "beastbots_onboarded" with backward compat
+- [x] Fix OnboardingGuard to check new key first
+
+### Feature Buildout
+- [x] Seed 8 default plugins into bot_plugins table (Customer Support, Klaviyo, Judge.me, Shipping, Inventory Forecaster, Social Proof, Returns, Cross-Sell)
+- [x] Add working store selector dropdown to SupplierPOs page with summary stats
+- [x] Build Live Sales Feed component on Command Center (real-time order ticker)
+- [x] Add notification bell to DashboardLayout header with recent bot alerts (already built in DashboardLayout.tsx)
+- [x] Build User Profile/Settings page with account info, connected platforms, usage stats, bot performance, installed plugins
+- [x] Enhance Merchant Fulfillment tab with order pipeline visualization (4-stage funnel + progress bar + fulfillment breakdown)
+
+### UX Polish
+- [x] Add date range picker to Analytics page (7d/30d/90d/all)
+- [x] Add confirmation dialog before launching workflows (2-step: Review & Launch → Confirm & Launch)
+- [x] Remove ComponentShowcase from routes (orphaned dev page, file deleted)
 - [x] Verify 0 TypeScript errors and all 538 tests passing

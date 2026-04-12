@@ -27,6 +27,7 @@ const OrchestratorGraphPage = lazy(() => import("./pages/OrchestratorGraph"));
 const PluginStorePage = lazy(() => import("./pages/PluginStore"));
 const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
+const ProfilePage = lazy(() => import("./pages/Profile"));
 
 function PageLoader() {
   return (
@@ -45,8 +46,8 @@ function OnboardingGuard() {
     if (!user) return; // Not logged in — auth handles redirect
     if (location === "/onboarding") return; // Already on onboarding
     // Check if user has completed onboarding
-    // Support both old key (shopbot_onboarded) and new key (shopbots_onboarded) for backward compatibility
-    const hasOnboarded = localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
+    // Support old keys for backward compatibility
+    const hasOnboarded = localStorage.getItem("beastbots_onboarded") || localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
     if (!hasOnboarded) {
       setLocation("/onboarding");
     }
@@ -84,6 +85,7 @@ function Router() {
                   <Route path="/plugins" component={PluginStorePage} />
                   <Route path="/supplier" component={SupplierPOsPage} />
                   <Route path="/prompt-lab" component={PromptLabPage} />
+                  <Route path="/profile" component={ProfilePage} />
                   <Route path="/404" component={NotFound} />
                   <Route component={NotFound} />
                 </Switch>

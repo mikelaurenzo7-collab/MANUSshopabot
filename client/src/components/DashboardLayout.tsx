@@ -44,6 +44,7 @@ import {
   Store,
   Truck,
   Sparkles,
+  User,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -53,7 +54,7 @@ import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 
 const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "BeastBots";
-const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/shopbots-logo-jtbPJz7S5VtEogc7An2qZH.webp";
+const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beastbots-logo-5mUP2nWBTL76U95J5hXgrq.webp";
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
@@ -319,13 +320,17 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setLocation("/profile")} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>My Profile</span>
+                </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => setLocation("/config")} className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Bot Config</span>
                   </DropdownMenuItem>
                 )}
-                {isAdmin && <DropdownMenuSeparator />}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"

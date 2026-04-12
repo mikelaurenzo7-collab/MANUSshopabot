@@ -25,6 +25,7 @@ import {
   ArrowUpDown,
   RotateCcw,
   X,
+  Activity,
 } from "lucide-react";
 
 export default function MerchantPage() {
@@ -343,12 +344,85 @@ export default function MerchantPage() {
 
           {/* Fulfillment Tab */}
           <TabsContent value="fulfillment" className="space-y-4">
+            {(() => {
+              const statusPipeline = {
+                pending: orders?.filter((o: any) => o.status === "pending").length || 0,
+                processing: orders?.filter((o: any) => o.status === "processing").length || 0,
+                shipped: orders?.filter((o: any) => o.status === "shipped").length || 0,
+                delivered: orders?.filter((o: any) => o.status === "delivered").length || 0,
+              };
+              const fulfillPipeline = {
+                unfulfilled: orders?.filter((o: any) => o.fulfillmentStatus === "unfulfilled").length || 0,
+                partial: orders?.filter((o: any) => o.fulfillmentStatus === "partial").length || 0,
+                fulfilled: orders?.filter((o: any) => o.fulfillmentStatus === "fulfilled").length || 0,
+              };
+              const total = orders?.length || 0;
+              return (
+                <>
+                  {/* Pipeline Funnel */}
+                  <Card className="bg-card border-border/50">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Activity className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground">Order Pipeline</h3>
+                        <Badge variant="outline" className="text-[10px] ml-auto">{total} orders</Badge>
+                      </div>
+                      <div className="grid grid-cols-4 gap-3 mb-4">
+                        {[
+                          { label: "Pending", count: statusPipeline.pending, color: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
+                          { label: "Processing", count: statusPipeline.processing, color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
+                          { label: "Shipped", count: statusPipeline.shipped, color: "bg-violet-500/10 border-violet-500/20 text-violet-400" },
+                          { label: "Delivered", count: statusPipeline.delivered, color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
+                        ].map((stage, i) => (
+                          <div key={stage.label} className="relative">
+                            <div className={`p-3 rounded-xl border text-center ${stage.color}`}>
+                              <p className="text-2xl font-bold">{stage.count}</p>
+                              <p className="text-[10px] uppercase tracking-wider mt-1 font-semibold">{stage.label}</p>
+                            </div>
+                            {i < 3 && (
+                              <div className="absolute top-1/2 -right-2 transform -translate-y-1/2 text-muted-foreground/30 text-lg z-10">\u2192</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Progress bar */}
+                      <div className="h-2 rounded-full bg-secondary/30 overflow-hidden flex">
+                        {total > 0 && (
+                          <>
+                            <div className="bg-amber-400 h-full transition-all" style={{ width: `${(statusPipeline.pending / total) * 100}%` }} />
+                            <div className="bg-blue-400 h-full transition-all" style={{ width: `${(statusPipeline.processing / total) * 100}%` }} />
+                            <div className="bg-violet-400 h-full transition-all" style={{ width: `${(statusPipeline.shipped / total) * 100}%` }} />
+                            <div className="bg-emerald-400 h-full transition-all" style={{ width: `${(statusPipeline.delivered / total) * 100}%` }} />
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  {/* Fulfillment Status Breakdown */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-4 rounded-xl bg-red-500/8 border border-red-500/15">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Unfulfilled</p>
+                      <p className="text-2xl font-bold text-red-400">{fulfillPipeline.unfulfilled}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-amber-500/8 border border-amber-500/15">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Partial</p>
+                      <p className="text-2xl font-bold text-amber-400">{fulfillPipeline.partial}</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Fulfilled</p>
+                      <p className="text-2xl font-bold text-emerald-400">{fulfillPipeline.fulfilled}</p>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+            {/* Auto-Fulfillment Action */}
             <Card className="bg-card border-border/50">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Truck className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">Auto-Fulfillment</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Zero-Touch Fulfillment</h3>
                   </div>
                   <Button
                     size="sm"
@@ -367,12 +441,12 @@ export default function MerchantPage() {
                     ) : (
                       <RefreshCw className="h-3.5 w-3.5 mr-1" />
                     )}
-                    Process Orders
+                    Process All Orders
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Merchant Bot will automatically process all pending orders and initiate fulfillment.
-                  Zero-touch from "Placed" to "Processed" with 0% human clicks.
+                  Zero-touch from \u201cPlaced\u201d to \u201cProcessed\u201d with 0% human clicks.
                 </p>
               </CardContent>
             </Card>

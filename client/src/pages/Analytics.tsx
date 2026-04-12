@@ -125,7 +125,9 @@ function normalizeTopProducts(value: unknown): TopProductDatum[] {
 
 export default function AnalyticsPage() {
   const [selectedStore, setSelectedStore] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<string>("30");
   const selectedStoreId = selectedStore !== "all" ? Number(selectedStore) : undefined;
+  const days = dateRange === "all" ? 365 : Number(dateRange);
 
   const utils = trpc.useUtils();
   const { data: stores, error: storesError } = trpc.stores.list.useQuery();
@@ -133,7 +135,7 @@ export default function AnalyticsPage() {
     storeId: selectedStoreId,
   });
   const { data: snapshots } = trpc.analytics.snapshots.useQuery(
-    { storeId: selectedStoreId ?? 0, days: 30 },
+    { storeId: selectedStoreId ?? 0, days },
     { enabled: selectedStoreId !== undefined }
   );
 
@@ -202,17 +204,30 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
           </div>
         </div>
-        <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
-          <SelectTrigger className="w-48 bg-input/50">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Stores</SelectItem>
-            {storeOptions.map((s: any) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-28 bg-input/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">7 Days</SelectItem>
+              <SelectItem value="30">30 Days</SelectItem>
+              <SelectItem value="90">90 Days</SelectItem>
+              <SelectItem value="all">All Time</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
+            <SelectTrigger className="w-48 bg-input/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stores</SelectItem>
+              {storeOptions.map((s: any) => (
+                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
