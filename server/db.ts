@@ -1254,3 +1254,33 @@ export async function getTopPerformingVariant(agentType: string, taskType: strin
   }
   return variants.find(v => v.id === bestId);
 }
+
+// ─── PROMPT RL DYNAMIC INJECTION ──────────────────────────────────────────
+
+/**
+ * Dynamically fetches the highest-performing prompt variant for a specific task.
+ * Used at execution time by the WorkflowEngine to ensure the agent uses the safest/best logic.
+ */
+export async function getBestPromptVariant(
+  agentType: string,
+  taskType: string
+) {
+  const db = await getDb();
+  if (!db) return null;
+  const variants = await db.select({
+    variant: promptVariants,
+    metrics: promptMetrics,
+  })
+    .from(promptVariants)
+    .leftJoin(promptMetrics, eq(promptVariants.id, promptMetrics.variantId))
+    .where(
+      and(
+        eq(promptVariants.agentType, agentType),
+        eq(promptVariants.taskType, taskType),
+        eq(promptVariants.isActive, true)
+      )
+    )
+    .orderBy(desc(promptMetrics.successRate));
+    
+  return variants[0]?.variant || null;
+}

@@ -24,6 +24,7 @@ registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
       title: "Audience Research",
       description: `Researching target audience for ${product} on ${platform}`,
       input: {
+        promptClass: "audience_research",
         systemPrompt: "You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads.",
         userPrompt: `Create a detailed target audience profile for advertising "${product}" on ${platform}:
 
@@ -65,6 +66,7 @@ Return as JSON.`,
       title: "Ad Copy Generation",
       description: "Writing high-converting ad copy variations",
       input: {
+        promptClass: "ad_copy_writer",
         systemPrompt: "You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy.",
         userPrompt: `Generate 5 ad copy variations for "${product}" on ${platform}. For each variation include:
 - Hook (first line that stops the scroll)
@@ -140,6 +142,7 @@ registerWorkflow("social_content", (input): WorkflowStepDefinition[] => {
       title: "Content Strategy",
       description: `Creating ${duration} content strategy for ${platforms.join(", ")}`,
       input: {
+        promptClass: "social_content_strategy",
         systemPrompt: "You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.",
         userPrompt: `Create a ${duration} social media content calendar for "${brand}" across ${platforms.join(", ")}:
 
@@ -213,6 +216,7 @@ registerWorkflow("seo_audit", (input): WorkflowStepDefinition[] => {
       title: "Keyword Research",
       description: `Researching high-value keywords for ${niche}`,
       input: {
+        promptClass: "seo_expert",
         systemPrompt: "You are an SEO expert who has ranked hundreds of e-commerce stores on page 1 of Google. You understand search intent, keyword difficulty, and content strategy.",
         userPrompt: `Conduct comprehensive keyword research for a ${niche} e-commerce store (${domain}):
 
@@ -296,6 +300,7 @@ registerWorkflow("email_flow", (input): WorkflowStepDefinition[] => {
       title: `Generate ${flowType} Email Flow`,
       description: `Creating a complete ${flowType} email automation sequence`,
       input: {
+        promptClass: "email_campaign_expert",
         systemPrompt: "You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.",
         userPrompt: `Create a complete ${flowType} email automation flow for "${brand}":
 
@@ -698,6 +703,7 @@ registerWorkflow("conversion_funnel", (input): WorkflowStepDefinition[] => {
       title: "Funnel Leak Analysis",
       description: `Analyzing conversion funnel for "${storeName}"`,
       input: {
+        promptClass: "cro_expert",
         systemPrompt: "You are a conversion rate optimization (CRO) expert who has increased e-commerce conversion rates by 50-300%. You think in funnels, test hypotheses, and optimize every micro-interaction.",
         userPrompt: `Conduct a comprehensive conversion funnel optimization analysis for "${storeName}" (current conversion rate: ${currentConversionRate}):
 

@@ -14,7 +14,7 @@
 
 import {
   createWorkflow, updateWorkflow, getWorkflowById,
-  createWorkflowSteps, getWorkflowSteps, updateWorkflowStep, getWorkflowStepById,
+  createWorkflowSteps, getWorkflowSteps, updateWorkflowStep, getBestPromptVariant, getWorkflowStepById,
   createAgentTask, createNotification, createApprovalItem,
   getStoresByUser, getStoreById, getBotConfigs,
 } from "../db";
@@ -61,6 +61,7 @@ export interface WorkflowDefinition {
 }
 
 export interface StepContext {
+  agentType: string;
   workflowId: number;
   stepId: number;
   stepIndex: number;
@@ -252,6 +253,7 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
 
     try {
       const context: StepContext = {
+        agentType: workflow.agentType,
         workflowId,
         stepId: dbStep.id,
         stepIndex: i,
@@ -325,6 +327,7 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         if (rollbackDef.rollback) {
           try {
             const rollbackCtx: StepContext = {
+              agentType: workflow.agentType,
               workflowId,
               stepId: dbSteps[r].id,
               stepIndex: r,
@@ -498,9 +501,20 @@ async function executeStepByType(stepType: StepType, context: StepContext): Prom
 }
 
 async function executeLLMStep(context: StepContext): Promise<any> {
-  const { input, previousOutputs } = context;
-  const systemPrompt = input.systemPrompt ?? "You are a helpful e-commerce AI assistant.";
+  const { input, previousOutputs, agentType } = context;
+  let systemPrompt = input.systemPrompt ?? "You are a helpful e-commerce AI assistant.";
   const userPrompt = input.userPrompt ?? input.prompt ?? "Analyze the provided data.";
+
+  // -- MANUS AI AUTONOMOUS OVERRIDE: Reinforcement Learning Prompt Injection --
+  if (input.promptClass) {
+    const bestVariant = await getBestPromptVariant(agentType, input.promptClass);
+    if (bestVariant) {
+      console.log(`[RL_ENGINE] Injecting high-performing prompt variant for ${input.promptClass} (Agent: ${agentType})`);
+      systemPrompt = bestVariant.promptTemplate;
+    } else {
+      console.log(`[RL_ENGINE] No active variants found for ${input.promptClass}. Using static fallback.`);
+    }
+  }
 
   // Build context from previous step outputs
   let contextStr = "";
