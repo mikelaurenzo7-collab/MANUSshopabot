@@ -47,14 +47,23 @@ export async function getStoreAdapter(storeId: number) {
  */
 export async function syncProductsFromStore(storeId: number, userId: number): Promise<{ synced: number; errors: string[] }> {
   const { adapter, credentials, store } = await getStoreAdapter(storeId);
+  
+  if (!adapter) throw new Error(`No adapter found for store ${storeId}`);
+  if (!credentials) throw new Error(`No credentials found for store ${storeId}`);
+  if (!store) throw new Error(`Store ${storeId} not found`);
+  
   const errors: string[] = [];
   let synced = 0;
 
   try {
-        const remoteProducts = await adapter.listProducts(credentials, { limit: 250 });
+    const remoteProducts = await adapter.listProducts(credentials, { limit: 250 });
 
     for (const rp of remoteProducts) {
       try {
+        if (!rp || !rp.platformId) {
+          errors.push(`Invalid product data: missing platformId`);
+          continue;
+        }
         // Check if product already exists by platform ID
         const existing = await db.getProductByPlatformId(storeId, rp.platformId);
         if (existing) {
@@ -136,6 +145,11 @@ export async function pushProductToStore(storeId: number, productId: number): Pr
  */
 export async function fulfillOrderOnPlatform(storeId: number, orderId: number, trackingNumber?: string, trackingUrl?: string): Promise<boolean> {
   const { adapter, credentials, store } = await getStoreAdapter(storeId);
+  
+  if (!adapter) throw new Error(`No adapter found for store ${storeId}`);
+  if (!credentials) throw new Error(`No credentials found for store ${storeId}`);
+  if (!store) throw new Error(`Store ${storeId} not found`);
+  
   const order = await db.getOrderById(orderId);
   if (!order) throw new Error(`Order ${orderId} not found`);
 
@@ -233,6 +247,10 @@ export async function publishSocialPost(
 ): Promise<SocialPost> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
 
+  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
+  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
+  if (!account) throw new Error(`Account ${accountId} not found`);
+
   const post = await adapter.createPost(credentials, postInput);
 
   // Save to local DB
@@ -275,6 +293,10 @@ export async function scheduleSocialPost(
 ): Promise<SocialPost> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
 
+  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
+  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
+  if (!account) throw new Error(`Account ${accountId} not found`);
+
   const post = await adapter.schedulePost(credentials, postInput, scheduledAt);
 
   if (storeId) {
@@ -313,6 +335,10 @@ export async function launchAdCampaign(
   storeId: number,
 ): Promise<AdCampaign> {
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
+
+  if (!adapter) throw new Error(`No adapter found for account ${accountId}`);
+  if (!credentials) throw new Error(`No credentials found for account ${accountId}`);
+  if (!account) throw new Error(`Account ${accountId} not found`);
 
   const campaign = await adapter.createAdCampaign(credentials, campaignInput);
 

@@ -546,7 +546,7 @@
 - [x] Verify AI Tools buttons have error handling (confirmed: Architect, Merchant, HypeMan all have onError callbacks with toast)
 - [x] Verify empty states are implemented (confirmed: Activity, Workflows, Approvals pages all have empty state cards)
 - [x] Verify error handling is comprehensive across all pages (333 tests passing)
-- [ ] Add error state to Analytics page (currently no error handling)
+- [x] Add error state to Analytics page (storesError, analyticsError with AlertTriangle card)
 - [ ] Add loading skeleton to Analytics charts
 - [ ] Add "retry" button to error states for user-triggered retry
 - [ ] Standardize loading state display across all pages (42 queries need consistent spinners/skeletons)
@@ -556,8 +556,11 @@
 - [x] Verify Zod validation in connectors.generateOAuthUrl (confirmed: input schema defined)
 - [x] Verify Zod validation in stores.create (confirmed: input schema defined)
 - [x] Verify adapter files exist and are properly structured
-- [ ] Add null checks to platformBridge.publishSocialPost() before calling adapters
-- [ ] Add null checks to all adapter methods before using credentials
+- [x] Add null checks to platformBridge.publishSocialPost() before calling adapters
+- [x] Add null checks to platformBridge.scheduleSocialPost() before calling adapters
+- [x] Add null checks to platformBridge.launchAdCampaign() before calling adapters
+- [x] Add null checks to platformBridge.fulfillOrderOnPlatform() before calling adapters
+- [x] Add null checks to platformBridge.syncProductsFromStore() before calling adapters
 - [ ] Replace silent `.catch(() => {})` in telemetry with proper error logging
 - [ ] Add error logging to scheduler tasks instead of silent failures
 - [ ] Implement rate limit detection (429) with exponential backoff in retry logic

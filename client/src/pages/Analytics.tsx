@@ -13,6 +13,7 @@ import {
   Package,
   ArrowUpRight,
   ArrowDownRight,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -34,8 +35,8 @@ const CHART_COLORS = ["#a78bfa", "#22d3ee", "#fbbf24", "#f87171", "#34d399", "#8
 export default function AnalyticsPage() {
   const [selectedStore, setSelectedStore] = useState<string>("all");
 
-  const { data: stores } = trpc.stores.list.useQuery();
-  const { data: analytics, isLoading } = trpc.analytics.overview.useQuery({
+  const { data: stores, error: storesError } = trpc.stores.list.useQuery();
+  const { data: analytics, isLoading, error: analyticsError } = trpc.analytics.overview.useQuery({
     storeId: selectedStore !== "all" ? Number(selectedStore) : undefined,
   });
 
@@ -76,6 +77,19 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Error States */}
+      {(storesError || analyticsError) && (
+        <Card className="bg-red-500/5 border-red-500/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-400">Analytics Error</p>
+              <p className="text-xs text-red-400/70 mt-1">Failed to load analytics data. Retrying...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -87,7 +101,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
           </div>
         </div>
-        <Select value={selectedStore} onValueChange={setSelectedStore}>
+        <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
           <SelectTrigger className="w-48 bg-input/50">
             <SelectValue />
           </SelectTrigger>
