@@ -1,5 +1,5 @@
 /**
- * BeastBots — Merchant Bot Scheduler Tasks
+ * orchAIstrate — Merchant Bot Scheduler Tasks
  *
  * Handles: inventory checks, order fulfillment, product sync
  */

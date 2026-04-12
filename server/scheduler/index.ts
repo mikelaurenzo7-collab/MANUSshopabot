@@ -1,5 +1,5 @@
 /**
- * BeastBots — Bot Task Scheduler
+ * orchAIstrate — Bot Task Scheduler
  *
  * Uses node-cron to run recurring agent tasks with real platform adapter calls:
  * - Merchant: inventory checks, order fulfillment, pricing optimization

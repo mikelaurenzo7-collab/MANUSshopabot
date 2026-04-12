@@ -52,9 +52,9 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
+import { BrandName, BRAND_NAME } from "./BrandName";
 
-const APP_TITLE = (import.meta.env.VITE_APP_TITLE as string) || "BeastBots";
-const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) || "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beastbots-logo-5mUP2nWBTL76U95J5hXgrq.webp";
+const APP_TITLE = BRAND_NAME;
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
@@ -248,14 +248,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  {APP_LOGO ? (
-                    <img src={APP_LOGO} alt={APP_TITLE} className="h-8 w-32 object-contain shrink-0 drop-shadow-lg" />
-                  ) : (
-                    <>
-                      <Zap className="h-5 w-5 text-primary shrink-0" />
-                      <span className="font-bold tracking-tight truncate gradient-text text-sm">{APP_TITLE}</span>
-                    </>
-                  )}
+                  <BrandName size="lg" />
                 </div>
               ) : null}
             </div>
@@ -359,7 +352,7 @@ function DashboardLayoutContent({
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-semibold tracking-tight text-foreground">
-                {activeMenuItem?.label ?? "BeastBots"}
+                {activeMenuItem?.label ?? BRAND_NAME}
               </h1>
             </div>
           </div>

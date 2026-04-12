@@ -1,5 +1,5 @@
 /**
- * BeastBots — Elite Orchestration Engine
+ * orchAIstrate — Elite Orchestration Engine
  *
  * Cross-platform intelligence layer implementing:
  * 1. Anomaly Detection — detect inventory crashes, fulfillment delays, ROAS drops

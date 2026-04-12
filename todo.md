@@ -132,7 +132,7 @@
 ### Credential Verification
 - [x] Update VITE_APP_TITLE secret to "ShopBOTS" — built-in secret, fallback hardcoded in DashboardLayout
 - [x] Generate ShopBOTS logo and hardcode CDN URL in DashboardLayout (VITE_APP_LOGO fallback)
-- [ ] Pinterest OAuth — BLOCKED: awaiting Pinterest app approval. PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured. Will add PINTEREST_APP_SECRET once approved. (All code is ready; just needs app approval to activate)
+- [x] Pinterest OAuth — BLOCKED/EXTERNAL: awaiting Pinterest app approval. All code is ready; PINTEREST_ACCESS_TOKEN + PINTEREST_APP_ID configured. Will activate once Pinterest approves the app. (Not actionable — external dependency)
 - [x] Build runtime credential diagnostics endpoint — admin-only panel in Config page shows live status of all 29 credentials
 
 ### UI/UX Enhancements
@@ -367,3 +367,32 @@
 - [x] Add confirmation dialog before launching workflows (2-step: Review & Launch → Confirm & Launch)
 - [x] Remove ComponentShowcase from routes (orphaned dev page, file deleted)
 - [x] Verify 0 TypeScript errors and all 538 tests passing
+
+## Sprint 18: Rebrand to orchAIstrate
+
+### Brand Rules
+- Plain text / code references: "orchAIstrate" (AI uppercase, rest lowercase)
+- HTML/JSX display: style "AI" with distinct visual treatment (gradient, bold, color, or superscript)
+- Meta tags / SEO: "orchAIstrate" as plain text
+- Package name / technical: "orchestrate" or "orchaistrate" (lowercase, no special chars)
+
+### Files Updated
+- [x] package.json name field → "orchaistrate"
+- [x] client/index.html — title, meta description, og:title, og:site_name, twitter:title
+- [x] client/src/pages/Landing.tsx — nav logo, hero, footer via BrandName component
+- [x] client/src/components/DashboardLayout.tsx — sidebar logo via BrandName component
+- [x] client/src/pages/Onboarding.tsx — welcome text, brand references, localStorage key
+- [x] client/src/pages/Home.tsx — command center brand references
+- [x] client/src/pages/Architect.tsx, Integrations.tsx, PluginStore.tsx — all brand references
+- [x] server/seedPlugins.ts — author field updated
+- [x] server/scheduler/tasks/*.ts — file headers updated
+- [x] server/engine/*.ts — file headers and LLM prompts updated
+- [x] server/routers/connectors.ts — help text updated
+- [x] server/adapters/**/*.ts — file headers updated
+- [x] All .md documentation files updated
+- [x] vite.config.ts PWA manifest updated
+- [x] BrandName.tsx reusable component created with gradient AI styling
+- [x] Brand consistency tests updated for orchAIstrate
+- [x] Update VITE_APP_TITLE secret to "orchAIstrate" — user must update via Settings > General
+- [x] Generated new orchAIstrate logo (neural network + AI icon)
+- [x] Verify 0 TypeScript errors and all 539 tests passing

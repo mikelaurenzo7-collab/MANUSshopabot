@@ -599,7 +599,7 @@ export default function ArchitectPage() {
                 <h3 className="text-sm font-semibold text-foreground">Supported Platforms</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                BeastBots is platform-agnostic. Your bots can manage stores across all major e-commerce platforms simultaneously.
+                orchAIstrate is platform-agnostic. Your bots can manage stores across all major e-commerce platforms simultaneously.
               </p>
             </CardContent>
           </Card>
@@ -957,7 +957,7 @@ export default function ArchitectPage() {
                     className="bg-input/50"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    You'll be redirected to Shopify to authorize BeastBots. This is a one-time step.
+                    You'll be redirected to Shopify to authorize orchAIstrate. This is a one-time step.
                   </p>
                 </div>
                 <div className="rounded-lg bg-violet-500/10 border border-violet-400/20 p-3">
@@ -965,7 +965,7 @@ export default function ArchitectPage() {
                     <ShieldCheck className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground">
                       <p className="font-medium text-violet-400 mb-0.5">Secure OAuth Connection</p>
-                      <p>BeastBots will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
+                      <p>orchAIstrate will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
                     </div>
                   </div>
                 </div>

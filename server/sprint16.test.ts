@@ -1,5 +1,5 @@
 /**
- * Sprint 16 Tests — Token Bucket Rate Limiter + Scheduler Refactor + BeastBots Brand
+ * Sprint 16 Tests — Token Bucket Rate Limiter + Scheduler Refactor + orchAIstrate Brand
  */
 import { describe, it, expect, vi } from "vitest";
 
@@ -303,35 +303,50 @@ describe("Platform Bridge + Token Bucket Integration", () => {
   });
 });
 
-// ─── BeastBots Brand Consistency Tests ────────────────────────────────────
+// ─── orchAIstrate Brand Consistency Tests ────────────────────────────────────────
 
-describe("BeastBots Brand Consistency", () => {
-  it("index.html uses BeastBots in title and meta tags", async () => {
+describe("orchAIstrate Brand Consistency", () => {
+  it("index.html uses orchAIstrate in title and meta tags", async () => {
     const fs = await import("fs");
     const html = fs.readFileSync("client/index.html", "utf-8");
-    expect(html).toContain("BeastBots");
-    expect(html).not.toContain("Beast Bots");
+    expect(html).toContain("orchAIstrate");
+    expect(html).not.toContain("BeastBots");
     expect(html).not.toContain("ShopBOTS");
     expect(html).not.toContain("ShopBots");
   });
 
-  it("Landing.tsx uses BeastBots brand", async () => {
+  it("Landing.tsx uses orchAIstrate brand via BrandName component", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("client/src/pages/Landing.tsx", "utf-8");
-    expect(src).toContain("BeastBots");
-    expect(src).not.toContain("Beast Bots");
+    expect(src).toContain("BrandName");
+    expect(src).toContain("BRAND_NAME");
+    expect(src).not.toContain("BeastBots");
   });
 
-  it("DashboardLayout.tsx fallback uses BeastBots", async () => {
+  it("DashboardLayout.tsx uses orchAIstrate brand via BrandName component", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("client/src/components/DashboardLayout.tsx", "utf-8");
-    expect(src).toContain('"BeastBots"');
-    expect(src).not.toContain('"Beast Bots"');
+    expect(src).toContain("BrandName");
+    expect(src).toContain("BRAND_NAME");
+    expect(src).not.toContain('"BeastBots"');
   });
 
-  it("scheduler/index.ts header uses BeastBots", async () => {
+  it("scheduler/index.ts header uses orchAIstrate", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("server/scheduler/index.ts", "utf-8");
-    expect(src).toContain("BeastBots");
+    expect(src).toContain("orchAIstrate");
+    expect(src).not.toContain("BeastBots");
+  });
+
+  it("BrandName component exports correct brand constants", async () => {
+    const fs = await import("fs");
+    const src = fs.readFileSync("client/src/components/BrandName.tsx", "utf-8");
+    expect(src).toContain('BRAND_NAME = "orchAIstrate"');
+    expect(src).toContain('BRAND_SLUG = "orchaistrate"');
+    // Verify the AI is styled distinctly
+    expect(src).toContain("font-black");
+    expect(src).toContain("bg-gradient-to-r");
+    expect(src).toContain("bg-clip-text");
+    expect(src).toContain("text-transparent");
   });
 });

@@ -1,5 +1,5 @@
 /**
- * BeastBots — Comprehensive Test Suite
+ * orchAIstrate — Comprehensive Test Suite
  * Covers: auth, authorization, store ownership, notifications, approvals, bot config, OAuth
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";

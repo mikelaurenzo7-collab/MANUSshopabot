@@ -1,5 +1,5 @@
 /**
- * BeastBots — Structured Logger
+ * orchAIstrate — Structured Logger
  *
  * A production-grade structured logger that emits JSON log lines with:
  * - ISO timestamps

@@ -1,4 +1,4 @@
-# ShopBot — Gap Analysis & Roadmap to Production
+# orchAIstrate — Gap Analysis & Roadmap to Production
 
 **Author:** Manus AI (CTO)
 **Date:** April 12, 2026
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-ShopBot has a strong architectural foundation — 24,600+ lines of TypeScript across 100+ files, 23 workflow types, 10 scheduled tasks, 15 e-commerce/social adapters, and a full tRPC API layer. The three bots (Architect, Merchant, Hype-Man) have real LLM-powered workflows, and the platform bridge correctly routes operations to the right adapter.
+orchAIstrate has a strong architectural foundation — 24,600+ lines of TypeScript across 100+ files, 23 workflow types, 10 scheduled tasks, 15 e-commerce/social adapters, and a full tRPC API layer. The three bots (Architect, Merchant, Hype-Man) have real LLM-powered workflows, and the platform bridge correctly routes operations to the right adapter.
 
 However, there is a clear gap between **"impressive demo"** and **"production Commerce-as-a-Service."** This document catalogs every gap, scores its severity, and provides a prioritized execution plan to close them.
 
@@ -267,7 +267,7 @@ These are platform credentials that only you can create. They are not code tasks
 | 6.2 | Remove ComponentShowcase from production routes | 0.5 hr | Clean up |
 | 6.3 | Add dark/light theme toggle | 1 hr | User preference |
 | 6.4 | Add command palette (Cmd+K) | 3 hrs | Power user delight |
-| 6.5 | Generate ShopBot logo and update branding | 1 hr | Brand identity |
+| 6.5 | Generate orchAIstrate logo and update branding | 1 hr | Brand identity |
 
 ---
 

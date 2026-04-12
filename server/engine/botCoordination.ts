@@ -1,7 +1,7 @@
 /**
  * Bot Coordination Engine
  *
- * Durable handoff layer between BeastBots agents.
+ * Durable handoff layer between orchAIstrate agents.
  * Processes queued bot events and converts them into internal tasks,
  * notifications, or draft follow-up actions.
  *

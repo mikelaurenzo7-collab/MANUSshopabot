@@ -2,6 +2,7 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import {
   Zap, Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Star, Shield, BarChart3,
@@ -152,7 +153,7 @@ export default function LandingPage() {
       {/* ── Nav ─────────────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 topbar-glass">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <img src={APP_LOGO} alt="BeastBots" className="h-8 w-auto object-contain" />
+          <BrandName size="lg" />
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -284,7 +285,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold mb-3 font-heading">Sellers Are Already Winning</h2>
-            <p className="text-muted-foreground">Real results from BeastBots beta users</p>
+            <p className="text-muted-foreground">Real results from <span className="font-semibold">{BRAND_NAME}</span> beta users</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 stagger-list">
             {TESTIMONIALS.map((t) => (
@@ -432,9 +433,9 @@ export default function LandingPage() {
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <footer className="py-8 px-4 border-t border-border/20">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <img src={APP_LOGO} alt="BeastBots" className="h-6 w-auto object-contain opacity-50 hover:opacity-80 transition-opacity duration-300" />
+          <BrandName size="sm" className="opacity-50 hover:opacity-80 transition-opacity duration-300" />
           <p className="text-xs text-muted-foreground/40">
-            © {new Date().getFullYear()} BeastBots. Autonomous Commerce Platform.
+            © {new Date().getFullYear()} {BRAND_NAME}. Autonomous Commerce Platform.
           </p>
           <div className="flex gap-5 text-xs text-muted-foreground/40 hover:[&>span]:text-muted-foreground/70 [&>span]:transition-colors [&>span]:duration-200 [&>span]:cursor-pointer">
             <span>Privacy</span>

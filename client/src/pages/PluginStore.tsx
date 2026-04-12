@@ -49,7 +49,7 @@ export default function PluginStore() {
           Bot App Store
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Extend your BeastBots with first-party micro-bots. One click to install.
+          Extend your orchAIstrate with first-party micro-bots. One click to install.
         </p>
       </div>
 

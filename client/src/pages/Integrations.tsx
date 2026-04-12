@@ -128,7 +128,7 @@ export default function IntegrationsPage() {
             Integrations Hub
           </h2>
           <p className="text-muted-foreground mt-1">
-            Connect your e-commerce stores and social media accounts to power the BeastBots bots.
+            Connect your e-commerce stores and social media accounts to power the orchAIstrate bots.
           </p>
         </div>
       </div>
@@ -322,7 +322,7 @@ export default function IntegrationsPage() {
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     Each social media platform requires its own OAuth app credentials. To connect a platform,
                     create a developer app on that platform, then add the Client ID and Client Secret to your
-                    BeastBots Settings &gt; Secrets. Social Bot will then be able to post content
+                    orchAIstrate Settings &gt; Secrets. Social Bot will then be able to post content
                     and manage campaigns on your behalf.
                   </p>
                 </div>

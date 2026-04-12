@@ -54,7 +54,7 @@ function createUnauthContext(): TrpcContext {
   };
 }
 
-describe("BeastBots Routers", () => {
+describe("orchAIstrate Routers", () => {
   // ─── Auth ──────────────────────────────────────────────────────────────
   describe("auth.me", () => {
     it("returns user when authenticated", async () => {

@@ -1,5 +1,5 @@
 /**
- * BeastBots — Platform-Specific Elite Workflows
+ * orchAIstrate — Platform-Specific Elite Workflows
  *
  * Advanced platform-specific automation workflows implementing the
  * strategies from the 13-platform research playbook.

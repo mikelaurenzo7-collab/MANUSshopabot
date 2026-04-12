@@ -1,4 +1,4 @@
-# ShopBot — SDK Research: All Platform Connectors
+# orchAIstrate — SDK Research: All Platform Connectors
 
 ## E-Commerce Platform SDKs
 

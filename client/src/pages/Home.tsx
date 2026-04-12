@@ -657,7 +657,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              BeastBots Plans
+              orchAIstrate Plans
             </CardTitle>
             <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Beta Pricing</Badge>
           </div>

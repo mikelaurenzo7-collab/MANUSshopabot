@@ -1,5 +1,5 @@
 /**
- * BeastBots — Architect Bot Scheduler Tasks
+ * orchAIstrate — Architect Bot Scheduler Tasks
  *
  * Handles: store health checks, token refresh, competitor scan
  */

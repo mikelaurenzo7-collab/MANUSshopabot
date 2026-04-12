@@ -1,5 +1,5 @@
 /**
- * BeastBots — System Scheduler Tasks
+ * orchAIstrate — System Scheduler Tasks
  *
  * Handles: job queue processing, OAuth cleanup, elite orchestrator tasks
  * (anomaly detection, DLQ, dynamic pricing, creative velocity, ad pausing)

@@ -1,5 +1,5 @@
 /**
- * BeastBots — Token Bucket Rate Limiter
+ * orchAIstrate — Token Bucket Rate Limiter
  *
  * Production-grade per-platform rate limiter using the token bucket algorithm.
  * Each platform gets its own bucket with configurable:

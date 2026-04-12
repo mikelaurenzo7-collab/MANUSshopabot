@@ -1,5 +1,5 @@
 /**
- * BeastBots — Scheduler Task Module Index
+ * orchAIstrate — Scheduler Task Module Index
  *
  * Re-exports all task handlers organized by agent type.
  */
