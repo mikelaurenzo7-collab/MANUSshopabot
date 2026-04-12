@@ -1,5 +1,5 @@
 /**
- * Beast Bots Workflow Engine
+ * BeastBots Workflow Engine
  * 
  * The orchestration brain. Manages the lifecycle of multi-step bot workflows:
  * 1. Creates workflows with defined step pipelines

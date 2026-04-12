@@ -1,7 +1,7 @@
 /**
  * Onboarding Wizard
  * Guides new users through the 4 steps to get their first bot running:
- * 1. Welcome — understand what Beast Bots does
+ * 1. Welcome — understand what BeastBots does
  * 2. Connect Store — link a Shopify/WooCommerce store
  * 3. Connect Socials — link Meta/TikTok/Twitter for the Social Bot
  * 4. Launch — pick a niche and fire the Builder Bot
@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
-  { id: 1, title: "Welcome to Beast Bots", icon: Sparkles },
+  { id: 1, title: "Welcome to BeastBots", icon: Sparkles },
   { id: 2, title: "Connect Your Store", icon: Store },
   { id: 3, title: "Connect Socials", icon: Share2 },
   { id: 4, title: "Launch Your First Bot", icon: Zap },
@@ -93,7 +93,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-2">
           <ShoppingBag className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Welcome to Beast Bots</h2>
+        <h2 className="text-2xl font-bold text-foreground">Welcome to BeastBots</h2>
         <p className="text-muted-foreground max-w-md mx-auto">
           Your three autonomous bots work 24/7 to build, run, and grow your e-commerce business.
           Zero-touch. No daily management required.
@@ -594,7 +594,7 @@ export default function OnboardingPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2">
             <ShoppingBag className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">Beast Bots</span>
+            <span className="text-xl font-bold text-foreground">BeastBots</span>
           </div>
         </div>
 

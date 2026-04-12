@@ -1,5 +1,5 @@
 /**
- * Beast Bots — Social Media Platform Adapter Registry
+ * BeastBots — Social Media Platform Adapter Registry
  *
  * The central factory for all social media adapters.
  * The Social Bot uses this registry to post content,

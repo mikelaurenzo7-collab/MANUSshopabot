@@ -1,5 +1,5 @@
 /**
- * Beast Bots — Unified Social Media Platform Adapter Interface
+ * BeastBots — Unified Social Media Platform Adapter Interface
  *
  * Every social media platform adapter implements this interface so that
  * The Social Bot Bot can post content, manage ads, and pull analytics

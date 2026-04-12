@@ -1,5 +1,5 @@
 /**
- * Beast Bots — Platform Bridge
+ * BeastBots — Platform Bridge
  *
  * The critical integration layer that connects the workflow engine
  * and agent routers to the platform-specific adapters.
@@ -17,6 +17,7 @@ import type { AdapterCredentials, CreateProductInput, FulfillmentInput, Platform
 import type { SocialCredentials, CreatePostInput, CreateAdCampaignInput, SocialPost, AdCampaign, SocialAnalytics } from "../adapters/social/types";
 import { withResilience } from "../_core/retry";
 import { logger } from "../_core/logger";
+import { getBucket } from "../utils/tokenBucket";
 import * as db from "../db";
 
 // ─── Circuit Breaker Key Helpers ──────────────────────────────────────────
@@ -67,6 +68,7 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
   let synced = 0;
 
   try {
+    await getBucket(store.platform).waitForToken();
     const remoteProducts = await withResilience(
       cbKey,
       () => adapter.listProducts(credentials, { limit: 250 }),
@@ -145,6 +147,7 @@ export async function pushProductToStore(storeId: number, productId: number): Pr
     stockLevel: product.stockLevel,
   };
 
+  await getBucket(store.platform).waitForToken();
   const created = await withResilience(
     cbKey,
     () => adapter.createProduct(credentials, input),
@@ -195,6 +198,7 @@ export async function fulfillOrderOnPlatform(
     notifyCustomer: true,
   };
 
+  await getBucket(store.platform).waitForToken();
   await withResilience(
     cbKey,
     () => adapter.fulfillOrder(credentials, platformOrderId, fulfillment),
@@ -276,6 +280,7 @@ export async function publishSocialPost(
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
   const cbKey = socialCbKey(account.platform, accountId);
 
+  await getBucket(account.platform).waitForToken();
   const post = await withResilience(
     cbKey,
     () => adapter.createPost(credentials, postInput),
@@ -315,6 +320,7 @@ export async function scheduleSocialPost(
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
   const cbKey = socialCbKey(account.platform, accountId);
 
+  await getBucket(account.platform).waitForToken();
   const post = await withResilience(
     cbKey,
     () => adapter.schedulePost(credentials, postInput, scheduledAt),
@@ -353,6 +359,7 @@ export async function launchAdCampaign(
   const { adapter, credentials, account } = await getSocialAccountAdapter(accountId);
   const cbKey = socialCbKey(account.platform, accountId);
 
+  await getBucket(account.platform).waitForToken();
   const campaign = await withResilience(
     cbKey,
     () => adapter.createAdCampaign(credentials, campaignInput),
@@ -404,6 +411,7 @@ export async function getCrossPlatformSocialAnalytics(userId: number) {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const cbKey = socialCbKey(account.platform, account.id);
 
+      await getBucket(account.platform).waitForToken();
       const analytics = await withResilience(
         cbKey,
         () => adapter.getAccountAnalytics(credentials, thirtyDaysAgo, now),

@@ -1,5 +1,5 @@
 /**
- * Beast Bots — Structured Logger
+ * BeastBots — Structured Logger
  *
  * A production-grade structured logger that emits JSON log lines with:
  * - ISO timestamps

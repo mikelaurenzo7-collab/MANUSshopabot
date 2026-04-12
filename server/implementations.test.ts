@@ -75,7 +75,7 @@ describe("Platform Bridge Null Checks", () => {
     
     const fulfillSection = content.substring(
       content.indexOf("export async function fulfillOrderOnPlatform"),
-      content.indexOf("export async function fulfillOrderOnPlatform") + 1000
+      content.indexOf("export async function fulfillOrderOnPlatform") + 1200
     );
     
     expect(fulfillSection).toContain("withResilience");
@@ -129,13 +129,13 @@ describe("Telemetry Integration", () => {
     expect(content).toContain("telemetry");
   });
 
-  it("Scheduler imports telemetry", async () => {
+  it("Scheduler task modules import telemetry", async () => {
     const fs = await import("fs");
     const path = await import("path");
-    const filePath = path.join(process.cwd(), "server/scheduler/index.ts");
-    const content = fs.readFileSync(filePath, "utf-8");
-    
-    expect(content).toContain("telemetry");
+    // After scheduler refactor, telemetry is imported in task modules
+    const merchantPath = path.join(process.cwd(), "server/scheduler/tasks/merchant.ts");
+    const merchantContent = fs.readFileSync(merchantPath, "utf-8");
+    expect(merchantContent).toContain("telemetry");
   });
 });
 

@@ -336,3 +336,13 @@
 - [x] Update VITE_APP_TITLE secret to "Beast Bots" — user must update via Settings > General in Management UI (built-in secret)
 - [x] Verify 0 TypeScript errors and 512 tests still passing
 - [x] Merge visual-polish branch into main and checkpoint
+
+## Sprint 16: BeastBots Brand Alignment + Sprint 14 Completion
+
+- [x] Update brand from "Beast Bots" to "BeastBots" (no space) across all frontend/server files
+- [x] Fix architect task handler TS error (expiresAt → tokenExpiresAt)
+- [x] Complete scheduler refactor into task modules (tasks/merchant.ts, tasks/social.ts, tasks/architect.ts, tasks/system.ts)
+- [x] Rewrite scheduler/index.ts to import from task modules instead of inline handlers
+- [x] Write tests for token bucket rate limiter
+- [x] Write tests for scheduler task modules
+- [x] Verify 0 TypeScript errors and all 538 tests passing
