@@ -502,10 +502,14 @@ export const connectorsRouter = router({
         timestamp: Date.now(),
       });
 
-      // For Etsy, generate PKCE code_challenge
+      // For Etsy, generate PKCE code_challenge (RFC 7636: S256)
       let url: string;
       if (input.platform === "etsy") {
         const codeVerifier = crypto.randomBytes(32).toString("base64url");
+        // RFC 7636 requires code_verifier to be 43-128 characters
+        if (codeVerifier.length < 43 || codeVerifier.length > 128) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "PKCE code_verifier generation failed: invalid length" });
+        }
         const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
         pkceStore.set(state, { codeVerifier, timestamp: Date.now() });
         url = `https://www.etsy.com/oauth/connect?response_type=code&client_id=${ecomClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;

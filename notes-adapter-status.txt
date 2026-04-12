@@ -1,0 +1,7 @@
+Adapter Resilience Status:
+- PKCE code_verifier validation: DONE (added length check in connectors.ts)
+- Tracking number validation: ALREADY DONE (Etsy adapter lines 142-151)
+- Meta prerequisite checks: ALREADY DONE (pageId check line 71, accessToken check line 72, adAccountId check line 169)
+- Budget validation: ALREADY DONE (Meta adapter lines 171-184, min $1/day, min $5 total)
+- healthCheck(): ALREADY DONE on Etsy (line 226), Meta (line 316)
+- Need to check: Shopify, Amazon, WooCommerce, eBay, TikTok Shop adapters for healthCheck
