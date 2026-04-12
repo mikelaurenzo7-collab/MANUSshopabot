@@ -18,6 +18,7 @@ import {
   checkInventoryAcrossStores,
   fulfillOrderOnPlatform,
   getCrossPlatformSocialAnalytics,
+  publishSocialPost,
 } from "../engine/platformBridge";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 
@@ -258,6 +259,65 @@ async function handleScheduledPosts(): Promise<void> {
 
   for (const post of duePosts) {
     try {
+      // Resolve the store owner to find the linked social account for this platform
+      const store = await db.getStoreById(post.storeId);
+      if (!store) {
+        console.warn(`[Scheduler] Post #${post.id}: store #${post.storeId} not found, skipping`);
+        continue;
+      }
+
+      // Map DB platform enum to social_accounts platform enum
+      const platformMap: Record<string, string> = {
+        facebook: "meta",
+        meta: "meta",
+        instagram: "instagram",
+        tiktok: "tiktok",
+        twitter: "twitter",
+        pinterest: "pinterest",
+        linkedin: "linkedin",
+        google_ads: "google_ads",
+      };
+      const socialPlatform = platformMap[post.platform] || post.platform;
+
+      // Find the user's connected social account for this platform
+      const accounts = await db.getSocialAccountsByPlatform(store.userId, socialPlatform);
+      const activeAccount = accounts.find((a: any) => a.status === "active");
+
+      if (!activeAccount) {
+        // No connected account — mark as failed and notify
+        await db.updateSocialPost(post.id, { status: "failed" });
+        await db.createNotification({
+          userId: store.userId,
+          agentType: "hypeman",
+          type: "warning",
+          title: `Scheduled post failed: no active ${post.platform} account`,
+          message: `Post #${post.id} could not be published. Connect a ${post.platform} account in Integrations.`,
+          actionUrl: "/integrations",
+        });
+        await db.createAgentTask({
+          agentType: "hypeman",
+          taskType: "scheduled_post",
+          title: `Failed: no active ${post.platform} account`,
+          description: `Post #${post.id} — no connected ${post.platform} account for user #${store.userId}`,
+          status: "failed",
+          storeId: post.storeId,
+        });
+        continue;
+      }
+
+      // Build the post input from the stored post data
+      const postInput = {
+        content: post.content || "",
+        imageUrl: post.imageUrl || undefined,
+        metadata: typeof post.engagement === "object" && post.engagement !== null
+          ? (post.engagement as Record<string, any>)
+          : undefined,
+      };
+
+      // Actually publish to the external platform via the adapter
+      await publishSocialPost(activeAccount.id, postInput, post.storeId);
+
+      // Mark as published in local DB
       await db.updateSocialPost(post.id, {
         status: "published",
         publishedAt: now,
@@ -267,12 +327,40 @@ async function handleScheduledPosts(): Promise<void> {
         agentType: "hypeman",
         taskType: "scheduled_post",
         title: `Published scheduled ${post.platform} post`,
-        description: `Post #${post.id} published on schedule`,
+        description: `Post #${post.id} published via ${activeAccount.accountName || activeAccount.platform} account`,
         status: "completed",
         storeId: post.storeId,
       });
+
+      console.log(`[Scheduler] Published post #${post.id} to ${post.platform} via account #${activeAccount.id}`);
     } catch (err: any) {
+      // On API failure: mark the post as failed (not published) and notify the owner
       console.error(`[Scheduler] Failed to publish post ${post.id}:`, err.message);
+      try {
+        await db.updateSocialPost(post.id, { status: "failed" });
+        // Get store for userId (may already be fetched above, but handle re-fetch safely)
+        const store = await db.getStoreById(post.storeId);
+        if (store) {
+          await db.createNotification({
+            userId: store.userId,
+            agentType: "hypeman",
+            type: "error",
+            title: `Scheduled post failed: ${post.platform}`,
+            message: `Post #${post.id} could not be published: ${err.message}`,
+            actionUrl: "/hypeman",
+          });
+        }
+        await db.createAgentTask({
+          agentType: "hypeman",
+          taskType: "scheduled_post",
+          title: `Failed to publish ${post.platform} post`,
+          description: `Post #${post.id} error: ${err.message}`,
+          status: "failed",
+          storeId: post.storeId,
+        });
+      } catch (innerErr: any) {
+        console.error(`[Scheduler] Could not update failed post status for #${post.id}:`, innerErr.message);
+      }
     }
   }
 }

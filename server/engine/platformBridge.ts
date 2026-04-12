@@ -77,7 +77,7 @@ export async function syncProductsFromStore(storeId: number, userId: number): Pr
             imageUrl: rp.imageUrl || undefined,
             stockLevel: rp.stockLevel ?? 0,
             status: rp.status === "active" ? "active" : "draft",
-            shopifyProductId: rp.platformId, // reuse field for any platform's product ID
+            platformProductId: rp.platformId, 
           });
         }
         synced++;
@@ -124,7 +124,7 @@ export async function pushProductToStore(storeId: number, productId: number): Pr
 
   // Update local record with platform ID
   await db.updateProduct(productId, {
-    shopifyProductId: created.platformId,
+    platformProductId: created.platformId,
     status: "active",
   });
 
@@ -139,7 +139,7 @@ export async function fulfillOrderOnPlatform(storeId: number, orderId: number, t
   const order = await db.getOrderById(orderId);
   if (!order) throw new Error(`Order ${orderId} not found`);
 
-  const platformOrderId = order.shopifyOrderId; // reused field for any platform
+  const platformOrderId = order.platformOrderId; 
   if (!platformOrderId) {
     // No platform order ID — just update locally
     await db.updateOrder(orderId, {

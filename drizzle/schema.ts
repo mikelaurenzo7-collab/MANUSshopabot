@@ -58,7 +58,7 @@ export const products = mysqlTable("products", {
   stockLevel: int("stockLevel").default(0).notNull(),
   lowStockThreshold: int("lowStockThreshold").default(5),
   status: mysqlEnum("status", ["draft", "active", "out_of_stock", "archived"]).default("draft").notNull(),
-  shopifyProductId: varchar("shopifyProductId", { length: 100 }),
+  platformProductId: varchar("platformProductId", { length: 100 }), // platform-agnostic product ID (was shopifyProductId)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -72,7 +72,7 @@ export type InsertProduct = typeof products.$inferInsert;
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  shopifyOrderId: varchar("shopifyOrderId", { length: 100 }),
+  platformOrderId: varchar("platformOrderId", { length: 100 }), // platform-agnostic order ID (was shopifyOrderId)
   customerName: varchar("customerName", { length: 255 }),
   customerEmail: varchar("customerEmail", { length: 320 }),
   totalAmount: int("totalAmount").default(0).notNull(), // cents
@@ -141,8 +141,12 @@ export const botConfig = mysqlTable("bot_config", {
   enabled: boolean("enabled").default(true).notNull(),
   config: json("config"), // agent-specific settings
   autoApprove: boolean("autoApprove").default(false).notNull(),
-  autonomyLevel: mysqlEnum("autonomyLevel", ["fully_autonomous", "supervised", "manual"]).default("supervised").notNull(),
+  // Default to fully_autonomous for Zero-Touch commerce (CTO directive)
+  autonomyLevel: mysqlEnum("autonomyLevel", ["fully_autonomous", "supervised", "manual"]).default("fully_autonomous").notNull(),
   maxBudgetCents: int("maxBudgetCents").default(10000),
+  // Granular safety thresholds (Priority 3 fix: persisted, not just UI)
+  lowStockThreshold: int("lowStockThreshold").default(5), // units below which low-stock alert fires
+  approvalRequired: boolean("approvalRequired").default(false).notNull(), // require human approval for high-impact actions
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -251,7 +255,8 @@ export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "linkedin"]).notNull(),
+  // Expanded enum: linkedin and google_ads are first-class values (no more fallback hacks)
+  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "linkedin", "google_ads"]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),

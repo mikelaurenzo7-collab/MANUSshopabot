@@ -102,6 +102,9 @@ export const appRouter = router({
         autonomyLevel: z.enum(["fully_autonomous", "supervised", "manual"]).optional(),
         maxBudgetCents: z.number().optional(),
         config: z.any().optional(),
+        // Priority 3: granular safety thresholds — now persisted to DB
+        lowStockThreshold: z.number().int().min(0).max(10000).optional(),
+        approvalRequired: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         return db.upsertBotConfig({
@@ -112,6 +115,8 @@ export const appRouter = router({
           autonomyLevel: input.autonomyLevel,
           maxBudgetCents: input.maxBudgetCents,
           config: input.config,
+          lowStockThreshold: input.lowStockThreshold,
+          approvalRequired: input.approvalRequired ?? false,
         });
       }),
   }),

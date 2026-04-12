@@ -367,3 +367,46 @@
 - [x] Add "AI Tools" tab to Hype-Man page (Viral Trend Detector, A/B Copy, SMS Recovery) — UI added, needs wiring to mutations
 - [x] Show new workflow capabilities in each bot's UI with badges
 - [x] Update Workflows page icon map for new workflow types
+
+## Co-Founder Agent Priority Action Plan (April 12, 2026)
+
+### Priority 1: Critical Security Remediation
+- [x] Remove CREDENTIALS_COLLECTED.md from git tracking (git rm --cached)
+- [x] Add CREDENTIALS_COLLECTED.md to .gitignore (also added *.credentials.md and CREDENTIALS*.md patterns)
+- [x] Verify no other credential files are tracked in git (PLATFORM_CREDENTIALS_GUIDE.md is safe — instructions only, no keys)
+- [x] Document credential rotation requirement for Twitter/X keys — user notified to rotate at developer.twitter.com
+
+### Priority 2: Fix Scheduler Social Publishing Stub
+- [x] Open server/scheduler/index.ts and locate handleScheduledPosts()
+- [x] Wire publishSocialPost() from platformBridge into handleScheduledPosts()
+- [x] Add error handling: catch API failures and mark post status as 'failed' not 'published'
+- [x] Test that scheduled posts now actually call social adapters (covered in scheduler tests)
+
+### Priority 3: Reconcile Bot Config UI with Persistence
+- [x] Remove "Select Store" dropdown from Config.tsx (settings are global, not store-specific)
+- [x] Add lowStockThreshold column to bot_config table in drizzle/schema.ts
+- [x] Add approvalRequired column to bot_config table in drizzle/schema.ts
+- [x] Run migration SQL via Node.js migration script (0006_big_lockjaw.sql applied)
+- [x] Update botConfig.upsert tRPC mutation to accept and persist lowStockThreshold and approvalRequired
+- [x] Update Config.tsx to wire lowStockThreshold and approvalRequired inputs to the mutation
+
+### Priority 4: Database Enum & Column Normalization
+- [x] Rename shopifyProductId → platformProductId in products table (drizzle/schema.ts)
+- [x] Rename shopifyOrderId → platformOrderId in orders table (drizzle/schema.ts)
+- [x] Expand social_posts.platform enum to explicitly include linkedin and google_ads
+- [ ] Expand ad_campaigns.platform enum to explicitly include 'linkedin' and 'google_ads'
+- [ ] Run migration SQL to apply column renames and enum changes
+- [ ] Remove fallback mapping hacks in server/engine/platformBridge.ts
+- [x] Update all references to shopifyProductId/shopifyOrderId in server code
+
+### Priority 5: CTO Business Logic Directives
+- [ ] Inject "Marketing Moat" analysis into Architect niche_research LLM system prompt
+- [ ] Inject open platform-agnostic orchestration strategy suggestion into niche_research prompt
+- [x] Set default autonomy level for new users to fully_autonomous in bot config defaults (schema default + Config.tsx)
+- [x] Add Zero-Touch onboarding nudge in dashboard (info banner in Config.tsx)
+
+### Twitter OAuth 1.0a User-Level Credentials
+- [x] Add TWITTER_ACCESS_TOKEN secret to platform
+- [x] Add TWITTER_ACCESS_TOKEN_SECRET secret to platform
+- [x] Update Twitter adapter to use access token for user-level API calls
+- [x] Add TWITTER_CLIENT_ID secret (OAuth 2.0 Client ID for user-level OAuth flows)

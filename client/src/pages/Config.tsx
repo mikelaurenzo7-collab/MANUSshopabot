@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -23,6 +22,7 @@ import {
   Zap,
   Eye,
   Hand,
+  Info,
 } from "lucide-react";
 
 type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
@@ -54,7 +54,13 @@ const agents = [
   },
 ];
 
-const autonomyOptions: { value: AutonomyLevel; label: string; description: string; icon: typeof Zap; color: string }[] = [
+const autonomyOptions: {
+  value: AutonomyLevel;
+  label: string;
+  description: string;
+  icon: typeof Zap;
+  color: string;
+}[] = [
   {
     value: "fully_autonomous",
     label: "Fully Autonomous",
@@ -81,7 +87,6 @@ const autonomyOptions: { value: AutonomyLevel; label: string; description: strin
 export default function ConfigPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedStore, setSelectedStore] = useState<string>("");
 
   useEffect(() => {
     if (!loading && user && user.role !== "admin") {
@@ -101,35 +106,57 @@ export default function ConfigPage() {
     return null;
   }
 
-  const { data: stores } = trpc.stores.list.useQuery();
   const { data: configs, isLoading } = trpc.botConfig.list.useQuery();
   const utils = trpc.useUtils();
 
-  // Per-agent state
+  // Per-bot autonomy and enable state
   const [architectEnabled, setArchitectEnabled] = useState(true);
   const [merchantEnabled, setMerchantEnabled] = useState(true);
   const [hypemanEnabled, setHypemanEnabled] = useState(true);
-  const [architectAutonomy, setArchitectAutonomy] = useState<AutonomyLevel>("supervised");
-  const [merchantAutonomy, setMerchantAutonomy] = useState<AutonomyLevel>("supervised");
-  const [hypemanAutonomy, setHypemanAutonomy] = useState<AutonomyLevel>("supervised");
-  const [autoFulfill, setAutoFulfill] = useState(true);
-  const [lowStockThreshold, setLowStockThreshold] = useState("10");
-  const [maxDailySpend, setMaxDailySpend] = useState("100");
-  const [approvalRequired, setApprovalRequired] = useState(true);
+  const [architectAutonomy, setArchitectAutonomy] = useState<AutonomyLevel>("fully_autonomous");
+  const [merchantAutonomy, setMerchantAutonomy] = useState<AutonomyLevel>("fully_autonomous");
+  const [hypemanAutonomy, setHypemanAutonomy] = useState<AutonomyLevel>("fully_autonomous");
 
+  // Merchant-specific settings
+  const [autoFulfill, setAutoFulfill] = useState(true);
+  const [lowStockThreshold, setLowStockThreshold] = useState("5");
+
+  // Hype-Man-specific settings
+  const [maxDailySpend, setMaxDailySpend] = useState("100");
+
+  // Global safety settings (applied to all bots)
+  const [approvalRequired, setApprovalRequired] = useState(false);
+
+  // Hydrate from DB on load
   useEffect(() => {
     if (configs && configs.length > 0) {
       const archConf = configs.find((c: any) => c.agentType === "architect");
       const merchConf = configs.find((c: any) => c.agentType === "merchant");
       const hypeConf = configs.find((c: any) => c.agentType === "hypeman");
+
       setArchitectEnabled(archConf?.enabled ?? true);
       setMerchantEnabled(merchConf?.enabled ?? true);
       setHypemanEnabled(hypeConf?.enabled ?? true);
-      setArchitectAutonomy((archConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
-      setMerchantAutonomy((merchConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
-      setHypemanAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
+
+      setArchitectAutonomy((archConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
+      setMerchantAutonomy((merchConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
+      setHypemanAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "fully_autonomous");
+
       setAutoFulfill(merchConf?.autoApprove ?? true);
-      if (hypeConf?.maxBudgetCents) setMaxDailySpend(String(hypeConf.maxBudgetCents / 100));
+
+      // Load persisted lowStockThreshold (any bot's value, merchant is canonical)
+      if (merchConf?.lowStockThreshold != null) {
+        setLowStockThreshold(String(merchConf.lowStockThreshold));
+      }
+
+      // Load persisted approvalRequired (any bot's value, architect is canonical)
+      if (archConf?.approvalRequired != null) {
+        setApprovalRequired(archConf.approvalRequired);
+      }
+
+      if (hypeConf?.maxBudgetCents) {
+        setMaxDailySpend(String(hypeConf.maxBudgetCents / 100));
+      }
     }
   }, [configs]);
 
@@ -142,25 +169,35 @@ export default function ConfigPage() {
 
   const handleSave = async () => {
     try {
+      // Save Architect config (carries global approvalRequired)
       await upsertConfig.mutateAsync({
         agentType: "architect",
         enabled: architectEnabled,
         autonomyLevel: architectAutonomy,
+        approvalRequired,
       });
+
+      // Save Merchant config (carries lowStockThreshold + autoFulfill)
       await upsertConfig.mutateAsync({
         agentType: "merchant",
         enabled: merchantEnabled,
         autoApprove: autoFulfill,
         autonomyLevel: merchantAutonomy,
+        lowStockThreshold: Number(lowStockThreshold),
+        approvalRequired,
       });
+
+      // Save Hype-Man config (carries maxBudgetCents)
       await upsertConfig.mutateAsync({
         agentType: "hypeman",
         enabled: hypemanEnabled,
         maxBudgetCents: Number(maxDailySpend) * 100,
         autonomyLevel: hypemanAutonomy,
+        approvalRequired,
       });
-      toast.success("All configurations saved!");
-    } catch (e) {
+
+      toast.success("All bot configurations saved!");
+    } catch {
       // handled by onError
     }
   };
@@ -187,35 +224,30 @@ export default function ConfigPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Configuration</h1>
-            <p className="text-sm text-muted-foreground">Automation rules, autonomy levels, and agent controls</p>
+            <p className="text-sm text-muted-foreground">Automation rules, autonomy levels, and bot controls</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedStore} onValueChange={setSelectedStore}>
-            <SelectTrigger className="w-48 bg-input/50">
-              <SelectValue placeholder="Select store" />
-            </SelectTrigger>
-            <SelectContent>
-              {(stores ?? []).map((s: any) => (
-                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={handleSave} disabled={upsertConfig.isPending}>
-            {upsertConfig.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            Save All
-          </Button>
-        </div>
+        <Button onClick={handleSave} disabled={upsertConfig.isPending}>
+          {upsertConfig.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+          ) : (
+            <Save className="h-4 w-4 mr-1" />
+          )}
+          Save All
+        </Button>
       </div>
 
-      {!selectedStore ? (
-        <Card className="bg-card border-border/50">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Settings className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Select a store to configure</p>
-          </CardContent>
-        </Card>
-      ) : isLoading ? (
+      {/* Info banner: settings are global */}
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          These settings apply globally to all connected stores. Bots default to{" "}
+          <span className="font-semibold text-emerald-400">Fully Autonomous</span> mode for Zero-Touch commerce.
+          Adjust autonomy levels to add human oversight where needed.
+        </p>
+      </div>
+
+      {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="bg-card border-border/50">
@@ -229,7 +261,7 @@ export default function ConfigPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Agent Controls + Autonomy Levels */}
+          {/* Per-Bot Controls */}
           {agents.map((agent) => {
             const Icon = agent.icon;
             const enabled = getEnabledState(agent.key);
@@ -279,8 +311,14 @@ export default function ConfigPage() {
                               }`}
                             >
                               <div className="flex items-center gap-2 mb-1">
-                                <OptIcon className={`h-4 w-4 ${isSelected ? opt.color : "text-muted-foreground"}`} />
-                                <span className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
+                                <OptIcon
+                                  className={`h-4 w-4 ${isSelected ? opt.color : "text-muted-foreground"}`}
+                                />
+                                <span
+                                  className={`text-sm font-medium ${
+                                    isSelected ? "text-foreground" : "text-muted-foreground"
+                                  }`}
+                                >
                                   {opt.label}
                                 </span>
                               </div>
@@ -291,23 +329,30 @@ export default function ConfigPage() {
                       </div>
                     </div>
 
-                    {/* Agent-specific settings */}
+                    {/* Merchant-specific settings */}
                     {agent.key === "merchant" && (
                       <div className="mt-4 space-y-3">
                         <Separator />
                         <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                           <div>
                             <p className="text-sm font-medium text-foreground">Auto-Fulfillment</p>
-                            <p className="text-xs text-muted-foreground">Automatically process orders without human intervention</p>
+                            <p className="text-xs text-muted-foreground">
+                              Automatically process orders without human intervention
+                            </p>
                           </div>
                           <Switch checked={autoFulfill} onCheckedChange={setAutoFulfill} />
                         </div>
                         <div className="p-3 rounded-lg bg-secondary/30">
-                          <Label className="text-sm font-medium text-foreground mb-2 block">Low Stock Alert Threshold</Label>
-                          <p className="text-xs text-muted-foreground mb-2">Alert when product stock falls below this number</p>
+                          <Label className="text-sm font-medium text-foreground mb-2 block">
+                            Low Stock Alert Threshold
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Alert when product stock falls below this number of units
+                          </p>
                           <Input
                             type="number"
                             min="1"
+                            max="10000"
                             value={lowStockThreshold}
                             onChange={(e) => setLowStockThreshold(e.target.value)}
                             className="bg-input/50 w-32"
@@ -316,12 +361,17 @@ export default function ConfigPage() {
                       </div>
                     )}
 
+                    {/* Hype-Man-specific settings */}
                     {agent.key === "hypeman" && (
                       <div className="mt-4 space-y-3">
                         <Separator />
                         <div className="p-3 rounded-lg bg-secondary/30">
-                          <Label className="text-sm font-medium text-foreground mb-2 block">Max Daily Ad Spend</Label>
-                          <p className="text-xs text-muted-foreground mb-2">Maximum daily budget across all ad platforms</p>
+                          <Label className="text-sm font-medium text-foreground mb-2 block">
+                            Max Daily Ad Spend
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Maximum daily budget across all ad platforms
+                          </p>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">$</span>
                             <Input
@@ -348,13 +398,18 @@ export default function ConfigPage() {
                 <Shield className="h-4 w-4 text-primary" />
                 <CardTitle className="text-base font-semibold">Global Safety Controls</CardTitle>
               </div>
-              <CardDescription>Override settings that apply to all agents regardless of autonomy level</CardDescription>
+              <CardDescription>
+                Override settings that apply to all bots regardless of autonomy level
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                 <div>
                   <p className="text-sm font-medium text-foreground">Require Approval for Critical Decisions</p>
-                  <p className="text-xs text-muted-foreground">Even fully autonomous bots will pause before executing critical actions (e.g., spending over $500, deleting products)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Even fully autonomous bots will pause before executing critical actions (e.g., spending over
+                    $500, deleting products). Saved to all bots.
+                  </p>
                 </div>
                 <Switch checked={approvalRequired} onCheckedChange={setApprovalRequired} />
               </div>

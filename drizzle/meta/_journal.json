@@ -43,6 +43,13 @@
       "when": 1775960786003,
       "tag": "0005_swift_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1775978212393,
+      "tag": "0006_big_lockjaw",
+      "breakpoints": true
     }
   ]
 }

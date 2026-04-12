@@ -704,7 +704,7 @@ export async function getProductByPlatformId(storeId: number, platformProductId:
   const db = await getDb();
   if (!db) return null;
   const rows = await db.select().from(products)
-    .where(and(eq(products.storeId, storeId), eq(products.shopifyProductId, platformProductId)))
+    .where(and(eq(products.storeId, storeId), eq(products.platformProductId, platformProductId)))
     .limit(1);
   return rows[0] ?? null;
 }
