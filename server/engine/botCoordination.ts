@@ -8,7 +8,7 @@
 
 import * as db from "../db";
 
-type SupportedEventType = "order_fulfilled_review_request";
+type SupportedEventType = "order_fulfilled_review_request" | "social_campaign_high_roas" | "merchant_anomaly_detected";
 
 interface OrderFulfilledReviewPayload {
   orderId: number;
@@ -29,7 +29,7 @@ async function handleOrderFulfilledReviewRequest(event: any) {
     taskType: "post_purchase_engagement",
     title: `Post-purchase follow-up queued for order ${orderLabel}`,
     description: `Social Bot identified a review-request and UGC opportunity after fulfillment${store ? ` for ${store.name}` : ""}.`,
-    status: "completed",
+    status: "pending_approval", // Transitioning to proper async event state
     storeId: event.storeId ?? undefined,
     metadata: {
       sourceEventId: event.id,
@@ -55,8 +55,36 @@ async function handleOrderFulfilledReviewRequest(event: any) {
   });
 }
 
+
+async function handleHighRoas(event: any) {
+  const store = event.storeId ? await db.getStoreById(event.storeId) : undefined;
+  await db.createAgentTask({
+    agentType: "architect",
+    taskType: "niche_exploration",
+    title: `High ROAS on Social Campaign: ${event.payload?.campaignName}`,
+    description: `Social Bot detected exceptional ROAS. Architect Bot is queued to research derivative niches.`,
+    status: "pending_approval",
+    storeId: event.storeId,
+    metadata: { sourceEventId: event.id }
+  });
+}
+
+async function handleMerchantAnomaly(event: any) {
+  await db.createAgentTask({
+    agentType: "social",
+    taskType: "pause_underperforming_ads",
+    title: `Inventory Anomaly detected logic`,
+    description: `Merchant Bot detected an anomaly (${event.payload?.reason}). Social Bot will evaluate pausing associated ad spend.`,
+    status: "pending_approval",
+    storeId: event.storeId,
+    metadata: { sourceEventId: event.id }
+  });
+}
+
 const eventHandlers: Record<SupportedEventType, (event: any) => Promise<void>> = {
   order_fulfilled_review_request: handleOrderFulfilledReviewRequest,
+  social_campaign_high_roas: handleHighRoas,
+  merchant_anomaly_detected: handleMerchantAnomaly,
 };
 
 export async function processPendingBotEvents(limit = 25) {
