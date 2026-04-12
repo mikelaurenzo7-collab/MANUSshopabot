@@ -63,18 +63,18 @@ function MetricCard({
   accent?: string;
 }) {
   const TrendIcon = trend === "up" ? ChevronUp : trend === "down" ? ChevronDown : Minus;
-  const trendColor = trend === "up" ? "text-emerald-400" : trend === "down" ? "text-red-400" : "text-slate-400";
+  const trendColor = trend === "up" ? "text-emerald-400" : trend === "down" ? "text-red-400" : "text-muted-foreground";
 
   return (
-    <Card className="bg-slate-900/60 border-slate-700/50 card-hover">
+    <Card className="bg-card/60 border-border/40 card-hover">
       <CardContent className="pt-5 pb-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{label}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
             <p className={`text-2xl font-bold ${accent}`}>{value}</p>
-            {sub && <p className="text-xs text-slate-500">{sub}</p>}
+            {sub && <p className="text-xs text-muted-foreground/70">{sub}</p>}
           </div>
-          <div className="p-2 rounded-lg bg-slate-800/60">
+          <div className="p-2 rounded-lg bg-secondary/40">
             <Icon className={`h-5 w-5 ${accent}`} />
           </div>
         </div>
@@ -137,13 +137,13 @@ export default function Intelligence() {
             <Activity className="h-6 w-6 text-violet-400" />
             Intelligence Center
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Cross-platform metrics, anomaly detection, and elite automation controls
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Period selector */}
-          <div className="flex rounded-lg border border-slate-700 overflow-hidden">
+          <div className="flex rounded-lg border border-border/50 overflow-hidden">
             {(["24h", "7d", "30d"] as const).map(p => (
               <button
                 key={p}
@@ -151,7 +151,7 @@ export default function Intelligence() {
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   period === p
                     ? "bg-violet-600 text-white"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                    : "text-muted-foreground hover:text-white hover:bg-secondary/50"
                 }`}
               >
                 {p}
@@ -162,7 +162,7 @@ export default function Intelligence() {
             size="sm"
             variant="outline"
             onClick={() => { refetchMetrics(); refetchAnomalies(); refetchBuyBox(); }}
-            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="border-border/50 text-foreground/80 hover:bg-secondary/50"
             aria-label="Refresh all data"
           >
             <RefreshCw className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function Intelligence() {
       {metricsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-xl bg-slate-800/40 animate-pulse" />
+            <div key={i} className="h-28 rounded-xl bg-secondary/30 animate-pulse" />
           ))}
         </div>
       ) : metrics ? (
@@ -257,11 +257,11 @@ export default function Intelligence() {
           />
         </div>
       ) : (
-        <div className="text-center py-12 text-slate-500">No metrics available. Connect a store to get started.</div>
+        <div className="text-center py-12 text-muted-foreground/70">No metrics available. Connect a store to get started.</div>
       )}
 
       <Tabs defaultValue="anomalies" className="space-y-4">
-        <TabsList className="bg-slate-800/60 border border-slate-700/50">
+        <TabsList className="bg-secondary/40 border border-border/40">
           <TabsTrigger value="anomalies" className="data-[state=active]:bg-violet-600">
             Anomalies {allAnomalies.length > 0 && <Badge className="ml-1.5 bg-red-500/30 text-red-300 text-[10px]">{allAnomalies.length}</Badge>}
           </TabsTrigger>
@@ -276,19 +276,19 @@ export default function Intelligence() {
           {anomaliesLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-lg bg-slate-800/40 animate-pulse" />
+                <div key={i} className="h-20 rounded-lg bg-secondary/30 animate-pulse" />
               ))}
             </div>
           ) : allAnomalies.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
               <CheckCircle2 className="h-10 w-10 text-emerald-500 mb-3" />
-              <p className="font-medium text-slate-300">All Clear</p>
+              <p className="font-medium text-foreground/80">All Clear</p>
               <p className="text-sm mt-1">No anomalies detected across your stores and ad accounts.</p>
             </div>
           ) : (
             <div className="stagger-list space-y-3">
               {allAnomalies.map((anomaly, i) => (
-                <Card key={i} className="bg-slate-900/60 border-slate-700/50">
+                <Card key={i} className="bg-card/60 border-border/40">
                   <CardContent className="pt-4 pb-3">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -300,21 +300,21 @@ export default function Intelligence() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <SeverityBadge severity={anomaly.severity} />
-                            <span className="text-xs text-slate-400 uppercase tracking-wide">
+                            <span className="text-xs text-muted-foreground uppercase tracking-wide">
                               {anomaly.type.replace(/_/g, " ")}
                             </span>
-                            <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-400">
+                            <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">
                               {anomaly.platform}
                             </Badge>
                           </div>
-                          <p className="text-sm text-slate-200 mt-1">{anomaly.message}</p>
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-sm text-foreground mt-1">{anomaly.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
                             <span className="text-violet-400">Suggested:</span> {anomaly.suggestedAction}
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground/70">
                           {new Date(anomaly.detectedAt).toLocaleTimeString()}
                         </p>
                         <p className={`text-sm font-bold mt-1 ${
@@ -336,15 +336,15 @@ export default function Intelligence() {
           {metrics ? (
             <div className="grid md:grid-cols-2 gap-4">
               {/* E-Commerce breakdown */}
-              <Card className="bg-slate-900/60 border-slate-700/50">
+              <Card className="bg-card/60 border-border/40">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
+                  <CardTitle className="text-sm text-foreground/80 flex items-center gap-2">
                     <ShoppingCart className="h-4 w-4 text-cyan-400" /> E-Commerce Revenue
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.ecommerce.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-slate-500">No store data available</p>
+                    <p className="text-sm text-muted-foreground/70">No store data available</p>
                   ) : (
                     metrics.ecommerce.platformBreakdown.map((p) => {
                       const pct = metrics.ecommerce.totalRevenue > 0
@@ -352,11 +352,11 @@ export default function Intelligence() {
                       return (
                         <div key={p.platform} className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-300 capitalize">{p.platform}</span>
+                            <span className="text-foreground/80 capitalize">{p.platform}</span>
                             <span className="text-emerald-400 font-medium">${p.revenue.toLocaleString()}</span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-slate-800" />
-                          <p className="text-[10px] text-slate-500">{p.orders} orders · {pct.toFixed(1)}% of total</p>
+                          <Progress value={pct} className="h-1.5 bg-secondary/30" />
+                          <p className="text-[10px] text-muted-foreground/70">{p.orders} orders · {pct.toFixed(1)}% of total</p>
                         </div>
                       );
                     })
@@ -365,15 +365,15 @@ export default function Intelligence() {
               </Card>
 
               {/* Ad platform breakdown */}
-              <Card className="bg-slate-900/60 border-slate-700/50">
+              <Card className="bg-card/60 border-border/40">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
+                  <CardTitle className="text-sm text-foreground/80 flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-pink-400" /> Ad Platform ROAS
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.advertising.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-slate-500">No active ad campaigns</p>
+                    <p className="text-sm text-muted-foreground/70">No active ad campaigns</p>
                   ) : (
                     metrics.advertising.platformBreakdown.map((p) => {
                       const maxROAS = Math.max(...metrics.advertising.platformBreakdown.map(x => x.roas), 1);
@@ -381,13 +381,13 @@ export default function Intelligence() {
                       return (
                         <div key={p.platform} className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-300 capitalize">{p.platform}</span>
+                            <span className="text-foreground/80 capitalize">{p.platform}</span>
                             <span className={`font-medium ${p.roas >= 3 ? "text-emerald-400" : p.roas >= 2 ? "text-yellow-400" : "text-red-400"}`}>
                               {p.roas}x ROAS
                             </span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-slate-800" />
-                          <p className="text-[10px] text-slate-500">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
+                          <Progress value={pct} className="h-1.5 bg-secondary/30" />
+                          <p className="text-[10px] text-muted-foreground/70">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
                         </div>
                       );
                     })
@@ -396,7 +396,7 @@ export default function Intelligence() {
               </Card>
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-500">Connect stores and ad accounts to see platform breakdown.</div>
+            <div className="text-center py-12 text-muted-foreground/70">Connect stores and ad accounts to see platform breakdown.</div>
           )}
         </TabsContent>
 
@@ -405,13 +405,13 @@ export default function Intelligence() {
           {buyBoxLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-lg bg-slate-800/40 animate-pulse" />
+                <div key={i} className="h-16 rounded-lg bg-secondary/30 animate-pulse" />
               ))}
             </div>
           ) : !buyBox || buyBox.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-              <ShoppingCart className="h-10 w-10 text-slate-600 mb-3" />
-              <p className="font-medium text-slate-300">No Buy Box Data</p>
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
+              <ShoppingCart className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <p className="font-medium text-foreground/80">No Buy Box Data</p>
               <p className="text-sm mt-1">Connect Amazon, eBay, or Walmart stores to monitor Buy Box status.</p>
             </div>
           ) : (
@@ -427,23 +427,23 @@ export default function Intelligence() {
                   };
                   const labels = { lower_price: "Lower Price", hold: "Hold", raise_price: "Raise Price" };
                   return (
-                    <Card key={action} className="bg-slate-900/60 border-slate-700/50 text-center py-3">
+                    <Card key={action} className="bg-card/60 border-border/40 text-center py-3">
                       <p className={`text-2xl font-bold ${colors[action]}`}>{count}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{labels[action]}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{labels[action]}</p>
                     </Card>
                   );
                 })}
               </div>
 
               {buyBox.map((item, i) => (
-                <Card key={i} className="bg-slate-900/60 border-slate-700/50">
+                <Card key={i} className="bg-card/60 border-border/40">
                   <CardContent className="py-3 px-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <Badge variant="outline" className="border-slate-600 text-slate-300 capitalize text-[10px] flex-shrink-0">
+                        <Badge variant="outline" className="border-border/40 text-foreground/80 capitalize text-[10px] flex-shrink-0">
                           {item.platform}
                         </Badge>
-                        <span className="text-sm text-slate-300 truncate">Product #{item.productId}</span>
+                        <span className="text-sm text-foreground/80 truncate">Product #{item.productId}</span>
                         <Badge className={`text-[10px] flex-shrink-0 ${
                           item.buyBoxOwner === "us"
                             ? "bg-emerald-500/20 text-emerald-400"
@@ -454,22 +454,22 @@ export default function Intelligence() {
                       </div>
                       <div className="flex items-center gap-6 text-right flex-shrink-0">
                         <div>
-                          <p className="text-[10px] text-slate-500">Current</p>
-                          <p className="text-sm font-medium text-slate-200">${item.currentPrice.toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground/70">Current</p>
+                          <p className="text-sm font-medium text-foreground">${item.currentPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-slate-500">Buy Box</p>
-                          <p className="text-sm font-medium text-slate-200">${item.buyBoxPrice.toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground/70">Buy Box</p>
+                          <p className="text-sm font-medium text-foreground">${item.buyBoxPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-slate-500">Recommended</p>
+                          <p className="text-[10px] text-muted-foreground/70">Recommended</p>
                           <p className={`text-sm font-bold ${
                             item.action === "lower_price" ? "text-red-400" :
                             item.action === "raise_price" ? "text-blue-400" : "text-emerald-400"
                           }`}>${item.recommendedPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-slate-500">Margin</p>
+                          <p className="text-[10px] text-muted-foreground/70">Margin</p>
                           <p className={`text-sm font-medium ${item.marginAtRecommended >= 20 ? "text-emerald-400" : item.marginAtRecommended >= 10 ? "text-yellow-400" : "text-red-400"}`}>
                             {item.marginAtRecommended}%
                           </p>
@@ -487,13 +487,13 @@ export default function Intelligence() {
         <TabsContent value="controls" className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
             {/* Dynamic Pricing */}
-            <Card className="bg-slate-900/60 border-slate-700/50">
+            <Card className="bg-card/60 border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-emerald-400" />
                   Dynamic Pricing Engine
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-muted-foreground">
                   Apply pricing rules across all stores. Changes &gt;15% require approval.
                 </CardDescription>
               </CardHeader>
@@ -510,18 +510,18 @@ export default function Intelligence() {
                     <><Zap className="h-3.5 w-3.5 mr-2" /> Run Pricing Engine</>
                   )}
                 </Button>
-                <p className="text-[10px] text-slate-500 mt-2 text-center">Auto-runs every 6 hours</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 6 hours</p>
               </CardContent>
             </Card>
 
             {/* Creative Velocity */}
-            <Card className="bg-slate-900/60 border-slate-700/50">
+            <Card className="bg-card/60 border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-violet-400" />
                   Creative Velocity A/B
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-muted-foreground">
                   Pause losers (CPA &gt;20% above target), scale winners (CTR &gt;4%).
                 </CardDescription>
               </CardHeader>
@@ -538,18 +538,18 @@ export default function Intelligence() {
                     <><BarChart3 className="h-3.5 w-3.5 mr-2" /> Optimize Creatives</>
                   )}
                 </Button>
-                <p className="text-[10px] text-slate-500 mt-2 text-center">Auto-runs every 4 hours</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 4 hours</p>
               </CardContent>
             </Card>
 
             {/* Inventory Ad Pause */}
-            <Card className="bg-slate-900/60 border-slate-700/50">
+            <Card className="bg-card/60 border-border/40">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <PauseCircle className="h-4 w-4 text-orange-400" />
                   Inventory Ad Guard
                 </CardTitle>
-                <CardDescription className="text-xs text-slate-400">
+                <CardDescription className="text-xs text-muted-foreground">
                   Pause all active ads for out-of-stock products across all platforms.
                 </CardDescription>
               </CardHeader>
@@ -566,15 +566,15 @@ export default function Intelligence() {
                     <><PauseCircle className="h-3.5 w-3.5 mr-2" /> Scan & Pause OOS Ads</>
                   )}
                 </Button>
-                <p className="text-[10px] text-slate-500 mt-2 text-center">Auto-runs every 30 minutes</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 30 minutes</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Scheduler status */}
-          <Card className="bg-slate-900/60 border-slate-700/50">
+          <Card className="bg-card/60 border-border/40">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+              <CardTitle className="text-sm text-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 text-cyan-400" />
                 Scheduled Automation Tasks
               </CardTitle>
@@ -597,11 +597,11 @@ export default function Intelligence() {
                   { name: "Competitor Scan", freq: "Wed & Sat 4AM", agent: "Architect" },
                   { name: "DLQ Processor", freq: "Every 10min", agent: "System" },
                 ].map((task) => (
-                  <div key={task.name} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/40">
+                  <div key={task.name} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-xs text-slate-200 truncate">{task.name}</p>
-                      <p className="text-[10px] text-slate-500">{task.freq}</p>
+                      <p className="text-xs text-foreground truncate">{task.name}</p>
+                      <p className="text-[10px] text-muted-foreground/70">{task.freq}</p>
                     </div>
                   </div>
                 ))}
@@ -612,25 +612,25 @@ export default function Intelligence() {
 
         {/* Dead-Letter Queue Tab */}
         <TabsContent value="dlq" className="space-y-3">
-          <Card className="bg-slate-900/60 border-slate-700/50">
+          <Card className="bg-card/60 border-border/40">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+              <CardTitle className="text-sm text-foreground flex items-center gap-2">
                 <Inbox className="h-4 w-4 text-yellow-400" />
                 Dead-Letter Queue
               </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
+              <CardDescription className="text-xs text-muted-foreground">
                 Failed webhook deliveries are automatically retried with exponential backoff (max 5 attempts).
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!dlq ? (
-                <div className="h-16 animate-pulse bg-slate-800/40 rounded-lg" />
+                <div className="h-16 animate-pulse bg-secondary/30 rounded-lg" />
               ) : dlq.total === 0 ? (
                 <div className="flex items-center gap-3 py-4">
                   <CheckCircle2 className="h-8 w-8 text-emerald-500" />
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Queue Empty</p>
-                    <p className="text-xs text-slate-400">All webhook events processed successfully.</p>
+                    <p className="text-sm font-medium text-foreground">Queue Empty</p>
+                    <p className="text-xs text-muted-foreground">All webhook events processed successfully.</p>
                   </div>
                 </div>
               ) : (
@@ -638,25 +638,25 @@ export default function Intelligence() {
                   <div className="flex gap-4">
                     <div className="text-center">
                       <p className="text-2xl font-bold text-yellow-400">{dlq.total}</p>
-                      <p className="text-xs text-slate-400">Total</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
                     </div>
-                    <Separator orientation="vertical" className="h-12 bg-slate-700" />
+                    <Separator orientation="vertical" className="h-12 bg-border/40" />
                     <div className="text-center">
                       <p className="text-2xl font-bold text-orange-400">{dlq.pending}</p>
-                      <p className="text-xs text-slate-400">Pending Retry</p>
+                      <p className="text-xs text-muted-foreground">Pending Retry</p>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {dlq.entries.map((entry) => (
-                      <div key={entry.id} className="p-2 rounded-lg bg-slate-800/40 text-xs">
+                      <div key={entry.id} className="p-2 rounded-lg bg-secondary/30 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-slate-300 font-medium">{entry.event}</span>
-                          <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-400">
+                          <span className="text-foreground/80 font-medium">{entry.event}</span>
+                          <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">
                             {entry.platform}
                           </Badge>
                         </div>
-                        <p className="text-slate-500 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
-                        <p className="text-slate-600 mt-0.5">Next retry: {new Date(entry.nextRetryAt).toLocaleTimeString()}</p>
+                        <p className="text-muted-foreground/70 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
+                        <p className="text-muted-foreground/40 mt-0.5">Next retry: {new Date(entry.nextRetryAt).toLocaleTimeString()}</p>
                       </div>
                     ))}
                   </div>

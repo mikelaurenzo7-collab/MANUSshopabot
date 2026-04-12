@@ -63,26 +63,26 @@ function MetricCard({
   accentColor?: string;
 }) {
   return (
-    <Card className="glass-card">
-      <CardContent className="p-6">
+    <Card className="glass-card group hover:shadow-lg transition-all duration-350">
+      <CardContent className="p-7">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+          <div className="space-y-2 flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">{title}</p>
             {loading ? (
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-9 w-28" />
             ) : (
-              <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
+              <p className="text-3xl font-extrabold tracking-tight text-foreground font-heading metric-number">{value}</p>
             )}
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-muted-foreground/70">{subtitle}</p>}
           </div>
-          <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${accentColor || "bg-primary/10"}`}>
+          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border border-border/20 group-hover:scale-105 transition-transform duration-300 shadow-lg ${accentColor || "bg-primary/10"}`}>
             <Icon className={`h-5 w-5 ${accentColor ? "" : "text-primary"}`} />
           </div>
         </div>
         {trend && (
-          <div className="mt-3 flex items-center gap-1">
-            <TrendingUp className="h-3 w-3 text-emerald-400" />
-            <span className="text-xs text-emerald-400 font-medium">{trend}</span>
+          <div className="mt-4 flex items-center gap-1.5 pt-3 border-t border-border/20">
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-xs text-emerald-400 font-semibold">{trend}</span>
           </div>
         )}
       </CardContent>
@@ -106,22 +106,28 @@ function BotStatusCard({
   loading?: boolean;
 }) {
   const isActive = stats && stats.running > 0;
-  const botAccentColor = type === 'architect' ? 'bg-violet-500/10 border-violet-500/30' : type === 'merchant' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-amber-500/10 border-amber-500/30';
+  const botAccentColor = type === 'architect' ? 'bg-violet-500/8 border-violet-500/30' : type === 'merchant' ? 'bg-cyan-500/8 border-cyan-500/30' : 'bg-amber-500/8 border-amber-500/30';
   const botStatusColor = type === 'architect' ? 'bg-violet-400' : type === 'merchant' ? 'bg-cyan-400' : 'bg-amber-400';
+  const botNameColor = type === 'architect' ? 'text-violet-300' : type === 'merchant' ? 'text-cyan-300' : 'text-amber-300';
   return (
-    <Card className={`glass-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''}`}>
+    <Card className={`glass-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''} transition-all duration-350`}>
       <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
+        <div className="flex items-center gap-3 mb-5">
+          <div className={`h-11 w-11 rounded-xl flex items-center justify-center border border-border/20 shadow-lg ${color}`}>
             <Icon className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-foreground truncate">{name}</h3>
+            <h3 className={`text-sm font-bold truncate font-heading ${botNameColor}`}>{name}</h3>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <div className={`h-2 w-2 rounded-full ${isActive ? `${botStatusColor} bot-status-pulse` : 'bg-muted-foreground/40'}`} />
-              <span className="text-xs text-muted-foreground">{isActive ? "Active" : "Idle"}</span>
+              <div className={`h-2 w-2 rounded-full ${isActive ? `${botStatusColor} bot-status-pulse` : 'bg-muted-foreground/30'}`} />
+              <span className="text-xs text-muted-foreground">{isActive ? "Running" : "Standby"}</span>
             </div>
           </div>
+          {isActive && (
+            <div className="shrink-0">
+              <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
+            </div>
+          )}
         </div>
         {loading ? (
           <div className="space-y-2">
@@ -129,22 +135,22 @@ function BotStatusCard({
             <Skeleton className="h-4 w-3/4" />
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-lg font-bold text-emerald-400 metric-number">{stats.completed}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Done</p>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="text-center p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/20 hover:bg-emerald-500/12 transition-colors">
+              <p className="text-xl font-bold text-emerald-400 metric-number">{stats.completed}</p>
+              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Done</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <p className="text-lg font-bold text-amber-400 metric-number">{stats.running}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Active</p>
+            <div className="text-center p-3 rounded-xl bg-amber-500/8 border border-amber-500/20 hover:bg-amber-500/12 transition-colors">
+              <p className="text-xl font-bold text-amber-400 metric-number">{stats.running}</p>
+              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Active</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-lg font-bold text-red-400 metric-number">{stats.failed}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Failed</p>
+            <div className="text-center p-3 rounded-xl bg-red-500/8 border border-red-500/20 hover:bg-red-500/12 transition-colors">
+              <p className="text-xl font-bold text-red-400 metric-number">{stats.failed}</p>
+              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Failed</p>
             </div>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">No tasks recorded yet</p>
+          <p className="text-xs text-muted-foreground/60 italic">No tasks recorded yet</p>
         )}
       </CardContent>
     </Card>
@@ -181,12 +187,12 @@ function RecentActivityItem({
   };
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border/30 last:border-0">
+    <div className="flex items-center gap-3 py-3.5 border-b border-border/20 last:border-0 hover:bg-primary/3 rounded-lg px-2 -mx-2 transition-colors duration-200">
       <div className="shrink-0">{statusIcons[task.status] || statusIcons.pending}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-foreground truncate">{task.title}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          <span className={agentColors[task.agentType]}>{agentNames[task.agentType]}</span>
+        <p className="text-sm text-foreground truncate font-medium">{task.title}</p>
+        <p className="text-xs text-muted-foreground/70 mt-0.5">
+          <span className={`font-medium ${agentColors[task.agentType]}`}>{agentNames[task.agentType]}</span>
           {" \u00B7 "}
           {new Date(task.createdAt).toLocaleString()}
         </p>
@@ -235,42 +241,42 @@ function CrossStoreIntelligence() {
   const scheduledTotal = intel.schedulerTasks.length;
 
   return (
-    <Card className="bg-card border-border/50 overflow-hidden">
+    <Card className="glass-card overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-          <Globe className="h-4 w-4" />
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+          <Globe className="h-4 w-4 text-primary" />
           Cross-Store Intelligence
         </CardTitle>
       </CardHeader>
       <CardContent>
         {/* Top-line aggregates */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cross-Store Revenue</p>
-            <p className="text-lg font-bold text-emerald-400 mt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/15 hover:bg-emerald-500/12 transition-colors">
+            <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Cross-Store Revenue</p>
+            <p className="text-xl font-extrabold text-emerald-400 mt-1.5 font-heading metric-number">
               ${(intel.totalRevenue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Orders</p>
-            <p className="text-lg font-bold text-blue-400 mt-1">{intel.totalOrders.toLocaleString()}</p>
+          <div className="p-4 rounded-xl bg-blue-500/8 border border-blue-500/15 hover:bg-blue-500/12 transition-colors">
+            <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Total Orders</p>
+            <p className="text-xl font-extrabold text-blue-400 mt-1.5 font-heading metric-number">{intel.totalOrders.toLocaleString()}</p>
           </div>
-          <div className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Products</p>
-            <p className="text-lg font-bold text-violet-400 mt-1">{intel.totalProducts.toLocaleString()}</p>
+          <div className="p-4 rounded-xl bg-violet-500/8 border border-violet-500/15 hover:bg-violet-500/12 transition-colors">
+            <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Total Products</p>
+            <p className="text-xl font-extrabold text-violet-400 mt-1.5 font-heading metric-number">{intel.totalProducts.toLocaleString()}</p>
           </div>
-          <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Low Stock Alerts</p>
-            <p className="text-lg font-bold text-amber-400 mt-1">{intel.totalLowStock}</p>
+          <div className="p-4 rounded-xl bg-amber-500/8 border border-amber-500/15 hover:bg-amber-500/12 transition-colors">
+            <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Low Stock Alerts</p>
+            <p className="text-xl font-extrabold text-amber-400 mt-1.5 font-heading metric-number">{intel.totalLowStock}</p>
           </div>
         </div>
 
         {/* Platform breakdown + top store + scheduler */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Platform breakdown */}
-          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5" /> Platform Breakdown
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/25 hover:border-border/40 transition-colors">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5 text-primary" /> Platform Breakdown
             </h4>
             <div className="space-y-2">
               {platforms.map(([platform, data]: [string, any]) => (
@@ -296,9 +302,9 @@ function CrossStoreIntelligence() {
           </div>
 
           {/* Top performing store */}
-          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <TrendingUp className="h-3.5 w-3.5" /> Top Performer
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/25 hover:border-border/40 transition-colors">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-400" /> Top Performer
             </h4>
             {intel.topStore ? (
               <div className="space-y-2">
@@ -320,9 +326,9 @@ function CrossStoreIntelligence() {
           </div>
 
           {/* Scheduler status */}
-          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Timer className="h-3.5 w-3.5" /> Bot Scheduler
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/25 hover:border-border/40 transition-colors">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1.5">
+              <Timer className="h-3.5 w-3.5 text-cyan-400" /> Bot Scheduler
             </h4>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -406,11 +412,11 @@ export default function Home() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-extrabold tracking-tight font-heading gradient-text">
             Welcome back{user?.name ? `, ${user.name}` : ""}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-          Your autonomous bots are building, selling, and marketing 24/7 — zero manual work required.
+          <p className="text-sm text-muted-foreground/80 mt-1.5">
+            Your autonomous bots are building, selling, and marketing 24/7 — zero manual work required.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -473,11 +479,11 @@ export default function Home() {
       </div>
 
       {/* Connected Stores Section */}
-      <Card className="bg-card border-border/50">
+      <Card className="glass-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Store className="h-4 w-4" />
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
               Connected Stores
             </CardTitle>
             <Button
@@ -644,11 +650,13 @@ export default function Home() {
 
         {/* Recent Activity */}
         <div className="lg:col-span-2">
-          <Card className="bg-card border-border/50 h-full">
+          <Card className="glass-card h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Recent Bot Activity</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Recent Bot Activity
+              </CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"

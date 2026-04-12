@@ -264,7 +264,7 @@ function DashboardLayoutContent({
             {Object.entries(groups).map(([group, items]) => (
               <div key={group} className="mb-3">
                 {!isCollapsed && (
-                  <p className="px-3 py-1.5 text-[10px] font-semibold tracking-widest text-muted-foreground/60 uppercase">
+                  <p className="px-3 py-1.5 text-[9px] font-bold tracking-[0.15em] text-muted-foreground/40 uppercase">
                     {groupLabels[group]}
                   </p>
                 )}
@@ -277,12 +277,19 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className={`h-9 transition-all font-normal ${isActive ? "bg-primary/10 text-primary" : ""}`}
+                          className={`h-9 transition-all duration-200 font-normal rounded-lg ${
+                            isActive
+                              ? "bg-primary/12 text-primary border border-primary/20 shadow-[0_0_12px_rgba(157,78,221,0.15)]"
+                              : "hover:bg-sidebar-accent/60 hover:border hover:border-border/20"
+                          }`}
                         >
                           <item.icon
-                            className={`h-4 w-4 ${isActive ? "text-primary" : item.color || "text-muted-foreground"}`}
+                            className={`h-4 w-4 shrink-0 transition-colors duration-200 ${
+                              isActive ? "text-primary drop-shadow-[0_0_6px_rgba(157,78,221,0.6)]" : item.color || "text-muted-foreground/70"
+                            }`}
                           />
-                          <span className={isActive ? "font-medium" : ""}>{item.label}</span>
+                          <span className={`truncate ${isActive ? "font-semibold" : "font-normal"}`}>{item.label}</span>
+                          {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_6px_rgba(157,78,221,0.8)]" />}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -295,18 +302,18 @@ function DashboardLayoutContent({
           <SidebarFooter className="p-3 border-t border-sidebar-border/50">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-sidebar-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-8 w-8 border border-primary/20 shrink-0">
-                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-sidebar-accent/60 hover:border hover:border-border/20 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Avatar className="h-8 w-8 border border-primary/30 shrink-0 shadow-[0_0_10px_rgba(157,78,221,0.2)]">
+                    <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none text-foreground">
+                    <p className="text-sm font-semibold truncate leading-none text-foreground">
                       {user?.name || "-"}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1">
-                      {user?.role === "admin" ? "Admin" : "User"}
+                    <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">
+                      {user?.role === "admin" ? "✦ Admin" : "Member"}
                     </p>
                   </div>
                 </button>
