@@ -561,8 +561,8 @@
 - [x] Add null checks to platformBridge.launchAdCampaign() before calling adapters
 - [x] Add null checks to platformBridge.fulfillOrderOnPlatform() before calling adapters
 - [x] Add null checks to platformBridge.syncProductsFromStore() before calling adapters
-- [ ] Replace silent `.catch(() => {})` in telemetry with proper error logging
-- [ ] Add error logging to scheduler tasks instead of silent failures
+- [x] Replace silent `.catch(() => {})` in telemetry with proper error logging (workflowEngine, scheduler, shopifyWebhooks)
+- [x] Add error logging to scheduler tasks instead of silent failures (handleOrderFulfillment now logs telemetry errors)
 - [ ] Implement rate limit detection (429) with exponential backoff in retry logic
 
 ### Adapter Resilience

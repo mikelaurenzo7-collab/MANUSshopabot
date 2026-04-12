@@ -290,7 +290,9 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         success: true,
         durationMs,
         metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
-      }).catch(() => {}); // fire-and-forget
+      }).catch((telemetryErr: any) => {
+        console.error(`[Workflow] Failed to log telemetry for step ${i}:`, telemetryErr.message);
+      });
     } catch (error: any) {
       const durationMs = Date.now() - stepStartTime;
       await updateWorkflowStep(dbStep.id, {
@@ -311,7 +313,9 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         errorMessage: error.message ?? String(error),
         durationMs,
         metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
-      }).catch(() => {}); // fire-and-forget
+      }).catch((telemetryErr: any) => {
+        console.error(`[Workflow] Failed to log telemetry for failed step ${i}:`, telemetryErr.message);
+      });
 
       // Fail the entire workflow
       await updateWorkflow(workflowId, {

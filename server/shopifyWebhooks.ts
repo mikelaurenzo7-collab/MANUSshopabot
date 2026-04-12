@@ -134,7 +134,9 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
       output: { workflowLaunched: true, autonomyLevel: autonomy },
       success: true,
       metadata: { shopDomain, orderNumber: payload.order_number },
-    }).catch(() => {});
+    }).catch((telemetryErr: any) => {
+      console.error(`[Webhook] Failed to log telemetry for order creation ${orderId}:`, telemetryErr.message);
+    });
   } else {
     // Queue for approval
     await notifyOwner({
@@ -173,7 +175,9 @@ async function handleOrderPaid(shopDomain: string, payload: any) {
       input: { platformOrderId, topic: "orders/paid" },
       output: { newStatus: "processing" },
       success: true,
-    }).catch(() => {});
+    }).catch((telemetryErr: any) => {
+      console.error(`[Webhook] Failed to log telemetry for order status update ${platformOrderId}:`, telemetryErr.message);
+    });
   }
 }
 

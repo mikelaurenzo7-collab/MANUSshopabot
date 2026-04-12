@@ -208,7 +208,9 @@ async function handleOrderFulfillment(): Promise<void> {
         input: { orderId: order.id, platformOrderId: order.platformOrderId },
         output: { fulfilled: true },
         success: true,
-      }).catch(() => {});
+      }).catch((telemetryErr: any) => {
+        console.error(`[Scheduler] Failed to log telemetry for order ${order.id}:`, telemetryErr.message);
+      });
     } catch (err: any) {
       console.error(`[Scheduler] Auto-fulfill failed for order ${order.id}:`, err.message);
 
@@ -221,7 +223,9 @@ async function handleOrderFulfillment(): Promise<void> {
         input: { orderId: order.id },
         success: false,
         errorMessage: err.message,
-      }).catch(() => {});
+      }).catch((telemetryErr: any) => {
+        console.error(`[Scheduler] Failed to log telemetry for failed fulfillment ${order.id}:`, telemetryErr.message);
+      });
     }
   }
 }
