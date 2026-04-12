@@ -29,6 +29,20 @@
       "when": 1775955353419,
       "tag": "0003_loose_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1775960689200,
+      "tag": "0004_freezing_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1775960786003,
+      "tag": "0005_swift_green_goblin",
+      "breakpoints": true
     }
   ]
 }

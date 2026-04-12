@@ -3,6 +3,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
+import { pushProductToStore, syncProductsFromStore } from "../engine/platformBridge";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -194,6 +195,54 @@ export const architectRouter = router({
         return { products: createdProducts };
       } catch (error) {
         await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  // ─── Platform Bridge: Push Products to Store ──────────────────────────
+  pushProductToStore: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      productId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "product_push",
+        title: `Pushing product #${input.productId} to store #${input.storeId}`,
+        description: "Pushing product to connected platform via adapter",
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const result = await pushProductToStore(input.storeId, input.productId);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error: any) {
+        await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
+        throw error;
+      }
+    }),
+
+  syncFromStore: protectedProcedure
+    .input(z.object({ storeId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "product_sync",
+        title: `Syncing products from store #${input.storeId}`,
+        description: "Importing products from connected platform",
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const result = await syncProductsFromStore(input.storeId, ctx.user.id);
+        await db.updateAgentTask(task.id, { status: "completed", result });
+        return result;
+      } catch (error: any) {
+        await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
         throw error;
       }
     }),

@@ -18,6 +18,8 @@ import {
   analyticsSnapshots, InsertAnalyticsSnapshot,
   platformCredentials, InsertPlatformCredential,
   socialAccounts, InsertSocialAccount,
+  agentWorkflows, InsertAgentWorkflow,
+  workflowSteps, InsertWorkflowStep,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -580,4 +582,167 @@ export async function getConnectedPlatformSummary(userId: number) {
     credentials: credCount?.count ?? 0,
     socialAccounts: socialCount?.count ?? 0,
   };
+}
+
+// ─── Agent Workflow helpers ────────────────────────────────────────────────
+
+export async function createWorkflow(data: InsertAgentWorkflow) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(agentWorkflows).values(data);
+  return { id: result[0].insertId };
+}
+
+export async function getWorkflowById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(agentWorkflows).where(eq(agentWorkflows.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getWorkflowsByUser(userId: number, filters?: { agentType?: string; status?: string; storeId?: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [eq(agentWorkflows.userId, userId)];
+  if (filters?.agentType) conditions.push(eq(agentWorkflows.agentType, filters.agentType as any));
+  if (filters?.status) conditions.push(eq(agentWorkflows.status, filters.status as any));
+  if (filters?.storeId) conditions.push(eq(agentWorkflows.storeId, filters.storeId));
+  return db.select().from(agentWorkflows)
+    .where(and(...conditions))
+    .orderBy(desc(agentWorkflows.createdAt))
+    .limit(filters?.limit ?? 50);
+}
+
+export async function getActiveWorkflows(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(agentWorkflows)
+    .where(and(
+      eq(agentWorkflows.userId, userId),
+      sql`${agentWorkflows.status} IN ('pending', 'running', 'awaiting_approval')`
+    ))
+    .orderBy(desc(agentWorkflows.createdAt));
+}
+
+export async function updateWorkflow(id: number, data: Partial<InsertAgentWorkflow>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(agentWorkflows).set(data).where(eq(agentWorkflows.id, id));
+}
+
+export async function getWorkflowCounts(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
+  const result = await db.select({
+    total: count(),
+    running: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'running' THEN 1 ELSE 0 END)`,
+    completed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'completed' THEN 1 ELSE 0 END)`,
+    failed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'failed' THEN 1 ELSE 0 END)`,
+    awaiting: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'awaiting_approval' THEN 1 ELSE 0 END)`,
+  }).from(agentWorkflows).where(eq(agentWorkflows.userId, userId));
+  return result[0] ?? { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
+}
+
+// ─── Workflow Step helpers ─────────────────────────────────────────────────
+
+export async function createWorkflowSteps(data: InsertWorkflowStep[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (data.length === 0) return;
+  await db.insert(workflowSteps).values(data);
+}
+
+export async function getWorkflowSteps(workflowId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(workflowSteps)
+    .where(eq(workflowSteps.workflowId, workflowId))
+    .orderBy(workflowSteps.stepIndex);
+}
+
+export async function getWorkflowStepById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(workflowSteps).where(eq(workflowSteps.id, id)).limit(1);
+  return result[0];
+}
+
+export async function updateWorkflowStep(id: number, data: Partial<InsertWorkflowStep>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(workflowSteps).set(data).where(eq(workflowSteps.id, id));
+}
+
+export async function getPendingApprovalSteps(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  // Join workflow_steps with agent_workflows to filter by user
+  return db.select({
+    step: workflowSteps,
+    workflow: agentWorkflows,
+  }).from(workflowSteps)
+    .innerJoin(agentWorkflows, eq(workflowSteps.workflowId, agentWorkflows.id))
+    .where(and(
+      eq(agentWorkflows.userId, userId),
+      eq(workflowSteps.approvalStatus, "pending")
+    ))
+    .orderBy(desc(workflowSteps.createdAt));
+}
+
+// ─── Platform Bridge helpers ────────────────────────────────────────────────
+
+export async function getCredentialsByStoreId(storeId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(platformCredentials)
+    .where(eq(platformCredentials.storeId, storeId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getProductByPlatformId(storeId: number, platformProductId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(products)
+    .where(and(eq(products.storeId, storeId), eq(products.shopifyProductId, platformProductId)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getOrderById(orderId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+// ─── Scheduler helpers ──────────────────────────────────────────────────────
+
+export async function getActiveStores() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(stores).where(eq(stores.status, "active"));
+}
+
+export async function getPendingFulfillmentOrders() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orders)
+    .where(and(
+      eq(orders.status, "pending"),
+      eq(orders.fulfillmentStatus, "unfulfilled"),
+    ))
+    .limit(100);
+}
+
+export async function getDueScheduledPosts(now: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(socialPosts)
+    .where(and(
+      eq(socialPosts.status, "scheduled"),
+      lte(socialPosts.scheduledAt, now),
+    ));
 }

@@ -36,6 +36,7 @@ import {
   Bell,
   Zap,
   Plug,
+  Workflow,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -54,6 +55,7 @@ const allMenuItems = [
   { icon: Activity, label: "Activity Log", path: "/activity", group: "operations", adminOnly: false },
   { icon: BarChart3, label: "Analytics", path: "/analytics", group: "operations", adminOnly: false },
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
+  { icon: Workflow, label: "Workflows", path: "/workflows", group: "operations", color: "text-rose-400", adminOnly: false },
   { icon: Settings, label: "Bot Config", path: "/config", group: "settings", adminOnly: true },
 ];
 

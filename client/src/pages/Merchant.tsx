@@ -318,7 +318,7 @@ export default function MerchantPage() {
                     onClick={() => {
                       const pendingOrder = orders?.find((o: any) => o.fulfillmentStatus === "unfulfilled");
                       if (pendingOrder) {
-                        autoFulfill.mutate({ orderId: (pendingOrder as any).id });
+                        autoFulfill.mutate({ orderId: (pendingOrder as any).id, storeId: (pendingOrder as any).storeId });
                       } else {
                         toast.info("No unfulfilled orders to process");
                       }

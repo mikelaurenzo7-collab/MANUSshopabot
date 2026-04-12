@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Settings,
@@ -19,11 +20,16 @@ import {
   Loader2,
   Save,
   Shield,
+  Zap,
+  Eye,
+  Hand,
 } from "lucide-react";
+
+type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 
 const agents = [
   {
-    key: "architect",
+    key: "architect" as const,
     name: "The Architect Agent",
     description: "Niche research, product sourcing, and store setup",
     icon: Bot,
@@ -31,7 +37,7 @@ const agents = [
     bgColor: "bg-violet-500/15",
   },
   {
-    key: "merchant",
+    key: "merchant" as const,
     name: "The Merchant Agent",
     description: "Inventory monitoring, pricing, and fulfillment",
     icon: Package,
@@ -39,7 +45,7 @@ const agents = [
     bgColor: "bg-cyan-500/15",
   },
   {
-    key: "hypeman",
+    key: "hypeman" as const,
     name: "The Hype-Man Agent",
     description: "Ad copy, social media, SEO, and email campaigns",
     icon: Megaphone,
@@ -48,13 +54,35 @@ const agents = [
   },
 ];
 
+const autonomyOptions: { value: AutonomyLevel; label: string; description: string; icon: typeof Zap; color: string }[] = [
+  {
+    value: "fully_autonomous",
+    label: "Fully Autonomous",
+    description: "Agent executes all actions without approval. Zero-touch operation.",
+    icon: Zap,
+    color: "text-emerald-400",
+  },
+  {
+    value: "supervised",
+    label: "Supervised",
+    description: "Agent executes low-impact actions automatically; pauses for high-impact decisions.",
+    icon: Eye,
+    color: "text-amber-400",
+  },
+  {
+    value: "manual",
+    label: "Manual",
+    description: "Agent suggests actions but waits for human approval before executing anything.",
+    icon: Hand,
+    color: "text-red-400",
+  },
+];
+
 export default function ConfigPage() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedStore, setSelectedStore] = useState<string>("");
-  const storeId = selectedStore ? Number(selectedStore) : undefined;
 
-  // Redirect non-admins away from this page
   useEffect(() => {
     if (!loading && user && user.role !== "admin") {
       setLocation("/");
@@ -70,16 +98,20 @@ export default function ConfigPage() {
   }
 
   if (!user || user.role !== "admin") {
-    return null; // Will redirect via useEffect
+    return null;
   }
 
   const { data: stores } = trpc.stores.list.useQuery();
   const { data: configs, isLoading } = trpc.botConfig.list.useQuery();
   const utils = trpc.useUtils();
 
+  // Per-agent state
   const [architectEnabled, setArchitectEnabled] = useState(true);
   const [merchantEnabled, setMerchantEnabled] = useState(true);
   const [hypemanEnabled, setHypemanEnabled] = useState(true);
+  const [architectAutonomy, setArchitectAutonomy] = useState<AutonomyLevel>("supervised");
+  const [merchantAutonomy, setMerchantAutonomy] = useState<AutonomyLevel>("supervised");
+  const [hypemanAutonomy, setHypemanAutonomy] = useState<AutonomyLevel>("supervised");
   const [autoFulfill, setAutoFulfill] = useState(true);
   const [lowStockThreshold, setLowStockThreshold] = useState("10");
   const [maxDailySpend, setMaxDailySpend] = useState("100");
@@ -93,6 +125,9 @@ export default function ConfigPage() {
       setArchitectEnabled(archConf?.enabled ?? true);
       setMerchantEnabled(merchConf?.enabled ?? true);
       setHypemanEnabled(hypeConf?.enabled ?? true);
+      setArchitectAutonomy((archConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
+      setMerchantAutonomy((merchConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
+      setHypemanAutonomy((hypeConf?.autonomyLevel as AutonomyLevel) ?? "supervised");
       setAutoFulfill(merchConf?.autoApprove ?? true);
       if (hypeConf?.maxBudgetCents) setMaxDailySpend(String(hypeConf.maxBudgetCents / 100));
     }
@@ -100,7 +135,6 @@ export default function ConfigPage() {
 
   const upsertConfig = trpc.botConfig.upsert.useMutation({
     onSuccess: () => {
-      toast.success("Configuration saved!");
       utils.botConfig.list.invalidate();
     },
     onError: (err: any) => toast.error(err.message),
@@ -108,12 +142,39 @@ export default function ConfigPage() {
 
   const handleSave = async () => {
     try {
-      await upsertConfig.mutateAsync({ agentType: "architect", enabled: architectEnabled });
-      await upsertConfig.mutateAsync({ agentType: "merchant", enabled: merchantEnabled, autoApprove: autoFulfill });
-      await upsertConfig.mutateAsync({ agentType: "hypeman", enabled: hypemanEnabled, maxBudgetCents: Number(maxDailySpend) * 100 });
+      await upsertConfig.mutateAsync({
+        agentType: "architect",
+        enabled: architectEnabled,
+        autonomyLevel: architectAutonomy,
+      });
+      await upsertConfig.mutateAsync({
+        agentType: "merchant",
+        enabled: merchantEnabled,
+        autoApprove: autoFulfill,
+        autonomyLevel: merchantAutonomy,
+      });
+      await upsertConfig.mutateAsync({
+        agentType: "hypeman",
+        enabled: hypemanEnabled,
+        maxBudgetCents: Number(maxDailySpend) * 100,
+        autonomyLevel: hypemanAutonomy,
+      });
+      toast.success("All configurations saved!");
     } catch (e) {
       // handled by onError
     }
+  };
+
+  const getAutonomyState = (key: string) => {
+    if (key === "architect") return { value: architectAutonomy, set: setArchitectAutonomy };
+    if (key === "merchant") return { value: merchantAutonomy, set: setMerchantAutonomy };
+    return { value: hypemanAutonomy, set: setHypemanAutonomy };
+  };
+
+  const getEnabledState = (key: string) => {
+    if (key === "architect") return { value: architectEnabled, set: setArchitectEnabled };
+    if (key === "merchant") return { value: merchantEnabled, set: setMerchantEnabled };
+    return { value: hypemanEnabled, set: setHypemanEnabled };
   };
 
   return (
@@ -126,7 +187,7 @@ export default function ConfigPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Configuration</h1>
-            <p className="text-sm text-muted-foreground">Automation rules, thresholds, and agent controls</p>
+            <p className="text-sm text-muted-foreground">Automation rules, autonomy levels, and agent controls</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -142,7 +203,7 @@ export default function ConfigPage() {
           </Select>
           <Button onClick={handleSave} disabled={upsertConfig.isPending}>
             {upsertConfig.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            Save
+            Save All
           </Button>
         </div>
       </div>
@@ -168,108 +229,132 @@ export default function ConfigPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Agent Toggles */}
-          <Card className="bg-card border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Agent Controls</CardTitle>
-              <CardDescription>Toggle individual agents on or off</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {agents.map((agent) => {
-                const Icon = agent.icon;
-                const enabled =
-                  agent.key === "architect" ? architectEnabled :
-                  agent.key === "merchant" ? merchantEnabled :
-                  hypemanEnabled;
-                const setEnabled =
-                  agent.key === "architect" ? setArchitectEnabled :
-                  agent.key === "merchant" ? setMerchantEnabled :
-                  setHypemanEnabled;
+          {/* Agent Controls + Autonomy Levels */}
+          {agents.map((agent) => {
+            const Icon = agent.icon;
+            const enabled = getEnabledState(agent.key);
+            const autonomy = getAutonomyState(agent.key);
 
-                return (
-                  <div key={agent.key} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+            return (
+              <Card key={agent.key} className="bg-card border-border/50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`h-9 w-9 rounded-lg ${agent.bgColor} flex items-center justify-center`}>
-                        <Icon className={`h-4.5 w-4.5 ${agent.color}`} />
+                      <div className={`h-10 w-10 rounded-lg ${agent.bgColor} flex items-center justify-center`}>
+                        <Icon className={`h-5 w-5 ${agent.color}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{agent.name}</p>
-                        <p className="text-xs text-muted-foreground">{agent.description}</p>
+                        <CardTitle className="text-base font-semibold">{agent.name}</CardTitle>
+                        <CardDescription>{agent.description}</CardDescription>
                       </div>
                     </div>
-                    <Switch checked={enabled} onCheckedChange={setEnabled} />
+                    <div className="flex items-center gap-3">
+                      <Badge variant={enabled.value ? "default" : "secondary"} className="text-xs">
+                        {enabled.value ? "Active" : "Disabled"}
+                      </Badge>
+                      <Switch checked={enabled.value} onCheckedChange={enabled.set} />
+                    </div>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+                </CardHeader>
+                {enabled.value && (
+                  <CardContent className="pt-0">
+                    <Separator className="mb-4" />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                        <Shield className="h-3.5 w-3.5 text-primary" />
+                        Autonomy Level
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {autonomyOptions.map((opt) => {
+                          const OptIcon = opt.icon;
+                          const isSelected = autonomy.value === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              onClick={() => autonomy.set(opt.value)}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                isSelected
+                                  ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                                  : "border-border/50 bg-secondary/30 hover:bg-secondary/50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <OptIcon className={`h-4 w-4 ${isSelected ? opt.color : "text-muted-foreground"}`} />
+                                <span className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
+                                  {opt.label}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-          {/* Merchant Settings */}
-          <Card className="bg-card border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Merchant Settings</CardTitle>
-              <CardDescription>Fulfillment and inventory automation rules</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Auto-Fulfillment</p>
-                  <p className="text-xs text-muted-foreground">Automatically process orders without human intervention</p>
-                </div>
-                <Switch checked={autoFulfill} onCheckedChange={setAutoFulfill} />
-              </div>
-              <div className="p-3 rounded-lg bg-secondary/30">
-                <Label className="text-sm font-medium text-foreground mb-2 block">Low Stock Alert Threshold</Label>
-                <p className="text-xs text-muted-foreground mb-2">Alert when product stock falls below this number</p>
-                <Input
-                  type="number"
-                  min="1"
-                  value={lowStockThreshold}
-                  onChange={(e) => setLowStockThreshold(e.target.value)}
-                  className="bg-input/50 w-32"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                    {/* Agent-specific settings */}
+                    {agent.key === "merchant" && (
+                      <div className="mt-4 space-y-3">
+                        <Separator />
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Auto-Fulfillment</p>
+                            <p className="text-xs text-muted-foreground">Automatically process orders without human intervention</p>
+                          </div>
+                          <Switch checked={autoFulfill} onCheckedChange={setAutoFulfill} />
+                        </div>
+                        <div className="p-3 rounded-lg bg-secondary/30">
+                          <Label className="text-sm font-medium text-foreground mb-2 block">Low Stock Alert Threshold</Label>
+                          <p className="text-xs text-muted-foreground mb-2">Alert when product stock falls below this number</p>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={lowStockThreshold}
+                            onChange={(e) => setLowStockThreshold(e.target.value)}
+                            className="bg-input/50 w-32"
+                          />
+                        </div>
+                      </div>
+                    )}
 
-          {/* Marketing Settings */}
-          <Card className="bg-card border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Marketing Settings</CardTitle>
-              <CardDescription>Ad spend limits and campaign controls</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 rounded-lg bg-secondary/30">
-                <Label className="text-sm font-medium text-foreground mb-2 block">Max Daily Ad Spend</Label>
-                <p className="text-xs text-muted-foreground mb-2">Maximum daily budget across all ad platforms</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">$</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={maxDailySpend}
-                    onChange={(e) => setMaxDailySpend(e.target.value)}
-                    className="bg-input/50 w-32"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    {agent.key === "hypeman" && (
+                      <div className="mt-4 space-y-3">
+                        <Separator />
+                        <div className="p-3 rounded-lg bg-secondary/30">
+                          <Label className="text-sm font-medium text-foreground mb-2 block">Max Daily Ad Spend</Label>
+                          <p className="text-xs text-muted-foreground mb-2">Maximum daily budget across all ad platforms</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">$</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={maxDailySpend}
+                              onChange={(e) => setMaxDailySpend(e.target.value)}
+                              className="bg-input/50 w-32"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
 
-          {/* Safety & Approvals */}
+          {/* Global Safety & Approvals */}
           <Card className="bg-card border-border/50">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base font-semibold">Safety & Approvals</CardTitle>
+                <CardTitle className="text-base font-semibold">Global Safety Controls</CardTitle>
               </div>
-              <CardDescription>Control when agents need human approval</CardDescription>
+              <CardDescription>Override settings that apply to all agents regardless of autonomy level</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Require Approval for High-Impact Decisions</p>
-                  <p className="text-xs text-muted-foreground">Agents will pause and request approval before executing critical actions</p>
+                  <p className="text-sm font-medium text-foreground">Require Approval for Critical Decisions</p>
+                  <p className="text-xs text-muted-foreground">Even fully autonomous agents will pause before executing critical actions (e.g., spending over $500, deleting products)</p>
                 </div>
                 <Switch checked={approvalRequired} onCheckedChange={setApprovalRequired} />
               </div>

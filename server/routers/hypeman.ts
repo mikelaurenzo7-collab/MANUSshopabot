@@ -4,6 +4,7 @@ import { invokeLLM } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
+import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
 
 export const hypemanRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
@@ -12,7 +13,7 @@ export const hypemanRouter = router({
       storeId: z.number(),
       productName: z.string(),
       productDescription: z.string().optional(),
-      platform: z.enum(["tiktok", "meta", "google", "email", "sms"]).default("meta"),
+      platform: z.enum(["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "linkedin", "email", "sms"]).default("meta"),
       tone: z.string().default("engaging and persuasive"),
     }))
     .mutation(async ({ input }) => {
@@ -225,7 +226,7 @@ export const hypemanRouter = router({
   generateSocialPost: protectedProcedure
     .input(z.object({
       storeId: z.number(),
-      platform: z.enum(["tiktok", "instagram", "facebook", "twitter", "pinterest"]),
+      platform: z.enum(["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "linkedin"]),
       topic: z.string(),
       productName: z.string().optional(),
     }))
@@ -398,5 +399,143 @@ export const hypemanRouter = router({
       const { id, ...data } = input;
       await db.updateAdCampaign(id, data);
       return { success: true };
+    }),
+
+  // ─── Platform Bridge: Publish to Connected Social Accounts ──────────
+  publishToSocial: protectedProcedure
+    .input(z.object({
+      socialAccountId: z.number(),
+      storeId: z.number().optional(),
+      content: z.string(),
+      imageUrl: z.string().optional(),
+      link: z.string().optional(),
+      hashtags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "social_publish",
+        title: `Publishing to social account #${input.socialAccountId}`,
+        description: "Publishing content via platform adapter",
+        status: "running",
+        storeId: input.storeId ?? null,
+      });
+
+      try {
+        const post = await publishSocialPost(
+          input.socialAccountId,
+          {
+            content: input.content,
+            imageUrl: input.imageUrl,
+            link: input.link,
+            hashtags: input.hashtags,
+          },
+          input.storeId,
+        );
+
+        await db.updateAgentTask(task.id, { status: "completed", result: post });
+        return post;
+      } catch (error: any) {
+        await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
+        throw error;
+      }
+    }),
+
+  scheduleToSocial: protectedProcedure
+    .input(z.object({
+      socialAccountId: z.number(),
+      storeId: z.number().optional(),
+      content: z.string(),
+      imageUrl: z.string().optional(),
+      link: z.string().optional(),
+      hashtags: z.array(z.string()).optional(),
+      scheduledAt: z.string(), // ISO date string
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "social_schedule",
+        title: `Scheduling post on account #${input.socialAccountId}`,
+        description: `Scheduled for ${input.scheduledAt}`,
+        status: "running",
+        storeId: input.storeId ?? null,
+      });
+
+      try {
+        const post = await scheduleSocialPost(
+          input.socialAccountId,
+          {
+            content: input.content,
+            imageUrl: input.imageUrl,
+            link: input.link,
+            hashtags: input.hashtags,
+          },
+          new Date(input.scheduledAt),
+          input.storeId,
+        );
+
+        await db.updateAgentTask(task.id, { status: "completed", result: post });
+        return post;
+      } catch (error: any) {
+        await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
+        throw error;
+      }
+    }),
+
+  launchCampaign: protectedProcedure
+    .input(z.object({
+      socialAccountId: z.number(),
+      storeId: z.number(),
+      name: z.string(),
+      objective: z.enum(["awareness", "traffic", "conversions", "sales"]),
+      budgetCents: z.number(),
+      dailyBudgetCents: z.number().optional(),
+      adCopy: z.string(),
+      imageUrl: z.string().optional(),
+      targetUrl: z.string(),
+      targeting: z.object({
+        ageMin: z.number().optional(),
+        ageMax: z.number().optional(),
+        locations: z.array(z.string()).optional(),
+        interests: z.array(z.string()).optional(),
+      }).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "hypeman",
+        taskType: "ad_launch",
+        title: `Launching ad campaign: ${input.name}`,
+        description: `${input.objective} campaign on account #${input.socialAccountId}`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      try {
+        const campaign = await launchAdCampaign(
+          input.socialAccountId,
+          {
+            name: input.name,
+            objective: input.objective,
+            budgetCents: input.budgetCents,
+            dailyBudgetCents: input.dailyBudgetCents,
+            adCopy: input.adCopy,
+            imageUrl: input.imageUrl,
+            targetUrl: input.targetUrl,
+            targeting: input.targeting,
+          },
+          input.storeId,
+        );
+
+        await db.updateAgentTask(task.id, { status: "completed", result: campaign });
+        return campaign;
+      } catch (error: any) {
+        await db.updateAgentTask(task.id, { status: "failed", result: { error: error.message } });
+        throw error;
+      }
+    }),
+
+  crossPlatformAnalytics: protectedProcedure
+    .query(async ({ ctx }) => {
+      return getCrossPlatformSocialAnalytics(ctx.user.id);
     }),
 });

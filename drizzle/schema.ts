@@ -141,6 +141,7 @@ export const botConfig = mysqlTable("bot_config", {
   enabled: boolean("enabled").default(true).notNull(),
   config: json("config"), // agent-specific settings
   autoApprove: boolean("autoApprove").default(false).notNull(),
+  autonomyLevel: mysqlEnum("autonomyLevel", ["fully_autonomous", "supervised", "manual"]).default("supervised").notNull(),
   maxBudgetCents: int("maxBudgetCents").default(10000),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -172,7 +173,7 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "google", "email", "sms"]).default("meta").notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "linkedin", "email", "sms"]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -250,7 +251,7 @@ export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "twitter", "pinterest"]).notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "linkedin"]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),
@@ -357,3 +358,66 @@ export const socialAccounts = mysqlTable("social_accounts", {
 
 export type SocialAccount = typeof socialAccounts.$inferSelect;
 export type InsertSocialAccount = typeof socialAccounts.$inferInsert;
+
+/**
+ * Agent Workflows — multi-step pipelines executed by agents.
+ * Each workflow represents a complete operation (e.g., "niche research", "ad campaign creation").
+ * State machine: pending -> running -> awaiting_approval -> completed | failed | cancelled
+ */
+export const agentWorkflows = mysqlTable("agent_workflows", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  workflowType: varchar("workflowType", { length: 100 }).notNull(), // e.g. niche_research, product_sourcing, ad_campaign, inventory_sync
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  // Scope: which store(s) this workflow targets
+  scope: mysqlEnum("scope", ["specific_store", "all_stores", "global"]).default("global").notNull(),
+  storeId: int("storeId"), // null if scope is all_stores or global
+  // State machine
+  status: mysqlEnum("status", ["pending", "running", "awaiting_approval", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  currentStepIndex: int("currentStepIndex").default(0).notNull(),
+  totalSteps: int("totalSteps").default(0).notNull(),
+  // Input/output
+  input: json("input"), // workflow input parameters
+  output: json("output"), // final workflow result
+  error: text("error"), // error message if failed
+  // Timing
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgentWorkflow = typeof agentWorkflows.$inferSelect;
+export type InsertAgentWorkflow = typeof agentWorkflows.$inferInsert;
+
+/**
+ * Workflow Steps — individual steps within a workflow pipeline.
+ * Each step represents one atomic action (LLM call, API call, image gen, approval gate, etc.)
+ */
+export const workflowSteps = mysqlTable("workflow_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  workflowId: int("workflowId").notNull(),
+  stepIndex: int("stepIndex").notNull(), // 0-based order within workflow
+  stepType: mysqlEnum("stepType", ["llm_call", "api_call", "image_generation", "data_transform", "approval_gate", "notification", "store_action", "analysis"]).notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  // Execution
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "skipped", "awaiting_approval"]).default("pending").notNull(),
+  input: json("input"), // step-specific input (can reference previous step outputs)
+  output: json("output"), // step result
+  error: text("error"),
+  // For approval gates
+  requiresApproval: boolean("requiresApproval").default(false).notNull(),
+  approvalStatus: mysqlEnum("approvalStatus", ["none", "pending", "approved", "rejected"]).default("none").notNull(),
+  approvalNote: text("approvalNote"),
+  // Timing
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  durationMs: int("durationMs"), // execution time in milliseconds
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WorkflowStep = typeof workflowSteps.$inferSelect;
+export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;

@@ -23,6 +23,10 @@ import {
   Share2,
   ArrowRight,
   ShoppingBag,
+  BarChart3,
+  Globe,
+  Timer,
+  Activity,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -203,6 +207,182 @@ function RecentActivityItem({
   );
 }
 
+function CrossStoreIntelligence() {
+  const { data: intel, isLoading } = trpc.dashboard.crossStoreIntelligence.useQuery();
+
+  if (isLoading) {
+    return (
+      <Card className="bg-card border-border/50">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!intel || intel.storeCount === 0) return null;
+
+  const platforms = Object.entries(intel.platformBreakdown);
+  const scheduledActive = intel.schedulerTasks.filter((t: any) => t.enabled && t.isScheduled).length;
+  const scheduledTotal = intel.schedulerTasks.length;
+
+  return (
+    <Card className="bg-card border-border/50 overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Globe className="h-4 w-4" />
+          Cross-Store Intelligence
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Top-line aggregates */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Cross-Store Revenue</p>
+            <p className="text-lg font-bold text-emerald-400 mt-1">
+              ${(intel.totalRevenue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Orders</p>
+            <p className="text-lg font-bold text-blue-400 mt-1">{intel.totalOrders.toLocaleString()}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-violet-500/5 border border-violet-500/10">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Products</p>
+            <p className="text-lg font-bold text-violet-400 mt-1">{intel.totalProducts.toLocaleString()}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Low Stock Alerts</p>
+            <p className="text-lg font-bold text-amber-400 mt-1">{intel.totalLowStock}</p>
+          </div>
+        </div>
+
+        {/* Platform breakdown + top store + scheduler */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Platform breakdown */}
+          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5" /> Platform Breakdown
+            </h4>
+            <div className="space-y-2">
+              {platforms.map(([platform, data]: [string, any]) => (
+                <div key={platform} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{PLATFORM_ICONS[platform] || "🏪"}</span>
+                    <span className="text-xs text-foreground capitalize">{platform.replace(/_/g, " ")}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-medium text-foreground">
+                      ${(data.revenue / 100).toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-1.5">
+                      {data.stores} store{data.stores > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {platforms.length === 0 && (
+                <p className="text-xs text-muted-foreground">No platform data yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Top performing store */}
+          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5" /> Top Performer
+            </h4>
+            {intel.topStore ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{PLATFORM_ICONS[intel.topStore.platform] || "🏪"}</span>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{intel.topStore.name}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{intel.topStore.platform.replace(/_/g, " ")}</p>
+                  </div>
+                </div>
+                <p className="text-xl font-bold text-emerald-400">
+                  ${(intel.topStore.revenue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[10px] text-muted-foreground">Highest revenue across all stores</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Connect stores to see performance</p>
+            )}
+          </div>
+
+          {/* Scheduler status */}
+          <div className="p-4 rounded-lg bg-secondary/30 border border-border/30">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <Timer className="h-3.5 w-3.5" /> Agent Scheduler
+            </h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Active Tasks</span>
+                <span className="text-sm font-medium text-foreground">{scheduledActive}/{scheduledTotal}</span>
+              </div>
+              <Separator className="bg-border/30" />
+              <div className="space-y-1.5 max-h-24 overflow-y-auto">
+                {intel.schedulerTasks.filter((t: any) => t.enabled).slice(0, 5).map((task: any) => (
+                  <div key={task.id} className="flex items-center gap-2">
+                    <div className={`h-1.5 w-1.5 rounded-full ${task.isScheduled ? "bg-emerald-400" : "bg-muted-foreground/40"}`} />
+                    <span className="text-[10px] text-muted-foreground truncate">{task.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Per-store metrics table */}
+        {intel.storeMetrics.length > 1 && (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border/30">
+                  <th className="text-left py-2 text-muted-foreground font-medium">Store</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium">Revenue</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium">Orders</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium">Products</th>
+                  <th className="text-right py-2 text-muted-foreground font-medium">Low Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {intel.storeMetrics.map((s: any) => (
+                  <tr key={s.storeId} className="border-b border-border/10 hover:bg-secondary/20">
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <span>{PLATFORM_ICONS[s.platform] || "🏪"}</span>
+                        <span className="text-foreground">{s.storeName}</span>
+                      </div>
+                    </td>
+                    <td className="text-right py-2 text-foreground font-medium">
+                      ${(s.revenue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="text-right py-2 text-foreground">{s.orders}</td>
+                    <td className="text-right py-2 text-foreground">{s.products}</td>
+                    <td className="text-right py-2">
+                      <span className={s.lowStockCount > 0 ? "text-amber-400 font-medium" : "text-muted-foreground"}>
+                        {s.lowStockCount}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -354,6 +534,9 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* Cross-Store Intelligence */}
+      <CrossStoreIntelligence />
 
       {/* Agent Status + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

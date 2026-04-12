@@ -13,6 +13,7 @@ import ActivityPage from "./pages/Activity";
 import AnalyticsPage from "./pages/Analytics";
 import ConfigPage from "./pages/Config";
 import IntegrationsPage from "./pages/Integrations";
+import WorkflowsPage from "./pages/Workflows";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/activity" component={ActivityPage} />
         <Route path="/analytics" component={AnalyticsPage} />
         <Route path="/integrations" component={IntegrationsPage} />
+        <Route path="/workflows" component={WorkflowsPage} />
         <Route path="/config" component={ConfigPage} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

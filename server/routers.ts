@@ -12,6 +12,7 @@ import { hypemanRouter } from "./routers/hypeman";
 import { activityRouter } from "./routers/activity";
 import { analyticsRouter } from "./routers/analytics";
 import { connectorsRouter } from "./routers/connectors";
+import { workflowRouter } from "./routers/workflows";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -34,6 +35,7 @@ export const appRouter = router({
   activity: activityRouter,
   analytics: analyticsRouter,
   connectors: connectorsRouter,
+  workflows: workflowRouter,
 
   // Notifications — scoped to current user
   notifications: router({
@@ -97,6 +99,7 @@ export const appRouter = router({
         agentType: z.enum(["architect", "merchant", "hypeman"]),
         enabled: z.boolean().optional(),
         autoApprove: z.boolean().optional(),
+        autonomyLevel: z.enum(["fully_autonomous", "supervised", "manual"]).optional(),
         maxBudgetCents: z.number().optional(),
         config: z.any().optional(),
       }))
@@ -106,6 +109,7 @@ export const appRouter = router({
           agentType: input.agentType,
           enabled: input.enabled,
           autoApprove: input.autoApprove,
+          autonomyLevel: input.autonomyLevel,
           maxBudgetCents: input.maxBudgetCents,
           config: input.config,
         });

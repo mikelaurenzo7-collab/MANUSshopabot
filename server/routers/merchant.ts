@@ -3,6 +3,12 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
+import {
+  syncProductsFromStore,
+  pushProductToStore,
+  fulfillOrderOnPlatform,
+  checkInventoryAcrossStores,
+} from "../engine/platformBridge";
 
 export const merchantRouter = router({
   // ─── Inventory ────────────────────────────────────────────────────────
@@ -73,14 +79,20 @@ export const merchantRouter = router({
     }),
 
   autoFulfill: protectedProcedure
-    .input(z.object({ orderId: z.number() }))
+    .input(z.object({
+      orderId: z.number(),
+      storeId: z.number(),
+      trackingNumber: z.string().optional(),
+      trackingUrl: z.string().optional(),
+    }))
     .mutation(async ({ input }) => {
       const task = await db.createAgentTask({
         agentType: "merchant",
         taskType: "auto_fulfillment",
         title: `Auto-fulfilling order #${input.orderId}`,
-        description: "Merchant agent processing automated fulfillment",
+        description: "Merchant agent processing fulfillment via platform adapter",
         status: "running",
+        storeId: input.storeId,
       });
 
       try {
@@ -89,18 +101,19 @@ export const merchantRouter = router({
           fulfillmentStatus: "partial",
         });
 
-        // Simulate fulfillment processing
-        await db.updateOrder(input.orderId, {
-          status: "fulfilled",
-          fulfillmentStatus: "fulfilled",
-          trackingNumber: `BB-${Date.now().toString(36).toUpperCase()}`,
-        });
+        // Fulfill via the platform adapter (Shopify, WooCommerce, etc.)
+        await fulfillOrderOnPlatform(
+          input.storeId,
+          input.orderId,
+          input.trackingNumber,
+          input.trackingUrl,
+        );
 
         await db.updateAgentTask(task.id, { status: "completed" });
 
         await notifyOwner({
           title: "Order Auto-Fulfilled",
-          content: `The Merchant Agent automatically fulfilled order #${input.orderId}.`,
+          content: `The Merchant Agent fulfilled order #${input.orderId} on the connected platform.`,
         });
 
         return { success: true };
@@ -108,6 +121,24 @@ export const merchantRouter = router({
         await db.updateAgentTask(task.id, { status: "failed" });
         throw error;
       }
+    }),
+
+  // ─── Platform Bridge: Product Sync & Inventory ────────────────────
+  syncProducts: protectedProcedure
+    .input(z.object({ storeId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return syncProductsFromStore(input.storeId, ctx.user.id);
+    }),
+
+  pushProduct: protectedProcedure
+    .input(z.object({ storeId: z.number(), productId: z.number() }))
+    .mutation(async ({ input }) => {
+      return pushProductToStore(input.storeId, input.productId);
+    }),
+
+  crossStoreInventory: protectedProcedure
+    .query(async ({ ctx }) => {
+      return checkInventoryAcrossStores(ctx.user.id);
     }),
 
   // ─── Pricing Rules ────────────────────────────────────────────────────

@@ -1,0 +1,2 @@
+ALTER TABLE `ad_campaigns` MODIFY COLUMN `platform` enum('tiktok','meta','instagram','twitter','pinterest','google_ads','linkedin','email','sms') NOT NULL DEFAULT 'meta';--> statement-breakpoint
+ALTER TABLE `social_posts` MODIFY COLUMN `platform` enum('tiktok','instagram','facebook','meta','twitter','pinterest','google_ads','linkedin') NOT NULL;
