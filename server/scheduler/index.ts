@@ -21,6 +21,7 @@ import {
   publishSocialPost,
 } from "../engine/platformBridge";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
+import { logAgentAction } from "../telemetry";
 
 export interface ScheduledTask {
   id: string;
@@ -197,8 +198,30 @@ async function handleOrderFulfillment(): Promise<void> {
         status: "completed",
         storeId: order.storeId,
       });
+
+      // Telemetry: log scheduler auto-fulfillment
+      logAgentAction({
+        agentType: "merchant",
+        actionType: "scheduler_auto_fulfillment",
+        storeId: order.storeId,
+        triggerSource: "scheduler",
+        input: { orderId: order.id, platformOrderId: order.platformOrderId },
+        output: { fulfilled: true },
+        success: true,
+      }).catch(() => {});
     } catch (err: any) {
       console.error(`[Scheduler] Auto-fulfill failed for order ${order.id}:`, err.message);
+
+      // Telemetry: log scheduler fulfillment failure
+      logAgentAction({
+        agentType: "merchant",
+        actionType: "scheduler_auto_fulfillment",
+        storeId: order.storeId,
+        triggerSource: "scheduler",
+        input: { orderId: order.id },
+        success: false,
+        errorMessage: err.message,
+      }).catch(() => {});
     }
   }
 }

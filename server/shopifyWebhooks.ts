@@ -20,6 +20,7 @@ import { createOrder, updateOrder, getBotConfigs, createAgentTask } from "./db";
 import { launchWorkflow } from "./engine/workflowEngine";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
+import { logAgentAction } from "./telemetry";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
 
@@ -122,6 +123,18 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
       steps: [],
     });
     console.log(`[Webhook] Zero-Touch: Launched fulfillment_automation for order ${orderId} (store ${store.id})`);
+
+    // Telemetry: log zero-touch fulfillment trigger
+    logAgentAction({
+      agentType: "merchant",
+      actionType: "zero_touch_fulfillment_triggered",
+      storeId: store.id,
+      triggerSource: "webhook",
+      input: { orderId: dbOrderId, platformOrderId: orderId, totalCents, itemCount: payload.line_items?.length },
+      output: { workflowLaunched: true, autonomyLevel: autonomy },
+      success: true,
+      metadata: { shopDomain, orderNumber: payload.order_number },
+    }).catch(() => {});
   } else {
     // Queue for approval
     await notifyOwner({
@@ -150,6 +163,17 @@ async function handleOrderPaid(shopDomain: string, payload: any) {
   if (existing.length > 0) {
     await updateOrder(existing[0].id, { status: "processing" });
     console.log(`[Webhook] orders/paid: Order ${platformOrderId} marked as processing`);
+
+    // Telemetry: log order status update
+    logAgentAction({
+      agentType: "merchant",
+      actionType: "order_status_update",
+      storeId: store.id,
+      triggerSource: "webhook",
+      input: { platformOrderId, topic: "orders/paid" },
+      output: { newStatus: "processing" },
+      success: true,
+    }).catch(() => {});
   }
 }
 
@@ -182,6 +206,17 @@ async function handleOrderFulfilled(shopDomain: string, payload: any) {
       content: `Order for ${payload.total_price} ${payload.currency} has been fulfilled.${trackingNumber ? ` Tracking: ${trackingNumber}` : ""}`,
     });
     console.log(`[Webhook] orders/fulfilled: Order ${platformOrderId} fulfilled`);
+
+    // Telemetry: log fulfillment completion
+    logAgentAction({
+      agentType: "merchant",
+      actionType: "order_fulfilled",
+      storeId: store.id,
+      triggerSource: "webhook",
+      input: { platformOrderId, topic: "orders/fulfilled" },
+      output: { trackingNumber, trackingUrl },
+      success: true,
+    }).catch(() => {});
   }
 }
 

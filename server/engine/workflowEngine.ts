@@ -32,6 +32,7 @@ import {
   getCrossPlatformSocialAnalytics,
 } from "./platformBridge";
 import type { InsertAgentWorkflow, InsertWorkflowStep } from "../../drizzle/schema";
+import { logAgentAction } from "../telemetry";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -253,6 +254,19 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
       });
 
       previousOutputs.push(output ?? {});
+
+      // Telemetry: log successful step
+      logAgentAction({
+        agentType: workflow.agentType,
+        actionType: `workflow_step:${dbStep.stepType}`,
+        storeId: workflow.storeId ?? undefined,
+        triggerSource: "workflow",
+        input: context.input,
+        output,
+        success: true,
+        durationMs,
+        metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
+      }).catch(() => {}); // fire-and-forget
     } catch (error: any) {
       const durationMs = Date.now() - startTime;
       await updateWorkflowStep(dbStep.id, {
@@ -261,6 +275,19 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         completedAt: new Date(),
         durationMs,
       });
+
+      // Telemetry: log failed step
+      logAgentAction({
+        agentType: workflow.agentType,
+        actionType: `workflow_step:${dbStep.stepType}`,
+        storeId: workflow.storeId ?? undefined,
+        triggerSource: "workflow",
+        input: dbStep.input,
+        success: false,
+        errorMessage: error.message ?? String(error),
+        durationMs,
+        metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
+      }).catch(() => {}); // fire-and-forget
 
       // Fail the entire workflow
       await updateWorkflow(workflowId, {

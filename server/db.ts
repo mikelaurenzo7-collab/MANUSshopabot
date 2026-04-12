@@ -20,6 +20,7 @@ import {
   socialAccounts, InsertSocialAccount,
   agentWorkflows, InsertAgentWorkflow,
   workflowSteps, InsertWorkflowStep,
+  agentTelemetry, InsertAgentTelemetry,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -745,4 +746,61 @@ export async function getDueScheduledPosts(now: Date) {
       eq(socialPosts.status, "scheduled"),
       lte(socialPosts.scheduledAt, now),
     ));
+}
+
+// ── Agent Telemetry ──────────────────────────────────────────
+
+export async function logTelemetry(data: InsertAgentTelemetry) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(agentTelemetry).values(data);
+  return result.insertId;
+}
+
+export async function updateTelemetryOutcome(id: number, outcome: {
+  outcomeType: string;
+  outcomeBefore: any;
+  outcomeAfter: any;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(agentTelemetry)
+    .set({
+      outcomeType: outcome.outcomeType,
+      outcomeBefore: outcome.outcomeBefore,
+      outcomeAfter: outcome.outcomeAfter,
+      outcomeCollectedAt: new Date(),
+    })
+    .where(eq(agentTelemetry.id, id));
+}
+
+export async function getTelemetryByStore(storeId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(agentTelemetry)
+    .where(eq(agentTelemetry.storeId, storeId))
+    .orderBy(desc(agentTelemetry.createdAt))
+    .limit(limit);
+}
+
+export async function getTelemetryByAgent(agentType: "architect" | "merchant" | "hypeman", limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(agentTelemetry)
+    .where(eq(agentTelemetry.agentType, agentType))
+    .orderBy(desc(agentTelemetry.createdAt))
+    .limit(limit);
+}
+
+export async function getTelemetryStats(storeId?: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, successful: 0, failed: 0, avgDurationMs: 0 };
+  const where = storeId ? eq(agentTelemetry.storeId, storeId) : undefined;
+  const [stats] = await db.select({
+    total: count(),
+    successful: count(sql`CASE WHEN ${agentTelemetry.success} = true THEN 1 END`),
+    failed: count(sql`CASE WHEN ${agentTelemetry.success} = false THEN 1 END`),
+    avgDurationMs: sql<number>`COALESCE(AVG(${agentTelemetry.durationMs}), 0)`,
+  }).from(agentTelemetry).where(where);
+  return stats;
 }

@@ -488,3 +488,52 @@
 - [x] Confirm Etsy keys (ETSY_API_KEY, ETSY_SHARED_SECRET) are properly wired in env.ts
 - [x] Run tests after all OAuth fixes — 283 tests passing (15 files, 0 failures)
 - [ ] Add PINTEREST_APP_SECRET value (user will provide tomorrow from laptop)
+
+## Next Steps Analysis Integration (Priority 1-5 from PDF)
+
+### Priority 1: Wire AI Tools UI to Backend Mutations
+- [x] Wire Architect AI Tools tab: Store Health Check button → architect.storeHealthCheck mutation
+- [x] Wire Architect AI Tools tab: AI Copy Rewriter button → architect.rewriteProductDescriptions mutation
+- [x] Wire Architect AI Tools tab: Price Scanner button → architect.competitorPriceScan mutation
+- [x] Wire Merchant AI Tools tab: Demand Forecasting button → merchant.demandForecasting mutation
+- [x] Wire Merchant AI Tools tab: Margin Analyzer button → merchant.marginAnalyzer mutation
+- [x] Wire Merchant AI Tools tab: Return Analysis button → merchant.returnAnalysis mutation
+- [x] Wire Hype-Man AI Tools tab: A/B Copy Generator button → hypeman.abTestCopyGenerator mutation
+- [x] Wire Hype-Man AI Tools tab: SMS Recovery Flow button → hypeman.smsRecoveryFlow mutation
+- [x] Wire Hype-Man AI Tools tab: Social Proof Generator button → hypeman.socialProofGenerator mutation
+- [x] Display real LLM results in UI with result cards (not just toast stubs)
+
+### Priority 2: Implement Meta/Facebook Adapter (Real API Calls)
+- [x] Meta Graph API createPost already implemented in metaAdapter.ts
+- [x] Meta Graph API createAdCampaign already implemented in metaAdapter.ts
+- [x] Meta Graph API getPostAnalytics + getAccountAnalytics already implemented
+- [x] Instagram posting already implemented in instagramAdapter.ts
+- [x] Meta adapter already wired into Hype-Man via platformBridge.ts publishSocialPost()
+- [x] Note: Adapter code is production-ready — just needs user to connect Meta account via OAuth
+
+### Priority 3: Flesh Out Amazon SP-API Adapter (SKIPPED — no credentials yet)
+- [ ] Implement Amazon SP-API listProducts (Catalog Items API)
+- [ ] Implement Amazon SP-API createProduct (Listings API)
+- [ ] Implement Amazon SP-API getOrders (Orders API)
+- [ ] Implement Amazon SP-API fulfillOrder (Fulfillment Outbound API)
+- [ ] Implement Amazon SP-API getInventory (FBA Inventory API)
+- [ ] Remove "must be done via Seller Central" stubs and replace with real API calls
+
+### Priority 4: Data Collection Pipeline for Phase 2 Learning
+- [x] Create agent_telemetry table (agentType, actionType, input, output, outcome, timestamps, LLM metrics)
+- [x] Build telemetry.ts middleware: withTelemetry() wrapper + logAgentAction() + collectOutcome()
+- [x] Wire telemetry into workflowEngine.ts (auto-logs every workflow step success/failure)
+- [x] Wire telemetry into shopifyWebhooks.ts (logs zero-touch fulfillment triggers, order status updates)
+- [x] Wire telemetry into scheduler auto-fulfillment handler
+- [x] Build telemetry tRPC router: byStore, byAgent, stats queries
+- [x] Register telemetry router in main appRouter
+
+### Priority 5: Zero-Touch Auto-Fulfillment Flow
+- [x] Order detection via Shopify webhook orders/create → handleOrderCreate()
+- [x] Autonomy check: reads merchant bot config → auto-fulfill if fully_autonomous
+- [x] Launches fulfillment_automation workflow (3-step: validate → fulfill → notify)
+- [x] fulfillOrderOnPlatform() calls real Shopify/Etsy/eBay adapter APIs
+- [x] Scheduler fallback: every 15 min checks for pending unfulfilled orders
+- [x] Fulfillment confirmation notification to store owner via notifyOwner()
+- [x] Telemetry logging on all fulfillment events (webhook + scheduler)
+- [x] Note: Was already built — just needed telemetry integration

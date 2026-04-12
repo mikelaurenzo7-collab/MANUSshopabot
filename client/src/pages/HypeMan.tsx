@@ -25,6 +25,7 @@ import {
   MessageSquare,
   ThumbsUp,
   TrendingUp,
+  X,
 } from "lucide-react";
 
 export default function HypeManPage() {
@@ -92,6 +93,41 @@ export default function HypeManPage() {
   });
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
+
+  // AI Tools state
+  const [abTestResult, setAbTestResult] = useState<any>(null);
+  const [smsResult, setSmsResult] = useState<any>(null);
+  const [socialProofResult, setSocialProofResult] = useState<any>(null);
+  const [abOriginalCopy, setAbOriginalCopy] = useState("");
+  const [abCopyType, setAbCopyType] = useState<"headline" | "description" | "cta" | "email_subject" | "ad_copy">("headline");
+  const [smsFlowType, setSmsFlowType] = useState<"abandoned_cart" | "browse_abandonment" | "winback" | "post_purchase_upsell" | "review_request">("abandoned_cart");
+  const [proofProductName, setProofProductName] = useState("");
+  const [proofType, setProofType] = useState<"testimonials" | "urgency_notifications" | "trust_badges" | "review_responses" | "ugc_prompts">("testimonials");
+
+  // AI Tools mutations
+  const abTestCopy = trpc.hypeman.abTestCopyGenerator.useMutation({
+    onSuccess: (data) => {
+      setAbTestResult(data);
+      toast.success("A/B test variants generated!");
+    },
+    onError: (err) => toast.error(`A/B test failed: ${err.message}`),
+  });
+
+  const smsRecovery = trpc.hypeman.smsRecoveryFlow.useMutation({
+    onSuccess: (data) => {
+      setSmsResult(data);
+      toast.success("SMS recovery flow created!");
+    },
+    onError: (err) => toast.error(`SMS flow failed: ${err.message}`),
+  });
+
+  const socialProof = trpc.hypeman.socialProofGenerator.useMutation({
+    onSuccess: (data) => {
+      setSocialProofResult(data);
+      toast.success("Social proof generated!");
+    },
+    onError: (err) => toast.error(`Social proof failed: ${err.message}`),
+  });
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -492,8 +528,8 @@ export default function HypeManPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Scan TikTok, Instagram, and Twitter for viral trends. Get hashtag strategies and ready-to-film content templates.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full trend detection")}>
-                    <Zap className="h-3 w-3 mr-1" /> Detect Trends
+                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Trend detection runs via Workflows — go to Workflows tab to launch")}>
+                    <Zap className="h-3 w-3 mr-1" /> Detect Trends (Workflow)
                   </Button>
                 </CardContent>
               </Card>
@@ -511,9 +547,25 @@ export default function HypeManPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Generate copy variants for headlines, CTAs, and ads with testing plans and winner predictions.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Feature coming soon — direct A/B test generation")}>
-                    <Copy className="h-3 w-3 mr-1" /> Generate Variants
-                  </Button>
+                  <div className="space-y-2">
+                    <Input className="h-8 text-xs" placeholder="Original copy to test" value={abOriginalCopy} onChange={(e) => setAbOriginalCopy(e.target.value)} />
+                    <Select value={abCopyType} onValueChange={(v) => setAbCopyType(v as any)}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Copy type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="headline">Headline</SelectItem>
+                        <SelectItem value="description">Description</SelectItem>
+                        <SelectItem value="cta">CTA</SelectItem>
+                        <SelectItem value="email_subject">Email Subject</SelectItem>
+                        <SelectItem value="ad_copy">Ad Copy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="w-full text-xs" disabled={!abOriginalCopy.trim() || abTestCopy.isPending} onClick={() => abTestCopy.mutate({ storeId: storeId!, originalCopy: abOriginalCopy, copyType: abCopyType, numberOfVariants: 5 })}>
+                      {abTestCopy.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Copy className="h-3 w-3 mr-1" />}
+                      {abTestCopy.isPending ? "Generating..." : "Generate Variants"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -530,12 +582,138 @@ export default function HypeManPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Generate compliant SMS flows for cart recovery, win-back, post-purchase upsells, and review requests.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Feature coming soon — direct SMS flow generation")}>
-                    <MessageSquare className="h-3 w-3 mr-1" /> Create SMS Flow
-                  </Button>
+                  <div className="space-y-2">
+                    <Select value={smsFlowType} onValueChange={(v) => setSmsFlowType(v as any)}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Flow type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="abandoned_cart">Abandoned Cart</SelectItem>
+                        <SelectItem value="browse_abandonment">Browse Abandonment</SelectItem>
+                        <SelectItem value="winback">Win-Back</SelectItem>
+                        <SelectItem value="post_purchase_upsell">Post-Purchase Upsell</SelectItem>
+                        <SelectItem value="review_request">Review Request</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="w-full text-xs" disabled={smsRecovery.isPending} onClick={() => smsRecovery.mutate({ storeId: storeId!, flowType: smsFlowType })}>
+                      {smsRecovery.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <MessageSquare className="h-3 w-3 mr-1" />}
+                      {smsRecovery.isPending ? "Creating..." : "Create SMS Flow"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Social Proof Generator - inline since it's a Direct Action */}
+            <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                    <ThumbsUp className="h-4.5 w-4.5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Social Proof Generator</h3>
+                    <p className="text-[11px] text-muted-foreground">Testimonials, badges, UGC prompts</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Input className="h-8 text-xs" placeholder="Product name" value={proofProductName} onChange={(e) => setProofProductName(e.target.value)} />
+                  <Select value={proofType} onValueChange={(v) => setProofType(v as any)}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Proof type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="testimonials">Testimonials</SelectItem>
+                      <SelectItem value="urgency_notifications">Urgency Notifications</SelectItem>
+                      <SelectItem value="trust_badges">Trust Badges</SelectItem>
+                      <SelectItem value="review_responses">Review Responses</SelectItem>
+                      <SelectItem value="ugc_prompts">UGC Prompts</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="w-full text-xs" disabled={!proofProductName.trim() || socialProof.isPending} onClick={() => socialProof.mutate({ storeId: storeId!, productName: proofProductName, proofType })}>
+                    {socialProof.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <ThumbsUp className="h-3 w-3 mr-1" />}
+                    {socialProof.isPending ? "Generating..." : "Generate Social Proof"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Tools Results */}
+            {abTestResult && (
+              <Card className="bg-card border-border/50 border-blue-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">A/B Test Variants</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAbTestResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  {abTestResult.variants ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {abTestResult.variants.map((v: any, i: number) => (
+                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge variant="outline" className="text-[9px]">{v.variantLabel || `Variant ${i + 1}`}</Badge>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(v.copy || v.text || '')}><Copy className="h-3 w-3" /></Button>
+                          </div>
+                          <p className="text-xs text-foreground">{v.copy || v.text}</p>
+                          {v.psychologicalTrigger && <p className="text-[10px] text-muted-foreground mt-1">Trigger: {v.psychologicalTrigger}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{JSON.stringify(abTestResult).slice(0, 500)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {smsResult && (
+              <Card className="bg-card border-border/50 border-emerald-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">SMS Recovery Flow</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSmsResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  {smsResult.messages ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {smsResult.messages.map((m: any, i: number) => (
+                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] text-muted-foreground">{m.timing || m.delay || `Message ${i + 1}`}</span>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(m.text || m.content || '')}><Copy className="h-3 w-3" /></Button>
+                          </div>
+                          <p className="text-xs text-foreground">{m.text || m.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{JSON.stringify(smsResult).slice(0, 500)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {socialProofResult && (
+              <Card className="bg-card border-border/50 border-amber-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Social Proof Content</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSocialProofResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  {socialProofResult.items ? (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {socialProofResult.items.map((item: any, i: number) => (
+                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                          <p className="text-xs text-foreground">{item.content || item.text || JSON.stringify(item)}</p>
+                          <Button variant="ghost" size="sm" className="h-5 text-[10px] mt-1 p-0" onClick={() => copyToClipboard(item.content || item.text || JSON.stringify(item))}><Copy className="h-3 w-3 mr-1" />Copy</Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{JSON.stringify(socialProofResult).slice(0, 500)}</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* New Workflow Capabilities */}
             <Card className="bg-card border-border/50">

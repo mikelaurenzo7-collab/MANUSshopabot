@@ -29,7 +29,11 @@ import {
   CheckCircle2,
   Trash2,
   Sparkles,
+  X,
+  BarChart3,
+  FileText,
 } from "lucide-react";
+import { Streamdown } from "streamdown";
 
 function NicheReportCard({ report }: { report: any }) {
   const data = report.report;
@@ -125,6 +129,14 @@ export default function ArchitectPage() {
   const [shopDomain, setShopDomain] = useState("");
   const [isConnectingShopify, setIsConnectingShopify] = useState(false);
   const [activeTab, setActiveTab] = useState("research");
+
+  // AI Tools state
+  const [healthResult, setHealthResult] = useState<any>(null);
+  const [rewriteResult, setRewriteResult] = useState<any>(null);
+  const [priceScanResult, setPriceScanResult] = useState<any>(null);
+  const [priceScanNiche, setPriceScanNiche] = useState("");
+  const [priceScanProducts, setPriceScanProducts] = useState("");
+  const [rewriteTone, setRewriteTone] = useState("persuasive and benefit-focused");
 
   const { data: reports, isLoading: reportsLoading } = trpc.architect.nicheReports.useQuery({});
   const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
@@ -223,6 +235,37 @@ export default function ArchitectPage() {
   };
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
+
+  // Products for the selected store (for AI Copy Rewriter)
+  const { data: storeProducts } = trpc.merchant.products.useQuery(
+    { storeId: Number(selectedStore) },
+    { enabled: !!selectedStore }
+  );
+
+  // AI Tools mutations
+  const healthCheck = trpc.architect.storeHealthCheck.useMutation({
+    onSuccess: (data) => {
+      setHealthResult(data);
+      toast.success(`Health check complete! Score: ${data.overallScore}/100`);
+    },
+    onError: (err) => toast.error(`Health check failed: ${err.message}`),
+  });
+
+  const rewriteDescriptions = trpc.architect.rewriteProductDescriptions.useMutation({
+    onSuccess: (data) => {
+      setRewriteResult(data);
+      toast.success(`Rewrote ${data.products.length} product descriptions!`);
+    },
+    onError: (err) => toast.error(`Rewrite failed: ${err.message}`),
+  });
+
+  const priceScan = trpc.architect.competitorPriceScan.useMutation({
+    onSuccess: (data) => {
+      setPriceScanResult(data);
+      toast.success(`Scanned prices for ${data.products.length} products!`);
+    },
+    onError: (err) => toast.error(`Price scan failed: ${err.message}`),
+  });
 
   return (
     <div className="space-y-6">
@@ -623,8 +666,9 @@ export default function ArchitectPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button size="sm" className="w-full text-xs" disabled={!selectedStore} onClick={() => toast.info("Launch this via Workflows for full execution")}>
-                      <Zap className="h-3 w-3 mr-1" /> Run Health Check
+                    <Button size="sm" className="w-full text-xs" disabled={!selectedStore || healthCheck.isPending} onClick={() => healthCheck.mutate({ storeId: Number(selectedStore) })}>
+                      {healthCheck.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Zap className="h-3 w-3 mr-1" />}
+                      {healthCheck.isPending ? "Analyzing..." : "Run Health Check"}
                     </Button>
                   </div>
                 ) : (
@@ -646,9 +690,30 @@ export default function ArchitectPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">Rewrite product titles and descriptions with conversion-focused copy, SEO keywords, and bullet points.</p>
-                <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Select products from the Merchant page to rewrite their descriptions")}>
-                  <Sparkles className="h-3 w-3 mr-1" /> Rewrite Descriptions
-                </Button>
+                {selectedStore && storeProducts && storeProducts.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select value={rewriteTone} onValueChange={setRewriteTone}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="persuasive and benefit-focused">Persuasive</SelectItem>
+                        <SelectItem value="professional and technical">Professional</SelectItem>
+                        <SelectItem value="fun and casual">Casual</SelectItem>
+                        <SelectItem value="luxury and premium">Luxury</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="w-full text-xs" disabled={rewriteDescriptions.isPending} onClick={() => {
+                      const ids = storeProducts.slice(0, 10).map((p: any) => p.id);
+                      rewriteDescriptions.mutate({ storeId: Number(selectedStore), productIds: ids, tone: rewriteTone, seoOptimize: true });
+                    }}>
+                      {rewriteDescriptions.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                      {rewriteDescriptions.isPending ? "Rewriting..." : `Rewrite ${Math.min(storeProducts.length, 10)} Products`}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">{selectedStore ? "No products in this store yet" : "Select a store above first"}</p>
+                )}
               </CardContent>
             </Card>
 
@@ -665,12 +730,125 @@ export default function ArchitectPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">Scan competitor pricing across the market. Get positioning recommendations and pricing opportunities.</p>
-                <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full competitive price analysis")}>
-                  <Target className="h-3 w-3 mr-1" /> Scan Prices
-                </Button>
+                <div className="space-y-2">
+                  <Input className="h-8 text-xs" placeholder="Niche (e.g., Home Decor)" value={priceScanNiche} onChange={(e) => setPriceScanNiche(e.target.value)} />
+                  <Input className="h-8 text-xs" placeholder="Products (comma-separated)" value={priceScanProducts} onChange={(e) => setPriceScanProducts(e.target.value)} />
+                  <Button size="sm" className="w-full text-xs" disabled={!priceScanNiche.trim() || !priceScanProducts.trim() || !selectedStore || priceScan.isPending} onClick={() => {
+                    const names = priceScanProducts.split(",").map(s => s.trim()).filter(Boolean).slice(0, 10);
+                    priceScan.mutate({ storeId: Number(selectedStore), niche: priceScanNiche, productNames: names });
+                  }}>
+                    {priceScan.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Target className="h-3 w-3 mr-1" />}
+                    {priceScan.isPending ? "Scanning..." : "Scan Prices"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* AI Tools Results */}
+          {healthResult && (
+            <Card className="bg-card border-border/50 border-emerald-500/30">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Health Check Results</h3>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={`text-sm font-bold ${healthResult.overallScore >= 70 ? 'text-emerald-400 border-emerald-400/30' : healthResult.overallScore >= 40 ? 'text-amber-400 border-amber-400/30' : 'text-red-400 border-red-400/30'}`}>{healthResult.overallScore}/100</Badge>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setHealthResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{healthResult.summary}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <div className="p-2 rounded-md bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground">Product Health</p>
+                    <p className="text-xs font-medium">{healthResult.productHealth.activeCount} active, {healthResult.productHealth.outOfStockCount} OOS</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground">SEO Score</p>
+                    <p className="text-xs font-medium">{healthResult.seoHealth.score}/100</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground">Conversion Score</p>
+                    <p className="text-xs font-medium">{healthResult.conversionHealth.score}/100</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground">Operations Score</p>
+                    <p className="text-xs font-medium">{healthResult.operationalHealth.score}/100</p>
+                  </div>
+                </div>
+                {healthResult.criticalActions.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-amber-400 mb-1">Critical Actions:</p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      {healthResult.criticalActions.map((a: string, i: number) => <li key={i} className="flex items-start gap-1"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0 mt-0.5" />{a}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {rewriteResult && (
+            <Card className="bg-card border-border/50 border-blue-500/30">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Rewritten Descriptions ({rewriteResult.products.length} products)</h3>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRewriteResult(null)}><X className="h-3 w-3" /></Button>
+                </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {rewriteResult.products.map((p: any) => (
+                    <div key={p.id} className="p-3 rounded-md bg-secondary/30">
+                      <p className="text-[10px] text-muted-foreground line-through">{p.originalTitle}</p>
+                      <p className="text-xs font-medium text-foreground">{p.optimizedTitle}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{p.optimizedDescription}</p>
+                      {p.bulletPoints?.length > 0 && (
+                        <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                          {p.bulletPoints.map((bp: string, i: number) => <li key={i}>• {bp}</li>)}
+                        </ul>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {p.seoKeywords?.map((kw: string, i: number) => <Badge key={i} variant="outline" className="text-[9px] border-blue-400/30 text-blue-400">{kw}</Badge>)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {priceScanResult && (
+            <Card className="bg-card border-border/50 border-amber-500/30">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Price Scan Results</h3>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setPriceScanResult(null)}><X className="h-3 w-3" /></Button>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{priceScanResult.overallStrategy}</p>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {priceScanResult.products.map((p: any, i: number) => (
+                    <div key={i} className="p-3 rounded-md bg-secondary/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-medium text-foreground">{p.productName}</p>
+                        <Badge variant="outline" className={`text-[9px] ${p.pricePosition === 'below_market' ? 'text-emerald-400 border-emerald-400/30' : p.pricePosition === 'above_market' ? 'text-red-400 border-red-400/30' : 'text-amber-400 border-amber-400/30'}`}>{p.pricePosition.replace('_', ' ')}</Badge>
+                      </div>
+                      <div className="flex gap-4 text-[10px] text-muted-foreground">
+                        <span>Suggested: <span className="text-foreground font-medium">{p.ourSuggestedPrice}</span></span>
+                        <span>Market avg: <span className="text-foreground font-medium">{p.averageMarketPrice}</span></span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">{p.recommendation}</p>
+                    </div>
+                  ))}
+                </div>
+                {priceScanResult.pricingOpportunities?.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-[10px] font-medium text-amber-400 mb-1">Pricing Opportunities:</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {priceScanResult.pricingOpportunities.map((o: string, i: number) => <li key={i}>• {o}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* New Workflow Capabilities */}
           <Card className="bg-card border-border/50">

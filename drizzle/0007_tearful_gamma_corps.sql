@@ -1,0 +1,22 @@
+CREATE TABLE `agent_telemetry` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`agentType` enum('architect','merchant','hypeman') NOT NULL,
+	`actionType` varchar(100) NOT NULL,
+	`storeId` int,
+	`triggerSource` varchar(100),
+	`input` json,
+	`output` json,
+	`outcomeType` varchar(100),
+	`outcomeBefore` json,
+	`outcomeAfter` json,
+	`outcomeCollectedAt` timestamp,
+	`llmModel` varchar(100),
+	`llmTokensUsed` int,
+	`llmLatencyMs` int,
+	`success` boolean NOT NULL DEFAULT true,
+	`errorMessage` text,
+	`durationMs` int,
+	`metadata` json,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `agent_telemetry_id` PRIMARY KEY(`id`)
+);

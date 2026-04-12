@@ -426,3 +426,32 @@ export const workflowSteps = mysqlTable("workflow_steps", {
 
 export type WorkflowStep = typeof workflowSteps.$inferSelect;
 export type InsertWorkflowStep = typeof workflowSteps.$inferInsert;
+
+/**
+ * Agent Telemetry — logs every agent action and its outcome for Phase 2 ML training.
+ * Captures: what the agent did, what input it received, what output it produced,
+ * and what the measurable outcome was (e.g., sales velocity change after a price change).
+ */
+export const agentTelemetry = mysqlTable("agent_telemetry", {
+  id: int("id").autoincrement().primaryKey(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "hypeman"]).notNull(),
+  actionType: varchar("actionType", { length: 100 }).notNull(),
+  storeId: int("storeId"),
+  triggerSource: varchar("triggerSource", { length: 100 }),
+  input: json("input"),
+  output: json("output"),
+  outcomeType: varchar("outcomeType", { length: 100 }),
+  outcomeBefore: json("outcomeBefore"),
+  outcomeAfter: json("outcomeAfter"),
+  outcomeCollectedAt: timestamp("outcomeCollectedAt"),
+  llmModel: varchar("llmModel", { length: 100 }),
+  llmTokensUsed: int("llmTokensUsed"),
+  llmLatencyMs: int("llmLatencyMs"),
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("errorMessage"),
+  durationMs: int("durationMs"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AgentTelemetry = typeof agentTelemetry.$inferSelect;
+export type InsertAgentTelemetry = typeof agentTelemetry.$inferInsert;

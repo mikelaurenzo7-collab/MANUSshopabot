@@ -24,6 +24,7 @@ import {
   Users,
   ArrowUpDown,
   RotateCcw,
+  X,
 } from "lucide-react";
 
 export default function MerchantPage() {
@@ -76,6 +77,37 @@ export default function MerchantPage() {
   });
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
+
+  // AI Tools state
+  const [forecastResult, setForecastResult] = useState<any>(null);
+  const [marginResult, setMarginResult] = useState<any>(null);
+  const [returnResult, setReturnResult] = useState<any>(null);
+  const [forecastPeriod, setForecastPeriod] = useState<"7_days" | "30_days" | "90_days">("30_days");
+
+  // AI Tools mutations
+  const demandForecast = trpc.merchant.demandForecasting.useMutation({
+    onSuccess: (data) => {
+      setForecastResult(data);
+      toast.success("Demand forecast complete!");
+    },
+    onError: (err) => toast.error(`Forecast failed: ${err.message}`),
+  });
+
+  const marginAnalyzer = trpc.merchant.marginAnalyzer.useMutation({
+    onSuccess: (data) => {
+      setMarginResult(data);
+      toast.success("Margin analysis complete!");
+    },
+    onError: (err) => toast.error(`Margin analysis failed: ${err.message}`),
+  });
+
+  const returnAnalysis = trpc.merchant.returnAnalysis.useMutation({
+    onSuccess: (data) => {
+      setReturnResult(data);
+      toast.success("Return analysis complete!");
+    },
+    onError: (err) => toast.error(`Return analysis failed: ${err.message}`),
+  });
 
   return (
     <div className="space-y-6">
@@ -362,9 +394,22 @@ export default function MerchantPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">AI-powered demand prediction with stockout risk alerts, seasonal insights, and reorder recommendations.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full demand forecasting")}>
-                    <TrendingUp className="h-3 w-3 mr-1" /> Run Forecast
-                  </Button>
+                  <div className="space-y-2">
+                    <Select value={forecastPeriod} onValueChange={(v) => setForecastPeriod(v as any)}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Period" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7_days">7 Days</SelectItem>
+                        <SelectItem value="30_days">30 Days</SelectItem>
+                        <SelectItem value="90_days">90 Days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" className="w-full text-xs" disabled={demandForecast.isPending} onClick={() => demandForecast.mutate({ storeId: storeId!, forecastPeriod })}>
+                      {demandForecast.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <TrendingUp className="h-3 w-3 mr-1" />}
+                      {demandForecast.isPending ? "Forecasting..." : "Run Forecast"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -381,8 +426,9 @@ export default function MerchantPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Analyze margins by product and category. Find profit leaks, top performers, and optimization opportunities.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full margin analysis")}>
-                    <DollarSign className="h-3 w-3 mr-1" /> Analyze Margins
+                  <Button size="sm" className="w-full text-xs" disabled={marginAnalyzer.isPending} onClick={() => marginAnalyzer.mutate({ storeId: storeId! })}>
+                    {marginAnalyzer.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <DollarSign className="h-3 w-3 mr-1" />}
+                    {marginAnalyzer.isPending ? "Analyzing..." : "Analyze Margins"}
                   </Button>
                 </CardContent>
               </Card>
@@ -400,12 +446,90 @@ export default function MerchantPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Analyze return patterns, identify problematic products, and get strategies to reduce return rates and costs.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Launch via Workflows for full return analysis")}>
-                    <RotateCcw className="h-3 w-3 mr-1" /> Analyze Returns
+                  <Button size="sm" className="w-full text-xs" disabled={returnAnalysis.isPending} onClick={() => returnAnalysis.mutate({ storeId: storeId! })}>
+                    {returnAnalysis.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RotateCcw className="h-3 w-3 mr-1" />}
+                    {returnAnalysis.isPending ? "Analyzing..." : "Analyze Returns"}
                   </Button>
                 </CardContent>
               </Card>
             </div>
+
+            {/* AI Tools Results */}
+            {forecastResult && (
+              <Card className="bg-card border-border/50 border-blue-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Demand Forecast Results</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setForecastResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">{forecastResult.summary || forecastResult.overallInsight || JSON.stringify(forecastResult).slice(0, 300)}</p>
+                  {forecastResult.products && (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {forecastResult.products.slice(0, 10).map((p: any, i: number) => (
+                        <div key={i} className="p-2 rounded-md bg-secondary/30 flex items-center justify-between">
+                          <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
+                          <div className="flex gap-2 text-[10px] text-muted-foreground">
+                            {p.predictedDemand && <span>Demand: <span className="text-foreground">{p.predictedDemand}</span></span>}
+                            {p.stockoutRisk && <Badge variant="outline" className={`text-[9px] ${p.stockoutRisk === 'high' ? 'text-red-400 border-red-400/30' : p.stockoutRisk === 'medium' ? 'text-amber-400 border-amber-400/30' : 'text-emerald-400 border-emerald-400/30'}`}>{p.stockoutRisk} risk</Badge>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {marginResult && (
+              <Card className="bg-card border-border/50 border-emerald-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Margin Analysis Results</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMarginResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">{marginResult.summary || marginResult.overallInsight || JSON.stringify(marginResult).slice(0, 300)}</p>
+                  {marginResult.products && (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {marginResult.products.slice(0, 10).map((p: any, i: number) => (
+                        <div key={i} className="p-2 rounded-md bg-secondary/30">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
+                            <span className="text-xs text-emerald-400 font-medium">{p.margin || p.profitMargin || ''}</span>
+                          </div>
+                          {p.recommendation && <p className="text-[10px] text-muted-foreground mt-1">{p.recommendation}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {returnResult && (
+              <Card className="bg-card border-border/50 border-amber-500/30">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Return Analysis Results</h3>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReturnResult(null)}><X className="h-3 w-3" /></Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">{returnResult.summary || returnResult.overallInsight || JSON.stringify(returnResult).slice(0, 300)}</p>
+                  {returnResult.products && (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {returnResult.products.slice(0, 10).map((p: any, i: number) => (
+                        <div key={i} className="p-2 rounded-md bg-secondary/30">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
+                            {p.returnRate && <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-400/30">{p.returnRate} return rate</Badge>}
+                          </div>
+                          {p.topReason && <p className="text-[10px] text-muted-foreground mt-1">Top reason: {p.topReason}</p>}
+                          {p.recommendation && <p className="text-[10px] text-muted-foreground">{p.recommendation}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* New Workflow Capabilities */}
             <Card className="bg-card border-border/50">
