@@ -394,14 +394,14 @@
 - [x] Rename shopifyProductId → platformProductId in products table (drizzle/schema.ts)
 - [x] Rename shopifyOrderId → platformOrderId in orders table (drizzle/schema.ts)
 - [x] Expand social_posts.platform enum to explicitly include linkedin and google_ads
-- [ ] Expand ad_campaigns.platform enum to explicitly include 'linkedin' and 'google_ads'
-- [ ] Run migration SQL to apply column renames and enum changes
-- [ ] Remove fallback mapping hacks in server/engine/platformBridge.ts
+- [x] Expand ad_campaigns.platform enum to explicitly include linkedin and google_ads (done in migration 0007)
+- [x] Run migration SQL to apply column renames and enum changes (migration 0007 applied)
+- [x] Remove fallback mapping hacks in server/engine/platformBridge.ts (platformProductId + platformOrderId now native)
 - [x] Update all references to shopifyProductId/shopifyOrderId in server code
 
 ### Priority 5: CTO Business Logic Directives
-- [ ] Inject "Marketing Moat" analysis into Architect niche_research LLM system prompt
-- [ ] Inject open platform-agnostic orchestration strategy suggestion into niche_research prompt
+- [x] Inject "Marketing Moat" analysis into Architect niche_research LLM system prompt (DONE)
+- [x] Inject open platform-agnostic orchestration strategy suggestion into niche_research prompt (DONE)
 - [x] Set default autonomy level for new users to fully_autonomous in bot config defaults (schema default + Config.tsx)
 - [x] Add Zero-Touch onboarding nudge in dashboard (info banner in Config.tsx)
 
