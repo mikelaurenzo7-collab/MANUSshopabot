@@ -21,7 +21,6 @@ const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
   ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
   meta: "📘", instagram: "📸", tiktok: "🎵", twitter: "🐦",
-  pinterest: "📌", google_ads: "📊", linkedin: "💼",
 };
 
 function StatusBadge({ status }: { status: string }) {

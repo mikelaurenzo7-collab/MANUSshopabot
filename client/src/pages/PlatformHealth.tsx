@@ -14,7 +14,6 @@ const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
   ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
   meta: "📘", instagram: "📸", tiktok: "🎶", twitter: "🐦",
-  pinterest: "📌", google_ads: "🎯", linkedin: "💼",
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -31,7 +30,6 @@ const PLATFORM_COLORS: Record<string, string> = {
   twitter: "border-sky-400/30 bg-sky-400/5",
   pinterest: "border-red-500/30 bg-red-500/5",
   google_ads: "border-yellow-500/30 bg-yellow-500/5",
-  linkedin: "border-blue-700/30 bg-blue-700/5",
 };
 
 type HealthResult = {

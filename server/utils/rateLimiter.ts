@@ -174,5 +174,4 @@ export const platformRateLimiters = {
   amazon: new ApiRateLimiter(15, 1000),        // Amazon SP-API: ~15 calls/sec (varies by endpoint)
   woocommerce: new ApiRateLimiter(25, 1000),   // WooCommerce: ~25 calls/sec (server-dependent)
   google_ads: new ApiRateLimiter(100, 60000),  // Google Ads: ~100 calls/min
-  linkedin: new ApiRateLimiter(100, 60000),    // LinkedIn: ~100 calls/min
 };

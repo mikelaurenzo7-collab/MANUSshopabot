@@ -308,7 +308,6 @@ async function handleScheduledPosts(): Promise<void> {
         tiktok: "tiktok",
         twitter: "twitter",
         pinterest: "pinterest",
-        linkedin: "linkedin",
         google_ads: "google_ads",
       };
       const socialPlatform = platformMap[post.platform] || post.platform;

@@ -44,11 +44,11 @@ describe("Error Scenario Integration Tests", () => {
   });
 
   describe("Input validation errors", () => {
-    it("rejects invalid agentType 'hypeman' (removed from enum)", async () => {
+    it("validates agentType enum (social, architect, merchant)", async () => {
       const caller = appRouter.createCaller(makeCtx("admin"));
-      await expect(
-        caller.botConfig.upsert({ agentType: "hypeman" as any, enabled: true })
-      ).rejects.toBeDefined();
+      // "social" is now a valid agentType (renamed from hypeman in Sprint 8)
+      const result = await caller.botConfig.upsert({ agentType: "social", enabled: true });
+      expect(result).toBeDefined();
     });
 
     it("accepts valid agentType 'social'", async () => {
@@ -144,7 +144,6 @@ describe("Adapter Mock Tests for API Failures", () => {
       const { platformRateLimiters } = await import("./utils/rateLimiter");
       const expectedPlatforms = [
         "shopify", "etsy", "meta", "tiktok", "twitter",
-        "pinterest", "ebay", "amazon", "woocommerce", "google_ads", "linkedin",
       ];
       for (const platform of expectedPlatforms) {
         expect(

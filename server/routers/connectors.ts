@@ -215,20 +215,6 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["campaign_management", "reporting", "optimization"],
   },
-  linkedin: {
-    name: "LinkedIn",
-    icon: "💼",
-    color: "#0A66C2",
-    connectionType: "oauth" as const,
-    description: "Post to LinkedIn company pages",
-    oauthConfig: {
-      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`,
-      tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
-      scopes: "w_member_social r_liteprofile r_organization_social w_organization_social",
-    },
-    capabilities: ["company_posting", "analytics"],
-  },
 };
 
 export const connectorsRouter = router({
@@ -542,7 +528,6 @@ export const connectorsRouter = router({
         twitter: ENV.twitterClientId,
         pinterest: ENV.pinterestAppId,
         google_ads: ENV.googleAdsClientId,
-        linkedin: "", // Not yet configured
       };
 
       const clientId = clientIdMap[input.platform];
@@ -588,7 +573,6 @@ function getSetupInstructions(platform: string): string {
     twitter: "1. Go to developer.twitter.com\n2. Create a new project and app\n3. Enable OAuth 2.0 with PKCE\n4. Copy Client ID and Client Secret\n5. Add them as TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET in Settings > Secrets",
     pinterest: "1. Go to developers.pinterest.com\n2. Create a new app\n3. Request access to Pins and Boards scopes\n4. Copy App ID and App Secret\n5. Add them as PINTEREST_APP_ID and PINTEREST_APP_SECRET in Settings > Secrets",
     google_ads: "1. Go to console.cloud.google.com\n2. Create OAuth 2.0 credentials\n3. Enable Google Ads API\n4. Copy Client ID and Client Secret\n5. Add them as GOOGLE_ADS_CLIENT_ID and GOOGLE_ADS_CLIENT_SECRET in Settings > Secrets",
-    linkedin: "1. Go to linkedin.com/developers\n2. Create a new app\n3. Request Marketing Developer Platform access\n4. Copy Client ID and Client Secret\n5. Add them as LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET in Settings > Secrets",
   };
   return instructions[platform] || "Contact support for setup instructions.";
 }
