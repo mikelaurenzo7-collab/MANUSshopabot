@@ -5,6 +5,9 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
+import { registerSocialOAuthRoutes } from "../socialOAuth";
+import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
+import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -35,10 +38,17 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Rate limiting — protect API and webhook endpoints
+  app.use("/api/trpc", generalRateLimiter);
+  app.use("/api/webhooks", webhookRateLimiter);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // Shopify OAuth for user store connections
   registerShopifyOAuthRoutes(app);
+  // Social platform OAuth callbacks (Meta, TikTok, Twitter, Pinterest)
+  registerSocialOAuthRoutes(app);
+  // Shopify webhook handlers (orders/create, orders/paid, products/update, inventory)
+  registerShopifyWebhookRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

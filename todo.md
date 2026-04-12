@@ -418,3 +418,54 @@
 - [x] Wire Meta OAuth secrets into Meta/Instagram adapter for OAuth flow + API calls
 - [x] Write vitest tests to validate TikTok and Meta OAuth secrets are wired correctly (21 tests, all passing)
 - [x] Confirm Instagram is covered by Meta adapter (no separate credentials needed)
+
+## Sprint 1: Critical Infrastructure (Make It Real)
+
+### Social OAuth Callback
+- [ ] Create server/socialOAuth.ts with Express callback routes for Meta, TikTok, Twitter, Pinterest
+- [ ] Handle authorization code exchange for access tokens per platform
+- [ ] Store tokens in social_accounts table with proper platform field
+- [ ] Redirect user back to /integrations after successful connection
+- [ ] Handle OAuth errors gracefully (user denied, invalid state, etc.)
+- [ ] Register /api/social/oauth/callback route in server/_core/index.ts
+
+### Shopify Webhooks
+- [ ] Create server/shopifyWebhooks.ts with HMAC verification middleware
+- [ ] Handle orders/create webhook → trigger immediate auto-fulfillment workflow
+- [ ] Handle orders/paid webhook → update order status in DB
+- [ ] Handle orders/fulfilled webhook → update order status + notify user
+- [ ] Handle products/update webhook → sync product changes to DB
+- [ ] Handle inventory_levels/update webhook → trigger low-stock alerts
+- [ ] Register webhook routes in server/_core/index.ts
+- [ ] Add Shopify webhook registration to store connection flow
+
+### Retry Logic & Resilience
+- [ ] Create server/_core/retry.ts with exponential backoff utility
+- [ ] Wrap all LLM calls (invokeLLM) with retry logic (3 attempts, 1s/2s/4s backoff)
+- [ ] Wrap all external API calls in adapters with retry logic
+- [ ] Add circuit breaker pattern for repeatedly failing platforms
+
+### Rate Limiting
+- [ ] Install express-rate-limit package
+- [ ] Add global rate limit: 100 req/min per user on /api/trpc
+- [ ] Add strict rate limit: 10 req/min per user on LLM-heavy procedures
+- [ ] Return proper 429 responses with retry-after headers
+
+### Real-Time UI
+- [ ] Add refetchInterval: 30000 on dashboard metrics query
+- [ ] Add refetchInterval: 15000 on active workflows query
+- [ ] Add refetchInterval: 60000 on orders query
+- [ ] Add refetchInterval: 30000 on activity feed query
+
+### Onboarding Wizard
+- [ ] Create client/src/pages/Onboarding.tsx with multi-step wizard
+- [ ] Step 1: Welcome + connect first store (Shopify OAuth or API key)
+- [ ] Step 2: Choose primary niche / let Architect analyze
+- [ ] Step 3: Configure bot autonomy level
+- [ ] Step 4: Launch first workflow
+- [ ] Show wizard to new users who have no stores connected
+- [ ] Add /onboarding route to App.tsx
+- [ ] Auto-redirect new users to /onboarding after first login
+
+## Bot Capability & Proactiveness Enhancement Analysis
+- [ ] Write SHOPBOT_BOT_ENHANCEMENT_ANALYSIS.md with full proactiveness roadmap

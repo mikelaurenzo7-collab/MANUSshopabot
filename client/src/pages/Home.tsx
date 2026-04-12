@@ -386,10 +386,10 @@ function CrossStoreIntelligence() {
 export default function Home() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery({});
-  const { data: agentStatus, isLoading: agentLoading } = trpc.dashboard.agentStatus.useQuery();
-  const { data: recentActivity, isLoading: activityLoading } = trpc.dashboard.recentActivity.useQuery({ limit: 10 });
-  const { data: pendingApprovals } = trpc.approvals.pending.useQuery();
+  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
+  const { data: agentStatus, isLoading: agentLoading } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
+  const { data: recentActivity, isLoading: activityLoading } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
+  const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 15000 });
   const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
   const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
 

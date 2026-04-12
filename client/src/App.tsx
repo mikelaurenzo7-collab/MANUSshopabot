@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -14,24 +15,53 @@ import AnalyticsPage from "./pages/Analytics";
 import ConfigPage from "./pages/Config";
 import IntegrationsPage from "./pages/Integrations";
 import WorkflowsPage from "./pages/Workflows";
+import OnboardingPage from "./pages/Onboarding";
+import { useAuth } from "./_core/hooks/useAuth";
+
+function OnboardingGuard() {
+  const [location, setLocation] = useLocation();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return; // Not logged in — auth handles redirect
+    if (location === "/onboarding") return; // Already on onboarding
+    // Check if user has completed onboarding
+    const hasOnboarded = localStorage.getItem("shopbot_onboarded");
+    if (!hasOnboarded) {
+      setLocation("/onboarding");
+    }
+  }, [user, loading, location, setLocation]);
+
+  return null;
+}
 
 function Router() {
   return (
-    <DashboardLayout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/architect" component={ArchitectPage} />
-        <Route path="/merchant" component={MerchantPage} />
-        <Route path="/hypeman" component={HypeManPage} />
-        <Route path="/activity" component={ActivityPage} />
-        <Route path="/analytics" component={AnalyticsPage} />
-        <Route path="/integrations" component={IntegrationsPage} />
-        <Route path="/workflows" component={WorkflowsPage} />
-        <Route path="/config" component={ConfigPage} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </DashboardLayout>
+    <Switch>
+      {/* Onboarding is full-screen, outside DashboardLayout */}
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route>
+        <>
+          <OnboardingGuard />
+          <DashboardLayout>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/architect" component={ArchitectPage} />
+              <Route path="/merchant" component={MerchantPage} />
+              <Route path="/hypeman" component={HypeManPage} />
+              <Route path="/activity" component={ActivityPage} />
+              <Route path="/analytics" component={AnalyticsPage} />
+              <Route path="/integrations" component={IntegrationsPage} />
+              <Route path="/workflows" component={WorkflowsPage} />
+              <Route path="/config" component={ConfigPage} />
+              <Route path="/404" component={NotFound} />
+              <Route component={NotFound} />
+            </Switch>
+          </DashboardLayout>
+        </>
+      </Route>
+    </Switch>
   );
 }
 
