@@ -236,8 +236,8 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        <Sidebar collapsible="icon" className="border-r-0 bg-[#030305]" disableTransition={isResizing}>
-          <SidebarHeader className="h-16 justify-center border-b border-white/[0.06] bg-[#030305]">
+        <Sidebar collapsible="icon" className="border-r border-white/[0.05] glass-subtle rounded-none" disableTransition={isResizing}>
+          <SidebarHeader className="h-16 justify-center border-b border-white/[0.06] bg-transparent">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
@@ -254,11 +254,11 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-2 py-3 bg-[#030305]">
+          <SidebarContent className="gap-0 px-2 py-3 bg-transparent">
             {Object.entries(groups).map(([group, items]) => (
               <div key={group} className="mb-3">
                 {!isCollapsed && (
-                  <p className="px-3 py-1.5 text-[9px] font-bold tracking-[0.2em] text-sky-500/60 uppercase">
+                  <p className="px-3 py-1.5 micro-label text-sky-500/60">
                     {groupLabels[group]}
                   </p>
                 )}
@@ -282,7 +282,7 @@ function DashboardLayoutContent({
                               isActive ? "text-sky-400 drop-shadow-[0_0_6px_rgba(14,165,233,0.6)]" : item.color || "text-muted-foreground/70"
                             }`}
                           />
-                          <span className={`truncate ${isActive ? "font-semibold" : "font-normal"}`}>{item.label}</span>
+                          <span className={`truncate ${isActive ? "font-semibold tracking-wide" : "font-medium"}`}>{item.label}</span>
                           {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0 shadow-[0_0_6px_rgba(14,165,233,0.8)]" />}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -293,7 +293,7 @@ function DashboardLayoutContent({
             ))}
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-white/[0.06] bg-[#030305]">
+          <SidebarFooter className="p-3 border-t border-white/[0.06] bg-transparent">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-white/[0.04] hover:border hover:border-white/[0.08] transition-all duration-500 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50">
@@ -347,7 +347,7 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {/* Top bar */}
-        <div className="flex border-b border-white/[0.06] h-14 items-center justify-between bg-[#030305]/90 px-4 backdrop-blur-xl sticky top-0 z-40">
+        <div className="flex border-b border-white/[0.06] h-14 items-center justify-between glass-subtle px-4 sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
@@ -471,7 +471,7 @@ function DashboardLayoutContent({
               </DropdownMenu>
           </div>
         </div>
-        <main className="flex-1 p-4 md:p-6 bg-[#000000]">{children}</main>
+        <main className="flex-1 p-4 md:p-6 bg-transparent">{children}</main>
       </SidebarInset>
     </>
   );

@@ -173,7 +173,7 @@ const TERMINAL_LINES = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#000000] text-foreground overflow-x-hidden page-enter">
+    <div className="min-h-screen bg-transparent text-foreground overflow-x-hidden page-enter">
 
       {/* ── Nav ─────────────────────────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 topbar-glass">
@@ -265,7 +265,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Platform Ticker (Supabase) ──────────────────────────────────────── */}
-      <section className="py-8 border-y border-white/[0.04] bg-[#030305]">
+      <section className="py-8 border-y border-white/[0.04] glass-subtle">
         <div className="max-w-6xl mx-auto">
           <div className="ticker-wrapper">
             <div className="ticker-track">
@@ -524,7 +524,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="py-10 px-4 border-t border-white/[0.04] bg-[#030305]">
+      <footer className="py-10 px-4 border-t border-white/[0.04] glass-subtle">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <BrandName size="sm" className="opacity-50 hover:opacity-80 transition-opacity duration-500" />
           <p className="text-[11px] text-muted-foreground/30 tracking-wide">
