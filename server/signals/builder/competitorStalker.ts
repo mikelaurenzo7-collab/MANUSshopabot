@@ -17,7 +17,7 @@ signalRegistry.register({
     
     // In production, this uses the Google Ad API connected previously, 
     // retrieving Search Volume data for the last 7 days compared to 90.
-    const store = await db.getStore(storeId);
+    const store = await db.getStoreById(storeId);
     if (!store || !store.niche) return null;
 
     // Simulate finding a gap

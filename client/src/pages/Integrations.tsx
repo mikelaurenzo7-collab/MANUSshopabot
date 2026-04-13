@@ -68,9 +68,9 @@ export default function IntegrationsPage() {
 
   const connectToPlatform = (platformId: string, kind: "ecommerce" | "social") => {
      if (kind === "ecommerce") {
-        generateOAuth.mutate({ platformId });
+        generateOAuth.mutate({ platform: platformId, origin: window.location.origin });
      } else {
-        generateSocialOAuth.mutate({ platformId });
+        generateSocialOAuth.mutate({ platform: platformId as any, origin: window.location.origin });
      }
   };
 
@@ -226,7 +226,7 @@ export default function IntegrationsPage() {
                   <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Security & Diagnostic Overrides</p>
                   {selectedEntity.kind === "ecommerce" && (
                     <button 
-                       onClick={() => checkHealth.mutate({ credentialId: selectedEntity.id })}
+                       onClick={() => checkHealth.mutate({ id: selectedEntity.id })}
                        disabled={checkHealth.isPending}
                        className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                     >
@@ -234,7 +234,7 @@ export default function IntegrationsPage() {
                     </button>
                   )}
                   <button 
-                     onClick={() => selectedEntity.kind === "ecommerce" ? disconnectCred.mutate({ credentialId: selectedEntity.id }) : disconnectSocial.mutate({ accountId: selectedEntity.id })}
+                     onClick={() => selectedEntity.kind === "ecommerce" ? disconnectCred.mutate({ id: selectedEntity.id }) : disconnectSocial.mutate({ id: selectedEntity.id })}
                      disabled={disconnectCred.isPending || disconnectSocial.isPending}
                      className="w-full bg-[#050505] border border-red-500/30 hover:border-red-500 hover:text-red-500 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >

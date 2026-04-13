@@ -59,7 +59,7 @@ async function requireDb(): Promise<DbExecutor> {
 
 export async function withTransaction<T>(callback: (tx: DbExecutor) => Promise<T>): Promise<T> {
   const db = await requireDb();
-  return db.transaction(async (tx) => callback(tx as DbExecutor));
+  return db.transaction(async (tx) => callback(tx as unknown as DbExecutor));
 }
 
 function encryptStoreTokens<T extends { platformAccessToken?: string | null }>(record: T): T {

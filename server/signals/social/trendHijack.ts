@@ -18,7 +18,7 @@ signalRegistry.register({
     
     // Instead of just relying on the user to request a post manually, 
     // the system checks the niche context of the store.
-    const store = await db.getStore(storeId);
+    const store = await db.getStoreById(storeId);
     if (!store || !store.niche) return null;
 
     // Simulate API call to TikTok for Business/Meta Graph searching for `store.niche`

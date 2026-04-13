@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   Package, Loader2, AlertTriangle, DollarSign, TrendingUp, ShoppingCart, 
-  Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers
+  Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers, Target
 } from "lucide-react";
 
 export default function MerchantPage() {
@@ -28,7 +28,7 @@ export default function MerchantPage() {
 
   const utils = trpc.useUtils();
   const { data: status } = trpc.dashboard.agentStatus.useQuery();
-  const merchantStatus = status?.agents?.merchant || { status: 'idle' };
+  const merchantStatus: any = status?.find?.((s: any) => s.agentType === 'merchant') || { status: 'idle' };
 
   const autoFulfill = trpc.merchant.autoFulfill.useMutation({
     onSuccess: () => {
@@ -275,7 +275,7 @@ export default function MerchantPage() {
                 <div className="pt-4 border-t border-[#1e293b]">
                   <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Processing Overrides</p>
                   <button 
-                    onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id })}
+                    onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id, storeId: storeId! })}
                     disabled={autoFulfill.isPending || selectedEntity.fulfillmentStatus === 'fulfilled'}
                     className="w-full bg-[#050505] border border-[#1e293b] hover:border-[#f59e0b] hover:text-[#f59e0b] disabled:opacity-50 disabled:border-[#1e293b] disabled:text-[#64748b] text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >

@@ -81,7 +81,7 @@ export default function Home() {
         value: "PROCESSING",
         icon: <Workflow className="w-4 h-4 text-[#f59e0b]" />,
         status: "active",
-        details: { "Active Workflows": agentStatus?.running || 0, "Completed": agentStatus?.completed || 0 }
+        details: { "Active Workflows": (agentStatus as any[])?.reduce((a: number, s: any) => a + (s.running || 0), 0) || 0, "Completed": (agentStatus as any[])?.reduce((a: number, s: any) => a + (s.completed || 0), 0) || 0 }
       }
     },
     {
@@ -153,7 +153,9 @@ export default function Home() {
           n.data = { ...n.data, value: `$${((metrics?.totalRevenue ?? 0) / 100).toFixed(2)}`, details: { "Total Orders": metrics?.totalOrders || 0, "Active Products": metrics?.activeProducts || 0 } };
         }
         if (n.id === "workflows") {
-          n.data = { ...n.data, details: { "Active Tasks": agentStatus?.running || 0, "Completed": agentStatus?.completed || 0 } };
+          const totalRunning = (agentStatus as any[])?.reduce((acc: number, s: any) => acc + (s.running || 0), 0) || 0;
+          const totalCompleted = (agentStatus as any[])?.reduce((acc: number, s: any) => acc + (s.completed || 0), 0) || 0;
+          n.data = { ...n.data, details: { "Active Tasks": totalRunning, "Completed": totalCompleted } };
         }
         if (n.id === "connectors") {
           n.data = { ...n.data, value: `${(connSummary?.stores || 0) + (connSummary?.socialAccounts || 0)} CONNECTED` };
@@ -163,7 +165,7 @@ export default function Home() {
     );
   }, [metrics, agentStatus, connSummary, setNodes]);
 
-  const onNodeClick = useCallback((_, node) => {
+  const onNodeClick = useCallback((_: any, node: any) => {
     setSelectedNode(node);
     setNodes((nds) =>
       nds.map((n) => ({

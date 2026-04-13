@@ -16,16 +16,16 @@ export default function Architect() {
   const utils = trpc.useUtils();
   const { data: status } = trpc.dashboard.agentStatus.useQuery();
   const { data: history, isLoading: historyLoading } = trpc.dashboard.recentActivity.useQuery({ limit: 10 });
-  const { data: reports, isLoading: reportsLoading } = trpc.reports.list.useQuery();
+  const { data: reports, isLoading: reportsLoading } = trpc.architect.nicheReports.useQuery();
   
-  const architectStatus = status?.agents?.architect || { status: 'idle', currentTask: null };
+  const architectStatus: any = (status as any[])?.find?.((s: any) => s.agentType === 'architect') || { status: 'idle', currentTask: null };
 
   const analyzeNicheMutation = trpc.workflows.launch.useMutation({
     onSuccess: () => {
       toast.success("INITIATING_NICHE_ANALYSIS");
       setKeyword("");
       utils.dashboard.agentStatus.invalidate();
-      utils.reports.list.invalidate();
+      utils.workflows.list?.invalidate?.();
       utils.dashboard.recentActivity.invalidate();
     },
     onError: (err) => {
@@ -41,9 +41,11 @@ export default function Architect() {
   const handleAnalyze = () => {
     if (!keyword.trim()) return;
     analyzeNicheMutation.mutate({
-      workflowId: "analyze-niche",
+      agentType: "architect",
+      workflowType: "niche_research",
+      title: `Niche Research: ${keyword.trim()}`,
+      scope: "global",
       input: { keyword: keyword.trim() },
-      sync: false
     });
   };
 
@@ -178,22 +180,22 @@ export default function Architect() {
                    <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2">{selectedReport.keyword}</h2>
                    <div className="flex justify-between items-center mt-3">
                       <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Viability Matrix</span>
-                      <span className={`font-mono text-xl font-bold ${selectedReport.report.viabilityScore >= 70 ? 'text-[#00ff41]' : selectedReport.report.viabilityScore >= 40 ? 'text-[#f59e0b]' : 'text-red-500'}`}>
-                         {selectedReport.report.viabilityScore}
+                      <span className={`font-mono text-xl font-bold ${(selectedReport.report as any).viabilityScore >= 70 ? 'text-[#00ff41]' : (selectedReport.report as any).viabilityScore >= 40 ? 'text-[#f59e0b]' : 'text-red-500'}`}>
+                         {(selectedReport.report as any).viabilityScore}
                       </span>
                    </div>
                 </div>
 
                 <div className="space-y-2">
-                   <InspectorRow label="Market Demand" value={`${selectedReport.report.marketDemandScore}/100`} />
-                   <InspectorRow label="Competition" value={`${selectedReport.report.competitionScore}/100`} />
-                   <InspectorRow label="Profit Margin" value={`${selectedReport.report.profitMarginScore}/100`} />
+                   <InspectorRow label="Market Demand" value={`${(selectedReport.report as any).marketDemandScore}/100`} />
+                   <InspectorRow label="Competition" value={`${(selectedReport.report as any).competitionScore}/100`} />
+                   <InspectorRow label="Profit Margin" value={`${(selectedReport.report as any).profitMarginScore}/100`} />
                 </div>
 
                 <div>
                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-2 border-b border-[#1e293b] pb-1">Strengths</p>
                    <ul className="space-y-1.5 mt-2">
-                     {selectedReport.report.strengths.map((str: string, i: number) => (
+                     {(selectedReport.report as any).strengths?.map((str: string, i: number) => (
                        <li key={i} className="flex gap-2 text-[10px] font-mono text-[#e2e8f0] opacity-80 leading-relaxed">
                          <span className="text-[#00ff41] mt-0.5">■</span> {str}
                        </li>
@@ -204,7 +206,7 @@ export default function Architect() {
                 <div>
                    <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-2 border-b border-[#1e293b] pb-1">Weaknesses</p>
                    <ul className="space-y-1.5 mt-2">
-                     {selectedReport.report.weaknesses.map((wk: string, i: number) => (
+                     {(selectedReport.report as any).weaknesses?.map((wk: string, i: number) => (
                        <li key={i} className="flex gap-2 text-[10px] font-mono text-[#e2e8f0] opacity-80 leading-relaxed">
                          <span className="text-red-500 mt-0.5">■</span> {wk}
                        </li>

@@ -17,7 +17,7 @@ signalRegistry.register({
     
     // In a real AI model, we'd query past 90 days of order data per active product
     // For now, we simulate finding a product that is selling faster than expected
-    const products = await db.getProducts(storeId);
+    const products = await db.getProductsByStore(storeId);
     
     if (products.length === 0) return null;
 

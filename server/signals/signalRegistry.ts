@@ -51,7 +51,7 @@ class SignalRegistry {
     logger.info("executing_signals_for_store", { userId, storeId });
     const results: Array<{ signalId: string; result: SignalResult }> = [];
 
-    for (const signal of this.signals.values()) {
+    for (const signal of Array.from(this.signals.values())) {
       try {
         const result = await signal.evaluate(userId, storeId);
         if (result) {
@@ -61,8 +61,8 @@ class SignalRegistry {
           // This bridges the "background intelligence" to the user's dashboard.
           await db.createNotification({
             userId,
-            agentType: signal.botType,
-            type: result.severity,
+            agentType: (signal.botType === "builder" ? "architect" : signal.botType) as "architect" | "merchant" | "social",
+            type: (result.severity === "critical" ? "error" : result.severity) as "info" | "warning" | "error" | "success" | "approval_needed",
             title: `Proactive Intelligence: ${signal.name}`,
             message: result.message + " | Recommendation: " + result.recommendedAction,
             actionUrl: result.workflowType ? `/workflows/new?type=${result.workflowType}` : undefined
