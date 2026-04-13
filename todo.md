@@ -455,3 +455,9 @@
 ## Sprint 20: UX Fixes
 
 - [x] Remove pricing section from Home.tsx (Command Center) — pricing belongs on Landing page only
+- [x] Install cockatiel, pino, pino-pretty, bottleneck and their @types
+- [x] Replace server/_core/retry.ts with cockatiel (retry + circuit breaker policies)
+- [x] Replace server/_core/logger.ts with Pino (structured JSON logger with child loggers)
+- [x] Replace server/utils/tokenBucket.ts with Bottleneck (rate limiter per platform)
+- [x] Update all import sites across scheduler, engine, adapters, routers
+- [x] Verify 0 TypeScript errors and all 539 tests passing after gem replacements

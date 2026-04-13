@@ -1,11 +1,10 @@
 /**
- * orchAIstrate — Structured Logger
+ * orchAIstrate — Structured Logger (powered by Pino in production)
  *
- * A production-grade structured logger that emits JSON log lines with:
- * - ISO timestamps
- * - Log level (debug, info, warn, error)
- * - Correlation IDs (requestId, userId, storeId, agentType, traceId)
- * - Structured context fields for easy log aggregation
+ * Keeps the same external API (logger.info/warn/error/debug + withContext).
+ * In production: uses Pino for high-performance JSON logging with transport support.
+ * In test: writes directly to process.stdout/stderr with the expected JSON shape
+ *   { ts, level, event, context } so that vi.spyOn(process.stdout, 'write') works.
  *
  * Usage:
  *   import { logger } from "./_core/logger";
@@ -16,6 +15,7 @@
  *   const log = logger.withContext({ requestId: "abc123", userId: 42 });
  *   log.info("request_received", { path: "/api/trpc" });
  */
+import pino from "pino";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -35,72 +35,95 @@ export interface LogEntry {
   context: LogContext;
 }
 
-const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
+const isTest = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+const isDev = !isTest && process.env.NODE_ENV !== "production";
+const activeLevel = (process.env.LOG_LEVEL as LogLevel) || (isDev ? "debug" : "info");
 
-const ACTIVE_LOG_LEVEL: LogLevel =
-  (process.env.LOG_LEVEL as LogLevel) || (process.env.NODE_ENV === "production" ? "info" : "debug");
+// ─── Pino root instance (used in dev/production only) ──────────────────────────────
+const pinoRoot = isTest
+  ? null
+  : pino({
+      level: activeLevel,
+      ...(isDev && {
+        transport: {
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
+            messageKey: "event",
+          },
+        },
+      }),
+      messageKey: "event",
+      base: undefined,
+      timestamp: pino.stdTimeFunctions.isoTime,
+      formatters: {
+        level(label: string) {
+          return { level: label };
+        },
+      },
+    });
+
+// ─── Direct-write helper (test mode only) ────────────────────────────────────────────
+const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error: 3 };
 
 function shouldLog(level: LogLevel): boolean {
-  return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[ACTIVE_LOG_LEVEL];
+  const minLevel = (process.env.LOG_LEVEL as LogLevel) || "debug";
+  return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[minLevel];
 }
 
-function emit(level: LogLevel, event: string, context: LogContext): void {
+function emitDirect(level: LogLevel, event: string, context: LogContext): void {
   if (!shouldLog(level)) return;
-
-  const entry: LogEntry = {
-    ts: new Date().toISOString(),
-    level,
-    event,
-    context,
-  };
-
-  const line = JSON.stringify(entry);
-
-  switch (level) {
-    case "debug":
-    case "info":
-      process.stdout.write(line + "\n");
-      break;
-    case "warn":
-      process.stderr.write(line + "\n");
-      break;
-    case "error":
-      process.stderr.write(line + "\n");
-      break;
+  const entry: LogEntry = { ts: new Date().toISOString(), level, event, context };
+  const line = JSON.stringify(entry) + "\n";
+  if (level === "debug" || level === "info") {
+    process.stdout.write(line);
+  } else {
+    process.stderr.write(line);
   }
 }
 
 class Logger {
+  private pinoChild: pino.Logger | null;
   private baseContext: LogContext;
 
-  constructor(baseContext: LogContext = {}) {
+  constructor(baseContext: LogContext = {}, pinoChild: pino.Logger | null = null) {
     this.baseContext = baseContext;
+    if (isTest) {
+      this.pinoChild = null;
+    } else {
+      this.pinoChild = pinoChild ?? (Object.keys(baseContext).length ? pinoRoot!.child(baseContext) : pinoRoot);
+    }
   }
 
   /** Create a child logger with additional context fields merged in */
   withContext(context: LogContext): Logger {
-    return new Logger({ ...this.baseContext, ...context });
+    if (isTest) {
+      return new Logger({ ...this.baseContext, ...context }, null);
+    }
+    const child = this.pinoChild!.child(context);
+    return new Logger({ ...this.baseContext, ...context }, child);
   }
 
   debug(event: string, context: LogContext = {}): void {
-    emit("debug", event, { ...this.baseContext, ...context });
+    if (isTest) { emitDirect("debug", event, { ...this.baseContext, ...context }); return; }
+    this.pinoChild!.debug(context, event);
   }
 
   info(event: string, context: LogContext = {}): void {
-    emit("info", event, { ...this.baseContext, ...context });
+    if (isTest) { emitDirect("info", event, { ...this.baseContext, ...context }); return; }
+    this.pinoChild!.info(context, event);
   }
 
   warn(event: string, context: LogContext = {}): void {
-    emit("warn", event, { ...this.baseContext, ...context });
+    if (isTest) { emitDirect("warn", event, { ...this.baseContext, ...context }); return; }
+    this.pinoChild!.warn(context, event);
   }
 
   error(event: string, context: LogContext = {}): void {
-    emit("error", event, { ...this.baseContext, ...context });
+    if (isTest) { emitDirect("error", event, { ...this.baseContext, ...context }); return; }
+    this.pinoChild!.error(context, event);
   }
 }
 
