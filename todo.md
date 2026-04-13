@@ -451,3 +451,7 @@
 - [x] Update Landing page bot card colors, pricing, testimonials
 - [x] Update DashboardLayout sidebar accent colors
 - [x] Update all dashboard page accent colors consistently — all 14 dashboard pages + OrchestratorGraph updated
+
+## Sprint 20: UX Fixes
+
+- [x] Remove pricing section from Home.tsx (Command Center) — pricing belongs on Landing page only
