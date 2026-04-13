@@ -496,3 +496,33 @@
 - [x] Audit all pages: button hover states consistency
 - [x] Audit all pages: form input focus states
 - [x] Audit all pages: mobile responsiveness
+
+## Sprint 24: Three Bots to Perfection
+
+### Builder Bot (Architect) Issues
+- [ ] Add loading state to EXECUTE SCAN button — show spinner and disable input during processing
+- [ ] Add error toast when workflow launch fails (subscription gate, LLM error, etc.)
+- [ ] Show real-time progress indicator while niche analysis is running
+- [ ] Add "Clear History" button to Intelligence Ledger
+- [ ] Improve empty state messaging when no reports exist
+
+### Merchant Bot (Merchant) Issues
+- [ ] Add loading state to store selection dropdown
+- [ ] Show real-time order count and revenue metrics
+- [ ] Add error handling for failed auto-fulfill attempts
+- [ ] Improve pricing adjustment UI — show current vs. new price before confirming
+- [ ] Add undo button for recent pricing changes
+
+### Social Engine (Social) Issues
+- [ ] Add loading state to ad copy generation
+- [ ] Show real-time post scheduling calendar
+- [ ] Add error handling for failed social media connections
+- [ ] Improve campaign performance metrics display
+- [ ] Add bulk action buttons for campaign management
+
+### Cross-Bot Issues
+- [ ] Add subscription gate error messaging (guide users to upgrade)
+- [ ] Add retry logic with exponential backoff for failed API calls
+- [ ] Improve empty states across all bot pages
+- [ ] Add keyboard shortcuts for common actions
+- [ ] Add help tooltips for complex workflows

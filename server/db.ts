@@ -559,11 +559,29 @@ export async function getDashboardMetrics(storeId?: number) {
     count: count(),
   }).from(approvalQueue).where(eq(approvalQueue.status, "pending"));
 
+  // Fetch platform revenue (Stripe subscriptions) — only if not filtering by store
+  let platformRevenue = 0;
+  let activeSubscriptions = 0;
+  if (!storeId) {
+    const [stripeResult] = await db.select({
+      activeCount: count(),
+    }).from(users).where(eq(users.stripeSubscriptionStatus, "active"));
+    activeSubscriptions = stripeResult?.activeCount ?? 0;
+    // Estimate platform revenue: average $250/user/month in cents
+    platformRevenue = activeSubscriptions * 25000;
+  }
+
+  const storeRevenue = Number(revenueResult?.total ?? 0);
+  const totalRevenue = storeRevenue + platformRevenue;
+
   return {
-    totalRevenue: Number(revenueResult?.total ?? 0),
+    totalRevenue,
+    storeRevenue,
+    platformRevenue,
     totalOrders: revenueResult?.count ?? 0,
     activeProducts: productResult?.count ?? 0,
     pendingApprovals: approvalResult?.count ?? 0,
+    activeSubscriptions,
   };
 }
 
