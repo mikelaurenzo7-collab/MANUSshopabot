@@ -483,3 +483,16 @@
 - [x] Builder Bot: store populated products in DB and show in Command Center
 - [x] Error boundaries: wrap all major page sections with React ErrorBoundary
 - [x] Circuit breaker UI: toast notification when a platform circuit trips open
+
+## Sprint 23: E2E Live Testing & Polish
+
+- [x] Fix DashboardLayout: sidebar nav items duplicated in DOM
+- [x] Fix DashboardLayout: sidebar labels are ALL CAPS monospace
+- [x] Fix Home.tsx: Inspector Panel empty state when no node selected
+- [x] Fix Home.tsx: node graph nodes too small at default zoom
+- [x] Fix DashboardLayout: "TERMINATE SESSION" button label — rename to "Sign Out"
+- [x] Audit Landing page: full visual inspection
+- [x] Audit all pages: scroll test for overflow/clipping
+- [x] Audit all pages: button hover states consistency
+- [x] Audit all pages: form input focus states
+- [x] Audit all pages: mobile responsiveness

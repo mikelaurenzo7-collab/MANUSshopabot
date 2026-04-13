@@ -75,7 +75,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div key={i} className="mb-6">
               <div className="flex items-center gap-2 mb-2 px-2">
                 <FolderTree className="w-3 h-3 text-white/30" />
-                <span className="text-[9px] uppercase tracking-widest text-[#64748b] font-bold">
+                <span className="text-[11px] tracking-wide text-[#94a3b8] font-semibold">
                   {group.label}
                 </span>
               </div>
@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <button onClick={handleLogout} className="w-full flex items-center h-8 px-4 rounded-none border border-[#1e293b] hover:bg-red-500/10 hover:border-red-500/30 text-[#94a3b8] transition-colors group">
             <LogOut className="w-3.5 h-3.5 mr-2 opacity-70 group-hover:opacity-100 group-hover:text-red-400" />
-            <span className="font-mono text-[10px] uppercase tracking-wider group-hover:text-red-400">Terminate Session</span>
+            <span className="font-mono text-[10px] uppercase tracking-wider group-hover:text-red-400">Sign Out</span>
           </button>
         </div>
       </aside>
