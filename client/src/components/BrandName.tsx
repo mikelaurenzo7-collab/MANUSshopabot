@@ -27,7 +27,7 @@ export function BrandName({ className = "", size = "md" }: BrandNameProps) {
     >
       <span className="text-muted-foreground/80">orch</span>
       <span
-        className={`${s.ai} font-black bg-gradient-to-r from-violet-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(167,139,250,0.4)]`}
+        className={`${s.ai} font-black bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]`}
       >
         AI
       </span>

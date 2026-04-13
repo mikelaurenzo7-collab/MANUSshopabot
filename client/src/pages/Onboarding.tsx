@@ -71,7 +71,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
     {
       name: "Builder Bot",
       icon: Bot,
-      color: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+      color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
       description: "Researches niches, sources products, and builds your store in under 30 minutes.",
     },
     {
@@ -528,7 +528,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Bot className="h-4 w-4 text-violet-400" /> What the Builder Bot will do:
+          <Bot className="h-4 w-4 text-sky-400" /> What the Builder Bot will do:
         </h4>
         <ul className="space-y-1.5">
           {[

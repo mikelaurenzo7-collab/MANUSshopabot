@@ -39,7 +39,7 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }>
 };
 
 const AGENT_COLORS: Record<string, string> = {
-  architect: "from-violet-500/20 to-purple-500/20 border-violet-500/30",
+  architect: "from-sky-500/20 to-blue-500/20 border-sky-500/30",
   merchant: "from-emerald-500/20 to-teal-500/20 border-emerald-500/30",
   social: "from-orange-500/20 to-amber-500/20 border-orange-500/30",
 };
@@ -209,7 +209,13 @@ export default function Workflows() {
   const currentInputConfig = inputConfig[launchForm.workflowType] ?? { label: "Input", placeholder: "Describe what you need..." };
 
   return (
-    <div className="space-y-6 page-enter">
+    <div className="space-y-8 page-enter relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">WORKFLOWS</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -276,7 +282,7 @@ export default function Workflows() {
           {availableTypes && (["architect", "merchant", "social"] as const).map(agent => (
             <div key={agent} className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${agent === "architect" ? "bg-violet-400" : agent === "merchant" ? "bg-emerald-400" : "bg-orange-400"}`} />
+                <div className={`w-2 h-2 rounded-full ${agent === "architect" ? "bg-sky-400" : agent === "merchant" ? "bg-emerald-400" : "bg-orange-400"}`} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{AGENT_NAMES[agent]}</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -312,7 +318,7 @@ export default function Workflows() {
               <CardContent className="py-12 text-center">
                 <Zap className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground">No active workflows</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Launch a workflow from the Launch tab to get started</p>
+                <p className="text-xs text-white/30 mt-1">Launch a workflow from the Launch tab to get started</p>
               </CardContent>
             </Card>
           ) : (
@@ -356,7 +362,7 @@ export default function Workflows() {
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="w-10 h-10 text-emerald-500/50 mx-auto mb-3" />
                 <p className="text-muted-foreground">No pending approvals</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">All agent workflows are running smoothly</p>
+                <p className="text-xs text-white/30 mt-1">All agent workflows are running smoothly</p>
               </CardContent>
             </Card>
           ) : (
@@ -366,14 +372,14 @@ export default function Workflows() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge className={`text-xs ${workflow.agentType === "architect" ? "bg-violet-500/20 text-violet-300" : workflow.agentType === "merchant" ? "bg-emerald-500/20 text-emerald-300" : "bg-orange-500/20 text-orange-300"}`}>
+                        <Badge className={`text-xs ${workflow.agentType === "architect" ? "bg-sky-500/20 text-sky-300" : workflow.agentType === "merchant" ? "bg-emerald-500/20 text-emerald-300" : "bg-orange-500/20 text-orange-300"}`}>
                           {AGENT_NAMES[workflow.agentType]}
                         </Badge>
                         <span className="text-xs text-muted-foreground">Step {step.stepIndex + 1}</span>
                       </div>
                       <p className="font-medium">{step.title}</p>
                       <p className="text-sm text-muted-foreground">{step.description}</p>
-                      <p className="text-xs text-muted-foreground/60">Workflow: {workflow.title}</p>
+                      <p className="text-xs text-white/30">Workflow: {workflow.title}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10"
@@ -583,6 +589,7 @@ export default function Workflows() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
@@ -598,7 +605,7 @@ function WorkflowCard({ workflow, onView, onCancel, onRetry, retryLoading }: { w
         <div className="flex items-start justify-between">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={`text-xs ${workflow.agentType === "architect" ? "bg-violet-500/20 text-violet-300" : workflow.agentType === "merchant" ? "bg-emerald-500/20 text-emerald-300" : "bg-orange-500/20 text-orange-300"}`}>
+              <Badge className={`text-xs ${workflow.agentType === "architect" ? "bg-sky-500/20 text-sky-300" : workflow.agentType === "merchant" ? "bg-emerald-500/20 text-emerald-300" : "bg-orange-500/20 text-orange-300"}`}>
                 {AGENT_NAMES[workflow.agentType]}
               </Badge>
               <Badge variant="outline" className="text-[10px]">{workflow.workflowType}</Badge>
@@ -606,7 +613,7 @@ function WorkflowCard({ workflow, onView, onCancel, onRetry, retryLoading }: { w
             </div>
             <p className="font-medium truncate">{workflow.title}</p>
             {workflow.description && <p className="text-xs text-muted-foreground truncate">{workflow.description}</p>}
-            <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60 mt-1">
+            <div className="flex items-center gap-3 text-[10px] text-white/30 mt-1">
               <span>Steps: {Number(workflow.currentStepIndex) + (workflow.status === "completed" ? 0 : 1)}/{Number(workflow.totalSteps)}</span>
               <span>{new Date(workflow.createdAt).toLocaleString()}</span>
               {workflow.scope !== "global" && <span>Scope: {workflow.scope}</span>}

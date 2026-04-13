@@ -36,8 +36,8 @@ const agents = [
     name: "Builder Bot",
     description: "Niche research, product sourcing, and store setup",
     icon: Bot,
-    color: "text-violet-400",
-    bgColor: "bg-violet-500/15",
+    color: "text-sky-400",
+    bgColor: "bg-sky-500/15",
   },
   {
     key: "merchant" as const,
@@ -91,7 +91,7 @@ function CredentialDiagnostics() {
   const { data, isLoading } = trpc.diagnostics.credentialStatus.useQuery();
 
   return (
-    <Card className="bg-card border-border/50">
+    <Card className="bento-card">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
@@ -108,7 +108,7 @@ function CredentialDiagnostics() {
           </div>
         ) : data ? (
           <>
-            <div className="flex gap-4 mb-4 p-3 rounded-lg bg-secondary/30">
+            <div className="flex gap-4 mb-4 p-3 rounded-lg bg-white/[0.03]">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">{data.summary.configured}</div>
                 <div className="text-xs text-muted-foreground">Configured</div>
@@ -126,7 +126,7 @@ function CredentialDiagnostics() {
             </div>
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {data.results.map((r) => (
-                <div key={r.key} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/20 transition-colors">
+                <div key={r.key} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-2">
                     {r.configured
                       ? <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
@@ -136,7 +136,7 @@ function CredentialDiagnostics() {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">{r.platform}</Badge>
                     {r.configured && r.preview && (
-                      <span className="text-xs font-mono text-muted-foreground/60">{r.preview}</span>
+                      <span className="text-xs font-mono text-white/30">{r.preview}</span>
                     )}
                   </div>
                 </div>
@@ -280,11 +280,16 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">CONFIG</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
             <Settings className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -303,7 +308,7 @@ export default function ConfigPage() {
       </div>
 
       {/* Info banner: settings are global */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-sky-500/[0.06] border border-primary/20">
         <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">
           These settings apply globally to all connected stores. Bots default to{" "}
@@ -315,7 +320,7 @@ export default function ConfigPage() {
       {isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-card border-border/50">
+            <Card key={i} className="bento-card">
               <CardContent className="p-6 space-y-3">
                 <Skeleton className="h-5 w-48" />
                 <Skeleton className="h-4 w-full" />
@@ -333,7 +338,7 @@ export default function ConfigPage() {
             const autonomy = getAutonomyState(agent.key);
 
             return (
-              <Card key={agent.key} className="bg-card border-border/50">
+              <Card key={agent.key} className="bento-card">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -371,8 +376,8 @@ export default function ConfigPage() {
                               onClick={() => autonomy.set(opt.value)}
                               className={`p-3 rounded-lg border text-left transition-all ${
                                 isSelected
-                                  ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                                  : "border-border/50 bg-secondary/30 hover:bg-secondary/50"
+                                  ? "border-primary bg-sky-500/10 ring-1 ring-primary/30"
+                                  : "border-white/[0.08] bg-white/[0.03] hover:bg-secondary/50"
                               }`}
                             >
                               <div className="flex items-center gap-2 mb-1">
@@ -398,7 +403,7 @@ export default function ConfigPage() {
                     {agent.key === "merchant" && (
                       <div className="mt-4 space-y-3">
                         <Separator />
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03]">
                           <div>
                             <p className="text-sm font-medium text-foreground">Auto-Fulfillment</p>
                             <p className="text-xs text-muted-foreground">
@@ -407,7 +412,7 @@ export default function ConfigPage() {
                           </div>
                           <Switch checked={autoFulfill} onCheckedChange={setAutoFulfill} />
                         </div>
-                        <div className="p-3 rounded-lg bg-secondary/30">
+                        <div className="p-3 rounded-lg bg-white/[0.03]">
                           <Label className="text-sm font-medium text-foreground mb-2 block">
                             Low Stock Alert Threshold
                           </Label>
@@ -430,7 +435,7 @@ export default function ConfigPage() {
                     {agent.key === "social" && (
                       <div className="mt-4 space-y-3">
                         <Separator />
-                        <div className="p-3 rounded-lg bg-secondary/30">
+                        <div className="p-3 rounded-lg bg-white/[0.03]">
                           <Label className="text-sm font-medium text-foreground mb-2 block">
                             Max Daily Ad Spend
                           </Label>
@@ -460,7 +465,7 @@ export default function ConfigPage() {
           {user?.role === "admin" && <CredentialDiagnostics />}
 
           {/* Global Safety & Approvals */}
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
@@ -471,7 +476,7 @@ export default function ConfigPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03]">
                 <div>
                   <p className="text-sm font-medium text-foreground">Require Approval for Critical Decisions</p>
                   <p className="text-xs text-muted-foreground">

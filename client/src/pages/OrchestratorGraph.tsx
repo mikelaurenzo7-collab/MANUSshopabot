@@ -22,13 +22,13 @@ import {
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
-  running: "#6366f1",
+  running: "#0EA5E9",
   completed: "#10b981",
   pending_approval: "#f59e0b",
   failed: "#ef4444",
   rejected: "#dc2626",
   idle: "#94a3b8",
-  active: "#6366f1",
+  active: "#0EA5E9",
 };
 
 export default function OrchestratorGraph() {
@@ -84,11 +84,16 @@ export default function OrchestratorGraph() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">ORCHESTRATOR</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <GitBranch className="w-6 h-6 text-indigo-500" />
+            <GitBranch className="w-6 h-6 text-sky-400" />
             Orchestrator — Live Node Graph
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

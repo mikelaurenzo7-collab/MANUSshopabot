@@ -105,7 +105,7 @@ export default function SupplierPOs() {
       {/* Summary Stats */}
       {storeId && pos.data && pos.data.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 rounded-xl bg-secondary/20 border border-border/25">
+          <div className="p-3 rounded-xl bg-white/[0.02] border border-border/25">
             <div className="flex items-center gap-2 mb-1">
               <Hash className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total POs</span>
@@ -130,7 +130,7 @@ export default function SupplierPOs() {
       )}
 
       {!storeId ? (
-        <Card className="bg-card border-border/50">
+        <Card className="bento-card">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="w-10 h-10 mx-auto text-yellow-500 mb-3" />
             <p className="font-medium mb-1">No Store Connected</p>
@@ -140,7 +140,7 @@ export default function SupplierPOs() {
           </CardContent>
         </Card>
       ) : !pos.data?.length ? (
-        <Card className="bg-card border-border/50">
+        <Card className="bento-card">
           <CardContent className="p-8 text-center">
             <Package className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
             <p className="font-medium mb-1">No Purchase Orders Yet</p>
@@ -154,11 +154,11 @@ export default function SupplierPOs() {
           {pos.data.map((po: any) => {
             const StatusIcon = statusIcon[po.status] || Clock;
             return (
-              <Card key={po.id} className="bg-card border-border/50 hover:border-border transition-all">
+              <Card key={po.id} className="bg-card border-white/[0.08] hover:border-border transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-secondary/30 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-lg bg-white/[0.03] flex items-center justify-center">
                         <StatusIcon className="w-5 h-5 text-muted-foreground" />
                       </div>
                       <div>
@@ -169,7 +169,7 @@ export default function SupplierPOs() {
                           <span className="text-foreground font-medium">${(po.totalCents / 100).toFixed(2)}</span>
                         </p>
                         {po.notes && (
-                          <p className="text-xs text-muted-foreground/70 italic mt-1">{po.notes}</p>
+                          <p className="text-xs text-white/40 italic mt-1">{po.notes}</p>
                         )}
                       </div>
                     </div>

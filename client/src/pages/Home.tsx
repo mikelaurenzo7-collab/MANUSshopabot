@@ -37,7 +37,7 @@ const PLATFORM_ICONS: Record<string, string> = {
 
 const PLATFORM_COLORS: Record<string, string> = {
   shopify: "bg-green-500/10 text-green-400 border-green-500/20",
-  woocommerce: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  woocommerce: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   amazon: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   etsy: "bg-red-500/10 text-red-400 border-red-500/20",
   ebay: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -63,30 +63,30 @@ function MetricCard({
   accentColor?: string;
 }) {
   return (
-    <Card className="glass-card group hover:shadow-lg transition-all duration-350">
-      <CardContent className="p-7">
+    <div className="bento-card group hover:border-sky-500/30 hover:shadow-[0_0_30px_rgba(14,165,233,0.08)] transition-all duration-500">
+      <div className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2 flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">{title}</p>
+            <p className="micro-label">{title}</p>
             {loading ? (
-              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-28 bg-white/5" />
             ) : (
-              <p className="text-3xl font-extrabold tracking-tight text-foreground font-heading metric-number">{value}</p>
+              <p className="text-3xl font-black tracking-tighter text-foreground font-heading metric-number">{value}</p>
             )}
-            {subtitle && <p className="text-xs text-muted-foreground/70">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-white/40 mt-1">{subtitle}</p>}
           </div>
-          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border border-border/20 group-hover:scale-105 transition-transform duration-300 shadow-lg ${accentColor || "bg-primary/10"}`}>
-            <Icon className={`h-5 w-5 ${accentColor ? "" : "text-primary"}`} />
+          <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border border-white/[0.08] group-hover:scale-105 transition-transform duration-500 ${accentColor || "bg-sky-500/10"}`}>
+            <Icon className={`h-5 w-5 ${accentColor ? "" : "text-sky-400"}`} />
           </div>
         </div>
         {trend && (
-          <div className="mt-4 flex items-center gap-1.5 pt-3 border-t border-border/20">
+          <div className="mt-4 flex items-center gap-1.5 pt-3 border-t border-white/[0.06]">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
             <span className="text-xs text-emerald-400 font-semibold">{trend}</span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -106,12 +106,12 @@ function BotStatusCard({
   loading?: boolean;
 }) {
   const isActive = stats && stats.running > 0;
-  const botAccentColor = type === 'architect' ? 'bg-violet-500/8 border-violet-500/30' : type === 'merchant' ? 'bg-cyan-500/8 border-cyan-500/30' : 'bg-amber-500/8 border-amber-500/30';
-  const botStatusColor = type === 'architect' ? 'bg-violet-400' : type === 'merchant' ? 'bg-cyan-400' : 'bg-amber-400';
-  const botNameColor = type === 'architect' ? 'text-violet-300' : type === 'merchant' ? 'text-cyan-300' : 'text-amber-300';
+  const botAccentColor = type === 'architect' ? 'border-sky-500/25 hover:border-sky-500/40 hover:shadow-[0_0_20px_rgba(14,165,233,0.08)]' : type === 'merchant' ? 'border-cyan-500/25 hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(6,182,212,0.08)]' : 'border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_0_20px_rgba(245,158,11,0.08)]';
+  const botStatusColor = type === 'architect' ? 'bg-sky-400' : type === 'merchant' ? 'bg-cyan-400' : 'bg-amber-400';
+  const botNameColor = type === 'architect' ? 'text-sky-300' : type === 'merchant' ? 'text-cyan-300' : 'text-amber-300';
   return (
-    <Card className={`glass-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''} transition-all duration-350`}>
-      <CardContent className="p-6">
+    <div className={`bento-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''} transition-all duration-500`}>
+      <div className="p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className={`h-11 w-11 rounded-xl flex items-center justify-center border border-border/20 shadow-lg ${color}`}>
             <Icon className="h-5 w-5" />
@@ -131,29 +131,29 @@ function BotStatusCard({
         </div>
         {loading ? (
           <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full bg-white/5" />
+            <Skeleton className="h-4 w-3/4 bg-white/5" />
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="text-center p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/20 hover:bg-emerald-500/12 transition-colors">
-              <p className="text-xl font-bold text-emerald-400 metric-number">{stats.completed}</p>
-              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Done</p>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/15 hover:border-emerald-500/30 transition-all duration-500">
+              <p className="text-xl font-black text-emerald-400 metric-number">{stats.completed}</p>
+              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Done</p>
             </div>
-            <div className="text-center p-3 rounded-xl bg-amber-500/8 border border-amber-500/20 hover:bg-amber-500/12 transition-colors">
-              <p className="text-xl font-bold text-amber-400 metric-number">{stats.running}</p>
-              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Active</p>
+            <div className="text-center p-3 rounded-lg bg-amber-500/[0.06] border border-amber-500/15 hover:border-amber-500/30 transition-all duration-500">
+              <p className="text-xl font-black text-amber-400 metric-number">{stats.running}</p>
+              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Active</p>
             </div>
-            <div className="text-center p-3 rounded-xl bg-red-500/8 border border-red-500/20 hover:bg-red-500/12 transition-colors">
-              <p className="text-xl font-bold text-red-400 metric-number">{stats.failed}</p>
-              <p className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">Failed</p>
+            <div className="text-center p-3 rounded-lg bg-red-500/[0.06] border border-red-500/15 hover:border-red-500/30 transition-all duration-500">
+              <p className="text-xl font-black text-red-400 metric-number">{stats.failed}</p>
+              <p className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Failed</p>
             </div>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground/60 italic">No tasks recorded yet</p>
+          <p className="text-xs text-white/30 italic">No tasks recorded yet</p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -170,7 +170,7 @@ function RecentActivityItem({
   };
 }) {
   const agentColors: Record<string, string> = {
-    architect: "text-violet-400",
+    architect: "text-sky-400",
     merchant: "text-cyan-400",
     social: "text-amber-400",
   };
@@ -187,7 +187,7 @@ function RecentActivityItem({
   };
 
   return (
-    <div className="flex items-center gap-3 py-3.5 border-b border-border/20 last:border-0 hover:bg-primary/3 rounded-lg px-2 -mx-2 transition-colors duration-200">
+    <div className="flex items-center gap-3 py-3 border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03] rounded-lg px-2 -mx-2 transition-all duration-500 group">
       <div className="shrink-0">{statusIcons[task.status] || statusIcons.pending}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-foreground truncate font-medium">{task.title}</p>
@@ -241,14 +241,15 @@ function CrossStoreIntelligence() {
   const scheduledTotal = intel.schedulerTasks.length;
 
   return (
-    <Card className="glass-card overflow-hidden">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-          <Globe className="h-4 w-4 text-primary" />
+    <div className="bento-card overflow-hidden hover:border-cyan-500/25 hover:shadow-[0_0_25px_rgba(6,182,212,0.06)] transition-all duration-500">
+      <div className="p-5 pb-3">
+        <p className="micro-label mb-1">Intelligence</p>
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Globe className="h-4 w-4 text-cyan-400" />
           Cross-Store Intelligence
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h3>
+      </div>
+      <div className="px-5 pb-5">
         {/* Top-line aggregates */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/15 hover:bg-emerald-500/12 transition-colors">
@@ -261,9 +262,9 @@ function CrossStoreIntelligence() {
             <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Total Orders</p>
             <p className="text-xl font-extrabold text-blue-400 mt-1.5 font-heading metric-number">{intel.totalOrders.toLocaleString()}</p>
           </div>
-          <div className="p-4 rounded-xl bg-violet-500/8 border border-violet-500/15 hover:bg-violet-500/12 transition-colors">
+          <div className="p-4 rounded-xl bg-sky-500/8 border border-sky-500/15 hover:bg-sky-500/12 transition-colors">
             <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Total Products</p>
-            <p className="text-xl font-extrabold text-violet-400 mt-1.5 font-heading metric-number">{intel.totalProducts.toLocaleString()}</p>
+            <p className="text-xl font-extrabold text-sky-400 mt-1.5 font-heading metric-number">{intel.totalProducts.toLocaleString()}</p>
           </div>
           <div className="p-4 rounded-xl bg-amber-500/8 border border-amber-500/15 hover:bg-amber-500/12 transition-colors">
             <p className="text-[9px] text-muted-foreground/70 uppercase tracking-widest font-semibold">Low Stock Alerts</p>
@@ -386,8 +387,8 @@ function CrossStoreIntelligence() {
             </table>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -403,20 +404,26 @@ export default function Home() {
   const { data: recentOrders, isLoading: ordersLoading } = trpc.dashboard.recentOrders.useQuery({ limit: 8 }, { refetchInterval: 15000 });
 
   const agentConfigs = [
-    { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-violet-500/15 text-violet-400" },
+    { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-sky-500/15 text-sky-400" },
     { name: "Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/15 text-cyan-400" },
     { name: "Social Bot", type: "social", icon: Megaphone, color: "bg-amber-500/15 text-amber-400" },
   ];
 
   return (
-    <div className="space-y-8 page-enter">
+    <div className="space-y-8 page-enter relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">COMMAND</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '40%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight font-heading gradient-text">
-            Welcome back{user?.name ? `, ${user.name}` : ""}
+          <p className="micro-label mb-2">Command Center</p>
+          <h1 className="text-3xl font-black tracking-tighter text-white">
+            Welcome back{user?.name ? `, ${user.name}` : ""}<span className="text-sky-400">.</span>
           </h1>
-          <p className="text-sm text-muted-foreground/80 mt-1.5">
+          <p className="text-sm text-white/40 mt-1.5">
             Your autonomous bots are building, selling, and marketing 24/7 — zero manual work required.
           </p>
         </div>
@@ -447,7 +454,7 @@ export default function Home() {
       )}
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stagger-list" role="region" aria-label="Key metrics">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-list" role="region" aria-label="Key metrics">
         <MetricCard
           title="Total Revenue"
           value={metricsError ? "—" : `$${((metrics?.totalRevenue ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
@@ -467,7 +474,7 @@ export default function Home() {
           value={metricsError ? "—" : (metrics?.activeProducts ?? 0).toLocaleString()}
           icon={Package}
           loading={metricsLoading}
-          accentColor={metricsError ? "bg-red-500/10 text-red-400" : "bg-violet-500/10 text-violet-400"}
+          accentColor={metricsError ? "bg-red-500/10 text-red-400" : "bg-sky-500/10 text-sky-400"}
         />
         <MetricCard
           title="Connected Platforms"
@@ -480,28 +487,31 @@ export default function Home() {
       </div>
 
       {/* Connected Stores Section */}
-      <Card className="glass-card">
-        <CardHeader className="pb-3">
+      <div className="bento-card hover:border-sky-500/20 transition-all duration-500">
+        <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Store className="h-4 w-4 text-primary" />
-              Connected Stores
-            </CardTitle>
+            <div>
+              <p className="micro-label mb-1">Infrastructure</p>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Store className="h-4 w-4 text-sky-400" />
+                Connected Stores
+              </h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground hover:text-foreground gap-1"
+              className="text-xs text-white/40 hover:text-white gap-1 transition-all duration-500"
               onClick={() => setLocation("/integrations")}
             >
               Manage <ArrowRight className="h-3 w-3" />
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-5 pb-5">
           {storesLoading ? (
             <div className="flex gap-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 w-48 rounded-lg" />
+                <Skeleton key={i} className="h-20 w-48 rounded-lg bg-white/5" />
               ))}
             </div>
           ) : stores && stores.length > 0 ? (
@@ -509,8 +519,8 @@ export default function Home() {
               {stores.map((store: any) => (
                 <div
                   key={store.id}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all hover:border-primary/30 ${
-                    PLATFORM_COLORS[store.platform] || "bg-secondary/30 border-border/50"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-500 hover:border-sky-500/30 hover:shadow-[0_0_15px_rgba(14,165,233,0.06)] ${
+                    PLATFORM_COLORS[store.platform] || "bg-white/[0.03] border-white/[0.08]"
                   }`}
                 >
                   <span className="text-xl">{PLATFORM_ICONS[store.platform] || "🏪"}</span>
@@ -530,7 +540,7 @@ export default function Home() {
               {/* Add Store CTA */}
               <button
                 onClick={() => setLocation("/integrations")}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-white/[0.08] hover:border-sky-500/30 hover:bg-sky-500/[0.04] transition-all duration-500 text-white/30 hover:text-white"
               >
                 <Plug className="h-4 w-4" />
                 <span className="text-sm">Connect Store</span>
@@ -553,44 +563,47 @@ export default function Home() {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Live Sales Feed + Cross-Store Intelligence */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Live Sales Feed */}
-        <Card className="glass-card">
-          <CardHeader className="pb-3">
+        <div className="bento-card hover:border-emerald-500/25 hover:shadow-[0_0_25px_rgba(52,211,153,0.06)] transition-all duration-500">
+          <div className="p-5 pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+              <div>
+                <p className="micro-label mb-1">Real-Time</p>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <ShoppingBag className="h-4 w-4 text-emerald-400" />
                 Live Sales Feed
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
-              </CardTitle>
+              </h3>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-muted-foreground hover:text-foreground gap-1"
+                className="text-xs text-white/40 hover:text-white gap-1 transition-all duration-500"
                 onClick={() => setLocation("/merchant")}
               >
                 View All <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-5 pb-5">
             {ordersLoading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-8 w-8 rounded-lg bg-white/5" />
                     <div className="flex-1 space-y-1">
-                      <Skeleton className="h-3.5 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3.5 w-3/4 bg-white/5" />
+                      <Skeleton className="h-3 w-1/2 bg-white/5" />
                     </div>
-                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-5 w-16 bg-white/5" />
                   </div>
                 ))}
               </div>
@@ -599,7 +612,7 @@ export default function Home() {
                 {recentOrders.map((order: any) => (
                   <div
                     key={order.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-secondary/30 transition-colors group"
+                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.03] transition-all duration-500 group"
                   >
                     <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
                       <ShoppingCart className="h-3.5 w-3.5 text-emerald-400" />
@@ -638,31 +651,34 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No orders yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
+                <ShoppingBag className="h-10 w-10 text-white/10 mb-3" />
+                <p className="text-sm text-white/50">No orders yet</p>
+                <p className="text-xs text-white/30 mt-1">
                   Sales from all connected stores will appear here in real-time
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         {/* Cross-Store Intelligence */}
         <CrossStoreIntelligence />
       </div>
 
       {/* Pricing Tiers */}
-      <Card className="bg-card border-border/50">
-        <CardHeader className="pb-3">
+      <div className="bento-card hover:border-sky-500/20 transition-all duration-500">
+        <div className="p-5 pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              orchAIstrate Plans
-            </CardTitle>
-            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">Beta Pricing</Badge>
+            <div>
+              <p className="micro-label mb-1">Subscription</p>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-sky-400" />
+                orchAIstrate Plans
+              </h3>
+            </div>
+            <Badge variant="outline" className="text-[10px] border-sky-500/30 text-sky-400 bg-sky-500/[0.06]">Beta Pricing</Badge>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="px-5 pb-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { name: "Starter", price: "$49", period: "/mo", bots: ["Builder Bot"], highlight: false, badge: null, description: "Research niches, source products, build your first store.", cta: "Get Started" },
@@ -672,10 +688,10 @@ export default function Home() {
             ].map((tier) => (
               <div
                 key={tier.name}
-                className={`relative p-4 rounded-xl border transition-all ${
+                className={`relative p-4 rounded-xl border transition-all duration-500 ${
                   tier.highlight
-                    ? "border-primary/50 bg-primary/5 gradient-border"
-                    : "border-border/50 bg-secondary/20 hover:border-primary/20"
+                    ? "border-sky-500/40 bg-sky-500/[0.06] shadow-[0_0_25px_rgba(14,165,233,0.1)]"
+                    : "border-white/[0.08] bg-white/[0.02] hover:border-sky-500/20 hover:bg-sky-500/[0.03]"
                 }`}
               >
                 {tier.badge && (
@@ -706,8 +722,8 @@ export default function Home() {
                 <Button
                   size="sm"
                   variant={tier.highlight ? "default" : "outline"}
-                  className={`w-full text-xs h-8 ${
-                    tier.highlight ? "btn-glow" : "bg-transparent hover:bg-primary/10"
+                  className={`w-full text-xs h-8 transition-all duration-500 ${
+                    tier.highlight ? "btn-cyber" : "bg-transparent border-white/[0.08] text-white/60 hover:border-sky-500/30 hover:text-white hover:bg-sky-500/[0.06]"
                   }`}
                   disabled={tier.name === "Scale"}
                   onClick={() => setLocation("/onboarding")}
@@ -717,14 +733,14 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Agent Status + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Agent Status */}
-        <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Bot Status</h2>
+        <div className="lg:col-span-1 space-y-3">
+          <p className="micro-label">Bot Status</p>
           {agentConfigs.map((agent) => {
             const stats = agentStatus?.find((s: any) => s.agentType === agent.type);
             return (
@@ -743,32 +759,35 @@ export default function Home() {
 
         {/* Recent Activity */}
         <div className="lg:col-span-2">
-          <Card className="glass-card h-full">
-            <CardHeader className="pb-3">
+          <div className="bento-card h-full hover:border-sky-500/20 transition-all duration-500">
+            <div className="p-5 pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                <Activity className="h-4 w-4 text-primary" />
-                Recent Bot Activity
-              </CardTitle>
+                <div>
+                  <p className="micro-label mb-1">Live Feed</p>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-sky-400" />
+                    Recent Bot Activity
+                  </h3>
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-muted-foreground hover:text-foreground gap-1"
+                  className="text-xs text-white/40 hover:text-white gap-1 transition-all duration-500"
                   onClick={() => setLocation("/activity")}
                 >
                   View All <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+            <div className="px-5 pb-5">
               {activityLoading ? (
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-4 w-4 rounded-full bg-white/5" />
                       <div className="flex-1 space-y-1">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
+                        <Skeleton className="h-4 w-3/4 bg-white/5" />
+                        <Skeleton className="h-3 w-1/2 bg-white/5" />
                       </div>
                     </div>
                   ))}
@@ -781,15 +800,15 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Zap className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No bot activity yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
+                  <Zap className="h-10 w-10 text-white/10 mb-3" />
+                  <p className="text-sm text-white/50">No bot activity yet</p>
+                  <p className="text-xs text-white/30 mt-1">
                     Start by connecting a store or running niche research
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -42,10 +42,15 @@ export default function PluginStore() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">PLUGINS</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Store className="w-6 h-6 text-purple-500" />
+          <Store className="w-6 h-6 text-blue-500" />
           Bot App Store
         </h1>
         <p className="text-sm text-muted-foreground mt-1">

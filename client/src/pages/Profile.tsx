@@ -29,7 +29,7 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
   icon: any; label: string; value: string | number; color: string; loading?: boolean;
 }) {
   return (
-    <div className={`p-4 rounded-xl border transition-colors hover:bg-secondary/20 ${color}`}>
+    <div className={`p-4 rounded-xl border transition-colors hover:bg-white/[0.02] ${color}`}>
       <div className="flex items-center gap-2 mb-2">
         <Icon className="h-4 w-4" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</span>
@@ -57,6 +57,12 @@ export default function Profile() {
   const completedTasks = agentStatus?.reduce((sum: number, s: any) => sum + Number(s.completed || 0), 0) || 0;
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">PROFILE</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6 p-6 max-w-4xl mx-auto page-enter">
       {/* Profile Header */}
       <div className="flex items-start gap-6">
@@ -66,14 +72,14 @@ export default function Profile() {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h1 className="text-2xl font-extrabold tracking-tight font-heading text-foreground">
+          <h1 className="text-2xl font-black tracking-tighter font-heading text-foreground">
             {user?.name || "User"}
           </h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge
               variant="outline"
               className={user?.role === "admin"
-                ? "text-primary border-primary/30 bg-primary/10"
+                ? "text-primary border-primary/30 bg-sky-500/10"
                 : "text-muted-foreground border-border"
               }
             >
@@ -100,7 +106,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <Separator className="border-border/30" />
+      <Separator className="border-white/[0.06]" />
 
       {/* Usage Stats */}
       <div>
@@ -127,7 +133,7 @@ export default function Profile() {
             icon={Zap}
             label="Bot Tasks Run"
             value={totalTasks}
-            color="bg-violet-500/8 border-violet-500/15"
+            color="bg-sky-500/8 border-sky-500/15"
             loading={agentLoading}
           />
           <StatCard
@@ -141,7 +147,7 @@ export default function Profile() {
       </div>
 
       {/* Connected Stores */}
-      <Card className="glass-card">
+      <Card className="bento-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
@@ -163,7 +169,7 @@ export default function Profile() {
             <div className="space-y-3">
               {[1, 2].map(i => (
                 <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-10 w-10 rounded-lg bg-white/5" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-40" />
                     <Skeleton className="h-3 w-24" />
@@ -174,8 +180,8 @@ export default function Profile() {
           ) : storeList.length > 0 ? (
             <div className="space-y-2">
               {storeList.map((store: any) => (
-                <div key={store.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
-                  <div className="h-10 w-10 rounded-lg bg-secondary/30 flex items-center justify-center border border-border/20">
+                <div key={store.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors">
+                  <div className="h-10 w-10 rounded-lg bg-white/[0.03] flex items-center justify-center border border-white/[0.05]">
                     <Store className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -212,10 +218,10 @@ export default function Profile() {
       </Card>
 
       {/* Bot Performance Summary */}
-      <Card className="glass-card">
+      <Card className="bento-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-            <Bot className="h-4 w-4 text-violet-400" />
+            <Bot className="h-4 w-4 text-sky-400" />
             Bot Performance
           </CardTitle>
         </CardHeader>
@@ -227,7 +233,7 @@ export default function Profile() {
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {[
-                { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-violet-500/8 border-violet-500/20 text-violet-400" },
+                { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-sky-500/8 border-sky-500/20 text-sky-400" },
                 { name: "Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/8 border-cyan-500/20 text-cyan-400" },
                 { name: "Social Bot", type: "social", icon: Megaphone, color: "bg-amber-500/8 border-amber-500/20 text-amber-400" },
               ].map(bot => {
@@ -257,11 +263,11 @@ export default function Profile() {
       </Card>
 
       {/* Installed Plugins */}
-      <Card className="glass-card">
+      <Card className="bento-card">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Zap className="h-4 w-4 text-purple-400" />
+              <Zap className="h-4 w-4 text-blue-400" />
               Installed Plugins
             </CardTitle>
             <Button
@@ -282,9 +288,9 @@ export default function Profile() {
           ) : installedPlugins && installedPlugins.length > 0 ? (
             <div className="space-y-2">
               {installedPlugins.map((inst: any) => (
-                <div key={inst.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
-                  <div className="h-8 w-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                    <Zap className="h-3.5 w-3.5 text-purple-400" />
+                <div key={inst.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors">
+                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                    <Zap className="h-3.5 w-3.5 text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{inst.plugin?.pluginName || "Plugin"}</p>
@@ -312,6 +318,7 @@ export default function Profile() {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

@@ -119,7 +119,12 @@ export default function IntegrationsPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">INTEGRATIONS</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -135,7 +140,7 @@ export default function IntegrationsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card/50 border-border/50">
+        <Card className="bg-card/50 border-white/[0.08]">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-500/10">
@@ -148,7 +153,7 @@ export default function IntegrationsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card/50 border-border/50">
+        <Card className="bg-card/50 border-white/[0.08]">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
@@ -161,11 +166,11 @@ export default function IntegrationsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card/50 border-border/50">
+        <Card className="bg-card/50 border-white/[0.08]">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Share2 className="h-5 w-5 text-purple-400" />
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Share2 className="h-5 w-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{summary?.socialAccounts ?? 0}</p>
@@ -177,7 +182,7 @@ export default function IntegrationsPage() {
       </div>
 
       <Tabs defaultValue="ecommerce" className="space-y-4">
-        <TabsList className="bg-muted/30 border border-border/50">
+        <TabsList className="bg-muted/30 border border-white/[0.08]">
           <TabsTrigger value="ecommerce" className="gap-2">
             <ShoppingBag className="h-4 w-4" />
             E-Commerce Platforms
@@ -198,7 +203,7 @@ export default function IntegrationsPage() {
             {(ecommercePlatforms || []).map((platform: any) => {
               const isConnected = connectedPlatformIds.has(platform.id);
               return (
-                <Card key={platform.id} className={`bg-card/50 border-border/50 transition-all hover:border-primary/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
+                <Card key={platform.id} className={`bg-card/50 border-white/[0.08] transition-all hover:border-sky-500/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -260,7 +265,7 @@ export default function IntegrationsPage() {
             {(socialPlatforms || []).map((platform: any) => {
               const isConnected = connectedSocialIds.has(platform.id);
               return (
-                <Card key={platform.id} className={`bg-card/50 border-border/50 transition-all hover:border-primary/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
+                <Card key={platform.id} className={`bg-card/50 border-white/[0.08] transition-all hover:border-sky-500/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -313,7 +318,7 @@ export default function IntegrationsPage() {
               );
             })}
           </div>
-          <Card className="bg-card/30 border-border/30">
+          <Card className="bg-card/30 border-white/[0.06]">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -339,17 +344,17 @@ export default function IntegrationsPage() {
               <ShoppingBag className="h-4 w-4" /> E-Commerce Credentials
             </h3>
             {(credentials || []).length === 0 ? (
-              <Card className="bg-card/30 border-border/30">
+              <Card className="bg-card/30 border-white/[0.06]">
                 <CardContent className="pt-6 text-center">
                   <WifiOff className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No e-commerce platforms connected yet.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Go to the E-Commerce Platforms tab to connect your first store.</p>
+                  <p className="text-xs text-white/30 mt-1">Go to the E-Commerce Platforms tab to connect your first store.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-2">
                 {(credentials || []).map((cred: any) => (
-                  <Card key={cred.id} className="bg-card/50 border-border/50">
+                  <Card key={cred.id} className="bg-card/50 border-white/[0.08]">
                     <CardContent className="pt-4 pb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -403,17 +408,17 @@ export default function IntegrationsPage() {
               <Share2 className="h-4 w-4" /> Social Media Accounts
             </h3>
             {(socialAccounts || []).length === 0 ? (
-              <Card className="bg-card/30 border-border/30">
+              <Card className="bg-card/30 border-white/[0.06]">
                 <CardContent className="pt-6 text-center">
                   <WifiOff className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No social media accounts connected yet.</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Go to the Social Media tab to link your accounts for Social Bot.</p>
+                  <p className="text-xs text-white/30 mt-1">Go to the Social Media tab to link your accounts for Social Bot.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-2">
                 {(socialAccounts || []).map((account: any) => (
-                  <Card key={account.id} className="bg-card/50 border-border/50">
+                  <Card key={account.id} className="bg-card/50 border-white/[0.08]">
                     <CardContent className="pt-4 pb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">

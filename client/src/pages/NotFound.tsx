@@ -10,7 +10,7 @@ export default function NotFound() {
       {/* Background glow effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative z-10 text-center px-6 max-w-lg mx-auto">
@@ -25,7 +25,7 @@ export default function NotFound() {
         </div>
 
         {/* Error code */}
-        <div className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-violet-400 mb-4 leading-none">
+        <div className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-sky-400 mb-4 leading-none">
           404
         </div>
 

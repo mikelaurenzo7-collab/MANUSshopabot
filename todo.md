@@ -396,3 +396,58 @@
 - [x] Update VITE_APP_TITLE secret to "orchAIstrate" — user must update via Settings > General
 - [x] Generated new orchAIstrate logo (neural network + AI icon)
 - [x] Verify 0 TypeScript errors and all 539 tests passing
+
+## Sprint 19: Cyber-Industrial Visual Overhaul
+
+- [x] Global CSS: dark theme tokens (#000 base, #0a0a0a cards, electric blue accent vars), scan-line texture, glow utilities
+- [x] Typography: Inter font-black headlines, micro-label utility class, tracking-tighter display headers
+- [x] Landing page: cinematic dark hero with glow leaks, ghost watermark text, bento grid cards, gradient pill CTAs
+- [x] DashboardLayout: Cyber-Industrial sidebar (dark bg, sky-500 accent, glow on active item), header polish
+- [x] Home (Command Center): bento grid layout, glow cards, live sales feed card, KPI cards with glow
+- [x] Architect page: bento grid tabs, glow card borders, micro-labels
+- [x] Merchant page: industrial card styling, pipeline visualization polish
+- [x] Social page: dark card grid, gradient accents
+- [x] Analytics page: chart cards with glow borders, dark grid
+- [x] Workflows page: terminal-style card layout
+- [x] Activity page: dark feed styling
+- [x] Intelligence page: dark bento cards
+- [x] Integrations page: platform card grid with hover glow
+- [x] Config page: terminal-style settings panels
+- [x] PlatformHealth page: status card glow system
+- [x] Profile page: dark profile card layout
+- [x] PluginStore page: dark marketplace card grid
+- [x] SupplierPOs page: dark table/card styling
+- [x] Verify 0 TypeScript errors and all 539 tests passing
+
+## Sprint 19: Cyber-Industrial Visual Overhaul (Intel + Supabase + Vercel)
+
+- [x] Global CSS: grid-line background utility, scan-line overlay, bento grid utilities
+- [x] Global CSS: micro-label class, ghost watermark class, announcement banner styles
+- [x] Global CSS: social proof ticker animation, terminal card styles
+- [x] Landing page: announcement banner pill at top
+- [x] Landing page: two-line hero gradient (white + electric blue/cyan)
+- [x] Landing page: Vercel-style CSS grid line background on hero
+- [x] Landing page: inline metric callouts in hero subtext
+- [x] Landing page: social proof platform logo ticker (infinite scroll)
+- [x] Landing page: terminal/code block card showing bot activity
+- [x] Landing page: community testimonials Twitter-card grid
+- [x] Landing page: bento feature grid with micro-labels
+- [x] Landing page: light leak blobs (pointer-events-none)
+- [x] DashboardLayout: Cyber-Industrial sidebar skin
+- [x] Command Center: bento grid layout, ghost watermark, live leaderboard card
+- [x] Architect/Merchant/Social: terminal cards, micro-labels
+- [x] Analytics/Workflows/Activity/Intelligence/Config/PlatformHealth: micro-labels, bento polish
+- [x] Integrations/Profile/PluginStore/SupplierPOs: consistent skin
+- [x] Verify 0 TypeScript errors and all 539 tests passing
+
+## Sprint 19b: Industrial Color Palette Overhaul
+
+- [x] Replace violet/fuchsia primary with electric blue (#0EA5E9 / #0284C7)
+- [x] Replace fuchsia accents with sharp orange/red (#F97316 / #EF4444)
+- [x] Keep cyan for Merchant Bot, shift Social Bot to orange
+- [x] Update all CSS variables, glow colors, chart colors, sidebar colors
+- [x] Update BrandName component gradient to electric blue
+- [x] Update all light leak blobs, ghost watermark, micro-labels to new palette
+- [x] Update Landing page bot card colors, pricing, testimonials
+- [x] Update DashboardLayout sidebar accent colors
+- [x] Update all dashboard page accent colors consistently — all 14 dashboard pages + OrchestratorGraph updated

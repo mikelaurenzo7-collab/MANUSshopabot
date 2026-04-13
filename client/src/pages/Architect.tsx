@@ -47,7 +47,7 @@ function NicheReportCard({ report }: { report: any }) {
         : "text-destructive border-destructive/30";
 
   return (
-    <Card className="bg-card border-border/50 hover:border-primary/20 transition-all">
+    <Card className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -89,7 +89,7 @@ function NicheReportCard({ report }: { report: any }) {
           </div>
         )}
         {data.keyInsights && data.keyInsights.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="mt-4 pt-4 border-t border-white/[0.08]">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Key Insights</p>
             <div className="space-y-1">
               {data.keyInsights.slice(0, 3).map((insight: string, i: number) => (
@@ -268,18 +268,24 @@ export default function ArchitectPage() {
   });
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">ARCHITECT</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-violet-500/15 flex items-center justify-center">
-          <Bot className="h-5 w-5 text-violet-400" />
+        <div className="h-10 w-10 rounded-lg bg-sky-500/15 flex items-center justify-center">
+          <Bot className="h-5 w-5 text-sky-400" />
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">Builder Bot</h1>
           <p className="text-sm text-muted-foreground">Niche research, product sourcing, store setup, health checks, and competitive intelligence</p>
         </div>
         <div className="ml-auto">
-          <Badge variant="outline" className="text-[10px] border-violet-400/30 text-violet-400">
+          <Badge variant="outline" className="text-[10px] border-sky-400/30 text-sky-400">
             <Zap className="h-3 w-3 mr-1" />
             AI-Powered
           </Badge>
@@ -304,7 +310,7 @@ export default function ArchitectPage() {
 
         {/* Niche Research Tab */}
         <TabsContent value="research" className="space-y-4">
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Search className="h-4 w-4 text-primary" />
@@ -350,7 +356,7 @@ export default function ArchitectPage() {
           {reportsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1, 2].map((i) => (
-                <Card key={i} className="bg-card border-border/50">
+                <Card key={i} className="bento-card">
                   <CardContent className="p-5 space-y-3">
                     <Skeleton className="h-5 w-40" />
                     <Skeleton className="h-4 w-full" />
@@ -371,11 +377,11 @@ export default function ArchitectPage() {
               ))}
             </div>
           ) : (
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Lightbulb className="h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No niche reports yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Enter a keyword above to get started</p>
+                <p className="text-xs text-white/30 mt-1">Enter a keyword above to get started</p>
               </CardContent>
             </Card>
           )}
@@ -383,7 +389,7 @@ export default function ArchitectPage() {
 
         {/* Product Catalog Tab */}
         <TabsContent value="catalog" className="space-y-4">
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Package className="h-4 w-4 text-primary" />
@@ -463,7 +469,7 @@ export default function ArchitectPage() {
                 </div>
               )}
               {generateCatalog.data && (
-                <div className="mt-4 pt-4 border-t border-border/50">
+                <div className="mt-4 pt-4 border-t border-white/[0.08]">
                   <div className="flex items-center gap-2 mb-3">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                     <p className="text-sm font-medium text-foreground">
@@ -503,10 +509,10 @@ export default function ArchitectPage() {
           {storesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1, 2].map((i) => (
-                <Card key={i} className="bg-card border-border/50">
+                <Card key={i} className="bento-card">
                   <CardContent className="p-5 space-y-3">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-lg" />
+                      <Skeleton className="h-10 w-10 rounded-lg bg-white/5" />
                       <div className="space-y-1.5">
                         <Skeleton className="h-4 w-32" />
                         <Skeleton className="h-3 w-20" />
@@ -519,10 +525,10 @@ export default function ArchitectPage() {
           ) : storeOptions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {storeOptions.map((store: any) => (
-                <Card key={store.id} className="bg-card border-border/50 hover:border-primary/20 transition-all">
+                <Card key={store.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-lg">
+                      <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center text-lg">
                         {platformIcons[store.platform] || "🏪"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -544,7 +550,7 @@ export default function ArchitectPage() {
                     </div>
                     {store.niche && (
                       <p className="text-xs text-muted-foreground mb-2">
-                        <span className="text-muted-foreground/60">Niche: </span>{store.niche}
+                        <span className="text-white/30">Niche: </span>{store.niche}
                       </p>
                     )}
                     {store.platformDomain && (
@@ -572,11 +578,11 @@ export default function ArchitectPage() {
               ))}
             </div>
           ) : (
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Store className="h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No stores connected</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Click "Connect Store" to get started</p>
+                <p className="text-xs text-white/30 mt-1">Click "Connect Store" to get started</p>
                 <Button
                   size="sm"
                   className="mt-4"
@@ -592,7 +598,7 @@ export default function ArchitectPage() {
 
         {/* Platforms Tab */}
         <TabsContent value="platforms" className="space-y-4">
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="h-4 w-4 text-primary" />
@@ -605,7 +611,7 @@ export default function ArchitectPage() {
           </Card>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {platforms?.map((p: any) => (
-              <Card key={p.id} className="bg-card border-border/50 hover:border-primary/20 transition-all">
+              <Card key={p.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">{p.icon}</span>
@@ -642,7 +648,7 @@ export default function ArchitectPage() {
         <TabsContent value="tools" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Store Health Check */}
-            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+            <Card className="bg-card border-white/[0.08] hover:border-sky-500/30 transition-all">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
@@ -678,7 +684,7 @@ export default function ArchitectPage() {
             </Card>
 
             {/* Description Rewriter */}
-            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+            <Card className="bg-card border-white/[0.08] hover:border-sky-500/30 transition-all">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
@@ -718,7 +724,7 @@ export default function ArchitectPage() {
             </Card>
 
             {/* Competitor Price Scanner */}
-            <Card className="bg-card border-border/50 hover:border-violet-500/30 transition-all">
+            <Card className="bg-card border-white/[0.08] hover:border-sky-500/30 transition-all">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
@@ -747,7 +753,7 @@ export default function ArchitectPage() {
 
           {/* AI Tools Results */}
           {healthResult && (
-            <Card className="bg-card border-border/50 border-emerald-500/30">
+            <Card className="bg-card border-white/[0.08] border-emerald-500/30">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-foreground">Health Check Results</h3>
@@ -758,19 +764,19 @@ export default function ArchitectPage() {
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">{healthResult.summary}</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                  <div className="p-2 rounded-md bg-secondary/30">
+                  <div className="p-2 rounded-md bg-white/[0.03]">
                     <p className="text-[10px] text-muted-foreground">Product Health</p>
                     <p className="text-xs font-medium">{healthResult.productHealth.activeCount} active, {healthResult.productHealth.outOfStockCount} OOS</p>
                   </div>
-                  <div className="p-2 rounded-md bg-secondary/30">
+                  <div className="p-2 rounded-md bg-white/[0.03]">
                     <p className="text-[10px] text-muted-foreground">SEO Score</p>
                     <p className="text-xs font-medium">{healthResult.seoHealth.score}/100</p>
                   </div>
-                  <div className="p-2 rounded-md bg-secondary/30">
+                  <div className="p-2 rounded-md bg-white/[0.03]">
                     <p className="text-[10px] text-muted-foreground">Conversion Score</p>
                     <p className="text-xs font-medium">{healthResult.conversionHealth.score}/100</p>
                   </div>
-                  <div className="p-2 rounded-md bg-secondary/30">
+                  <div className="p-2 rounded-md bg-white/[0.03]">
                     <p className="text-[10px] text-muted-foreground">Operations Score</p>
                     <p className="text-xs font-medium">{healthResult.operationalHealth.score}/100</p>
                   </div>
@@ -788,7 +794,7 @@ export default function ArchitectPage() {
           )}
 
           {rewriteResult && (
-            <Card className="bg-card border-border/50 border-blue-500/30">
+            <Card className="bg-card border-white/[0.08] border-blue-500/30">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-foreground">Rewritten Descriptions ({rewriteResult.products.length} products)</h3>
@@ -796,7 +802,7 @@ export default function ArchitectPage() {
                 </div>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {rewriteResult.products.map((p: any) => (
-                    <div key={p.id} className="p-3 rounded-md bg-secondary/30">
+                    <div key={p.id} className="p-3 rounded-md bg-white/[0.03]">
                       <p className="text-[10px] text-muted-foreground line-through">{p.originalTitle}</p>
                       <p className="text-xs font-medium text-foreground">{p.optimizedTitle}</p>
                       <p className="text-xs text-muted-foreground mt-1">{p.optimizedDescription}</p>
@@ -816,7 +822,7 @@ export default function ArchitectPage() {
           )}
 
           {priceScanResult && (
-            <Card className="bg-card border-border/50 border-amber-500/30">
+            <Card className="bg-card border-white/[0.08] border-amber-500/30">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-foreground">Price Scan Results</h3>
@@ -825,7 +831,7 @@ export default function ArchitectPage() {
                 <p className="text-xs text-muted-foreground mb-3">{priceScanResult.overallStrategy}</p>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {priceScanResult.products.map((p: any, i: number) => (
-                    <div key={i} className="p-3 rounded-md bg-secondary/30">
+                    <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-xs font-medium text-foreground">{p.productName}</p>
                         <Badge variant="outline" className={`text-[9px] ${p.pricePosition === 'below_market' ? 'text-emerald-400 border-emerald-400/30' : p.pricePosition === 'above_market' ? 'text-red-400 border-red-400/30' : 'text-amber-400 border-amber-400/30'}`}>{p.pricePosition.replace('_', ' ')}</Badge>
@@ -851,19 +857,19 @@ export default function ArchitectPage() {
           )}
 
           {/* New Workflow Capabilities */}
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-5">
               <h3 className="text-sm font-semibold text-foreground mb-3">Builder Bot Capabilities</h3>
               <div className="space-y-2">
-                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
-                  <Globe className="h-4 w-4 text-violet-400" />
+                <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
+                  <Globe className="h-4 w-4 text-sky-400" />
                   <div>
                     <p className="text-xs font-medium text-foreground">Multi-Store Expansion</p>
                     <p className="text-[11px] text-muted-foreground">Cross-platform strategy for Shopify, Etsy, Amazon, and more</p>
                   </div>
-                  <Badge variant="outline" className="ml-auto text-[10px] border-violet-400/30 text-violet-400">Workflow</Badge>
+                  <Badge variant="outline" className="ml-auto text-[10px] border-sky-400/30 text-sky-400">Workflow</Badge>
                 </div>
-                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                   <ShieldCheck className="h-4 w-4 text-emerald-400" />
                   <div>
                     <p className="text-xs font-medium text-foreground">Brand Audit</p>
@@ -871,7 +877,7 @@ export default function ArchitectPage() {
                   </div>
                   <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Workflow</Badge>
                 </div>
-                <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                   <Sparkles className="h-4 w-4 text-blue-400" />
                   <div>
                     <p className="text-xs font-medium text-foreground">Product Optimization</p>
@@ -960,11 +966,11 @@ export default function ArchitectPage() {
                     You'll be redirected to Shopify to authorize orchAIstrate. This is a one-time step.
                   </p>
                 </div>
-                <div className="rounded-lg bg-violet-500/10 border border-violet-400/20 p-3">
+                <div className="rounded-lg bg-sky-500/10 border border-sky-400/20 p-3">
                   <div className="flex items-start gap-2">
-                    <ShieldCheck className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                    <ShieldCheck className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-muted-foreground">
-                      <p className="font-medium text-violet-400 mb-0.5">Secure OAuth Connection</p>
+                      <p className="font-medium text-sky-400 mb-0.5">Secure OAuth Connection</p>
                       <p>orchAIstrate will request access to products, orders, inventory, themes, and analytics. You can revoke access from your Shopify admin at any time.</p>
                     </div>
                   </div>
@@ -1016,6 +1022,7 @@ export default function ArchitectPage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }

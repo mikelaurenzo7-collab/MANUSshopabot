@@ -30,7 +30,7 @@ const agentIcons: Record<string, any> = {
   social: Megaphone,
 };
 const agentColors: Record<string, string> = {
-  architect: "text-violet-400",
+  architect: "text-sky-400",
   merchant: "text-cyan-400",
   social: "text-amber-400",
 };
@@ -80,10 +80,16 @@ export default function ActivityPage() {
   };
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">ACTIVITY</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
           <Activity className="h-5 w-5 text-primary" />
         </div>
         <div>
@@ -148,10 +154,10 @@ export default function ActivityPage() {
           {tasksLoading ? (
             <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Card key={i} className="bg-card border-border/50">
+                <Card key={i} className="bento-card">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-4 w-4 rounded-full bg-white/5" />
                       <div className="flex-1 space-y-1">
                         <Skeleton className="h-4 w-3/4" />
                         <Skeleton className="h-3 w-1/2" />
@@ -166,7 +172,7 @@ export default function ActivityPage() {
               {tasks.map((task: any) => {
                 const AgentIcon = agentIcons[task.agentType] || Activity;
                 return (
-                  <Card key={task.id} className="bg-card border-border/50 hover:border-primary/10 transition-all">
+                  <Card key={task.id} className="bg-card border-white/[0.08] hover:border-primary/10 transition-all">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5">{statusIcons[task.status] || statusIcons.pending}</div>
@@ -207,7 +213,7 @@ export default function ActivityPage() {
               })}
             </div>
           ) : (
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No bot activity recorded yet</p>
@@ -244,7 +250,7 @@ export default function ActivityPage() {
           {approvalsLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="bg-card border-border/50">
+                <Card key={i} className="bento-card">
                   <CardContent className="p-5 space-y-3">
                     <Skeleton className="h-5 w-48" />
                     <Skeleton className="h-4 w-full" />
@@ -321,11 +327,11 @@ export default function ActivityPage() {
               ))}
             </div>
           ) : (
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <CheckCircle2 className="h-10 w-10 text-emerald-400/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No pending approvals</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">All bot decisions are up to date</p>
+                <p className="text-xs text-white/30 mt-1">All bot decisions are up to date</p>
               </CardContent>
             </Card>
           )}
@@ -336,7 +342,7 @@ export default function ActivityPage() {
           {allApprovals && allApprovals.length > 0 ? (
             <div className="space-y-2">
               {allApprovals.map((item: any) => (
-                <Card key={item.id} className="bg-card border-border/50">
+                <Card key={item.id} className="bento-card">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -367,7 +373,7 @@ export default function ActivityPage() {
               ))}
             </div>
           ) : (
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm text-muted-foreground">No decisions recorded yet</p>
@@ -376,6 +382,7 @@ export default function ActivityPage() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 }

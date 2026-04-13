@@ -1,0 +1,58 @@
+Landing Page Visual Audit — Cyber-Industrial Overhaul (Sprint 19)
+
+HERO SECTION:
+✅ Announcement banner pill: "NEW Merchant Bot now supports Amazon FBA >" — looks great
+✅ Micro-label "AUTONOMOUS COMMERCE PLATFORM" in electric blue — perfect Intel treatment
+✅ Two-line hero: "Your store runs itself." (white, font-black) + "You collect the revenue." (gradient blue) — Supabase style nailed
+✅ Metric callouts inline: "30-min", "0-touch", "24/7" — Vercel style
+✅ Two CTA buttons: "Launch Command Center" (electric blue pill) + "See How It Works" (outline)
+✅ Trust line: "No credit card required · Cancel anytime · 30-day guarantee"
+✅ Ghost watermark "ORCHESTRATE" visible behind hero — Intel style
+✅ Grid line background visible — Vercel style
+
+PLATFORM TICKER:
+✅ Scrolling platform logos: Shopify, Amazon, Etsy, eBay, TikTok Shop, Meta Ads, Google Ads, WooCommerce, BigCommerce, Walmart, Pinterest, Twitter/X, Wix, YouTube, Zendrop — Supabase style
+
+STAT CALLOUTS:
+✅ 4 stat cards with icons: <30 min, 0 clicks, 24/7, 15+ — clean, electric blue/cyan
+
+TERMINAL CARD:
+✅ Terminal with red/yellow/green dots header
+✅ Monospace font with colored output lines
+✅ Shows full bot deployment sequence
+✅ Blinking cursor at bottom — looks amazing
+
+BOT SQUAD SECTION:
+✅ Micro-label "THE BEAST SQUAD" in electric blue
+✅ "Three bots. One mission." — font-black, tracking-tight
+✅ 3 bento cards with icons, micro-labels, descriptions, and feature lists
+✅ Each card has color-coded micro-label (blue/cyan/orange)
+
+TESTIMONIALS:
+✅ Micro-label "SOCIAL PROOF" 
+✅ "Sellers are already winning." — font-black
+✅ 3 testimonial cards with 5-star ratings, quotes, avatars, names, roles
+✅ Cards have proper dark bg and border treatment
+
+PRICING:
+✅ Micro-label "PRICING"
+✅ "Simple, transparent pricing." — font-black
+✅ 4 pricing tiers: Starter ($49), Growth ($149), Pro ($299), Scale ($599)
+✅ Pro card has cyan glow/border (Best Value)
+✅ "Beta Pricing" badge
+✅ Badges: Popular, Best Value, Coming Soon
+
+TRUST BADGES:
+✅ SOC 2 Ready, Real-time Analytics, 15+ Integrations — 3 trust badges with icons
+
+FOOTER CTA:
+✅ Micro-label "READY TO LAUNCH"
+✅ "Your bots are standing by." — font-black
+✅ "Start Free Today" electric blue pill button
+✅ Trust line below
+
+ISSUES TO FIX:
+- The red scanline border at the very top of the page looks like a CSS artifact — need to check
+- The footer is missing (no copyright, no links, no brand)
+- The "DEPLOY" ghost watermark section might be missing
+- Need to verify light leak blobs are rendering behind sections

@@ -18,14 +18,14 @@ const PLATFORM_ICONS: Record<string, string> = {
 
 const PLATFORM_COLORS: Record<string, string> = {
   shopify: "border-green-500/30 bg-green-500/5",
-  woocommerce: "border-purple-500/30 bg-purple-500/5",
+  woocommerce: "border-blue-500/30 bg-blue-500/5",
   amazon: "border-orange-500/30 bg-orange-500/5",
   etsy: "border-red-500/30 bg-red-500/5",
   ebay: "border-blue-500/30 bg-blue-500/5",
   tiktok_shop: "border-pink-500/30 bg-pink-500/5",
   walmart: "border-sky-500/30 bg-sky-500/5",
   meta: "border-blue-600/30 bg-blue-600/5",
-  instagram: "border-fuchsia-500/30 bg-fuchsia-500/5",
+  instagram: "border-cyan-500/30 bg-cyan-500/5",
   tiktok: "border-pink-500/30 bg-pink-500/5",
   twitter: "border-sky-400/30 bg-sky-400/5",
   pinterest: "border-red-500/30 bg-red-500/5",
@@ -68,7 +68,7 @@ function HealthCard({ result }: { result: HealthResult }) {
       <div className="flex items-center gap-3 shrink-0 ml-4">
         {result.healthy ? (
           <>
-            <span className="text-xs text-muted-foreground/60">{result.latencyMs}ms</span>
+            <span className="text-xs text-white/30">{result.latencyMs}ms</span>
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs">
               <CheckCircle2 className="w-3 h-3 mr-1" /> Healthy
             </Badge>
@@ -110,6 +110,12 @@ export default function PlatformHealth() {
   const totalConnected = (summary?.credentials ?? 0) + (summary?.socialAccounts ?? 0);
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">HEALTH</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -195,9 +201,9 @@ export default function PlatformHealth() {
             <CardDescription className="text-xs">Durable automation layers running behind Manus and the command center</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl border border-violet-500/20 bg-violet-500/5">
+            <div className="p-4 rounded-xl border border-sky-500/20 bg-sky-500/5">
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Job Queue</p>
-              <p className="text-lg font-bold text-violet-400 mt-1">{backgroundSystems.jobQueue.pending} pending</p>
+              <p className="text-lg font-bold text-sky-400 mt-1">{backgroundSystems.jobQueue.pending} pending</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {backgroundSystems.jobQueue.running} running · {backgroundSystems.jobQueue.failed} failed · {backgroundSystems.jobQueue.completed24h} completed / 24h
               </p>
@@ -226,7 +232,7 @@ export default function PlatformHealth() {
           <CardContent className="py-16 text-center">
             <Zap className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground font-medium">No platforms connected</p>
-            <p className="text-xs text-muted-foreground/60 mt-2 max-w-sm mx-auto">
+            <p className="text-xs text-white/30 mt-2 max-w-sm mx-auto">
               Connect your stores and social accounts in the Integrations page, then run a health check to verify connectivity.
             </p>
           </CardContent>
@@ -235,7 +241,7 @@ export default function PlatformHealth() {
 
       {/* Pre-check state */}
       {!healthData && totalConnected > 0 && (
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border-primary/20 bg-sky-500/[0.06]">
           <CardContent className="py-12 text-center">
             <Activity className="w-12 h-12 text-primary/50 mx-auto mb-4" />
             <p className="text-foreground font-medium">Ready to check {totalConnected} connected platform{totalConnected > 1 ? "s" : ""}</p>
@@ -316,6 +322,7 @@ export default function PlatformHealth() {
           </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }

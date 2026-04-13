@@ -58,7 +58,7 @@ const APP_TITLE = BRAND_NAME;
 
 const allMenuItems = [
   { icon: LayoutDashboard, label: "Command Center", path: "/", group: "overview", adminOnly: false },
-  { icon: Bot, label: "Builder Bot", path: "/architect", group: "bots", color: "text-violet-400", adminOnly: false },
+  { icon: Bot, label: "Builder Bot", path: "/architect", group: "bots", color: "text-sky-400", adminOnly: false },
   { icon: Package, label: "Merchant Bot", path: "/merchant", group: "bots", color: "text-cyan-400", adminOnly: false },
   { icon: Megaphone, label: "Social Bot", path: "/social", group: "bots", color: "text-amber-400", adminOnly: false },
   { icon: Activity, label: "Activity Log", path: "/activity", group: "operations", adminOnly: false },
@@ -66,9 +66,9 @@ const allMenuItems = [
   { icon: Plug, label: "Integrations", path: "/integrations", group: "operations", color: "text-emerald-400", adminOnly: false },
   { icon: Workflow, label: "Workflows", path: "/workflows", group: "operations", color: "text-rose-400", adminOnly: false },
   { icon: HeartPulse, label: "Platform Health", path: "/health", group: "operations", color: "text-emerald-400", adminOnly: false },
-  { icon: Brain, label: "Intelligence", path: "/intelligence", group: "operations", color: "text-violet-400", adminOnly: false },
+  { icon: Brain, label: "Intelligence", path: "/intelligence", group: "operations", color: "text-sky-400", adminOnly: false },
   { icon: GitBranch, label: "Orchestrator", path: "/orchestrator", group: "operations", color: "text-indigo-400", adminOnly: false },
-  { icon: Store, label: "App Store", path: "/plugins", group: "operations", color: "text-purple-400", adminOnly: false },
+  { icon: Store, label: "App Store", path: "/plugins", group: "operations", color: "text-blue-400", adminOnly: false },
   { icon: Truck, label: "Supplier POs", path: "/supplier", group: "operations", color: "text-orange-400", adminOnly: false },
   { icon: Sparkles, label: "Prompt Lab", path: "/prompt-lab", group: "operations", color: "text-pink-400", adminOnly: false },
   { icon: Settings, label: "Bot Config", path: "/config", group: "settings", adminOnly: true },
@@ -236,12 +236,12 @@ function DashboardLayoutContent({
   return (
     <>
       <div className="relative" ref={sidebarRef}>
-        <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
-          <SidebarHeader className="h-16 justify-center border-b border-sidebar-border/50">
+        <Sidebar collapsible="icon" className="border-r-0 bg-[#030305]" disableTransition={isResizing}>
+          <SidebarHeader className="h-16 justify-center border-b border-white/[0.06] bg-[#030305]">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-sidebar-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                className="h-8 w-8 flex items-center justify-center hover:bg-white/[0.06] rounded-lg transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 shrink-0"
                 aria-label="Toggle navigation"
               >
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
@@ -254,11 +254,11 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-2 py-3">
+          <SidebarContent className="gap-0 px-2 py-3 bg-[#030305]">
             {Object.entries(groups).map(([group, items]) => (
               <div key={group} className="mb-3">
                 {!isCollapsed && (
-                  <p className="px-3 py-1.5 text-[9px] font-bold tracking-[0.15em] text-muted-foreground/40 uppercase">
+                  <p className="px-3 py-1.5 text-[9px] font-bold tracking-[0.2em] text-sky-500/60 uppercase">
                     {groupLabels[group]}
                   </p>
                 )}
@@ -271,19 +271,19 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => setLocation(item.path)}
                           tooltip={item.label}
-                          className={`h-9 transition-all duration-200 font-normal rounded-lg ${
+                          className={`h-9 transition-all duration-500 font-normal rounded-lg ${
                             isActive
-                              ? "bg-primary/12 text-primary border border-primary/20 shadow-[0_0_12px_rgba(157,78,221,0.15)]"
-                              : "hover:bg-sidebar-accent/60 hover:border hover:border-border/20"
+                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/25 shadow-[0_0_12px_rgba(14,165,233,0.15)]"
+                              : "hover:bg-white/[0.04] hover:border hover:border-white/[0.08]"
                           }`}
                         >
                           <item.icon
-                            className={`h-4 w-4 shrink-0 transition-colors duration-200 ${
-                              isActive ? "text-primary drop-shadow-[0_0_6px_rgba(157,78,221,0.6)]" : item.color || "text-muted-foreground/70"
+                            className={`h-4 w-4 shrink-0 transition-colors duration-500 ${
+                              isActive ? "text-sky-400 drop-shadow-[0_0_6px_rgba(14,165,233,0.6)]" : item.color || "text-muted-foreground/70"
                             }`}
                           />
                           <span className={`truncate ${isActive ? "font-semibold" : "font-normal"}`}>{item.label}</span>
-                          {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_6px_rgba(157,78,221,0.8)]" />}
+                          {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0 shadow-[0_0_6px_rgba(14,165,233,0.8)]" />}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -293,12 +293,12 @@ function DashboardLayoutContent({
             ))}
           </SidebarContent>
 
-          <SidebarFooter className="p-3 border-t border-sidebar-border/50">
+          <SidebarFooter className="p-3 border-t border-white/[0.06] bg-[#030305]">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-sidebar-accent/60 hover:border hover:border-border/20 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-8 w-8 border border-primary/30 shrink-0 shadow-[0_0_10px_rgba(157,78,221,0.2)]">
-                    <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-white/[0.04] hover:border hover:border-white/[0.08] transition-all duration-500 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50">
+                  <Avatar className="h-8 w-8 border border-sky-500/30 shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.2)]">
+                    <AvatarFallback className="text-xs font-bold bg-sky-500/15 text-sky-400">
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -347,7 +347,7 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {/* Top bar */}
-        <div className="flex border-b border-border/50 h-14 items-center justify-between bg-background/80 px-4 backdrop-blur-sm sticky top-0 z-40">
+        <div className="flex border-b border-white/[0.06] h-14 items-center justify-between bg-[#030305]/90 px-4 backdrop-blur-xl sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <div className="flex items-center gap-2">
@@ -422,7 +422,7 @@ function DashboardLayoutContent({
                               }}
                             >
                               <div className="pt-0.5 shrink-0">
-                                <div className={`h-2 w-2 rounded-full ${notification.isRead ? "bg-muted-foreground/30" : "bg-primary"}`} />
+                                <div className={`h-2 w-2 rounded-full ${notification.isRead ? "bg-muted-foreground/30" : "bg-sky-500 shadow-[0_0_6px_rgba(14,165,233,0.5)]"}`} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-3">
@@ -471,7 +471,7 @@ function DashboardLayoutContent({
               </DropdownMenu>
           </div>
         </div>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6 bg-[#000000]">{children}</main>
       </SidebarInset>
     </>
   );

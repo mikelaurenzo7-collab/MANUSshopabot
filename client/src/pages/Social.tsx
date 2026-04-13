@@ -135,6 +135,12 @@ export default function SocialPage() {
   };
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">SOCIAL</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -160,7 +166,7 @@ export default function SocialPage() {
       </div>
 
       {!selectedStore ? (
-        <Card className="bg-card border-border/50">
+        <Card className="bento-card">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Megaphone className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Select a store to start marketing</p>
@@ -179,7 +185,7 @@ export default function SocialPage() {
 
           {/* Ad Copy Tab */}
           <TabsContent value="ads" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-primary" />
@@ -226,7 +232,7 @@ export default function SocialPage() {
             {campaigns && campaigns.length > 0 ? (
               <div className="space-y-3">
                 {campaigns.map((c: any) => (
-                  <Card key={c.id} className="bg-card border-border/50 hover:border-primary/20 transition-all">
+                  <Card key={c.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-2">
                         <div>
@@ -238,7 +244,7 @@ export default function SocialPage() {
                         </Button>
                       </div>
                       {c.adCopy && (
-                        <div className="text-sm text-muted-foreground bg-secondary/30 rounded-md p-3 mt-2 whitespace-pre-wrap">
+                        <div className="text-sm text-muted-foreground bg-white/[0.03] rounded-md p-3 mt-2 whitespace-pre-wrap">
                           {typeof c.adCopy === "string" ? c.adCopy : typeof c.adCopy === "object" && c.adCopy.headline ? (
                             <div className="space-y-2">
                               <p className="font-semibold text-foreground">{c.adCopy.headline}</p>
@@ -253,7 +259,7 @@ export default function SocialPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Sparkles className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No ad campaigns yet</p>
@@ -264,7 +270,7 @@ export default function SocialPage() {
 
           {/* Image Generation Tab */}
           <TabsContent value="images" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Image className="h-4 w-4 text-primary" />
@@ -293,7 +299,7 @@ export default function SocialPage() {
                     <img
                       src={(generateImage.data as any).imageUrl}
                       alt="Generated"
-                      className="rounded-lg border border-border/50 max-w-md"
+                      className="rounded-lg border border-white/[0.08] max-w-md"
                     />
                   </div>
                 )}
@@ -303,7 +309,7 @@ export default function SocialPage() {
 
           {/* SEO Tab */}
           <TabsContent value="seo" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Search className="h-4 w-4 text-primary" />
@@ -331,7 +337,7 @@ export default function SocialPage() {
             {seoKeywords && seoKeywords.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {seoKeywords.map((kw: any) => (
-                  <Card key={kw.id} className="bg-card border-border/50">
+                  <Card key={kw.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-foreground">{kw.keyword}</span>
@@ -351,7 +357,7 @@ export default function SocialPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Search className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No SEO keywords yet</p>
@@ -362,7 +368,7 @@ export default function SocialPage() {
 
           {/* Social Tab */}
           <TabsContent value="social" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Share2 className="h-4 w-4 text-primary" />
@@ -404,7 +410,7 @@ export default function SocialPage() {
             {socialPosts && socialPosts.length > 0 ? (
               <div className="space-y-3">
                 {socialPosts.map((p: any) => (
-                  <Card key={p.id} className="bg-card border-border/50">
+                  <Card key={p.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <Badge variant="outline" className="text-[10px] capitalize">{p.platform}</Badge>
@@ -423,7 +429,7 @@ export default function SocialPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Share2 className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No social posts yet</p>
@@ -434,7 +440,7 @@ export default function SocialPage() {
 
           {/* Email Tab */}
           <TabsContent value="email" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Mail className="h-4 w-4 text-primary" />
@@ -481,7 +487,7 @@ export default function SocialPage() {
             {emailCampaigns && emailCampaigns.length > 0 ? (
               <div className="space-y-3">
                 {emailCampaigns.map((ec: any) => (
-                  <Card key={ec.id} className="bg-card border-border/50">
+                  <Card key={ec.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>
@@ -494,7 +500,7 @@ export default function SocialPage() {
                       </div>
                       {ec.subject && <p className="text-sm text-foreground font-medium mt-2">Subject: {ec.subject}</p>}
                       {ec.body && (
-                        <div className="text-sm text-muted-foreground bg-secondary/30 rounded-md p-3 mt-2 whitespace-pre-wrap max-h-40 overflow-y-auto">
+                        <div className="text-sm text-muted-foreground bg-white/[0.03] rounded-md p-3 mt-2 whitespace-pre-wrap max-h-40 overflow-y-auto">
                           {ec.body}
                         </div>
                       )}
@@ -503,7 +509,7 @@ export default function SocialPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Mail className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No email campaigns yet</p>
@@ -516,7 +522,7 @@ export default function SocialPage() {
           <TabsContent value="tools" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Viral Trend Detector */}
-              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-orange-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-rose-500/15 flex items-center justify-center">
@@ -535,7 +541,7 @@ export default function SocialPage() {
               </Card>
 
               {/* A/B Test Copy Generator */}
-              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-orange-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
@@ -570,7 +576,7 @@ export default function SocialPage() {
               </Card>
 
               {/* SMS Recovery */}
-              <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-orange-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
@@ -605,7 +611,7 @@ export default function SocialPage() {
             </div>
 
             {/* Social Proof Generator - inline since it's a Direct Action */}
-            <Card className="bg-card border-border/50 hover:border-orange-500/30 transition-all">
+            <Card className="bg-card border-white/[0.08] hover:border-orange-500/30 transition-all">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
@@ -640,7 +646,7 @@ export default function SocialPage() {
 
             {/* AI Tools Results */}
             {abTestResult && (
-              <Card className="bg-card border-border/50 border-blue-500/30">
+              <Card className="bg-card border-white/[0.08] border-blue-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">A/B Test Variants</h3>
@@ -649,7 +655,7 @@ export default function SocialPage() {
                   {abTestResult.variants ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {abTestResult.variants.map((v: any, i: number) => (
-                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                        <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between mb-1">
                             <Badge variant="outline" className="text-[9px]">{v.variantLabel || `Variant ${i + 1}`}</Badge>
                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(v.copy || v.text || '')}><Copy className="h-3 w-3" /></Button>
@@ -667,7 +673,7 @@ export default function SocialPage() {
             )}
 
             {smsResult && (
-              <Card className="bg-card border-border/50 border-emerald-500/30">
+              <Card className="bg-card border-white/[0.08] border-emerald-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">SMS Recovery Flow</h3>
@@ -676,7 +682,7 @@ export default function SocialPage() {
                   {smsResult.messages ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {smsResult.messages.map((m: any, i: number) => (
-                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                        <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[10px] text-muted-foreground">{m.timing || m.delay || `Message ${i + 1}`}</span>
                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(m.text || m.content || '')}><Copy className="h-3 w-3" /></Button>
@@ -693,7 +699,7 @@ export default function SocialPage() {
             )}
 
             {socialProofResult && (
-              <Card className="bg-card border-border/50 border-amber-500/30">
+              <Card className="bg-card border-white/[0.08] border-amber-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Social Proof Content</h3>
@@ -702,7 +708,7 @@ export default function SocialPage() {
                   {socialProofResult.items ? (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {socialProofResult.items.map((item: any, i: number) => (
-                        <div key={i} className="p-3 rounded-md bg-secondary/30">
+                        <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                           <p className="text-xs text-foreground">{item.content || item.text || JSON.stringify(item)}</p>
                           <Button variant="ghost" size="sm" className="h-5 text-[10px] mt-1 p-0" onClick={() => copyToClipboard(item.content || item.text || JSON.stringify(item))}><Copy className="h-3 w-3 mr-1" />Copy</Button>
                         </div>
@@ -716,11 +722,11 @@ export default function SocialPage() {
             )}
 
             {/* New Workflow Capabilities */}
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Social Bot Power Features</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <Zap className="h-4 w-4 text-rose-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Viral Trend Detector</p>
@@ -728,7 +734,7 @@ export default function SocialPage() {
                     </div>
                     <Badge variant="outline" className="ml-auto text-[10px] border-rose-400/30 text-rose-400">Workflow</Badge>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <Star className="h-4 w-4 text-amber-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Influencer Outreach</p>
@@ -736,7 +742,7 @@ export default function SocialPage() {
                     </div>
                     <Badge variant="outline" className="ml-auto text-[10px] border-amber-400/30 text-amber-400">Workflow</Badge>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <Filter className="h-4 w-4 text-blue-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Conversion Funnel CRO</p>
@@ -744,7 +750,7 @@ export default function SocialPage() {
                     </div>
                     <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <ThumbsUp className="h-4 w-4 text-emerald-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Social Proof Generator</p>
@@ -758,6 +764,7 @@ export default function SocialPage() {
           </TabsContent>
         </Tabs>
       )}
+    </div>
     </div>
   );
 }

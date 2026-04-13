@@ -111,6 +111,12 @@ export default function MerchantPage() {
   });
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">MERCHANT</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -136,11 +142,11 @@ export default function MerchantPage() {
       </div>
 
       {!selectedStore ? (
-        <Card className="bg-card border-border/50">
+        <Card className="bento-card">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Select a store to manage</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Connect a store via Builder Bot or Integrations first</p>
+            <p className="text-xs text-white/30 mt-1">Connect a store via Builder Bot or Integrations first</p>
           </CardContent>
         </Card>
       ) : (
@@ -179,7 +185,7 @@ export default function MerchantPage() {
             {productsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bg-card border-border/50">
+                  <Card key={i} className="bento-card">
                     <CardContent className="p-4">
                       <Skeleton className="h-5 w-48 mb-2" />
                       <Skeleton className="h-4 w-32" />
@@ -190,7 +196,7 @@ export default function MerchantPage() {
             ) : products && products.length > 0 ? (
               <div className="space-y-2">
                 {products.map((p: any) => (
-                  <Card key={p.id} className="bg-card border-border/50 hover:border-primary/20 transition-all">
+                  <Card key={p.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
@@ -219,11 +225,11 @@ export default function MerchantPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No products yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Use Builder Bot to generate a product catalog automatically</p>
+                  <p className="text-xs text-white/30 mt-1">Use Builder Bot to generate a product catalog automatically</p>
                 </CardContent>
               </Card>
             )}
@@ -234,7 +240,7 @@ export default function MerchantPage() {
             {ordersLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bg-card border-border/50">
+                  <Card key={i} className="bento-card">
                     <CardContent className="p-4"><Skeleton className="h-5 w-48" /></CardContent>
                   </Card>
                 ))}
@@ -242,7 +248,7 @@ export default function MerchantPage() {
             ) : orders && orders.length > 0 ? (
               <div className="space-y-2">
                 {orders.map((o: any) => (
-                  <Card key={o.id} className="bg-card border-border/50 hover:border-primary/20 transition-all">
+                  <Card key={o.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
@@ -269,7 +275,7 @@ export default function MerchantPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <ShoppingCart className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No orders yet</p>
@@ -280,7 +286,7 @@ export default function MerchantPage() {
 
           {/* Pricing Tab */}
           <TabsContent value="pricing" className="space-y-4">
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -315,7 +321,7 @@ export default function MerchantPage() {
             {pricingRules && pricingRules.length > 0 ? (
               <div className="space-y-2">
                 {pricingRules.map((r: any) => (
-                  <Card key={r.id} className="bg-card border-border/50">
+                  <Card key={r.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
@@ -333,7 +339,7 @@ export default function MerchantPage() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-card border-border/50">
+              <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <BarChart3 className="h-10 w-10 text-muted-foreground/30 mb-3" />
                   <p className="text-sm text-muted-foreground">No pricing rules yet</p>
@@ -360,7 +366,7 @@ export default function MerchantPage() {
               return (
                 <>
                   {/* Pipeline Funnel */}
-                  <Card className="bg-card border-border/50">
+                  <Card className="bento-card">
                     <CardContent className="p-5">
                       <div className="flex items-center gap-2 mb-4">
                         <Activity className="h-4 w-4 text-primary" />
@@ -371,7 +377,7 @@ export default function MerchantPage() {
                         {[
                           { label: "Pending", count: statusPipeline.pending, color: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
                           { label: "Processing", count: statusPipeline.processing, color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
-                          { label: "Shipped", count: statusPipeline.shipped, color: "bg-violet-500/10 border-violet-500/20 text-violet-400" },
+                          { label: "Shipped", count: statusPipeline.shipped, color: "bg-sky-500/10 border-sky-500/20 text-sky-400" },
                           { label: "Delivered", count: statusPipeline.delivered, color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
                         ].map((stage, i) => (
                           <div key={stage.label} className="relative">
@@ -386,12 +392,12 @@ export default function MerchantPage() {
                         ))}
                       </div>
                       {/* Progress bar */}
-                      <div className="h-2 rounded-full bg-secondary/30 overflow-hidden flex">
+                      <div className="h-2 rounded-full bg-white/[0.03] overflow-hidden flex">
                         {total > 0 && (
                           <>
                             <div className="bg-amber-400 h-full transition-all" style={{ width: `${(statusPipeline.pending / total) * 100}%` }} />
                             <div className="bg-blue-400 h-full transition-all" style={{ width: `${(statusPipeline.processing / total) * 100}%` }} />
-                            <div className="bg-violet-400 h-full transition-all" style={{ width: `${(statusPipeline.shipped / total) * 100}%` }} />
+                            <div className="bg-sky-400 h-full transition-all" style={{ width: `${(statusPipeline.shipped / total) * 100}%` }} />
                             <div className="bg-emerald-400 h-full transition-all" style={{ width: `${(statusPipeline.delivered / total) * 100}%` }} />
                           </>
                         )}
@@ -417,7 +423,7 @@ export default function MerchantPage() {
               );
             })()}
             {/* Auto-Fulfillment Action */}
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -456,7 +462,7 @@ export default function MerchantPage() {
           <TabsContent value="tools" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Demand Forecasting */}
-              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
@@ -488,7 +494,7 @@ export default function MerchantPage() {
               </Card>
 
               {/* Margin Analyzer */}
-              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
@@ -508,7 +514,7 @@ export default function MerchantPage() {
               </Card>
 
               {/* Return Analysis */}
-              <Card className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
@@ -530,7 +536,7 @@ export default function MerchantPage() {
 
             {/* AI Tools Results */}
             {forecastResult && (
-              <Card className="bg-card border-border/50 border-blue-500/30">
+              <Card className="bg-card border-white/[0.08] border-blue-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Demand Forecast Results</h3>
@@ -540,7 +546,7 @@ export default function MerchantPage() {
                   {forecastResult.products && (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {forecastResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-secondary/30 flex items-center justify-between">
+                        <div key={i} className="p-2 rounded-md bg-white/[0.03] flex items-center justify-between">
                           <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
                           <div className="flex gap-2 text-[10px] text-muted-foreground">
                             {p.predictedDemand && <span>Demand: <span className="text-foreground">{p.predictedDemand}</span></span>}
@@ -555,7 +561,7 @@ export default function MerchantPage() {
             )}
 
             {marginResult && (
-              <Card className="bg-card border-border/50 border-emerald-500/30">
+              <Card className="bg-card border-white/[0.08] border-emerald-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Margin Analysis Results</h3>
@@ -565,7 +571,7 @@ export default function MerchantPage() {
                   {marginResult.products && (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {marginResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-secondary/30">
+                        <div key={i} className="p-2 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
                             <span className="text-xs text-emerald-400 font-medium">{p.margin || p.profitMargin || ''}</span>
@@ -580,7 +586,7 @@ export default function MerchantPage() {
             )}
 
             {returnResult && (
-              <Card className="bg-card border-border/50 border-amber-500/30">
+              <Card className="bg-card border-white/[0.08] border-amber-500/30">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-foreground">Return Analysis Results</h3>
@@ -590,7 +596,7 @@ export default function MerchantPage() {
                   {returnResult.products && (
                     <div className="space-y-2 max-h-[300px] overflow-y-auto">
                       {returnResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-secondary/30">
+                        <div key={i} className="p-2 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
                             {p.returnRate && <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-400/30">{p.returnRate} return rate</Badge>}
@@ -606,11 +612,11 @@ export default function MerchantPage() {
             )}
 
             {/* New Workflow Capabilities */}
-            <Card className="bg-card border-border/50">
+            <Card className="bento-card">
               <CardContent className="p-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3">New Merchant Capabilities</h3>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <Link className="h-4 w-4 text-emerald-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Supply Chain Intelligence</p>
@@ -618,7 +624,7 @@ export default function MerchantPage() {
                     </div>
                     <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Workflow</Badge>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <TrendingUp className="h-4 w-4 text-blue-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Profit & Loss Analysis</p>
@@ -626,13 +632,13 @@ export default function MerchantPage() {
                     </div>
                     <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
                   </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-secondary/30">
-                    <Users className="h-4 w-4 text-violet-400" />
+                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
+                    <Users className="h-4 w-4 text-sky-400" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Customer Segmentation</p>
                       <p className="text-[11px] text-muted-foreground">RFM analysis, behavioral segments, and churn prediction</p>
                     </div>
-                    <Badge variant="outline" className="ml-auto text-[10px] border-violet-400/30 text-violet-400">Workflow</Badge>
+                    <Badge variant="outline" className="ml-auto text-[10px] border-sky-400/30 text-sky-400">Workflow</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -640,6 +646,7 @@ export default function MerchantPage() {
           </TabsContent>
         </Tabs>
       )}
+    </div>
     </div>
   );
 }

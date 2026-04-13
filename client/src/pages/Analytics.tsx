@@ -62,8 +62,8 @@ function EmptyAnalyticsState({
   description: string;
 }) {
   return (
-    <div className="h-full min-h-52 flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 bg-secondary/20 px-6 text-center">
-      <Package className="h-8 w-8 text-muted-foreground/60 mb-3" />
+    <div className="h-full min-h-52 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.02] px-6 text-center">
+      <Package className="h-8 w-8 text-white/30 mb-3" />
       <p className="text-sm font-medium text-foreground">{title}</p>
       <p className="text-xs text-muted-foreground mt-1 max-w-sm">{description}</p>
     </div>
@@ -165,6 +165,12 @@ export default function AnalyticsPage() {
   const showStoreSelectionHint = selectedStoreId === undefined;
 
   return (
+    <div className="relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">ANALYTICS</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Error States */}
       {(storesError || analyticsError) && (
@@ -196,7 +202,7 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
             <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -234,7 +240,7 @@ export default function AnalyticsPage() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="bg-card border-border/50">
+            <Card key={i} className="bento-card">
               <CardContent className="p-4">
                 <Skeleton className="h-4 w-20 mb-2" />
                 <Skeleton className="h-7 w-28" />
@@ -244,7 +250,7 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Revenue</span>
@@ -256,7 +262,7 @@ export default function AnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
             </CardContent>
           </Card>
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
@@ -266,11 +272,11 @@ export default function AnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
             </CardContent>
           </Card>
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Avg Order</span>
-                <TrendingUp className="h-4 w-4 text-violet-400" />
+                <TrendingUp className="h-4 w-4 text-sky-400" />
               </div>
               <p className="text-2xl font-bold text-foreground">
                 ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
@@ -278,7 +284,7 @@ export default function AnalyticsPage() {
               <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
             </CardContent>
           </Card>
-          <Card className="bg-card border-border/50">
+          <Card className="bento-card">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Conversion</span>
@@ -296,7 +302,7 @@ export default function AnalyticsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Trend */}
-        <Card className="bg-card border-border/50 lg:col-span-2">
+        <Card className="bg-card border-white/[0.08] lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground">Revenue Trend (30 Days)</CardTitle>
           </CardHeader>
@@ -342,7 +348,7 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Traffic Sources */}
-        <Card className="bg-card border-border/50">
+        <Card className="bento-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground">Traffic Sources</CardTitle>
           </CardHeader>
@@ -390,7 +396,7 @@ export default function AnalyticsPage() {
               {trafficSources.map((s) => (
                 <div key={s.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                    <div className="h-2 w-2 rounded-full bg-white/5" style={{ backgroundColor: s.color }} />
                     <span className="text-muted-foreground">{s.name}</span>
                   </div>
                   <span className="text-foreground font-medium">{s.value}%</span>
@@ -404,7 +410,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top Products */}
-      <Card className="bg-card border-border/50">
+      <Card className="bento-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
         </CardHeader>
@@ -441,6 +447,7 @@ export default function AnalyticsPage() {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

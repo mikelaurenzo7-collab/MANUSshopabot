@@ -72,7 +72,7 @@ function MetricCard({
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
             <p className={`text-2xl font-bold ${accent}`}>{value}</p>
-            {sub && <p className="text-xs text-muted-foreground/70">{sub}</p>}
+            {sub && <p className="text-xs text-white/40">{sub}</p>}
           </div>
           <div className="p-2 rounded-lg bg-secondary/40">
             <Icon className={`h-5 w-5 ${accent}`} />
@@ -129,12 +129,17 @@ export default function Intelligence() {
   const allAnomalies = anomalies ?? [];
 
   return (
-    <div className="page-enter p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="page-enter p-6 space-y-6 max-w-7xl mx-auto relative">
+      {/* Ghost watermark */}
+      <div className="ghost-watermark" aria-hidden="true">INTELLIGENCE</div>
+      {/* Light leaks */}
+      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
+      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="h-6 w-6 text-violet-400" />
+            <Activity className="h-6 w-6 text-sky-400" />
             Intelligence Center
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -143,14 +148,14 @@ export default function Intelligence() {
         </div>
         <div className="flex items-center gap-2">
           {/* Period selector */}
-          <div className="flex rounded-lg border border-border/50 overflow-hidden">
+          <div className="flex rounded-lg border border-white/[0.08] overflow-hidden">
             {(["24h", "7d", "30d"] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   period === p
-                    ? "bg-violet-600 text-white"
+                    ? "bg-sky-600 text-white"
                     : "text-muted-foreground hover:text-white hover:bg-secondary/50"
                 }`}
               >
@@ -162,7 +167,7 @@ export default function Intelligence() {
             size="sm"
             variant="outline"
             onClick={() => { refetchMetrics(); refetchAnomalies(); refetchBuyBox(); }}
-            className="border-border/50 text-foreground/80 hover:bg-secondary/50"
+            className="border-white/[0.08] text-foreground/80 hover:bg-secondary/50"
             aria-label="Refresh all data"
           >
             <RefreshCw className="h-4 w-4" />
@@ -189,7 +194,7 @@ export default function Intelligence() {
       {metricsLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-xl bg-secondary/30 animate-pulse" />
+            <div key={i} className="h-28 rounded-xl bg-white/[0.03] animate-pulse" />
           ))}
         </div>
       ) : metrics ? (
@@ -208,7 +213,7 @@ export default function Intelligence() {
             value={`${metrics.advertising.blendedROAS}x`}
             sub={`$${metrics.advertising.totalSpend.toLocaleString()} spend`}
             icon={TrendingUp}
-            accent="text-violet-400"
+            accent="text-sky-400"
             trend={metrics.advertising.blendedROAS >= 3 ? "up" : "down"}
             trendValue={`${metrics.advertising.totalConversions} conversions`}
           />
@@ -257,18 +262,18 @@ export default function Intelligence() {
           />
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground/70">No metrics available. Connect a store to get started.</div>
+        <div className="text-center py-12 text-white/40">No metrics available. Connect a store to get started.</div>
       )}
 
       <Tabs defaultValue="anomalies" className="space-y-4">
         <TabsList className="bg-secondary/40 border border-border/40">
-          <TabsTrigger value="anomalies" className="data-[state=active]:bg-violet-600">
+          <TabsTrigger value="anomalies" className="data-[state=active]:bg-sky-600">
             Anomalies {allAnomalies.length > 0 && <Badge className="ml-1.5 bg-red-500/30 text-red-300 text-[10px]">{allAnomalies.length}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="platforms" className="data-[state=active]:bg-violet-600">Platform Breakdown</TabsTrigger>
-          <TabsTrigger value="buybox" className="data-[state=active]:bg-violet-600">Buy Box Monitor</TabsTrigger>
-          <TabsTrigger value="controls" className="data-[state=active]:bg-violet-600">Automation Controls</TabsTrigger>
-          <TabsTrigger value="dlq" className="data-[state=active]:bg-violet-600">Dead-Letter Queue</TabsTrigger>
+          <TabsTrigger value="platforms" className="data-[state=active]:bg-sky-600">Platform Breakdown</TabsTrigger>
+          <TabsTrigger value="buybox" className="data-[state=active]:bg-sky-600">Buy Box Monitor</TabsTrigger>
+          <TabsTrigger value="controls" className="data-[state=active]:bg-sky-600">Automation Controls</TabsTrigger>
+          <TabsTrigger value="dlq" className="data-[state=active]:bg-sky-600">Dead-Letter Queue</TabsTrigger>
         </TabsList>
 
         {/* Anomalies Tab */}
@@ -276,11 +281,11 @@ export default function Intelligence() {
           {anomaliesLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 rounded-lg bg-secondary/30 animate-pulse" />
+                <div key={i} className="h-20 rounded-lg bg-white/[0.03] animate-pulse" />
               ))}
             </div>
           ) : allAnomalies.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
+            <div className="flex flex-col items-center justify-center py-16 text-white/40">
               <CheckCircle2 className="h-10 w-10 text-emerald-500 mb-3" />
               <p className="font-medium text-foreground/80">All Clear</p>
               <p className="text-sm mt-1">No anomalies detected across your stores and ad accounts.</p>
@@ -309,12 +314,12 @@ export default function Intelligence() {
                           </div>
                           <p className="text-sm text-foreground mt-1">{anomaly.message}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            <span className="text-violet-400">Suggested:</span> {anomaly.suggestedAction}
+                            <span className="text-sky-400">Suggested:</span> {anomaly.suggestedAction}
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground/70">
+                        <p className="text-xs text-white/40">
                           {new Date(anomaly.detectedAt).toLocaleTimeString()}
                         </p>
                         <p className={`text-sm font-bold mt-1 ${
@@ -344,7 +349,7 @@ export default function Intelligence() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.ecommerce.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/70">No store data available</p>
+                    <p className="text-sm text-white/40">No store data available</p>
                   ) : (
                     metrics.ecommerce.platformBreakdown.map((p) => {
                       const pct = metrics.ecommerce.totalRevenue > 0
@@ -355,8 +360,8 @@ export default function Intelligence() {
                             <span className="text-foreground/80 capitalize">{p.platform}</span>
                             <span className="text-emerald-400 font-medium">${p.revenue.toLocaleString()}</span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-secondary/30" />
-                          <p className="text-[10px] text-muted-foreground/70">{p.orders} orders · {pct.toFixed(1)}% of total</p>
+                          <Progress value={pct} className="h-1.5 bg-white/[0.03]" />
+                          <p className="text-[10px] text-white/40">{p.orders} orders · {pct.toFixed(1)}% of total</p>
                         </div>
                       );
                     })
@@ -373,7 +378,7 @@ export default function Intelligence() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.advertising.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/70">No active ad campaigns</p>
+                    <p className="text-sm text-white/40">No active ad campaigns</p>
                   ) : (
                     metrics.advertising.platformBreakdown.map((p) => {
                       const maxROAS = Math.max(...metrics.advertising.platformBreakdown.map(x => x.roas), 1);
@@ -386,8 +391,8 @@ export default function Intelligence() {
                               {p.roas}x ROAS
                             </span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-secondary/30" />
-                          <p className="text-[10px] text-muted-foreground/70">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
+                          <Progress value={pct} className="h-1.5 bg-white/[0.03]" />
+                          <p className="text-[10px] text-white/40">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
                         </div>
                       );
                     })
@@ -396,7 +401,7 @@ export default function Intelligence() {
               </Card>
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground/70">Connect stores and ad accounts to see platform breakdown.</div>
+            <div className="text-center py-12 text-white/40">Connect stores and ad accounts to see platform breakdown.</div>
           )}
         </TabsContent>
 
@@ -405,11 +410,11 @@ export default function Intelligence() {
           {buyBoxLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-lg bg-secondary/30 animate-pulse" />
+                <div key={i} className="h-16 rounded-lg bg-white/[0.03] animate-pulse" />
               ))}
             </div>
           ) : !buyBox || buyBox.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
+            <div className="flex flex-col items-center justify-center py-16 text-white/40">
               <ShoppingCart className="h-10 w-10 text-muted-foreground/40 mb-3" />
               <p className="font-medium text-foreground/80">No Buy Box Data</p>
               <p className="text-sm mt-1">Connect Amazon, eBay, or Walmart stores to monitor Buy Box status.</p>
@@ -454,22 +459,22 @@ export default function Intelligence() {
                       </div>
                       <div className="flex items-center gap-6 text-right flex-shrink-0">
                         <div>
-                          <p className="text-[10px] text-muted-foreground/70">Current</p>
+                          <p className="text-[10px] text-white/40">Current</p>
                           <p className="text-sm font-medium text-foreground">${item.currentPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-muted-foreground/70">Buy Box</p>
+                          <p className="text-[10px] text-white/40">Buy Box</p>
                           <p className="text-sm font-medium text-foreground">${item.buyBoxPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-muted-foreground/70">Recommended</p>
+                          <p className="text-[10px] text-white/40">Recommended</p>
                           <p className={`text-sm font-bold ${
                             item.action === "lower_price" ? "text-red-400" :
                             item.action === "raise_price" ? "text-blue-400" : "text-emerald-400"
                           }`}>${item.recommendedPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-muted-foreground/70">Margin</p>
+                          <p className="text-[10px] text-white/40">Margin</p>
                           <p className={`text-sm font-medium ${item.marginAtRecommended >= 20 ? "text-emerald-400" : item.marginAtRecommended >= 10 ? "text-yellow-400" : "text-red-400"}`}>
                             {item.marginAtRecommended}%
                           </p>
@@ -510,7 +515,7 @@ export default function Intelligence() {
                     <><Zap className="h-3.5 w-3.5 mr-2" /> Run Pricing Engine</>
                   )}
                 </Button>
-                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 6 hours</p>
+                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 6 hours</p>
               </CardContent>
             </Card>
 
@@ -518,7 +523,7 @@ export default function Intelligence() {
             <Card className="bg-card/60 border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-foreground flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-violet-400" />
+                  <TrendingUp className="h-4 w-4 text-sky-400" />
                   Creative Velocity A/B
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
@@ -529,7 +534,7 @@ export default function Intelligence() {
                 <Button
                   onClick={() => triggerCreative.mutate()}
                   disabled={triggerCreative.isPending}
-                  className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                  className="w-full bg-sky-600 hover:bg-sky-700 text-white"
                   size="sm"
                 >
                   {triggerCreative.isPending ? (
@@ -538,7 +543,7 @@ export default function Intelligence() {
                     <><BarChart3 className="h-3.5 w-3.5 mr-2" /> Optimize Creatives</>
                   )}
                 </Button>
-                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 4 hours</p>
+                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 4 hours</p>
               </CardContent>
             </Card>
 
@@ -566,7 +571,7 @@ export default function Intelligence() {
                     <><PauseCircle className="h-3.5 w-3.5 mr-2" /> Scan & Pause OOS Ads</>
                   )}
                 </Button>
-                <p className="text-[10px] text-muted-foreground/70 mt-2 text-center">Auto-runs every 30 minutes</p>
+                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 30 minutes</p>
               </CardContent>
             </Card>
           </div>
@@ -597,11 +602,11 @@ export default function Intelligence() {
                   { name: "Competitor Scan", freq: "Wed & Sat 4AM", agent: "Architect" },
                   { name: "DLQ Processor", freq: "Every 10min", agent: "System" },
                 ].map((task) => (
-                  <div key={task.name} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/30">
+                  <div key={task.name} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03]">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-xs text-foreground truncate">{task.name}</p>
-                      <p className="text-[10px] text-muted-foreground/70">{task.freq}</p>
+                      <p className="text-[10px] text-white/40">{task.freq}</p>
                     </div>
                   </div>
                 ))}
@@ -624,7 +629,7 @@ export default function Intelligence() {
             </CardHeader>
             <CardContent>
               {!dlq ? (
-                <div className="h-16 animate-pulse bg-secondary/30 rounded-lg" />
+                <div className="h-16 animate-pulse bg-white/[0.03] rounded-lg" />
               ) : dlq.total === 0 ? (
                 <div className="flex items-center gap-3 py-4">
                   <CheckCircle2 className="h-8 w-8 text-emerald-500" />
@@ -648,14 +653,14 @@ export default function Intelligence() {
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {dlq.entries.map((entry) => (
-                      <div key={entry.id} className="p-2 rounded-lg bg-secondary/30 text-xs">
+                      <div key={entry.id} className="p-2 rounded-lg bg-white/[0.03] text-xs">
                         <div className="flex justify-between">
                           <span className="text-foreground/80 font-medium">{entry.event}</span>
                           <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">
                             {entry.platform}
                           </Badge>
                         </div>
-                        <p className="text-muted-foreground/70 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
+                        <p className="text-white/40 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
                         <p className="text-muted-foreground/40 mt-0.5">Next retry: {new Date(entry.nextRetryAt).toLocaleTimeString()}</p>
                       </div>
                     ))}
