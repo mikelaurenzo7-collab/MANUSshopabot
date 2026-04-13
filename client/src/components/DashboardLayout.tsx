@@ -274,7 +274,7 @@ function DashboardLayoutContent({
                           className={`h-9 transition-all duration-500 font-normal rounded-lg ${
                             isActive
                               ? "bg-sky-500/10 text-sky-400 border border-sky-500/25 shadow-[0_0_12px_rgba(14,165,233,0.15)]"
-                              : "hover:bg-white/[0.04] hover:border hover:border-white/[0.08]"
+                              : "hover:bg-white/[0.04] hover:border hover:border-white/[0.08] hover:translate-x-1 hover:shadow-lg"
                           }`}
                         >
                           <item.icon

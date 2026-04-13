@@ -191,7 +191,7 @@ export default function LandingPage() {
             <Button
               size="sm"
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="btn-cyber text-sm px-5 py-2"
+              className="btn-glow text-sm px-5 py-2"
             >
               Get Started Free
               <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -245,7 +245,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               onClick={() => { window.location.href = getLoginUrl(); }}
-              className="btn-cyber text-base px-10 h-13"
+              className="btn-glow text-base px-10 h-13"
             >
               <Zap className="h-4 w-4 mr-2" />
               Launch Command Center
@@ -253,7 +253,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               variant="outline"
-              className="btn-cyber-outline text-base px-10 h-13"
+              className="btn-glow-outline text-base px-10 h-13"
               onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
             >
               <Play className="h-4 w-4 mr-2" />
@@ -461,7 +461,7 @@ export default function LandingPage() {
                   <Button
                     size="sm"
                     className={`w-full text-xs font-semibold transition-all duration-500 ${
-                      tier.highlight ? "btn-cyber" : "bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] hover:border-sky-500/30"
+                      tier.highlight ? "btn-glow" : "bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] hover:border-sky-500/30"
                     }`}
                     variant={tier.highlight ? "default" : "outline"}
                     disabled={tier.disabled}
@@ -514,7 +514,7 @@ export default function LandingPage() {
           <Button
             size="lg"
             onClick={() => { window.location.href = getLoginUrl(); }}
-            className="btn-cyber text-base px-12 h-14"
+            className="btn-glow text-base px-12 h-14"
           >
             <Zap className="h-5 w-5 mr-2" />
             Start Free Today
