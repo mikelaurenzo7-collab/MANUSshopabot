@@ -30,6 +30,17 @@ export const workflowRouter = router({
       input: z.record(z.string(), z.any()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const user = await require("../db").getUserByOpenId(ctx.user.openId);
+      
+      // The Revenue Moat: Hard enforcement
+      const isSubscribed = user.stripeSubscriptionStatus === "active" || user.stripeSubscriptionStatus === "trialing";
+      if (!isSubscribed) {
+        throw new TRPCError({ 
+          code: "FORBIDDEN", 
+          message: "Please upgrade to a paid plan to launch bot workflows." 
+        });
+      }
+
       const workflowId = await launchWorkflow(ctx.user.id, {
         agentType: input.agentType,
         workflowType: input.workflowType,

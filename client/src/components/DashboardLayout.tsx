@@ -373,7 +373,7 @@ function DashboardLayoutContent({
               )}
               {!subscription?.isActive && (
                 <a
-                  href="/#pricing"
+                  href="/landing#pricing"
                   className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-semibold tracking-wide hover:bg-amber-500/20 transition-all duration-300"
                 >
                   <Zap className="h-3 w-3" />

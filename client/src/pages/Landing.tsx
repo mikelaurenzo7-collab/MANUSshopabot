@@ -261,6 +261,8 @@ function PricingSection() {
 }
 
 export default function LandingPage() {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen bg-transparent text-foreground overflow-x-hidden page-enter">
 
@@ -269,22 +271,35 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <BrandName size="lg" />
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="text-muted-foreground hover:text-foreground transition-all duration-500"
-            >
-              Sign In
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="btn-glow text-sm px-5 py-2"
-            >
-              Get Started Free
-              <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-            </Button>
+            {user ? (
+              <Button
+                size="sm"
+                onClick={() => { window.location.href = "/"; }}
+                className="btn-glow text-sm px-5 py-2"
+              >
+                Go to Dashboard
+                <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { window.location.href = getLoginUrl(); }}
+                  className="text-muted-foreground hover:text-foreground transition-all duration-500"
+                >
+                  Sign In
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => { window.location.href = getLoginUrl(); }}
+                  className="btn-glow text-sm px-5 py-2"
+                >
+                  Get Started Free
+                  <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -493,7 +508,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 relative">
+      <section id="pricing" className="py-24 px-4 relative">
         <div className="light-leak-blue" style={{ top: "-100px", left: "50%", transform: "translateX(-50%)", opacity: 0.06 }} />
         <div className="max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-14">
