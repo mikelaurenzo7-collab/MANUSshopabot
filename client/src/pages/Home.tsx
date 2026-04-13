@@ -106,15 +106,24 @@ function BotStatusCard({
   loading?: boolean;
 }) {
   const isActive = stats && stats.running > 0;
-  const botAccentColor = type === 'architect' ? 'border-sky-500/25 hover:border-sky-500/40 hover:shadow-[0_0_20px_rgba(14,165,233,0.08)]' : type === 'merchant' ? 'border-cyan-500/25 hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(6,182,212,0.08)]' : 'border-amber-500/25 hover:border-amber-500/40 hover:shadow-[0_0_20px_rgba(245,158,11,0.08)]';
+  const botAccentColor = type === 'architect'
+    ? 'border-sky-500/25 hover:border-sky-500/50 hover:shadow-[0_8px_32px_-8px_rgba(14,165,233,0.28)] hover:-translate-y-1'
+    : type === 'merchant'
+    ? 'border-cyan-500/25 hover:border-cyan-500/50 hover:shadow-[0_8px_32px_-8px_rgba(6,182,212,0.28)] hover:-translate-y-1'
+    : 'border-amber-500/25 hover:border-amber-500/50 hover:shadow-[0_8px_32px_-8px_rgba(245,158,11,0.28)] hover:-translate-y-1';
   const botStatusColor = type === 'architect' ? 'bg-sky-400' : type === 'merchant' ? 'bg-cyan-400' : 'bg-amber-400';
   const botNameColor = type === 'architect' ? 'text-sky-300' : type === 'merchant' ? 'text-cyan-300' : 'text-amber-300';
+  const botIconGlow = type === 'architect'
+    ? 'group-hover:shadow-[0_0_18px_rgba(14,165,233,0.45)] group-hover:border-sky-500/40'
+    : type === 'merchant'
+    ? 'group-hover:shadow-[0_0_18px_rgba(6,182,212,0.45)] group-hover:border-cyan-500/40'
+    : 'group-hover:shadow-[0_0_18px_rgba(245,158,11,0.45)] group-hover:border-amber-500/40';
   return (
-    <div className={`bento-card ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''} transition-all duration-500`}>
+    <div className={`bento-card group ${botAccentColor} ${isActive ? `bot-card-active ${type}` : ''} transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.99]`}>
       <div className="p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className={`h-11 w-11 rounded-xl flex items-center justify-center border border-border/20 shadow-lg ${color}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`h-11 w-11 rounded-xl flex items-center justify-center border border-border/20 shadow-lg transition-all duration-500 ${color} ${botIconGlow}`}>
+            <Icon className="h-5 w-5 transition-transform duration-500 group-hover:scale-110" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className={`text-sm font-bold truncate font-heading ${botNameColor}`}>{name}</h3>

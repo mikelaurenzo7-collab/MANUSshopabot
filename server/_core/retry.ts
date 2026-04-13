@@ -1,19 +1,40 @@
 /**
- * Retry Utility — Exponential Backoff + Circuit Breaker
- * Wraps any async operation with configurable retry logic.
- * Used to make LLM calls and external API calls resilient.
+ * orchAIstrate — Resilience Layer (powered by cockatiel)
+ *
+ * Replaces hand-rolled retry + circuit-breaker logic with cockatiel
+ * (1.2k ⭐, used by VS Code) — composable, battle-tested, TypeScript-native.
+ *
+ * PUBLIC API IS UNCHANGED — all existing call sites work without modification:
+ *   withRetry(fn, options?)           — exponential backoff retry
+ *   withCircuitBreaker(key, fn)       — per-key circuit breaker (threshold: 5)
+ *   withResilience(key, fn, options?) — retry + circuit breaker combined
+ *
+ * Cockatiel policies used:
+ *   ExponentialBackoff + retry()      → replaces custom calculateDelay loop
+ *   ConsecutiveBreaker(5) + circuitBreaker() → replaces hand-rolled state machine
  */
-
+import {
+  retry,
+  circuitBreaker,
+  ExponentialBackoff,
+  ConsecutiveBreaker,
+  handleAll,
+  handleWhen,
+  CircuitState,
+  isBrokenCircuitError,
+} from "cockatiel";
 import { logger } from "./logger";
 
+// ─── RetryOptions (public API preserved) ─────────────────────────────────────
+
 export interface RetryOptions {
-  /** Maximum number of attempts (default: 3) */
+  /** Maximum number of attempts including the first try (default: 3) */
   maxAttempts?: number;
-  /** Base delay in ms (default: 1000). Doubles each attempt. */
+  /** Base delay in ms for exponential backoff (default: 1000) */
   baseDelayMs?: number;
   /** Maximum delay cap in ms (default: 30000) */
   maxDelayMs?: number;
-  /** Jitter factor 0-1 to randomize delay and avoid thundering herd (default: 0.2) */
+  /** Jitter factor 0-1 — kept for API compat; cockatiel uses full jitter internally */
   jitter?: number;
   /** HTTP status codes that should NOT be retried (default: [400, 401, 403, 404, 422]) */
   nonRetryableStatuses?: number[];
@@ -30,132 +51,128 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   label: "operation",
 };
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function calculateDelay(attempt: number, options: Required<RetryOptions>): number {
-  const exponential = options.baseDelayMs * Math.pow(2, attempt - 1);
-  const capped = Math.min(exponential, options.maxDelayMs);
-  const jitterAmount = capped * options.jitter * (Math.random() * 2 - 1);
-  return Math.max(0, Math.round(capped + jitterAmount));
-}
-
-function isNonRetryableError(err: any, nonRetryableStatuses: number[]): boolean {
-  // Axios-style errors
-  const status = err?.response?.status || err?.status;
+function isNonRetryable(err: any, nonRetryableStatuses: number[]): boolean {
+  const status = err?.response?.status ?? err?.status;
+  if (status === 429) return false; // always retry rate limits
   if (status && nonRetryableStatuses.includes(status)) return true;
-  // Rate limit errors should be retried (429)
-  if (status === 429) return false;
-  // Network errors should be retried
-  if (err?.code === "ECONNRESET" || err?.code === "ETIMEDOUT" || err?.code === "ENOTFOUND") return false;
   return false;
 }
 
+// ─── withRetry ────────────────────────────────────────────────────────────────
+
 /**
- * Retry an async operation with exponential backoff.
- * @param fn The async function to retry
- * @param options Retry configuration
+ * Retry an async operation with exponential backoff (cockatiel-powered).
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  let lastError: Error | null = null;
 
-  for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (err: any) {
-      lastError = err;
-
-      // Don't retry non-retryable errors
-      if (isNonRetryableError(err, opts.nonRetryableStatuses)) {
-        console.warn(`[Retry:${opts.label}] Non-retryable error on attempt ${attempt}: ${err.message}`);
-        throw err;
-      }
-
-      if (attempt === opts.maxAttempts) {
-        console.error(`[Retry:${opts.label}] All ${opts.maxAttempts} attempts failed. Last error: ${err.message}`);
-        break;
-      }
-
-      const delay = calculateDelay(attempt, opts);
-      console.warn(`[Retry:${opts.label}] Attempt ${attempt}/${opts.maxAttempts} failed: ${err.message}. Retrying in ${delay}ms...`);
-      await sleep(delay);
+  const policy = retry(
+    handleWhen((err) => !isNonRetryable(err, opts.nonRetryableStatuses)),
+    {
+      maxAttempts: Math.max(0, opts.maxAttempts - 1), // cockatiel counts retries, not total attempts
+      backoff: new ExponentialBackoff({
+        initialDelay: opts.baseDelayMs,
+        maxDelay: opts.maxDelayMs,
+      }),
     }
-  }
+  );
 
-  throw lastError!;
+  policy.onRetry((reason) => {
+    const err = "error" in reason ? reason.error : undefined;
+    logger.warn("retry_attempt", { label: opts.label, attempt: (reason as any).attempt, delayMs: (reason as any).delay, error: err?.message });
+  });
+
+  policy.onGiveUp((reason) => {
+    const err = "error" in reason ? reason.error : undefined;
+    logger.error("retry_exhausted", {
+      label: opts.label,
+      maxAttempts: opts.maxAttempts,
+      error: err?.message,
+    });
+  });
+
+  return policy.execute(fn);
 }
 
-// ─── Circuit Breaker ──────────────────────────────────────────────────────
+// ─── withCircuitBreaker ───────────────────────────────────────────────────────
 
-interface CircuitBreakerState {
-  failures: number;
-  lastFailureTime: number;
-  state: "closed" | "open" | "half-open";
+const CIRCUIT_BREAKER_THRESHOLD = 5;   // consecutive failures before opening
+const CIRCUIT_BREAKER_TIMEOUT_MS = 60_000; // 1 minute half-open window
+
+// Per-key cockatiel circuit breaker instances
+const _breakers = new Map<string, ReturnType<typeof circuitBreaker>>();
+
+function getBreaker(key: string) {
+  if (_breakers.has(key)) return _breakers.get(key)!;
+
+  const policy = circuitBreaker(handleAll, {
+    halfOpenAfter: CIRCUIT_BREAKER_TIMEOUT_MS,
+    breaker: new ConsecutiveBreaker(CIRCUIT_BREAKER_THRESHOLD),
+  });
+
+  policy.onBreak((reason) => {
+    const err = "error" in reason ? reason.error : undefined;
+    logger.warn("circuit_breaker_opened", { key, error: err?.message });
+  });
+  policy.onReset(() => logger.info("circuit_breaker_closed", { key }));
+  policy.onHalfOpen(() => logger.info("circuit_breaker_half_open", { key }));
+
+  _breakers.set(key, policy);
+  return policy;
 }
-
-const circuitBreakers = new Map<string, CircuitBreakerState>();
-
-const CIRCUIT_BREAKER_THRESHOLD = 5; // failures before opening
-const CIRCUIT_BREAKER_TIMEOUT_MS = 60000; // 1 minute before trying again
 
 /**
  * Circuit breaker wrapper — stops calling a failing service after too many errors.
- * @param key Unique identifier for this circuit (e.g., "meta_api", "tiktok_api")
- * @param fn The async function to protect
+ * @param key  Unique identifier for this circuit (e.g., "meta_api", "tiktok_api")
+ * @param fn   The async function to protect
  */
 export async function withCircuitBreaker<T>(
   key: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  let breaker = circuitBreakers.get(key);
-  if (!breaker) {
-    breaker = { failures: 0, lastFailureTime: 0, state: "closed" };
-    circuitBreakers.set(key, breaker);
-  }
+  const policy = getBreaker(key);
 
-  const now = Date.now();
-
-  if (breaker.state === "open") {
-    if (now - breaker.lastFailureTime > CIRCUIT_BREAKER_TIMEOUT_MS) {
-      breaker.state = "half-open";
-      logger.info("circuit_breaker_half_open", { key });
-    } else {
-      throw new Error(`[CircuitBreaker:${key}] Circuit is OPEN — service unavailable. Try again in ${Math.round((CIRCUIT_BREAKER_TIMEOUT_MS - (now - breaker.lastFailureTime)) / 1000)}s`);
-    }
+  // Eagerly reject when the circuit is already open (mirrors original behaviour)
+  if (policy.state === CircuitState.Open) {
+    throw new Error(
+      `[CircuitBreaker:${key}] Circuit is OPEN — service unavailable. Try again later.`
+    );
   }
 
   try {
-    const result = await fn();
-    // Success — reset circuit
-    if (breaker.state === "half-open") {
-      logger.info("circuit_breaker_closed", { key });
-    }
-    breaker.failures = 0;
-    breaker.state = "closed";
-    return result;
-  } catch (err) {
-    breaker.failures++;
-    breaker.lastFailureTime = now;
-    if (breaker.failures >= CIRCUIT_BREAKER_THRESHOLD) {
-      breaker.state = "open";
-      logger.warn("circuit_breaker_opened", { key, failures: breaker.failures });
+    return await policy.execute(fn);
+  } catch (err: any) {
+    // Cockatiel throws BrokenCircuitError when the circuit opens mid-execution;
+    // re-wrap with the original message format so tests and callers stay happy.
+    if (isBrokenCircuitError(err)) {
+      throw new Error(
+        `[CircuitBreaker:${key}] Circuit is OPEN — service unavailable. Try again later.`
+      );
     }
     throw err;
   }
 }
 
+// ─── withResilience ───────────────────────────────────────────────────────────
+
 /**
  * Combined retry + circuit breaker for maximum resilience.
+ * The circuit breaker wraps the retry policy so a tripped circuit
+ * short-circuits before any retry attempts are made.
  */
 export async function withResilience<T>(
   key: string,
   fn: () => Promise<T>,
   retryOptions: RetryOptions = {}
 ): Promise<T> {
+  // Delegate to the two public helpers — keeps behaviour consistent
   return withCircuitBreaker(key, () => withRetry(fn, { ...retryOptions, label: key }));
+}
+
+// ─── Utility: reset a circuit (useful in tests / admin recovery) ──────────────
+export function resetCircuit(key: string): void {
+  _breakers.delete(key);
 }

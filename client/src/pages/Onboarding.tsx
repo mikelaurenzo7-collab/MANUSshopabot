@@ -7,7 +7,7 @@
  * 4. Launch — pick a niche and fire the Builder Bot
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STEPS = [
   { id: 1, title: "Welcome to orchAIstrate", icon: Sparkles },
@@ -567,23 +568,60 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+/** Skeleton shown for 350ms during step transitions to prevent layout flash */
+function StepSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Icon + heading */}
+      <div className="flex flex-col items-center gap-3 pt-2">
+        <Skeleton className="h-16 w-16 rounded-2xl bg-white/[0.06]" />
+        <Skeleton className="h-7 w-56 rounded-lg bg-white/[0.06]" />
+        <Skeleton className="h-4 w-80 rounded bg-white/[0.04]" />
+      </div>
+      {/* Content rows */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-28 rounded-xl bg-white/[0.04]" />
+        ))}
+      </div>
+      {/* CTA */}
+      <Skeleton className="h-11 w-full rounded-lg bg-white/[0.06]" />
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displayStep, setDisplayStep] = useState(1);
   const [, setLocation] = useLocation();
+  const transitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // If returning from OAuth, jump to the right step
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("connected") === "true" || params.get("error")) {
-      setCurrentStep(2); // Go back to Connect Store step to show success/error
+      setCurrentStep(2);
+      setDisplayStep(2);
     }
     if (params.get("social_connected")) {
-      setCurrentStep(3); // Go back to Connect Socials step
+      setCurrentStep(3);
+      setDisplayStep(3);
     }
   }, []);
 
+  const goToStep = (step: number) => {
+    if (transitionTimeout.current) clearTimeout(transitionTimeout.current);
+    setIsTransitioning(true);
+    setCurrentStep(step);
+    // Show skeleton for 350ms, then reveal the new step
+    transitionTimeout.current = setTimeout(() => {
+      setDisplayStep(step);
+      setIsTransitioning(false);
+    }, 350);
+  };
+
   const handleComplete = () => {
-    // Mark onboarding as done in localStorage so we don't show it again
     localStorage.setItem("orchaistrate_onboarded", "true");
     setLocation("/");
   };
@@ -602,23 +640,32 @@ export default function OnboardingPage() {
 
         <Card className="bg-card border-border/50 shadow-xl">
           <CardContent className="p-8">
-            {currentStep === 1 && (
-              <WelcomeStep onNext={() => setCurrentStep(2)} />
-            )}
-            {currentStep === 2 && (
-              <ConnectStoreStep
-                onNext={() => setCurrentStep(3)}
-                onSkip={() => setCurrentStep(3)}
-              />
-            )}
-            {currentStep === 3 && (
-              <ConnectSocialsStep
-                onNext={() => setCurrentStep(4)}
-                onSkip={() => setCurrentStep(4)}
-              />
-            )}
-            {currentStep === 4 && (
-              <LaunchStep onComplete={handleComplete} />
+            {isTransitioning ? (
+              <StepSkeleton />
+            ) : (
+              <div
+                key={displayStep}
+                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              >
+                {displayStep === 1 && (
+                  <WelcomeStep onNext={() => goToStep(2)} />
+                )}
+                {displayStep === 2 && (
+                  <ConnectStoreStep
+                    onNext={() => goToStep(3)}
+                    onSkip={() => goToStep(3)}
+                  />
+                )}
+                {displayStep === 3 && (
+                  <ConnectSocialsStep
+                    onNext={() => goToStep(4)}
+                    onSkip={() => goToStep(4)}
+                  />
+                )}
+                {displayStep === 4 && (
+                  <LaunchStep onComplete={handleComplete} />
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
