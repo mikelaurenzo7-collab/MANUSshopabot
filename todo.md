@@ -461,3 +461,25 @@
 - [x] Replace server/utils/tokenBucket.ts with Bottleneck (rate limiter per platform)
 - [x] Update all import sites across scheduler, engine, adapters, routers
 - [x] Verify 0 TypeScript errors and all 539 tests passing after gem replacements
+
+## Sprint 21: GitHub Gem Upgrades + UX Polish
+
+- [x] Wire cockatiel into server/_core/retry.ts (replace custom retry + circuit breaker)
+- [x] Apply hover micro-interactions (lift + shadow + translate) to sidebar bot status cards
+- [x] Add loading skeleton to onboarding stepper step transitions
+
+## Sprint 22: Production Blockers
+
+- [ ] Stripe: activate integration, create subscription plans (Starter $49 / Growth $149 / Pro $299 / Scale $599)
+- [ ] Stripe: checkout session endpoint + success/cancel redirect handling
+- [ ] Stripe: webhook handler for subscription lifecycle (created, updated, canceled, payment_failed)
+- [ ] Stripe: gate Command Center behind active subscription (redirect to /pricing if no active sub)
+- [ ] Stripe: show current plan + manage billing link in Command Center header
+- [ ] Shopify OAuth: complete end-to-end install flow (HMAC validation → token exchange → encrypted token storage)
+- [ ] Shopify OAuth: show connected store in Command Center with real store name/URL
+- [ ] Shopify OAuth: handle reinstall / token refresh edge cases
+- [ ] Builder Bot: live execution pipeline (niche → LLM market research → product catalog → Shopify product creation)
+- [ ] Builder Bot: real-time progress UI (SSE streaming status updates during bot run)
+- [ ] Builder Bot: store populated products in DB and show in Command Center
+- [ ] Error boundaries: wrap all major page sections with React ErrorBoundary
+- [ ] Circuit breaker UI: toast notification when a platform circuit trips open

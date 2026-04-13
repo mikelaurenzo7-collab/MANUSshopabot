@@ -8,6 +8,7 @@ import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
 import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
+import { registerStripeWebhook } from "../stripe/webhook";
 import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
@@ -40,6 +41,11 @@ async function startServer() {
   const server = createServer(app);
   // Inject requestId + child logger into every request for distributed tracing
   app.use(correlationMiddleware);
+  // Stripe webhook MUST receive raw body for signature verification — register BEFORE express.json()
+  app.use("/api/stripe/webhook", express.raw({ type: "application/json" }), (req: any, _res: any, next: any) => {
+    req.rawBody = req.body;
+    next();
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -56,6 +62,8 @@ async function startServer() {
   registerEcommerceOAuthRoutes(app);
   // Shopify webhook handlers (orders/create, orders/paid, products/update, inventory)
   registerShopifyWebhookRoutes(app);
+  // Stripe webhook (subscription lifecycle: created, updated, canceled, payment_failed)
+  registerStripeWebhook(app);
   // tRPC API
   app.use(
     "/api/trpc",

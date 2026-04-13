@@ -1,4 +1,7 @@
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +81,7 @@ const PRICING = [
     highlight: false,
     badge: null,
     cta: "Get Started",
+    planId: "starter",
     borderClass: "border-white/[0.06]",
     bgClass: "",
   },
@@ -90,6 +94,7 @@ const PRICING = [
     highlight: false,
     badge: "Popular",
     cta: "Start Growing",
+    planId: "growth",
     borderClass: "border-cyan-500/25",
     bgClass: "",
   },
@@ -102,6 +107,7 @@ const PRICING = [
     highlight: true,
     badge: "Best Value",
     cta: "Go Pro",
+    planId: "pro",
     borderClass: "border-sky-500/40",
     bgClass: "",
   },
@@ -170,6 +176,89 @@ const TERMINAL_LINES = [
 /* ═══════════════════════════════════════════════════════════════════════════
    COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
+
+function PricingSection() {
+  const { user } = useAuth();
+  const checkout = trpc.stripe.createCheckoutSession.useMutation({
+    onSuccess: (data) => {
+      toast.success("Redirecting to checkout…");
+      window.open(data.url, "_blank");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handlePlanClick = (planId: string | undefined, disabled?: boolean) => {
+    if (disabled) return;
+    if (!planId) return;
+    if (!user) {
+      // Not logged in — send to login first, then they'll land in Command Center
+      window.location.href = getLoginUrl();
+      return;
+    }
+    checkout.mutate({ planId: planId as any, origin: window.location.origin });
+  };
+
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {PRICING.map((tier) => (
+        <div
+          key={tier.name}
+          className={`bento-card transition-all duration-500 ${
+            tier.highlight
+              ? "bento-card-featured scale-[1.02] shadow-xl shadow-sky-500/10"
+              : ""
+          } relative`}
+        >
+          {tier.badge && (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+              <Badge
+                className={`text-[10px] px-3 py-0.5 font-semibold tracking-wide ${
+                  tier.highlight
+                    ? "bg-sky-500 text-white shadow-lg shadow-sky-500/30"
+                    : tier.badge === "Popular"
+                    ? "bg-cyan-500 text-black"
+                    : "bg-white/5 text-muted-foreground border border-white/[0.06]"
+                }`}
+              >
+                {tier.badge}
+              </Badge>
+            </div>
+          )}
+          <div className="p-6 pt-7">
+            <div className="mb-5">
+              <h3 className="font-bold text-base font-heading text-white">{tier.name}</h3>
+              <div className="flex items-baseline gap-0.5 mt-1.5">
+                <span className={`text-3xl font-black font-heading tracking-tight ${tier.highlight ? "hero-line-gradient" : "text-white"}`}>{tier.price}</span>
+                <span className="text-xs text-muted-foreground ml-0.5">{tier.period}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">{tier.description}</p>
+            <div className="h-px bg-white/[0.04] mb-4" />
+            <ul className="space-y-2 mb-6">
+              {tier.bots.map((b) => (
+                <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+            <Button
+              size="sm"
+              className={`w-full text-xs font-semibold transition-all duration-500 ${
+                tier.highlight ? "btn-glow" : "bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] hover:border-sky-500/30"
+              }`}
+              variant={tier.highlight ? "default" : "outline"}
+              disabled={tier.disabled || (checkout.isPending && checkout.variables?.planId === tier.planId)}
+              onClick={() => handlePlanClick(tier.planId, tier.disabled)}
+            >
+              {checkout.isPending && checkout.variables?.planId === tier.planId ? "Redirecting…" : tier.cta}
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
@@ -415,64 +504,7 @@ export default function LandingPage() {
               <Badge variant="outline" className="text-[10px] border-sky-500/25 text-sky-400 bg-sky-500/5">Beta Pricing</Badge>
             </div>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PRICING.map((tier) => (
-              <div
-                key={tier.name}
-                className={`bento-card transition-all duration-500 ${
-                  tier.highlight
-                    ? "bento-card-featured scale-[1.02] shadow-xl shadow-sky-500/10"
-                    : ""
-                } relative`}
-              >
-                {tier.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <Badge
-                      className={`text-[10px] px-3 py-0.5 font-semibold tracking-wide ${
-                        tier.highlight
-                          ? "bg-sky-500 text-white shadow-lg shadow-sky-500/30"
-                          : tier.badge === "Popular"
-                          ? "bg-cyan-500 text-black"
-                          : "bg-white/5 text-muted-foreground border border-white/[0.06]"
-                      }`}
-                    >
-                      {tier.badge}
-                    </Badge>
-                  </div>
-                )}
-                <div className="p-6 pt-7">
-                  <div className="mb-5">
-                    <h3 className="font-bold text-base font-heading text-white">{tier.name}</h3>
-                    <div className="flex items-baseline gap-0.5 mt-1.5">
-                      <span className={`text-3xl font-black font-heading tracking-tight ${tier.highlight ? "hero-line-gradient" : "text-white"}`}>{tier.price}</span>
-                      <span className="text-xs text-muted-foreground ml-0.5">{tier.period}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-5 leading-relaxed">{tier.description}</p>
-                  <div className="h-px bg-white/[0.04] mb-4" />
-                  <ul className="space-y-2 mb-6">
-                    {tier.bots.map((b) => (
-                      <li key={b} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    size="sm"
-                    className={`w-full text-xs font-semibold transition-all duration-500 ${
-                      tier.highlight ? "btn-glow" : "bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08] hover:border-sky-500/30"
-                    }`}
-                    variant={tier.highlight ? "default" : "outline"}
-                    disabled={tier.disabled}
-                    onClick={() => { if (!tier.disabled) window.location.href = getLoginUrl(); }}
-                  >
-                    {tier.cta}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <PricingSection />
         </div>
       </section>
 

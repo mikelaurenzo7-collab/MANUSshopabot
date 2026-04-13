@@ -1291,3 +1291,39 @@ export async function getBestPromptVariant(
     
   return variants[0]?.variant || null;
 }
+
+// ─── Stripe helpers ─────────────────────────────────────────────────────────
+
+export async function updateUserStripe(
+  userId: number,
+  data: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    stripePlan?: "starter" | "growth" | "pro" | "scale";
+    stripeSubscriptionStatus?: string;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const set: Record<string, unknown> = {};
+  if (data.stripeCustomerId !== undefined) set.stripeCustomerId = data.stripeCustomerId;
+  if (data.stripeSubscriptionId !== undefined) set.stripeSubscriptionId = data.stripeSubscriptionId;
+  if (data.stripePlan !== undefined) set.stripePlan = data.stripePlan ?? null;
+  if (data.stripeSubscriptionStatus !== undefined) set.stripeSubscriptionStatus = data.stripeSubscriptionStatus;
+  if (Object.keys(set).length === 0) return;
+  await db.update(users).set(set).where(eq(users.id, userId));
+}
+
+export async function getUserByStripeCustomerId(customerId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function getUserByStripeSubscriptionId(subscriptionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.stripeSubscriptionId, subscriptionId)).limit(1);
+  return result[0] ?? undefined;
+}

@@ -232,6 +232,44 @@ export const architectRouter = router({
       }
     }),
 
+  bulkPushProducts: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      productIds: z.array(z.number()),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "bulk_product_push",
+        title: `Bulk pushing ${input.productIds.length} products to store #${input.storeId}`,
+        description: `Pushing ${input.productIds.length} AI-generated products to connected platform`,
+        status: "running",
+        storeId: input.storeId,
+      });
+      const results: { id: number; success: boolean; error?: string }[] = [];
+      for (const productId of input.productIds) {
+        try {
+          await pushProductToStore(input.storeId, productId);
+          results.push({ id: productId, success: true });
+        } catch (err: any) {
+          results.push({ id: productId, success: false, error: err.message });
+        }
+      }
+      const succeeded = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+      await db.updateAgentTask(task.id, {
+        status: failed === input.productIds.length ? "failed" : "completed",
+        result: { succeeded, failed },
+      });
+      await notifyOwner({
+        title: "Bulk Product Push Complete",
+        content: `Pushed ${succeeded}/${input.productIds.length} products to store #${input.storeId}.${
+          failed > 0 ? ` ${failed} failed.` : " All succeeded!"
+        }`,
+      });
+      return { succeeded, failed, results };
+    }),
+
   syncFromStore: protectedProcedure
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {

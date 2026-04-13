@@ -168,6 +168,14 @@ export default function ArchitectPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const bulkPush = trpc.architect.bulkPushProducts.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Pushed ${data.succeeded} products to Shopify!${data.failed > 0 ? ` (${data.failed} failed)` : ""}`);
+      utils.stores.list.invalidate();
+    },
+    onError: (err) => toast.error(`Push failed: ${err.message}`),
+  });
+
   const generateCatalog = trpc.architect.generateProductCatalog.useMutation({
     onSuccess: (data) => {
       toast.success(`Generated ${data.products.length} products!`);
@@ -470,11 +478,32 @@ export default function ArchitectPage() {
               )}
               {generateCatalog.data && (
                 <div className="mt-4 pt-4 border-t border-white/[0.08]">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <p className="text-sm font-medium text-foreground">
-                      Generated {generateCatalog.data.products.length} products
-                    </p>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <p className="text-sm font-medium text-foreground">
+                        Generated {generateCatalog.data.products.length} products
+                      </p>
+                    </div>
+                    {selectedStore && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs btn-glow px-3"
+                        disabled={bulkPush.isPending}
+                        onClick={() =>
+                          bulkPush.mutate({
+                            storeId: Number(selectedStore),
+                            productIds: generateCatalog.data!.products.map((p: any) => p.id),
+                          })
+                        }
+                      >
+                        {bulkPush.isPending ? (
+                          <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Pushing...</>
+                        ) : (
+                          <><Zap className="h-3 w-3 mr-1.5" />Push All to Shopify</>
+                        )}
+                      </Button>
+                    )}
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {generateCatalog.data.products.map((p: any, i: number) => (

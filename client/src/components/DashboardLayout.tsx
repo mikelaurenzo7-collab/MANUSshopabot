@@ -170,7 +170,10 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find((item) => item.path === location);
   const isMobile = useIsMobile();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-
+  const { data: subscription } = trpc.stripe.getSubscription.useQuery();
+  const billingPortal = trpc.stripe.createBillingPortalSession.useMutation({
+    onSuccess: (data) => { window.open(data.url, '_blank'); },
+  });
   const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
     refetchInterval: 30000,
   });
@@ -357,6 +360,26 @@ function DashboardLayoutContent({
             </div>
           </div>
           <div className="flex items-center gap-2">
+              {subscription?.isActive && subscription.plan && (
+                <button
+                  onClick={() => billingPortal.mutate({ origin: window.location.origin })}
+                  disabled={billingPortal.isPending}
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-400 text-[11px] font-semibold tracking-wide hover:bg-sky-500/20 transition-all duration-300 cursor-pointer"
+                  title="Manage subscription"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}
+                </button>
+              )}
+              {!subscription?.isActive && (
+                <a
+                  href="/#pricing"
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-semibold tracking-wide hover:bg-amber-500/20 transition-all duration-300"
+                >
+                  <Zap className="h-3 w-3" />
+                  Upgrade
+                </a>
+              )}
               <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button

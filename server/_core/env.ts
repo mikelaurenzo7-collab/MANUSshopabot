@@ -62,4 +62,9 @@ export const ENV = {
 
   // Facebook Page ID for bot notifications
   beastbotsPageId: process.env.BEASTBOTS_PAGE_ID ?? "",
+
+  // Stripe
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "",
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
 };

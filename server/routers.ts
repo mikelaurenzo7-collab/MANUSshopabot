@@ -21,6 +21,7 @@ import { workflowGraphRouter } from "./routers/workflowGraph";
 import { pluginRouter } from "./routers/pluginStore";
 import { supplierRouter } from "./routers/supplier";
 import { promptRLRouter } from "./routers/promptRL";
+import { stripeRouter } from "./routers/stripe";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -52,6 +53,7 @@ export const appRouter = router({
   plugins: pluginRouter,
   supplier: supplierRouter,
   promptRL: promptRLRouter,
+  stripe: stripeRouter,
 
   // Notifications — scoped to current user
   notifications: router({
