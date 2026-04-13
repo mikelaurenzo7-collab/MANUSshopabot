@@ -470,16 +470,16 @@
 
 ## Sprint 22: Production Blockers
 
-- [ ] Stripe: activate integration, create subscription plans (Starter $49 / Growth $149 / Pro $299 / Scale $599)
-- [ ] Stripe: checkout session endpoint + success/cancel redirect handling
-- [ ] Stripe: webhook handler for subscription lifecycle (created, updated, canceled, payment_failed)
-- [ ] Stripe: gate Command Center behind active subscription (redirect to /pricing if no active sub)
-- [ ] Stripe: show current plan + manage billing link in Command Center header
-- [ ] Shopify OAuth: complete end-to-end install flow (HMAC validation → token exchange → encrypted token storage)
-- [ ] Shopify OAuth: show connected store in Command Center with real store name/URL
-- [ ] Shopify OAuth: handle reinstall / token refresh edge cases
-- [ ] Builder Bot: live execution pipeline (niche → LLM market research → product catalog → Shopify product creation)
-- [ ] Builder Bot: real-time progress UI (SSE streaming status updates during bot run)
-- [ ] Builder Bot: store populated products in DB and show in Command Center
-- [ ] Error boundaries: wrap all major page sections with React ErrorBoundary
-- [ ] Circuit breaker UI: toast notification when a platform circuit trips open
+- [x] Stripe: activate integration, create subscription plans (Starter $49 / Growth $149 / Pro $299 / Scale $599)
+- [x] Stripe: checkout session endpoint + success/cancel redirect handling
+- [x] Stripe: webhook handler for subscription lifecycle (created, updated, canceled, payment_failed)
+- [x] Stripe: gate Command Center behind active subscription (redirect to /pricing if no active sub)
+- [x] Stripe: show current plan + manage billing link in Command Center header
+- [x] Shopify OAuth: complete end-to-end install flow (HMAC validation → token exchange → encrypted token storage)
+- [x] Shopify OAuth: show connected store in Command Center with real store name/URL
+- [x] Shopify OAuth: handle reinstall / token refresh edge cases
+- [x] Builder Bot: live execution pipeline (niche → LLM market research → product catalog → Shopify product creation)
+- [x] Builder Bot: real-time progress UI (SSE streaming status updates during bot run)
+- [x] Builder Bot: store populated products in DB and show in Command Center
+- [x] Error boundaries: wrap all major page sections with React ErrorBoundary
+- [x] Circuit breaker UI: toast notification when a platform circuit trips open

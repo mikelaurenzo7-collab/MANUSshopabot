@@ -69,26 +69,28 @@ function Router() {
             <OnboardingGuard />
             <DashboardLayout>
               <Suspense fallback={<PageLoader />}>
-                <Switch>
-                  <Route path="/" component={Home} />
-                  <Route path="/architect" component={ArchitectPage} />
-                  <Route path="/merchant" component={MerchantPage} />
-                  <Route path="/social" component={SocialPage} />
-                  <Route path="/activity" component={ActivityPage} />
-                  <Route path="/analytics" component={AnalyticsPage} />
-                  <Route path="/integrations" component={IntegrationsPage} />
-                  <Route path="/workflows" component={WorkflowsPage} />
-                  <Route path="/health" component={PlatformHealthPage} />
-                  <Route path="/intelligence" component={IntelligencePage} />
-                  <Route path="/config" component={ConfigPage} />
-                  <Route path="/orchestrator" component={OrchestratorGraphPage} />
-                  <Route path="/plugins" component={PluginStorePage} />
-                  <Route path="/supplier" component={SupplierPOsPage} />
-                  <Route path="/prompt-lab" component={PromptLabPage} />
-                  <Route path="/profile" component={ProfilePage} />
-                  <Route path="/404" component={NotFound} />
-                  <Route component={NotFound} />
-                </Switch>
+                <ErrorBoundary inline label="page">
+                  <Switch>
+                    <Route path="/" component={Home} />
+                    <Route path="/architect" component={ArchitectPage} />
+                    <Route path="/merchant" component={MerchantPage} />
+                    <Route path="/social" component={SocialPage} />
+                    <Route path="/activity" component={ActivityPage} />
+                    <Route path="/analytics" component={AnalyticsPage} />
+                    <Route path="/integrations" component={IntegrationsPage} />
+                    <Route path="/workflows" component={WorkflowsPage} />
+                    <Route path="/health" component={PlatformHealthPage} />
+                    <Route path="/intelligence" component={IntelligencePage} />
+                    <Route path="/config" component={ConfigPage} />
+                    <Route path="/orchestrator" component={OrchestratorGraphPage} />
+                    <Route path="/plugins" component={PluginStorePage} />
+                    <Route path="/supplier" component={SupplierPOsPage} />
+                    <Route path="/prompt-lab" component={PromptLabPage} />
+                    <Route path="/profile" component={ProfilePage} />
+                    <Route path="/404" component={NotFound} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </ErrorBoundary>
               </Suspense>
             </DashboardLayout>
           </>

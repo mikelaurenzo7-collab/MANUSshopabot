@@ -266,13 +266,20 @@ export function registerShopifyOAuthRoutes(app: Express) {
         storeId: existingStore?.id,
       });
 
-      // Redirect back to the originating page
+      // Redirect back to the originating page (use stored origin for absolute URL)
+      const storedOrigin = dbState?.origin ?? "";
       const returnPath = nonceData.returnTo || "/architect";
-      res.redirect(302, `${returnPath}?connected=true`);
+      const successUrl = storedOrigin
+        ? `${storedOrigin}${returnPath}?connected=true`
+        : `${returnPath}?connected=true`;
+      res.redirect(302, successUrl);
     } catch (error) {
       console.error("[Shopify OAuth] Callback error:", error);
-      const returnPath = "/architect";
-      res.redirect(302, `${returnPath}?error=connection_failed`);
+      // Best-effort: use the protocol/host from the incoming request for error redirect
+      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+      const host = req.headers["x-forwarded-host"] || req.headers.host;
+      const fallbackOrigin = `${protocol}://${host}`;
+      res.redirect(302, `${fallbackOrigin}/architect?error=connection_failed`);
     }
   });
 

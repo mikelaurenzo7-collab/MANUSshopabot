@@ -116,6 +116,13 @@ function getBreaker(key: string) {
   policy.onBreak((reason) => {
     const err = "error" in reason ? reason.error : undefined;
     logger.warn("circuit_breaker_opened", { key, error: err?.message });
+    // Fire-and-forget owner notification — circuit trips are critical operational alerts
+    import("./notification").then(({ notifyOwner }) => {
+      notifyOwner({
+        title: `⚡ Circuit Breaker Tripped: ${key}`,
+        content: `The ${key} circuit breaker opened after ${CIRCUIT_BREAKER_THRESHOLD} consecutive failures. Requests are paused for ${CIRCUIT_BREAKER_TIMEOUT_MS / 1000}s. Last error: ${err?.message ?? "unknown"}.`,
+      }).catch(() => { /* swallow — notification failure must not crash the app */ });
+    }).catch(() => {});
   });
   policy.onReset(() => logger.info("circuit_breaker_closed", { key }));
   policy.onHalfOpen(() => logger.info("circuit_breaker_half_open", { key }));
