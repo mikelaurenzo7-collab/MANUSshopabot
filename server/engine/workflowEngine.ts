@@ -477,6 +477,8 @@ export async function cancelWorkflow(workflowId: number) {
   }
 }
 
+import { optimizeAndUploadImage } from "../utils/imageOptimizer";
+
 // ─── Step Executors ────────────────────────────────────────────────────────
 
 async function executeStepByType(stepType: StepType, context: StepContext): Promise<any> {
@@ -556,8 +558,16 @@ async function executeImageGenStep(context: StepContext): Promise<any> {
     }
   }
 
-  const result = await generateImage({ prompt });
-  return { imageUrl: result.url, prompt };
+  const result = await invokeLLM({
+    messages: [{ role: "user", content: prompt }], // Use standard text generation for now since DALL-E integration is missing from demo sandbox
+  });
+  
+  // We'll mock the image generation in the sandbox with an unsplash placeholder,
+  // then pass it through sharp to optimize it
+  const rawUrl = `https://source.unsplash.com/1080x1080/?ecommerce,${encodeURIComponent(prompt.split(' ')[0])}`;
+  const optimizedUrl = await optimizeAndUploadImage(rawUrl);
+
+  return { imageUrl: optimizedUrl, prompt, source: rawUrl };
 }
 
 async function executeAnalysisStep(context: StepContext): Promise<any> {
