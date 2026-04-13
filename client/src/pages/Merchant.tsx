@@ -1,36 +1,16 @@
-import { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-  Package,
-  Loader2,
-  AlertTriangle,
-  DollarSign,
-  TrendingUp,
-  ShoppingCart,
-  Truck,
-  Zap,
-  BarChart3,
-  RefreshCw,
-  Link,
-  Users,
-  ArrowUpDown,
-  RotateCcw,
-  X,
-  Activity,
+  Package, Loader2, AlertTriangle, DollarSign, TrendingUp, ShoppingCart, 
+  Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers
 } from "lucide-react";
 
 export default function MerchantPage() {
   const [selectedStore, setSelectedStore] = useState<string>("");
   const storeId = selectedStore ? Number(selectedStore) : undefined;
+  const [selectedEntity, setSelectedEntity] = useState<any>(null);
+  const [entityType, setEntityType] = useState<"product" | "order" | null>(null);
 
   const { data: stores } = trpc.stores.list.useQuery();
   const { data: products, isLoading: productsLoading } = trpc.merchant.products.useQuery(
@@ -45,608 +25,284 @@ export default function MerchantPage() {
     { storeId: storeId! },
     { enabled: !!storeId }
   );
-  const { data: pricingRules } = trpc.merchant.pricingRules.useQuery(
-    { storeId: storeId! },
-    { enabled: !!storeId }
-  );
 
   const utils = trpc.useUtils();
+  const { data: status } = trpc.dashboard.agentStatus.useQuery();
+  const merchantStatus = status?.agents?.merchant || { status: 'idle' };
 
   const autoFulfill = trpc.merchant.autoFulfill.useMutation({
     onSuccess: () => {
-      toast.success("Order fulfilled successfully!");
+      toast.success("ORDER_FULFILLED");
       utils.merchant.orders.invalidate();
-      utils.dashboard.invalidate();
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(`ERR: ${err.message}`);
+    }
   });
 
-  const suggestPricing = trpc.merchant.suggestPricing.useMutation({
-    onSuccess: () => {
-      toast.success("Pricing suggestions generated!");
-      utils.merchant.pricingRules.invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const createPricingRule = trpc.merchant.createPricingRule.useMutation({
-    onSuccess: () => {
-      toast.success("Pricing rule created!");
-      utils.merchant.pricingRules.invalidate();
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const storeOptions = useMemo(() => stores ?? [], [stores]);
-
-  // AI Tools state
-  const [forecastResult, setForecastResult] = useState<any>(null);
-  const [marginResult, setMarginResult] = useState<any>(null);
-  const [returnResult, setReturnResult] = useState<any>(null);
-  const [forecastPeriod, setForecastPeriod] = useState<"7_days" | "30_days" | "90_days">("30_days");
-
-  // AI Tools mutations
-  const demandForecast = trpc.merchant.demandForecasting.useMutation({
-    onSuccess: (data) => {
-      setForecastResult(data);
-      toast.success("Demand forecast complete!");
-    },
-    onError: (err) => toast.error(`Forecast failed: ${err.message}`),
-  });
-
-  const marginAnalyzer = trpc.merchant.marginAnalyzer.useMutation({
-    onSuccess: (data) => {
-      setMarginResult(data);
-      toast.success("Margin analysis complete!");
-    },
-    onError: (err) => toast.error(`Margin analysis failed: ${err.message}`),
-  });
-
-  const returnAnalysis = trpc.merchant.returnAnalysis.useMutation({
-    onSuccess: (data) => {
-      setReturnResult(data);
-      toast.success("Return analysis complete!");
-    },
-    onError: (err) => toast.error(`Return analysis failed: ${err.message}`),
-  });
+  const handleEntitySelect = (type: "product" | "order", entity: any) => {
+    setEntityType(type);
+    setSelectedEntity(entity);
+  };
 
   return (
-    <div className="relative">
-      {/* Ghost watermark */}
-      <div className="ghost-watermark" aria-hidden="true">MERCHANT</div>
-      {/* Light leaks */}
-      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-cyan-500/15 flex items-center justify-center">
-            <Package className="h-5 w-5 text-cyan-400" />
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0]">
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col h-full border-r border-[#1e293b]">
+        {/* Header Bar */}
+        <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
+          <div className="flex items-center gap-3">
+            <Package className="text-cyan-400 w-5 h-5" />
+            <div>
+              <h1 className="font-mono text-[11px] uppercase tracking-widest font-bold text-white">Merchant Bot: Operations Module</h1>
+              <p className="font-mono text-[9px] text-[#64748b]">Inventory sync, auto-fulfillment, pricing matrices.</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Merchant Bot</h1>
-            <p className="text-sm text-muted-foreground">Inventory, pricing, and fulfillment automation</p>
+          <div className="flex items-center gap-2">
+             <span className="font-mono text-[9px] tracking-widest uppercase text-[#64748b]">Engine State:</span>
+             <span className={`font-mono text-[10px] uppercase font-bold ${merchantStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
+               {merchantStatus.status === 'running' ? 'PROCESSING' : 'STANDBY'}
+             </span>
           </div>
         </div>
-        <Select value={selectedStore} onValueChange={setSelectedStore}>
-          <SelectTrigger className="w-48 bg-input/50">
-            <SelectValue placeholder="Select store" />
-          </SelectTrigger>
-          <SelectContent>
-            {storeOptions.map((s: any) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {!selectedStore ? (
-        <Card className="bento-card">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Select a store to manage</p>
-            <p className="text-xs text-white/30 mt-1">Connect a store via Builder Bot or Integrations first</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs defaultValue="inventory" className="space-y-4">
-          <TabsList className="bg-secondary/50">
-            <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
-            <TabsTrigger value="fulfillment">Fulfillment</TabsTrigger>
-            <TabsTrigger value="tools">AI Tools</TabsTrigger>
-          </TabsList>
-
-          {/* Inventory Tab */}
-          <TabsContent value="inventory" className="space-y-4">
-            {lowStock && lowStock.length > 0 && (
-              <Card className="bg-amber-500/5 border-amber-400/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-400" />
-                    <h3 className="text-sm font-semibold text-amber-400">Low Stock Alerts</h3>
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
+          <div className="max-w-5xl mx-auto space-y-6">
+            
+            {/* Store Triage Selector */}
+            <div className="border border-[#1e293b] bg-[#0a0a0a] p-4 relative flex items-center justify-between">
+              <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />
+              <div className="flex items-center gap-4 w-full pl-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b] shrink-0">Active Source:</span>
+                <select
+                  value={selectedStore}
+                  onChange={(e) => {
+                    setSelectedStore(e.target.value);
+                    setSelectedEntity(null);
+                    setEntityType(null);
+                  }}
+                  className="bg-[#050505] border border-[#1e293b] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 flex-1 max-w-[300px]"
+                >
+                  <option value="">SELECT_TARGET_STORE</option>
+                  {stores?.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name} [{s.platform}]</option>
+                  ))}
+                </select>
+                
+                {lowStock && lowStock.length > 0 && (
+                  <div className="ml-auto flex items-center bg-red-500/10 border border-red-500/30 px-3 py-1">
+                    <AlertTriangle className="w-3 h-3 text-red-500 mr-2" />
+                    <span className="font-mono text-[10px] font-bold text-red-500 uppercase">{lowStock.length} INVENTORY WARNINGS</span>
                   </div>
-                  <div className="space-y-2">
-                    {lowStock.map((p: any) => (
-                      <div key={p.id} className="flex items-center justify-between text-sm">
-                        <span className="text-foreground">{p.title}</span>
-                        <Badge variant="outline" className="border-amber-400/30 text-amber-400">
-                          {p.stockLevel} left
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {productsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bento-card">
-                    <CardContent className="p-4">
-                      <Skeleton className="h-5 w-48 mb-2" />
-                      <Skeleton className="h-4 w-32" />
-                    </CardContent>
-                  </Card>
-                ))}
+                )}
               </div>
-            ) : products && products.length > 0 ? (
-              <div className="space-y-2">
-                {products.map((p: any) => (
-                  <Card key={p.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-foreground truncate">{p.title}</h4>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                            <span>SKU: {p.sku || "N/A"}</span>
-                            <span>${(p.price / 100).toFixed(2)}</span>
-                            <span>Stock: {p.stockLevel}</span>
-                          </div>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] ${
-                            p.status === "active"
-                              ? "border-emerald-400/30 text-emerald-400"
-                              : p.status === "draft"
-                                ? "border-border text-muted-foreground"
-                                : "border-amber-400/30 text-amber-400"
-                          }`}
-                        >
-                          {p.status}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bento-card">
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <Package className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No products yet</p>
-                  <p className="text-xs text-white/30 mt-1">Use Builder Bot to generate a product catalog automatically</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Orders Tab */}
-          <TabsContent value="orders" className="space-y-4">
-            {ordersLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bento-card">
-                    <CardContent className="p-4"><Skeleton className="h-5 w-48" /></CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : orders && orders.length > 0 ? (
-              <div className="space-y-2">
-                {orders.map((o: any) => (
-                  <Card key={o.id} className="bg-card border-white/[0.08] hover:border-sky-500/20 transition-all">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">Order #{o.platformOrderId || o.id}</h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {o.customerEmail || "Unknown customer"} · ${(o.totalAmount / 100).toFixed(2)}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] ${
-                            o.fulfillmentStatus === "fulfilled"
-                              ? "border-emerald-400/30 text-emerald-400"
-                              : o.fulfillmentStatus === "processing"
-                                ? "border-amber-400/30 text-amber-400"
-                                : "border-border text-muted-foreground"
-                          }`}
-                        >
-                          {o.fulfillmentStatus}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bento-card">
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <ShoppingCart className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No orders yet</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Pricing Tab */}
-          <TabsContent value="pricing" className="space-y-4">
-            <Card className="bento-card">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">AI Pricing Strategy</h3>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (products && products.length > 0) {
-                        suggestPricing.mutate({ storeId: storeId!, productId: (products[0] as any).id });
-                      } else {
-                        toast.error("Add products first to get pricing suggestions");
-                      }
-                    }}
-                    disabled={suggestPricing.isPending || !products?.length}
-                  >
-                    {suggestPricing.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                    ) : (
-                      <Zap className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    Get AI Suggestions
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Merchant Bot analyzes your products and competition to suggest optimal pricing.
-                </p>
-              </CardContent>
-            </Card>
-
-            {pricingRules && pricingRules.length > 0 ? (
-              <div className="space-y-2">
-                {pricingRules.map((r: any) => (
-                  <Card key={r.id} className="bento-card">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">{r.name}</h4>
-                          <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                            {r.ruleType} · Min margin: {r.minMarginPercent}%
-                          </p>
-                        </div>
-                        <Badge variant="outline" className={`text-[10px] ${r.isActive ? "border-emerald-400/30 text-emerald-400" : "border-border text-muted-foreground"}`}>
-                          {r.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bento-card">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <BarChart3 className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No pricing rules yet</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Fulfillment Tab */}
-          <TabsContent value="fulfillment" className="space-y-4">
-            {(() => {
-              const statusPipeline = {
-                pending: orders?.filter((o: any) => o.status === "pending").length || 0,
-                processing: orders?.filter((o: any) => o.status === "processing").length || 0,
-                shipped: orders?.filter((o: any) => o.status === "shipped").length || 0,
-                delivered: orders?.filter((o: any) => o.status === "delivered").length || 0,
-              };
-              const fulfillPipeline = {
-                unfulfilled: orders?.filter((o: any) => o.fulfillmentStatus === "unfulfilled").length || 0,
-                partial: orders?.filter((o: any) => o.fulfillmentStatus === "partial").length || 0,
-                fulfilled: orders?.filter((o: any) => o.fulfillmentStatus === "fulfilled").length || 0,
-              };
-              const total = orders?.length || 0;
-              return (
-                <>
-                  {/* Pipeline Funnel */}
-                  <Card className="bento-card">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Activity className="h-4 w-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground">Order Pipeline</h3>
-                        <Badge variant="outline" className="text-[10px] ml-auto">{total} orders</Badge>
-                      </div>
-                      <div className="grid grid-cols-4 gap-3 mb-4">
-                        {[
-                          { label: "Pending", count: statusPipeline.pending, color: "bg-amber-500/10 border-amber-500/20 text-amber-400" },
-                          { label: "Processing", count: statusPipeline.processing, color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
-                          { label: "Shipped", count: statusPipeline.shipped, color: "bg-sky-500/10 border-sky-500/20 text-sky-400" },
-                          { label: "Delivered", count: statusPipeline.delivered, color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" },
-                        ].map((stage, i) => (
-                          <div key={stage.label} className="relative">
-                            <div className={`p-3 rounded-xl border text-center ${stage.color}`}>
-                              <p className="text-2xl font-bold">{stage.count}</p>
-                              <p className="text-[10px] uppercase tracking-wider mt-1 font-semibold">{stage.label}</p>
-                            </div>
-                            {i < 3 && (
-                              <div className="absolute top-1/2 -right-2 transform -translate-y-1/2 text-muted-foreground/30 text-lg z-10">\u2192</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      {/* Progress bar */}
-                      <div className="h-2 rounded-full bg-white/[0.03] overflow-hidden flex">
-                        {total > 0 && (
-                          <>
-                            <div className="bg-amber-400 h-full transition-all" style={{ width: `${(statusPipeline.pending / total) * 100}%` }} />
-                            <div className="bg-blue-400 h-full transition-all" style={{ width: `${(statusPipeline.processing / total) * 100}%` }} />
-                            <div className="bg-sky-400 h-full transition-all" style={{ width: `${(statusPipeline.shipped / total) * 100}%` }} />
-                            <div className="bg-emerald-400 h-full transition-all" style={{ width: `${(statusPipeline.delivered / total) * 100}%` }} />
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {/* Fulfillment Status Breakdown */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="p-4 rounded-xl bg-red-500/8 border border-red-500/15">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Unfulfilled</p>
-                      <p className="text-2xl font-bold text-red-400">{fulfillPipeline.unfulfilled}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-amber-500/8 border border-amber-500/15">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Partial</p>
-                      <p className="text-2xl font-bold text-amber-400">{fulfillPipeline.partial}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">Fulfilled</p>
-                      <p className="text-2xl font-bold text-emerald-400">{fulfillPipeline.fulfilled}</p>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-            {/* Auto-Fulfillment Action */}
-            <Card className="bento-card">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">Zero-Touch Fulfillment</h3>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const pendingOrder = orders?.find((o: any) => o.fulfillmentStatus === "unfulfilled");
-                      if (pendingOrder) {
-                        autoFulfill.mutate({ orderId: (pendingOrder as any).id, storeId: (pendingOrder as any).storeId });
-                      } else {
-                        toast.info("No unfulfilled orders to process");
-                      }
-                    }}
-                    disabled={autoFulfill.isPending}
-                  >
-                    {autoFulfill.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                    ) : (
-                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                    )}
-                    Process All Orders
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Merchant Bot will automatically process all pending orders and initiate fulfillment.
-                  Zero-touch from \u201cPlaced\u201d to \u201cProcessed\u201d with 0% human clicks.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* AI Tools Tab */}
-          <TabsContent value="tools" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Demand Forecasting */}
-              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-9 w-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
-                      <TrendingUp className="h-4.5 w-4.5 text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Demand Forecasting</h3>
-                      <p className="text-[11px] text-muted-foreground">Predict future demand</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-4">AI-powered demand prediction with stockout risk alerts, seasonal insights, and reorder recommendations.</p>
-                  <div className="space-y-2">
-                    <Select value={forecastPeriod} onValueChange={(v) => setForecastPeriod(v as any)}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Period" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7_days">7 Days</SelectItem>
-                        <SelectItem value="30_days">30 Days</SelectItem>
-                        <SelectItem value="90_days">90 Days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" className="w-full text-xs" disabled={demandForecast.isPending} onClick={() => demandForecast.mutate({ storeId: storeId!, forecastPeriod })}>
-                      {demandForecast.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <TrendingUp className="h-3 w-3 mr-1" />}
-                      {demandForecast.isPending ? "Forecasting..." : "Run Forecast"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Margin Analyzer */}
-              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-9 w-9 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                      <DollarSign className="h-4.5 w-4.5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Margin Analyzer</h3>
-                      <p className="text-[11px] text-muted-foreground">Profitability deep-dive</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-4">Analyze margins by product and category. Find profit leaks, top performers, and optimization opportunities.</p>
-                  <Button size="sm" className="w-full text-xs" disabled={marginAnalyzer.isPending} onClick={() => marginAnalyzer.mutate({ storeId: storeId! })}>
-                    {marginAnalyzer.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <DollarSign className="h-3 w-3 mr-1" />}
-                    {marginAnalyzer.isPending ? "Analyzing..." : "Analyze Margins"}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Return Analysis */}
-              <Card className="bg-card border-white/[0.08] hover:border-emerald-500/30 transition-all">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                      <RotateCcw className="h-4.5 w-4.5 text-amber-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Return Analysis</h3>
-                      <p className="text-[11px] text-muted-foreground">Reduce return rates</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-4">Analyze return patterns, identify problematic products, and get strategies to reduce return rates and costs.</p>
-                  <Button size="sm" className="w-full text-xs" disabled={returnAnalysis.isPending} onClick={() => returnAnalysis.mutate({ storeId: storeId! })}>
-                    {returnAnalysis.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RotateCcw className="h-3 w-3 mr-1" />}
-                    {returnAnalysis.isPending ? "Analyzing..." : "Analyze Returns"}
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
 
-            {/* AI Tools Results */}
-            {forecastResult && (
-              <Card className="bg-card border-white/[0.08] border-blue-500/30">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Demand Forecast Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setForecastResult(null)}><X className="h-3 w-3" /></Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">{forecastResult.summary || forecastResult.overallInsight || JSON.stringify(forecastResult).slice(0, 300)}</p>
-                  {forecastResult.products && (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                      {forecastResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-white/[0.03] flex items-center justify-between">
-                          <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
-                          <div className="flex gap-2 text-[10px] text-muted-foreground">
-                            {p.predictedDemand && <span>Demand: <span className="text-foreground">{p.predictedDemand}</span></span>}
-                            {p.stockoutRisk && <Badge variant="outline" className={`text-[9px] ${p.stockoutRisk === 'high' ? 'text-red-400 border-red-400/30' : p.stockoutRisk === 'medium' ? 'text-amber-400 border-amber-400/30' : 'text-emerald-400 border-emerald-400/30'}`}>{p.stockoutRisk} risk</Badge>}
-                          </div>
-                        </div>
-                      ))}
+            {!storeId ? (
+              <div className="border border-[#1e293b] border-dashed p-12 flex flex-col items-center justify-center text-center opacity-50">
+                <Store className="w-8 h-8 text-[#64748b] mb-4" />
+                <p className="font-mono text-xs uppercase tracking-widest text-[#64748b]">Awaiting Target Source Configuration</p>
+                <p className="font-mono text-[9px] text-[#64748b] mt-2">Connect to a synchronized data stream to visualize inventory matrices.</p>
+              </div>
+            ) : (
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 
+                 {/* Product DB */}
+                 <div className="border border-[#1e293b] bg-[#0a0a0a] flex flex-col min-h-[400px]">
+                    <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                      <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Layers className="w-3 h-3 text-cyan-400 mr-2" /> Data: Products</h2>
+                      <Badge count={products?.length || 0} />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    <div className="flex-1 p-0 overflow-auto custom-scrollbar">
+                      {productsLoading ? (
+                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                      ) : !products?.length ? (
+                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Entity List Empty</div>
+                      ) : (
+                        <table className="w-full text-left font-mono border-collapse">
+                          <thead>
+                            <tr className="border-b border-[#1e293b] bg-[#050505]">
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal w-1/2">Product Title</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Stock</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Price</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {products.map((p: any) => {
+                              const isSelected = selectedEntity?.id === p.id && entityType === "product";
+                              const stockColor = p.stockQuantity && p.stockQuantity < 5 ? "text-red-500 font-bold" : "text-[#00ff41]";
+                              return (
+                                <tr 
+                                  key={p.id} 
+                                  onClick={() => handleEntitySelect("product", p)}
+                                  className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-cyan-400' : 'hover:bg-[#1e293b]/20'} relative`}
+                                >
+                                 <td className="px-4 py-2 font-bold text-[#e2e8f0] text-[10px] uppercase truncate max-w-[150px]">
+                                   {p.title}
+                                 </td>
+                                 <td className={`px-4 py-2 text-[10px] ${stockColor}`}>{p.stockQuantity ?? "N/A"}</td>
+                                 <td className="px-4 py-2 text-right text-[#00ff41] text-[10px] tracking-wider">
+                                   ${((p.price ?? 0) / 100).toFixed(2)}
+                                 </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                 </div>
 
-            {marginResult && (
-              <Card className="bg-card border-white/[0.08] border-emerald-500/30">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Margin Analysis Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setMarginResult(null)}><X className="h-3 w-3" /></Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">{marginResult.summary || marginResult.overallInsight || JSON.stringify(marginResult).slice(0, 300)}</p>
-                  {marginResult.products && (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                      {marginResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-white/[0.03]">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
-                            <span className="text-xs text-emerald-400 font-medium">{p.margin || p.profitMargin || ''}</span>
-                          </div>
-                          {p.recommendation && <p className="text-[10px] text-muted-foreground mt-1">{p.recommendation}</p>}
-                        </div>
-                      ))}
+                 {/* Order Stream */}
+                 <div className="border border-[#1e293b] bg-[#0a0a0a] flex flex-col min-h-[400px]">
+                    <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                      <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Activity className="w-3 h-3 text-[#f59e0b] mr-2" /> Stream: Orders</h2>
+                      <Badge count={orders?.length || 0} />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    <div className="flex-1 p-0 overflow-auto custom-scrollbar">
+                      {ordersLoading ? (
+                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                      ) : !orders?.length ? (
+                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Stream Empty</div>
+                      ) : (
+                        <table className="w-full text-left font-mono border-collapse">
+                          <thead>
+                            <tr className="border-b border-[#1e293b] bg-[#050505]">
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal w-1/3">Order ID</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Status</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {orders.map((o: any) => {
+                              const isSelected = selectedEntity?.id === o.id && entityType === "order";
+                              const sCol = o.financialStatus === "paid" ? "text-[#00ff41]" : "text-[#f59e0b]";
+                              return (
+                                <tr 
+                                  key={o.id} 
+                                  onClick={() => handleEntitySelect("order", o)}
+                                  className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-[#f59e0b]' : 'hover:bg-[#1e293b]/20'} relative`}
+                                >
+                                 <td className="px-4 py-2 font-bold text-[#e2e8f0] text-[10px] uppercase truncate max-w-[120px]">
+                                   #{o.externalId || o.id}
+                                 </td>
+                                 <td className={`px-4 py-2 text-[9px] uppercase tracking-widest ${sCol}`}>{o.financialStatus}</td>
+                                 <td className="px-4 py-2 text-right text-[#00ff41] text-[10px] tracking-wider">
+                                   ${((o.totalAmount ?? 0) / 100).toFixed(2)}
+                                 </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                 </div>
 
-            {returnResult && (
-              <Card className="bg-card border-white/[0.08] border-amber-500/30">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Return Analysis Results</h3>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Dismiss" onClick={() => setReturnResult(null)}><X className="h-3 w-3" /></Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">{returnResult.summary || returnResult.overallInsight || JSON.stringify(returnResult).slice(0, 300)}</p>
-                  {returnResult.products && (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                      {returnResult.products.slice(0, 10).map((p: any, i: number) => (
-                        <div key={i} className="p-2 rounded-md bg-white/[0.03]">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">{p.productName || p.title || `Product ${i + 1}`}</span>
-                            {p.returnRate && <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-400/30">{p.returnRate} return rate</Badge>}
-                          </div>
-                          {p.topReason && <p className="text-[10px] text-muted-foreground mt-1">Top reason: {p.topReason}</p>}
-                          {p.recommendation && <p className="text-[10px] text-muted-foreground">{p.recommendation}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+               </div>
             )}
+            
+          </div>
+        </div>
+      </div>
 
-            {/* New Workflow Capabilities */}
-            <Card className="bento-card">
-              <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">New Merchant Capabilities</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
-                    <Link className="h-4 w-4 text-emerald-400" />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Supply Chain Intelligence</p>
-                      <p className="text-[11px] text-muted-foreground">Supplier scorecards, lead time optimization, and risk assessment</p>
-                    </div>
-                    <Badge variant="outline" className="ml-auto text-[10px] border-emerald-400/30 text-emerald-400">Workflow</Badge>
-                  </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
-                    <TrendingUp className="h-4 w-4 text-blue-400" />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Profit & Loss Analysis</p>
-                      <p className="text-[11px] text-muted-foreground">CFO-level P&L report with cash flow projections</p>
-                    </div>
-                    <Badge variant="outline" className="ml-auto text-[10px] border-blue-400/30 text-blue-400">Workflow</Badge>
-                  </div>
-                  <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
-                    <Users className="h-4 w-4 text-sky-400" />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Customer Segmentation</p>
-                      <p className="text-[11px] text-muted-foreground">RFM analysis, behavioral segments, and churn prediction</p>
-                    </div>
-                    <Badge variant="outline" className="ml-auto text-[10px] border-sky-400/30 text-sky-400">Workflow</Badge>
-                  </div>
+      {/* Metadata Inspector (Right Panel) */}
+      <aside className="w-[380px] shrink-0 bg-[#0a0a0a] flex flex-col z-20 box-border border-l border-[#1e293b]">
+        <div className="h-14 flex items-center px-4 border-b border-[#1e293b] justify-between shrink-0 bg-[#050505]">
+          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b]">
+            Merchant Inspector
+          </span>
+          <span className="flex items-center gap-2">
+             <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+           {!selectedEntity ? (
+             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
+                <Target className="w-6 h-6 text-[#64748b] mb-4" />
+                <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b]">Select an entity stream to view telemetry</p>
+             </div>
+           ) : entityType === "product" ? (
+             <div className="space-y-6">
+                <div>
+                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2 break-all">{selectedEntity.title}</h2>
+                   <div className="flex justify-between items-center mt-3">
+                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Drizzle ID</span>
+                      <span className="font-mono text-[10px] text-white">[{selectedEntity.id}]</span>
+                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+
+                <div className="space-y-2">
+                   <InspectorRow label="Platform ID" value={`${selectedEntity.externalId || 'N/A'}`} />
+                   <InspectorRow label="Vendor" value={`${selectedEntity.vendor || 'UNKNOWN'}`} />
+                   <InspectorRow label="Stock Vol" value={`${selectedEntity.stockQuantity ?? '0'}`} 
+                     valueColor={selectedEntity.stockQuantity < 5 ? "text-red-500" : "text-[#00ff41]"} />
+                   <InspectorRow label="Unit Price" value={`$${((selectedEntity.price ?? 0) / 100).toFixed(2)}`} valueColor="text-white" />
+                   <InspectorRow label="Competitor Avg" value={`$${((selectedEntity.competitorPrice ?? 0) / 100).toFixed(2)}`} valueColor="text-[#64748b]" />
+                   <InspectorRow label="AI Sync State" value={selectedEntity.synced ? "OK" : "PENDING"} valueColor={selectedEntity.synced ? "text-[#00ff41]" : "text-[#f59e0b]"} />
+                </div>
+                
+                <div className="pt-4 border-t border-[#1e293b]">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Linked Actions</p>
+                  <button className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
+                     Force DB Sync <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
+                  </button>
+                </div>
+             </div>
+           ) : (
+             <div className="space-y-6">
+                <div>
+                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2">ORDER #{selectedEntity.externalId || selectedEntity.id}</h2>
+                   <div className="flex justify-between items-center mt-3">
+                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Transaction Net</span>
+                      <span className="font-mono text-xl font-bold text-[#00ff41]">
+                         ${((selectedEntity.totalAmount ?? 0) / 100).toFixed(2)}
+                      </span>
+                   </div>
+                </div>
+
+                <div className="space-y-2">
+                   <InspectorRow label="Customer Target" value={selectedEntity.customerEmail || 'N/A'} />
+                   <InspectorRow label="Fulfillment Stage" value={selectedEntity.fulfillmentStatus?.toUpperCase() || 'UNFULFILLED'} 
+                     valueColor={selectedEntity.fulfillmentStatus === 'fulfilled' ? "text-[#00ff41]" : "text-[#f59e0b]"} />
+                   <InspectorRow label="Financial Stage" value={selectedEntity.financialStatus?.toUpperCase() || 'PENDING'} 
+                     valueColor={selectedEntity.financialStatus === 'paid' ? "text-[#00ff41]" : "text-[#f59e0b]"} />
+                   <InspectorRow label="Creation Timestamp" value={new Date(selectedEntity.createdAt).toLocaleString()} valueColor="text-[#64748b]" />
+                </div>
+                
+                <div className="pt-4 border-t border-[#1e293b]">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Processing Overrides</p>
+                  <button 
+                    onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id })}
+                    disabled={autoFulfill.isPending || selectedEntity.fulfillmentStatus === 'fulfilled'}
+                    className="w-full bg-[#050505] border border-[#1e293b] hover:border-[#f59e0b] hover:text-[#f59e0b] disabled:opacity-50 disabled:border-[#1e293b] disabled:text-[#64748b] text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                  >
+                     {autoFulfill.isPending ? "PROCESSING..." : "Override & Fulfill"} <Truck className="w-3 h-3 group-hover:text-[#f59e0b]" />
+                  </button>
+                </div>
+             </div>
+           )}
+        </div>
+      </aside>
     </div>
+  );
+}
+
+function Badge({ count }: { count: number }) {
+  return (
+    <div className="bg-[#1e293b] text-[#e2e8f0] font-mono text-[9px] font-bold px-2 py-0.5 rounded-none">
+      {count}
+    </div>
+  );
+}
+
+function InspectorRow({ label, value, valueColor = "text-[#e2e8f0]" }: { label: string, value: string, valueColor?: string }) {
+  return (
+    <div className="flex justify-between items-center border-b border-[#1e293b]/50 py-1.5">
+      <span className="font-mono text-[10px] uppercase text-[#64748b]">{label}</span>
+      <span className={`font-mono text-[10px] font-bold ${valueColor} text-right max-w-[60%] truncate`}>{value}</span>
     </div>
   );
 }

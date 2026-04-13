@@ -1,21 +1,12 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import React, { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { useSearch } from "wouter";
 import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
+  Database, Network, Zap
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
-import { useSearch } from "wouter";
 
 const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
@@ -23,25 +14,10 @@ const PLATFORM_ICONS: Record<string, string> = {
   meta: "📘", instagram: "📸", tiktok: "🎵", twitter: "🐦",
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof CheckCircle2; label: string }> = {
-    active: { variant: "default", icon: CheckCircle2, label: "Connected" },
-    expired: { variant: "secondary", icon: AlertCircle, label: "Expired" },
-    revoked: { variant: "destructive", icon: XCircle, label: "Revoked" },
-    error: { variant: "destructive", icon: AlertCircle, label: "Error" },
-  };
-  const c = config[status] || config.error;
-  return (
-    <Badge variant={c.variant} className="gap-1 text-xs">
-      <c.icon className="h-3 w-3" />
-      {c.label}
-    </Badge>
-  );
-}
-
 export default function IntegrationsPage() {
-  const { user } = useAuth();
   const [connectTab, setConnectTab] = useState<"ecommerce" | "social">("ecommerce");
+  const [selectedEntity, setSelectedEntity] = useState<any>(null);
+  const [activeSubTab, setActiveSubTab] = useState<"connected" | "catalogue">("connected");
 
   // Queries
   const { data: ecommercePlatforms } = trpc.connectors.ecommercePlatforms.useQuery();
@@ -49,630 +25,235 @@ export default function IntegrationsPage() {
   const { data: credentials, refetch: refetchCreds } = trpc.connectors.listCredentials.useQuery();
   const { data: socialAccounts, refetch: refetchSocial } = trpc.connectors.listSocialAccounts.useQuery();
   const { data: summary } = trpc.connectors.connectionSummary.useQuery();
-  const { data: stores } = trpc.stores.list.useQuery();
 
-  // Handle OAuth redirect query params (success/error)
+  // Search logic for redirects
   const searchString = useSearch();
   useEffect(() => {
     const params = new URLSearchParams(searchString);
-    const connected = params.get("connected");
-    const account = params.get("account");
-    const name = params.get("name");
-    const errorMsg = params.get("error");
-    if (connected) {
-      toast.success(`Successfully connected ${name || account || connected}!`);
-      refetchCreds();
-      refetchSocial();
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (errorMsg) {
-      toast.error(`Connection failed: ${errorMsg}`);
-      window.history.replaceState({}, "", window.location.pathname);
+    if (params.get("connected") && params.get("account")) {
+      toast.success(`${(params.get("name") || params.get("account"))?.toUpperCase()} CONNECTED SUCCESSFULLY`);
+      history.replaceState(null, "", window.location.pathname);
     }
   }, [searchString]);
 
   // Mutations
-  const connectApiKey = trpc.connectors.connectWithApiKey.useMutation({
-    onSuccess: () => { toast.success("Platform connected successfully"); refetchCreds(); },
-    onError: (err) => toast.error(err.message),
-  });
   const disconnectCred = trpc.connectors.disconnectCredential.useMutation({
-    onSuccess: () => { toast.success("Disconnected"); refetchCreds(); },
-    onError: (err) => toast.error(err.message),
+    onSuccess: () => { toast.success("AUTHORIZATION_REVOKED"); refetchCreds(); setSelectedEntity(null); },
+    onError: (err) => toast.error(`ERR: ${err.message}`),
   });
   const disconnectSocial = trpc.connectors.disconnectSocialAccount.useMutation({
-    onSuccess: () => { toast.success("Account disconnected"); refetchSocial(); },
-    onError: (err) => toast.error(err.message),
+    onSuccess: () => { toast.success("AUTHORIZATION_REVOKED"); refetchSocial(); setSelectedEntity(null); },
+    onError: (err) => toast.error(`ERR: ${err.message}`),
   });
   const checkHealth = trpc.connectors.checkCredentialHealth.useMutation({
-    onSuccess: (data) => { toast.success(`Status: ${data.status}`); refetchCreds(); },
-    onError: (err) => toast.error(err.message),
+    onSuccess: (data) => { toast.success(`LINK_STATUS_${data.status.toUpperCase()}`); refetchCreds(); },
+    onError: (err) => toast.error(`ERR: ${err.message}`),
   });
   const generateOAuth = trpc.connectors.generateOAuthUrl.useMutation({
-    onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-      } else if (data.setupRequired) {
-        toast.info(data.message);
-      }
-    },
-    onError: (err) => toast.error(err.message),
+    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message); },
+    onError: (err) => toast.error(`ERR: ${err.message}`),
   });
   const generateSocialOAuth = trpc.connectors.generateSocialOAuthUrl.useMutation({
-    onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-      } else if (data.setupRequired) {
-        toast.info(data.message || `Platform requires app credentials. Check Settings > Secrets.`);
-      }
-    },
-    onError: (err) => toast.error(err.message),
+    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message); },
+    onError: (err) => toast.error(`ERR: ${err.message}`),
   });
 
-  // Separate connected platforms
-  const connectedPlatformIds = useMemo(() =>
-    new Set((credentials || []).map((c: any) => c.platform)),
-    [credentials]
-  );
-  const connectedSocialIds = useMemo(() =>
-    new Set((socialAccounts || []).map((s: any) => s.platform)),
-    [socialAccounts]
-  );
+  const connectedPlatformIds = useMemo(() => new Set((credentials || []).map((c: any) => c.platform)), [credentials]);
+  const connectedSocialIds = useMemo(() => new Set((socialAccounts || []).map((s: any) => s.platform)), [socialAccounts]);
+
+  const allConnected = useMemo(() => [
+    ...(credentials || []).map((c: any) => ({ ...c, kind: "ecommerce" })),
+    ...(socialAccounts || []).map((s: any) => ({ ...s, kind: "social" }))
+  ], [credentials, socialAccounts]);
+
+  const connectToPlatform = (platformId: string, kind: "ecommerce" | "social") => {
+     if (kind === "ecommerce") {
+        generateOAuth.mutate({ platformId });
+     } else {
+        generateSocialOAuth.mutate({ platformId });
+     }
+  };
 
   return (
-    <div className="space-y-6 relative">
-      {/* Ghost watermark */}
-      <div className="ghost-watermark" aria-hidden="true">INTEGRATIONS</div>
-      {/* Light leaks */}
-      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight gradient-text flex items-center gap-2">
-            <Plug className="h-6 w-6 text-emerald-400" />
-            Integrations Hub
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Connect your e-commerce stores and social media accounts to power the orchAIstrate bots.
-          </p>
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0]">
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col h-full border-r border-[#1e293b]">
+        {/* Header Bar */}
+        <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
+          <div className="flex items-center gap-3">
+            <Zap className="text-cyan-400 w-5 h-5" />
+            <div>
+              <h1 className="font-mono text-[11px] uppercase tracking-widest font-bold text-white">System Data: Integration Nodes</h1>
+              <p className="font-mono text-[9px] text-[#64748b]">External APIs, authentication links, operational bridges.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+             <button onClick={() => { setActiveSubTab("connected"); setSelectedEntity(null); }} className={`font-mono text-[10px] uppercase font-bold tracking-widest pb-1 transition-colors border-b-2 ${activeSubTab === "connected" ? "border-cyan-400 text-white" : "border-transparent text-[#64748b] hover:text-white"}`}>ACTIVE_NODES</button>
+             <button onClick={() => { setActiveSubTab("catalogue"); setSelectedEntity(null); }} className={`font-mono text-[10px] uppercase font-bold tracking-widest pb-1 transition-colors border-b-2 ${activeSubTab === "catalogue" ? "border-cyan-400 text-white" : "border-transparent text-[#64748b] hover:text-white"}`}>NODE_CATALOGUE</button>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
+          <div className="max-w-4xl mx-auto space-y-6">
+
+             {activeSubTab === "connected" ? (
+               <div className="border border-[#1e293b] bg-[#0a0a0a]">
+                 <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                   <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Network className="w-3 h-3 text-cyan-400 mr-2" /> Live Network Bridges</h2>
+                   <span className="font-mono text-[9px] tracking-widest text-[#64748b]">{allConnected.length} SYSTEMS ACTIVE</span>
+                 </div>
+                 <div className="p-0 overflow-auto custom-scrollbar min-h-[400px]">
+                   {!allConnected.length ? (
+                     <div className="p-12 text-center text-[#64748b] font-mono text-[10px] uppercase tracking-widest border-b border-[#1e293b]/50">
+                        NO_BRIDGES_DETECTED
+                     </div>
+                   ) : (
+                     <table className="w-full text-left font-mono border-collapse">
+                       <thead>
+                         <tr className="border-b border-[#1e293b] bg-[#050505]">
+                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Node Identity</th>
+                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-center">Type</th>
+                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Link Status</th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                         {allConnected.map((c: any) => {
+                           const isSelected = selectedEntity?.id === c.id;
+                           return (
+                             <tr 
+                               key={`${c.kind}-${c.id}`} 
+                               onClick={() => setSelectedEntity(c)}
+                               className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-cyan-400' : 'hover:bg-[#1e293b]/20'} relative`}
+                             >
+                              <td className="px-4 py-3 text-[10px] text-white flex items-center uppercase font-bold tracking-wider">
+                                <span className="mr-3 text-[#1e293b] text-sm hidden sm:inline-block">{PLATFORM_ICONS[c.platform] || "🛜"}</span>
+                                {c.storeName || c.accountName || c.name}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 border ${c.kind === 'ecommerce' ? 'border-[#00ff41]/30 text-[#00ff41]' : 'border-[#f59e0b]/30 text-[#f59e0b]'}`}>{c.kind}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                {c.status === "active" ? (
+                                  <span className="text-[#00ff41] font-bold text-[10px] uppercase tracking-widest flex items-center justify-end"><Wifi className="w-3 h-3 mr-1"/> SYNCED</span>
+                                ) : (
+                                  <span className="text-red-500 font-bold text-[10px] uppercase tracking-widest flex items-center justify-end"><WifiOff className="w-3 h-3 mr-1"/> ERR_DISCONNECT</span>
+                                )}
+                              </td>
+                             </tr>
+                           )
+                         })}
+                       </tbody>
+                     </table>
+                   )}
+                 </div>
+               </div>
+             ) : (
+               <div className="space-y-6">
+                 {/* Connection Form Modes */}
+                 <div className="flex items-center gap-2 border-b border-[#1e293b] pb-4">
+                   <button onClick={() => setConnectTab("ecommerce")} className={`px-4 py-2 border font-mono text-[10px] uppercase tracking-widest transition-colors ${connectTab === "ecommerce" ? "border-cyan-400 text-cyan-400 bg-cyan-400/5" : "border-[#1e293b] text-[#64748b] bg-[#0a0a0a] hover:text-white"}`}>E-Commerce Matrices</button>
+                   <button onClick={() => setConnectTab("social")} className={`px-4 py-2 border font-mono text-[10px] uppercase tracking-widest transition-colors ${connectTab === "social" ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/5" : "border-[#1e293b] text-[#64748b] bg-[#0a0a0a] hover:text-white"}`}>Social Networks</button>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                   {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
+                     const isConnected = connectTab === "ecommerce" ? connectedPlatformIds.has(platform.id) : connectedSocialIds.has(platform.id);
+                     return (
+                       <div key={platform.id} className="border border-[#1e293b] bg-[#0a0a0a] p-4 flex flex-col group relative">
+                         {isConnected && <div className="absolute top-0 right-0 w-16 h-16 bg-[#00ff41]/5 rounded-bl-[100%] pointer-events-none"/>}
+                         <div className="flex items-center justify-between mb-3">
+                           <div className="flex items-center gap-2">
+                             <span className="text-lg opacity-70 group-hover:opacity-100 transition-opacity">{PLATFORM_ICONS[platform.id] || "🛜"}</span>
+                             <span className="font-mono text-xs uppercase text-white font-bold">{platform.name}</span>
+                           </div>
+                           {isConnected && <CheckCircle2 className="w-3 h-3 text-[#00ff41]" />}
+                         </div>
+                         <p className="font-mono text-[9px] text-[#64748b] mb-4 flex-1 line-clamp-2">{platform.description}</p>
+                         
+                         <button 
+                           onClick={() => connectToPlatform(platform.id, connectTab)}
+                           disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
+                           className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-white font-mono text-[10px] uppercase font-bold tracking-widest px-4 py-2 transition-colors flex items-center justify-center disabled:opacity-50"
+                         >
+                            {isConnected ? "INITIALIZE_DUPLICATE_NODE" : "AUTHORIZE_LINK"} <ExternalLink className="w-3 h-3 ml-2" />
+                         </button>
+                       </div>
+                     )
+                   })}
+                 </div>
+               </div>
+             )}
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card/50 border-white/[0.08]">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <ShoppingBag className="h-5 w-5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{summary?.stores ?? 0}</p>
-                <p className="text-xs text-muted-foreground">Active Stores</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-white/[0.08]">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Shield className="h-5 w-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{summary?.credentials ?? 0}</p>
-                <p className="text-xs text-muted-foreground">Platform Credentials</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-white/[0.08]">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Share2 className="h-5 w-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{summary?.socialAccounts ?? 0}</p>
-                <p className="text-xs text-muted-foreground">Social Accounts</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Metadata Inspector (Right Panel) */}
+      <aside className="w-[380px] shrink-0 bg-[#0a0a0a] flex flex-col z-20 box-border border-l border-[#1e293b]">
+        <div className="h-14 flex items-center px-4 border-b border-[#1e293b] justify-between shrink-0 bg-[#050505]">
+          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b]">
+            Integration Inspector
+          </span>
+          <span className="flex items-center gap-2">
+             <Shield className="w-3.5 h-3.5 text-cyan-400" />
+          </span>
+        </div>
 
-      <Tabs defaultValue="ecommerce" className="space-y-4">
-        <TabsList className="bg-muted/30 border border-white/[0.08]">
-          <TabsTrigger value="ecommerce" className="gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            E-Commerce Platforms
-          </TabsTrigger>
-          <TabsTrigger value="social" className="gap-2">
-            <Share2 className="h-4 w-4" />
-            Social Media
-          </TabsTrigger>
-          <TabsTrigger value="connected" className="gap-2">
-            <Wifi className="h-4 w-4" />
-            Connected
-          </TabsTrigger>
-        </TabsList>
-
-        {/* E-Commerce Platforms Tab */}
-        <TabsContent value="ecommerce" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(ecommercePlatforms || []).map((platform: any) => {
-              const isConnected = connectedPlatformIds.has(platform.id);
-              return (
-                <Card key={platform.id} className={`bg-card/50 border-white/[0.08] transition-all hover:border-sky-500/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{platform.icon}</span>
-                        <div>
-                          <CardTitle className="text-base">{platform.name}</CardTitle>
-                          <CardDescription className="text-xs mt-0.5">
-                            {platform.connectionType === "oauth" ? "OAuth 2.0" : "API Key"}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      {isConnected && <StatusBadge status="active" />}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">{platform.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {(platform.capabilities || []).map((cap: string) => (
-                        <Badge key={cap} variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
-                          {cap.replace(/_/g, " ")}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Separator className="bg-border/30" />
-                    {isConnected ? (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="gap-1 text-emerald-400 border-emerald-500/30 bg-emerald-500/5">
-                          <CheckCircle2 className="h-3 w-3" /> Connected
-                        </Badge>
-                      </div>
-                    ) : (
-                      <ConnectPlatformButton
-                        platform={platform}
-                        stores={stores || []}
-                        onConnectApiKey={(storeId, creds) => {
-                          connectApiKey.mutate({ platform: platform.id, storeId, credentials: creds });
-                        }}
-                        onConnectOAuth={(storeId, shopDomain) => {
-                          generateOAuth.mutate({
-                            platform: platform.id,
-                            storeId,
-                            origin: window.location.origin,
-                            shopDomain,
-                          });
-                        }}
-                        isLoading={connectApiKey.isPending || generateOAuth.isPending}
-                      />
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        {/* Social Media Tab */}
-        <TabsContent value="social" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(socialPlatforms || []).map((platform: any) => {
-              const isConnected = connectedSocialIds.has(platform.id);
-              return (
-                <Card key={platform.id} className={`bg-card/50 border-white/[0.08] transition-all hover:border-sky-500/30 ${isConnected ? "ring-1 ring-emerald-500/30" : ""}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{platform.icon}</span>
-                        <div>
-                          <CardTitle className="text-base">{platform.name}</CardTitle>
-                          <CardDescription className="text-xs mt-0.5">OAuth 2.0</CardDescription>
-                        </div>
-                      </div>
-                      {isConnected && <StatusBadge status="active" />}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">{platform.description}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {(platform.capabilities || []).map((cap: string) => (
-                        <Badge key={cap} variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
-                          {cap.replace(/_/g, " ")}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Separator className="bg-border/30" />
-                    {isConnected ? (
-                      <Badge variant="outline" className="gap-1 text-emerald-400 border-emerald-500/30 bg-emerald-500/5">
-                        <CheckCircle2 className="h-3 w-3" /> Connected
-                      </Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        variant="outline"
-                        disabled={generateSocialOAuth.isPending}
-                        onClick={() => {
-                          generateSocialOAuth.mutate({
-                            platform: platform.id as any,
-                            origin: window.location.origin,
-                          });
-                        }}
-                      >
-                        {generateSocialOAuth.isPending ? (
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        ) : (
-                          <Plus className="h-3 w-3 mr-1" />
-                        )}
-                        Connect {platform.name}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          <Card className="bg-card/30 border-white/[0.06]">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+           {!selectedEntity ? (
+             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
+                <Database className="w-6 h-6 text-[#64748b] mb-4" />
+                <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b]">Awaiting active node selection</p>
+             </div>
+           ) : (
+             <div className="space-y-6">
                 <div>
-                  <p className="text-sm font-medium">Social Media OAuth Setup</p>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    Each social media platform requires its own OAuth app credentials. To connect a platform,
-                    create a developer app on that platform, then add the Client ID and Client Secret to your
-                    orchAIstrate Settings &gt; Secrets. Social Bot will then be able to post content
-                    and manage campaigns on your behalf.
-                  </p>
+                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2 break-all">{selectedEntity.storeName || selectedEntity.accountName || selectedEntity.name}</h2>
+                   <div className="flex justify-between items-center mt-3">
+                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Target Vector</span>
+                      <span className="font-mono text-[10px] text-white uppercase font-bold">{selectedEntity.platform}</span>
+                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Connected Tab */}
-        <TabsContent value="connected" className="space-y-4">
-          {/* E-Commerce Credentials */}
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" /> E-Commerce Credentials
-            </h3>
-            {(credentials || []).length === 0 ? (
-              <Card className="bg-card/30 border-white/[0.06]">
-                <CardContent className="pt-6 text-center">
-                  <WifiOff className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No e-commerce platforms connected yet.</p>
-                  <p className="text-xs text-white/30 mt-1">Go to the E-Commerce Platforms tab to connect your first store.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {(credentials || []).map((cred: any) => (
-                  <Card key={cred.id} className="bg-card/50 border-white/[0.08]">
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{PLATFORM_ICONS[cred.platform] || "🔗"}</span>
-                          <div>
-                            <p className="text-sm font-medium capitalize">{cred.platform.replace(/_/g, " ")}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {cred.platformAccountName || `ID: ${cred.platformAccountId || cred.id}`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={cred.status} />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            aria-label="Check connection health"
-                            onClick={() => checkHealth.mutate({ id: cred.id })}
-                            disabled={checkHealth.isPending}
-                          >
-                            <RefreshCw className={`h-3.5 w-3.5 ${checkHealth.isPending ? "animate-spin" : ""}`} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            aria-label="Disconnect platform"
-                            onClick={() => {
-                              if (confirm("Disconnect this platform? The bots will lose access to this store.")) {
-                                disconnectCred.mutate({ id: cred.id });
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Separator className="bg-border/30" />
-
-          {/* Social Accounts */}
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-              <Share2 className="h-4 w-4" /> Social Media Accounts
-            </h3>
-            {(socialAccounts || []).length === 0 ? (
-              <Card className="bg-card/30 border-white/[0.06]">
-                <CardContent className="pt-6 text-center">
-                  <WifiOff className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No social media accounts connected yet.</p>
-                  <p className="text-xs text-white/30 mt-1">Go to the Social Media tab to link your accounts for Social Bot.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-2">
-                {(socialAccounts || []).map((account: any) => (
-                  <Card key={account.id} className="bg-card/50 border-white/[0.08]">
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{PLATFORM_ICONS[account.platform] || "🔗"}</span>
-                          <div>
-                            <p className="text-sm font-medium">{account.accountName || account.platform}</p>
-                            <p className="text-xs text-muted-foreground capitalize">
-                              {account.platform.replace(/_/g, " ")}
-                              {account.followerCount ? ` · ${account.followerCount.toLocaleString()} followers` : ""}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={account.status} />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            aria-label="Disconnect social account"
-                            onClick={() => {
-                              if (confirm("Disconnect this social account?")) {
-                                disconnectSocial.mutate({ id: account.id });
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+                <div className="space-y-2">
+                   <InspectorRow label="Uplink Kind" value={selectedEntity.kind.toUpperCase()} />
+                   <InspectorRow label="Node Key" value={`#${selectedEntity.id}`} valueColor="text-[#64748b]" />
+                   <InspectorRow label="Health" value={selectedEntity.status.toUpperCase()} valueColor={selectedEntity.status === 'active' ? "text-[#00ff41]" : "text-red-500"} />
+                   <InspectorRow label="Link Initiated" value={new Date(selectedEntity.createdAt).toLocaleString()} valueColor="text-[#64748b]" />
+                </div>
+                
+                <div className="pt-4 border-t border-[#1e293b] space-y-2">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Security & Diagnostic Overrides</p>
+                  {selectedEntity.kind === "ecommerce" && (
+                    <button 
+                       onClick={() => checkHealth.mutate({ credentialId: selectedEntity.id })}
+                       disabled={checkHealth.isPending}
+                       className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                    >
+                       DIAGNOSTIC_PING <RefreshCw className={`w-3 h-3 group-hover:text-cyan-400 ${checkHealth.isPending ? 'animate-spin' : ''}`} />
+                    </button>
+                  )}
+                  <button 
+                     onClick={() => selectedEntity.kind === "ecommerce" ? disconnectCred.mutate({ credentialId: selectedEntity.id }) : disconnectSocial.mutate({ accountId: selectedEntity.id })}
+                     disabled={disconnectCred.isPending || disconnectSocial.isPending}
+                     className="w-full bg-[#050505] border border-red-500/30 hover:border-red-500 hover:text-red-500 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                  >
+                     SEVER_CONNECTION <Trash2 className="w-3 h-3 group-hover:text-red-500" />
+                  </button>
+                </div>
+             </div>
+           )}
+        </div>
+      </aside>
     </div>
   );
 }
 
-/** Connect button with dialog for API key platforms or OAuth redirect */
-function ConnectPlatformButton({
-  platform,
-  stores,
-  onConnectApiKey,
-  onConnectOAuth,
-  isLoading,
-}: {
-  platform: any;
-  stores: any[];
-  onConnectApiKey: (storeId: number, credentials: Record<string, string>) => void;
-  onConnectOAuth: (storeId: number, shopDomain?: string) => void;
-  isLoading: boolean;
-}) {
-  const [selectedStore, setSelectedStore] = useState<string>("");
-  const [shopDomain, setShopDomain] = useState("");
-  const [apiFields, setApiFields] = useState<Record<string, string>>({});
-
-  const activeStores = stores.filter((s: any) => s.platform === platform.id || s.status === "setup");
-
-  if (platform.connectionType === "api_key") {
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button size="sm" className="w-full" variant="outline">
-            <Plus className="h-3 w-3 mr-1" />
-            Connect with API Key
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-xl">{platform.icon}</span>
-              Connect {platform.name}
-            </DialogTitle>
-            <DialogDescription>Enter your API credentials to connect your {platform.name} store.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Select Store</Label>
-              <Select value={selectedStore} onValueChange={setSelectedStore}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a store..." /></SelectTrigger>
-                <SelectContent>
-                  {activeStores.map((s: any) => (
-                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {platform.id === "woocommerce" && (
-              <>
-                <div>
-                  <Label>Store URL</Label>
-                  <Input placeholder="https://mystore.com" className="mt-1.5"
-                    value={apiFields.storeUrl || ""} onChange={(e) => setApiFields({ ...apiFields, storeUrl: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Consumer Key</Label>
-                  <Input placeholder="ck_..." className="mt-1.5"
-                    value={apiFields.consumerKey || ""} onChange={(e) => setApiFields({ ...apiFields, consumerKey: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Consumer Secret</Label>
-                  <Input type="password" placeholder="cs_..." className="mt-1.5"
-                    value={apiFields.consumerSecret || ""} onChange={(e) => setApiFields({ ...apiFields, consumerSecret: e.target.value })} />
-                </div>
-              </>
-            )}
-            {platform.id === "walmart" && (
-              <>
-                <div>
-                  <Label>Client ID</Label>
-                  <Input placeholder="Your Walmart Client ID" className="mt-1.5"
-                    value={apiFields.clientId || ""} onChange={(e) => setApiFields({ ...apiFields, clientId: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Client Secret</Label>
-                  <Input type="password" placeholder="Your Walmart Client Secret" className="mt-1.5"
-                    value={apiFields.clientSecret || ""} onChange={(e) => setApiFields({ ...apiFields, clientSecret: e.target.value })} />
-                </div>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost">Cancel</Button>
-            </DialogClose>
-            <Button
-              disabled={!selectedStore || isLoading}
-              onClick={() => {
-                if (selectedStore) {
-                  onConnectApiKey(Number(selectedStore), apiFields);
-                }
-              }}
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Connect
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // OAuth platforms
-  if (platform.id === "shopify") {
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button size="sm" className="w-full" variant="outline">
-            <Plus className="h-3 w-3 mr-1" />
-            Connect via OAuth
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-xl">{platform.icon}</span>
-              Connect {platform.name}
-            </DialogTitle>
-            <DialogDescription>
-              Enter your Shopify store domain to initiate the OAuth authorization flow.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Select Store</Label>
-              <Select value={selectedStore} onValueChange={setSelectedStore}>
-                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a store..." /></SelectTrigger>
-                <SelectContent>
-                  {activeStores.map((s: any) => (
-                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Shopify Store Domain</Label>
-              <Input placeholder="mystore.myshopify.com" className="mt-1.5"
-                value={shopDomain} onChange={(e) => setShopDomain(e.target.value)} />
-              <p className="text-xs text-muted-foreground mt-1">e.g., mystore or mystore.myshopify.com</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost">Cancel</Button>
-            </DialogClose>
-            <Button
-              disabled={!selectedStore || !shopDomain.trim() || isLoading}
-              onClick={() => {
-                if (selectedStore && shopDomain.trim()) {
-                  onConnectOAuth(Number(selectedStore), shopDomain.trim());
-                }
-              }}
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ExternalLink className="h-3 w-3 mr-1" />}
-              Authorize on Shopify
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Other OAuth platforms (Etsy, Amazon, eBay, TikTok Shop) — call generateOAuthUrl
+function InspectorRow({ label, value, valueColor = "text-[#e2e8f0]" }: { label: string, value: string, valueColor?: string }) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" className="w-full" variant="outline">
-          <Plus className="h-3 w-3 mr-1" />
-          Connect via OAuth
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-xl">{platform.icon}</span>
-            Connect {platform.name}
-          </DialogTitle>
-          <DialogDescription>
-            Select a store to link with your {platform.name} account via OAuth.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div>
-            <Label>Select Store</Label>
-            <Select value={selectedStore} onValueChange={setSelectedStore}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Choose a store..." /></SelectTrigger>
-              <SelectContent>
-                {activeStores.map((s: any) => (
-                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
-          </DialogClose>
-          <Button
-            disabled={!selectedStore || isLoading}
-            onClick={() => {
-              if (selectedStore) {
-                onConnectOAuth(Number(selectedStore));
-              }
-            }}
-          >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ExternalLink className="h-3 w-3 mr-1" />}
-            Authorize on {platform.name}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <div className="flex justify-between items-center border-b border-[#1e293b]/50 py-1.5">
+      <span className="font-mono text-[9px] uppercase text-[#64748b]">{label}</span>
+      <span className={`font-mono text-[10px] font-bold ${valueColor} text-right max-w-[60%] truncate uppercase tracking-widest`}>{value}</span>
+    </div>
   );
 }
