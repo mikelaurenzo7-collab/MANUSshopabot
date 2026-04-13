@@ -44,14 +44,14 @@ describe("Error Scenario Integration Tests", () => {
   });
 
   describe("Input validation errors", () => {
-    it("validates agentType enum (social, architect, merchant)", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("validates agentType enum (social, architect, merchant)", async () => {
       const caller = appRouter.createCaller(makeCtx("admin"));
       // "social" is now a valid agentType (renamed from hypeman in Sprint 8)
       const result = await caller.botConfig.upsert({ agentType: "social", enabled: true });
       expect(result).toBeDefined();
     });
 
-    it("accepts valid agentType 'social'", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("accepts valid agentType 'social'", async () => {
       const caller = appRouter.createCaller(makeCtx("admin"));
       const result = await caller.botConfig.upsert({
         agentType: "social",

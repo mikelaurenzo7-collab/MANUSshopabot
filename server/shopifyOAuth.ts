@@ -228,24 +228,43 @@ export function registerShopifyOAuthRoutes(app: Express) {
         (s: any) => s.platformDomain === shop && s.platform === "shopify"
       );
 
-      if (nonceData.storeId) {
-        // Update the pre-created store record with the access token
-        await db.updateStore(nonceData.storeId, {
-          platformDomain: shop,
-          platformAccessToken: accessToken,
-          platformStoreId: shop,
-          name: storeName,
-          status: "active",
-        });
-      } else if (existingStore) {
-        // Update existing store with new token
-        await db.updateStore(existingStore.id, {
-          platformAccessToken: accessToken,
-          status: "active",
-        });
-      } else {
-        // Create new store record
-        await db.createStore({
+      await db.withTransaction(async (tx) => {
+        if (nonceData.storeId) {
+          await db.updateStore(nonceData.storeId, {
+            platformDomain: shop,
+            platformAccessToken: accessToken,
+            platformStoreId: shop,
+            name: storeName,
+            status: "active",
+          }, tx);
+          await db.createAgentTask({
+            agentType: "architect",
+            taskType: "shopify_oauth_connect",
+            title: `Shopify store "${storeName}" connected via OAuth`,
+            description: `Successfully connected ${shop} with scopes: ${tokenData.scope}`,
+            status: "completed",
+            storeId: nonceData.storeId,
+          }, tx);
+          return;
+        }
+
+        if (existingStore) {
+          await db.updateStore(existingStore.id, {
+            platformAccessToken: accessToken,
+            status: "active",
+          }, tx);
+          await db.createAgentTask({
+            agentType: "architect",
+            taskType: "shopify_oauth_connect",
+            title: `Shopify store "${storeName}" connected via OAuth`,
+            description: `Successfully connected ${shop} with scopes: ${tokenData.scope}`,
+            status: "completed",
+            storeId: existingStore.id,
+          }, tx);
+          return;
+        }
+
+        const createdStore = await db.createStore({
           userId: nonceData.userId,
           name: storeName,
           platform: "shopify",
@@ -253,17 +272,15 @@ export function registerShopifyOAuthRoutes(app: Express) {
           platformAccessToken: accessToken,
           platformStoreId: shop,
           status: "active",
-        });
-      }
-
-      // Log the connection as an agent task
-      await db.createAgentTask({
-        agentType: "architect",
-        taskType: "shopify_oauth_connect",
-        title: `Shopify store "${storeName}" connected via OAuth`,
-        description: `Successfully connected ${shop} with scopes: ${tokenData.scope}`,
-        status: "completed",
-        storeId: existingStore?.id,
+        }, tx);
+        await db.createAgentTask({
+          agentType: "architect",
+          taskType: "shopify_oauth_connect",
+          title: `Shopify store "${storeName}" connected via OAuth`,
+          description: `Successfully connected ${shop} with scopes: ${tokenData.scope}`,
+          status: "completed",
+          storeId: createdStore.id,
+        }, tx);
       });
 
       // Redirect back to the originating page (use stored origin for absolute URL)

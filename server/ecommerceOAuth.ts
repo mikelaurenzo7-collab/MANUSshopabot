@@ -249,6 +249,74 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
   }
 }
 
+// ─── Token Refresh Exchangers ──────────────────────────────────────────────
+// Called by the Architect scheduler to proactively refresh expiring tokens
+// before they go stale. Each platform has its own refresh grant flow.
+
+export async function refreshPlatformToken(
+  platform: string,
+  refreshToken: string,
+): Promise<TokenResponse | null> {
+  const { default: axios } = await import("axios");
+
+  switch (platform) {
+    case "etsy": {
+      const res = await axios.post("https://api.etsy.com/v3/public/oauth/token", new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: ENV.etsyApiKey,
+        refresh_token: refreshToken,
+      }).toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      return res.data;
+    }
+    case "amazon": {
+      const res = await axios.post("https://api.amazon.com/auth/o2/token", new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: ENV.amazonSpClientId,
+        client_secret: ENV.amazonSpClientSecret,
+        refresh_token: refreshToken,
+      }).toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      return res.data;
+    }
+    case "ebay": {
+      const credentials = Buffer.from(`${ENV.ebayAppId}:${ENV.ebayCertId}`).toString("base64");
+      const res = await axios.post("https://api.ebay.com/identity/v1/oauth2/token", new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }).toString(), {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${credentials}`,
+        },
+      });
+      return res.data;
+    }
+    case "tiktok_shop": {
+      const appKey = ENV.tiktokAppId || ENV.tiktokClientKey;
+      const appSecret = ENV.tiktokClientSecret;
+      const res = await axios.get("https://auth.tiktok-shops.com/api/v2/token/refresh", {
+        params: {
+          app_key: appKey,
+          app_secret: appSecret,
+          refresh_token: refreshToken,
+          grant_type: "refresh_token",
+        },
+      });
+      const data = res.data?.data || res.data;
+      return {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_in: data.access_token_expire_in,
+      };
+    }
+    default:
+      return null;
+  }
+}
+
 // ─── Route Registration ────────────────────────────────────────────────────
 
 export function registerEcommerceOAuthRoutes(app: Express) {

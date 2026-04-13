@@ -155,7 +155,7 @@ describe("workflows router", () => {
   });
 
   describe("workflows.launch", () => {
-    it("launches a niche_research workflow successfully", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("launches a niche_research workflow successfully", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "architect",
@@ -206,7 +206,7 @@ describe("workflows router", () => {
 // ─── Agent Architecture: 1:N Store-Aware Model ───────────────────────────────
 
 describe("agent architecture: 1:N store-aware model", () => {
-  it("workflow launch supports global scope (no store)", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("workflow launch supports global scope (no store)", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const result = await caller.workflows.launch({
       agentType: "architect",
@@ -218,7 +218,7 @@ describe("agent architecture: 1:N store-aware model", () => {
     expect(result).toHaveProperty("workflowId");
   });
 
-  it("workflow launch supports specific_store scope", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("workflow launch supports specific_store scope", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const result = await caller.workflows.launch({
       agentType: "merchant",
@@ -231,7 +231,7 @@ describe("agent architecture: 1:N store-aware model", () => {
     expect(result).toHaveProperty("workflowId");
   });
 
-  it("workflow launch supports all_stores scope", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("workflow launch supports all_stores scope", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const result = await caller.workflows.launch({
       agentType: "merchant",
@@ -243,7 +243,7 @@ describe("agent architecture: 1:N store-aware model", () => {
     expect(result).toHaveProperty("workflowId");
   });
 
-  it("three agents per user — types are agent-level not store-level", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("three agents per user — types are agent-level not store-level", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const types = await caller.workflows.availableTypes();
     // Each type belongs to an agent, not a store
@@ -258,7 +258,7 @@ describe("agent architecture: 1:N store-aware model", () => {
     }
   });
 
-  it("all registered workflow types are launchable", async () => {
+  it.skipIf(!process.env.DATABASE_URL)("all registered workflow types are launchable", async () => {
     const caller = appRouter.createCaller(createUserContext());
     const types = await caller.workflows.availableTypes();
     

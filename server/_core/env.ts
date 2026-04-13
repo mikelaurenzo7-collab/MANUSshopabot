@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
   cookieSecret: process.env.JWT_SECRET ?? "",
@@ -68,3 +70,49 @@ export const ENV = {
   stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
 };
+
+// ─── Startup Validation ──────────────────────────────────────────────────
+// Validates that critical environment variables are set BEFORE the server
+// starts accepting traffic. Non-critical vars emit warnings instead of fatal.
+
+const REQUIRED_VARS = [
+  "DATABASE_URL",
+  "JWT_SECRET",
+] as const;
+
+const RECOMMENDED_VARS = [
+  "SHOPIFY_PARTNER_CLIENT_ID",
+  "SHOPIFY_PARTNER_CLIENT_SECRET",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+] as const;
+
+export function validateRequiredEnv(): void {
+  const missing: string[] = [];
+  const warned: string[] = [];
+
+  for (const key of REQUIRED_VARS) {
+    if (!process.env[key]) missing.push(key);
+  }
+
+  for (const key of RECOMMENDED_VARS) {
+    if (!process.env[key]) warned.push(key);
+  }
+
+  if (warned.length > 0) {
+    logger.warn("env_validation_warnings", {
+      message: `${warned.length} recommended env vars not set — some features will be unavailable`,
+      missing: warned,
+    });
+  }
+
+  if (missing.length > 0) {
+    logger.error("env_validation_fatal", {
+      message: `Missing ${missing.length} required env var(s) — server cannot start safely`,
+      missing,
+    });
+    throw new Error(`[ENV] Missing required environment variables: ${missing.join(", ")}`);
+  }
+
+  logger.info("env_validation_passed", { required: REQUIRED_VARS.length, warnings: warned.length });
+}

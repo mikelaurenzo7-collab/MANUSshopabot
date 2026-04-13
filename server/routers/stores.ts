@@ -30,22 +30,25 @@ export const storesRouter = router({
       currency: z.string().max(10).default("USD"),
     }))
     .mutation(async ({ ctx, input }) => {
-      const result = await db.createStore({
-        userId: ctx.user.id,
-        name: input.name,
-        platform: input.platform,
-        platformDomain: input.platformDomain,
-        niche: input.niche,
-        currency: input.currency,
-        status: "setup",
-      });
-      await db.createAgentTask({
-        agentType: "architect",
-        taskType: "store_creation",
-        title: `Store "${input.name}" created on ${input.platform}`,
-        description: `New ${input.platform} store created with niche: ${input.niche || "Not specified"}`,
-        status: "completed",
-        storeId: result.id,
+      const result = await db.withTransaction(async (tx) => {
+        const createdStore = await db.createStore({
+          userId: ctx.user.id,
+          name: input.name,
+          platform: input.platform,
+          platformDomain: input.platformDomain,
+          niche: input.niche,
+          currency: input.currency,
+          status: "setup",
+        }, tx);
+        await db.createAgentTask({
+          agentType: "architect",
+          taskType: "store_creation",
+          title: `Store "${input.name}" created on ${input.platform}`,
+          description: `New ${input.platform} store created with niche: ${input.niche || "Not specified"}`,
+          status: "completed",
+          storeId: createdStore.id,
+        }, tx);
+        return createdStore;
       });
       return result;
     }),

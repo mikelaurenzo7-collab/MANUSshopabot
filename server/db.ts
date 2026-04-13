@@ -34,8 +34,10 @@ import {
   promptMetrics, InsertPromptMetric,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { decryptSecret, encryptSecret } from "./_core/secrets";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+type DbExecutor = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -47,6 +49,50 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+async function requireDb(): Promise<DbExecutor> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db as DbExecutor;
+}
+
+export async function withTransaction<T>(callback: (tx: DbExecutor) => Promise<T>): Promise<T> {
+  const db = await requireDb();
+  return db.transaction(async (tx) => callback(tx as DbExecutor));
+}
+
+function encryptStoreTokens<T extends { platformAccessToken?: string | null }>(record: T): T {
+  if (!("platformAccessToken" in record)) return record;
+  return {
+    ...record,
+    platformAccessToken: encryptSecret(record.platformAccessToken) ?? null,
+  };
+}
+
+function decryptStoreTokens<T extends { platformAccessToken?: string | null }>(record: T | undefined): T | undefined {
+  if (!record) return record;
+  return {
+    ...record,
+    platformAccessToken: decryptSecret(record.platformAccessToken) ?? null,
+  };
+}
+
+function encryptCredentialTokens<T extends { accessToken?: string | null; refreshToken?: string | null }>(record: T): T {
+  return {
+    ...record,
+    accessToken: encryptSecret(record.accessToken) ?? null,
+    refreshToken: encryptSecret(record.refreshToken) ?? null,
+  };
+}
+
+function decryptCredentialTokens<T extends { accessToken?: string | null; refreshToken?: string | null }>(record: T | undefined): T | undefined {
+  if (!record) return record;
+  return {
+    ...record,
+    accessToken: decryptSecret(record.accessToken) ?? null,
+    refreshToken: decryptSecret(record.refreshToken) ?? null,
+  };
 }
 
 // ─── User helpers ───────────────────────────────────────────────────────────
@@ -86,10 +132,9 @@ export async function getUserByOpenId(openId: string) {
 
 // ─── Store helpers ──────────────────────────────────────────────────────────
 
-export async function createStore(data: InsertStore) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(stores).values(data);
+export async function createStore(data: InsertStore, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
+  const result = await db.insert(stores).values(encryptStoreTokens(data));
   return { id: result[0].insertId };
 }
 
@@ -103,20 +148,20 @@ export async function getStoreCount(userId: number) {
 export async function getStoresByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(stores).where(eq(stores.userId, userId)).orderBy(desc(stores.createdAt));
+  const results = await db.select().from(stores).where(eq(stores.userId, userId)).orderBy(desc(stores.createdAt));
+  return results.map(store => decryptStoreTokens(store)!);
 }
 
 export async function getStoreById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(stores).where(eq(stores.id, id)).limit(1);
-  return result[0];
+  return decryptStoreTokens(result[0]);
 }
 
-export async function updateStore(id: number, data: Partial<InsertStore>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(stores).set(data).where(eq(stores.id, id));
+export async function updateStore(id: number, data: Partial<InsertStore>, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
+  await db.update(stores).set(encryptStoreTokens(data)).where(eq(stores.id, id));
 }
 
 // ─── Product helpers ────────────────────────────────────────────────────────
@@ -213,9 +258,8 @@ export async function updateOrder(id: number, data: Partial<InsertOrder>) {
 
 // ─── Agent Task helpers ─────────────────────────────────────────────────────
 
-export async function createAgentTask(data: InsertAgentTask) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+export async function createAgentTask(data: InsertAgentTask, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
   const result = await db.insert(agentTasks).values(data);
   return { id: result[0].insertId };
 }
@@ -280,17 +324,17 @@ export async function getBotConfigs(userId: number) {
 }
 
 export async function upsertBotConfig(data: InsertBotConfig) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const existing = await db.select().from(botConfig)
-    .where(and(eq(botConfig.userId, data.userId), eq(botConfig.agentType, data.agentType)))
-    .limit(1);
-  if (existing.length > 0) {
-    await db.update(botConfig).set(data).where(eq(botConfig.id, existing[0].id));
-    return { id: existing[0].id };
-  }
-  const result = await db.insert(botConfig).values(data);
-  return { id: result[0].insertId };
+  return withTransaction(async (tx) => {
+    const existing = await tx.select().from(botConfig)
+      .where(and(eq(botConfig.userId, data.userId), eq(botConfig.agentType, data.agentType)))
+      .limit(1);
+    if (existing.length > 0) {
+      await tx.update(botConfig).set(data).where(eq(botConfig.id, existing[0].id));
+      return { id: existing[0].id };
+    }
+    const result = await tx.insert(botConfig).values(data);
+    return { id: result[0].insertId };
+  });
 }
 
 // ─── Notification helpers ───────────────────────────────────────────────────
@@ -373,12 +417,16 @@ export async function getAdCampaigns(storeId: number) {
 }
 
 export async function getAdCampaignsByUser(userId: number) {
-  const userStores = await getStoresByUser(userId);
-  if (userStores.length === 0) return [];
-  const storeIds = userStores.map((s: any) => s.id);
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(adCampaigns).where(inArray(adCampaigns.storeId, storeIds)).orderBy(desc(adCampaigns.createdAt));
+  return db.select().from(adCampaigns)
+    .where(sql`exists (
+      select 1
+      from ${stores}
+      where ${stores.id} = ${adCampaigns.storeId}
+        and ${stores.userId} = ${userId}
+    )`)
+    .orderBy(desc(adCampaigns.createdAt));
 }
 export async function updateAdCampaign(id: number, data: Partial<InsertAdCampaign>) {
   const db = await getDb();
@@ -534,82 +582,82 @@ export async function getAgentStatusSummary() {
 
 // ─── Platform Credential helpers ───────────────────────────────────────────
 
-export async function createPlatformCredential(data: InsertPlatformCredential) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(platformCredentials).values(data);
+export async function createPlatformCredential(data: InsertPlatformCredential, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
+  const result = await db.insert(platformCredentials).values(encryptCredentialTokens(data));
   return { id: result[0].insertId };
 }
 
 export async function getPlatformCredentials(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(platformCredentials).where(eq(platformCredentials.userId, userId)).orderBy(desc(platformCredentials.createdAt));
+  const results = await db.select().from(platformCredentials).where(eq(platformCredentials.userId, userId)).orderBy(desc(platformCredentials.createdAt));
+  return results.map(credential => decryptCredentialTokens(credential)!);
 }
 
 export async function getPlatformCredentialByStore(storeId: number) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(platformCredentials).where(eq(platformCredentials.storeId, storeId)).limit(1);
-  return result[0];
+  return decryptCredentialTokens(result[0]);
 }
 
 export async function getPlatformCredentialById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(platformCredentials).where(eq(platformCredentials.id, id)).limit(1);
-  return result[0];
+  return decryptCredentialTokens(result[0]);
 }
 
-export async function updatePlatformCredential(id: number, data: Partial<InsertPlatformCredential>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(platformCredentials).set(data).where(eq(platformCredentials.id, id));
+export async function updatePlatformCredential(id: number, data: Partial<InsertPlatformCredential>, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
+  await db.update(platformCredentials).set(encryptCredentialTokens(data)).where(eq(platformCredentials.id, id));
 }
 
-export async function deletePlatformCredential(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+export async function deletePlatformCredential(id: number, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
   await db.delete(platformCredentials).where(eq(platformCredentials.id, id));
 }
 
 export async function getExpiredCredentials() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(platformCredentials)
+  const results = await db.select().from(platformCredentials)
     .where(and(
       eq(platformCredentials.status, "active"),
       lte(platformCredentials.tokenExpiresAt, new Date())
     ));
+  return results.map(credential => decryptCredentialTokens(credential)!);
 }
 
 // ─── Social Account helpers ────────────────────────────────────────────────
 
-export async function createSocialAccount(data: InsertSocialAccount) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(socialAccounts).values(data);
+export async function createSocialAccount(data: InsertSocialAccount, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
+  const result = await db.insert(socialAccounts).values(encryptCredentialTokens(data));
   return { id: result[0].insertId };
 }
 
 export async function getSocialAccounts(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(socialAccounts).where(eq(socialAccounts.userId, userId)).orderBy(desc(socialAccounts.createdAt));
+  const results = await db.select().from(socialAccounts).where(eq(socialAccounts.userId, userId)).orderBy(desc(socialAccounts.createdAt));
+  return results.map(account => decryptCredentialTokens(account)!);
 }
 
 export async function getSocialAccountById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(socialAccounts).where(eq(socialAccounts.id, id)).limit(1);
-  return result[0];
+  return decryptCredentialTokens(result[0]);
 }
 
 export async function getSocialAccountsByPlatform(userId: number, platform: string) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(socialAccounts)
+  const results = await db.select().from(socialAccounts)
     .where(and(eq(socialAccounts.userId, userId), eq(socialAccounts.platform, platform as any)));
+  return results.map(account => decryptCredentialTokens(account)!);
 }
 
 export async function getSocialPostById(id: number) {
@@ -622,12 +670,11 @@ export async function getSocialPostById(id: number) {
 export async function updateSocialAccount(id: number, data: Partial<InsertSocialAccount>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(socialAccounts).set(data).where(eq(socialAccounts.id, id));
+  await db.update(socialAccounts).set(encryptCredentialTokens(data)).where(eq(socialAccounts.id, id));
 }
 
-export async function deleteSocialAccount(id: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+export async function deleteSocialAccount(id: number, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
   await db.delete(socialAccounts).where(eq(socialAccounts.id, id));
 }
 
@@ -800,9 +847,8 @@ export async function getOAuthStateStats() {
 
 // ─── Agent Workflow helpers ────────────────────────────────────────────────
 
-export async function createWorkflow(data: InsertAgentWorkflow) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+export async function createWorkflow(data: InsertAgentWorkflow, executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
   const result = await db.insert(agentWorkflows).values(data);
   return { id: result[0].insertId };
 }
@@ -860,9 +906,8 @@ export async function getWorkflowCounts(userId: number) {
 
 // ─── Workflow Step helpers ─────────────────────────────────────────────────
 
-export async function createWorkflowSteps(data: InsertWorkflowStep[]) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+export async function createWorkflowSteps(data: InsertWorkflowStep[], executor?: DbExecutor) {
+  const db = executor ?? await requireDb();
   if (data.length === 0) return;
   await db.insert(workflowSteps).values(data);
 }
@@ -912,7 +957,7 @@ export async function getCredentialsByStoreId(storeId: number) {
   const rows = await db.select().from(platformCredentials)
     .where(eq(platformCredentials.storeId, storeId))
     .limit(1);
-  return rows[0] ?? null;
+  return decryptCredentialTokens(rows[0]) ?? null;
 }
 
 export async function getProductByPlatformId(storeId: number, platformProductId: string) {
@@ -938,7 +983,8 @@ export async function getOrderById(orderId: number) {
 export async function getActiveStores() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(stores).where(eq(stores.status, "active"));
+  const results = await db.select().from(stores).where(eq(stores.status, "active"));
+  return results.map(store => decryptStoreTokens(store)!);
 }
 
 export async function getPendingFulfillmentOrders() {
@@ -1188,45 +1234,43 @@ export async function listPromptVariants(agentType?: string) {
 }
 
 export async function promotePromptVariant(variantId: number) {
-  const db = await getDb();
-  if (!db) return;
-  const variant = await db.select().from(promptVariants).where(eq(promptVariants.id, variantId));
-  if (!variant[0]) return;
-  // Deactivate all siblings for same agent+task
-  await db.update(promptVariants)
-    .set({ isActive: false })
-    .where(and(
-      eq(promptVariants.agentType, variant[0].agentType),
-      eq(promptVariants.taskType, variant[0].taskType),
-    ));
-  // Activate the winner
-  await db.update(promptVariants).set({ isActive: true }).where(eq(promptVariants.id, variantId));
+  await withTransaction(async (tx) => {
+    const variant = await tx.select().from(promptVariants).where(eq(promptVariants.id, variantId));
+    if (!variant[0]) return;
+    await tx.update(promptVariants)
+      .set({ isActive: false })
+      .where(and(
+        eq(promptVariants.agentType, variant[0].agentType),
+        eq(promptVariants.taskType, variant[0].taskType),
+      ));
+    await tx.update(promptVariants).set({ isActive: true }).where(eq(promptVariants.id, variantId));
+  });
 }
 
 export async function recordPromptInvocation(variantId: number, storeId: number | null, converted: boolean) {
-  const db = await getDb();
-  if (!db) return;
-  const existing = await db.select().from(promptMetrics)
-    .where(and(
-      eq(promptMetrics.variantId, variantId),
-      storeId ? eq(promptMetrics.storeId, storeId) : sql`${promptMetrics.storeId} IS NULL`,
-    ));
-  if (existing[0]) {
-    await db.update(promptMetrics).set({
-      invocations: (existing[0].invocations ?? 0) + 1,
-      conversions: (existing[0].conversions ?? 0) + (converted ? 1 : 0),
-      successRate: Math.round(((existing[0].conversions ?? 0) + (converted ? 1 : 0)) / ((existing[0].invocations ?? 0) + 1) * 100),
-      updatedAt: new Date(),
-    }).where(eq(promptMetrics.id, existing[0].id));
-  } else {
-    await db.insert(promptMetrics).values({
+  await withTransaction(async (tx) => {
+    const existing = await tx.select().from(promptMetrics)
+      .where(and(
+        eq(promptMetrics.variantId, variantId),
+        storeId ? eq(promptMetrics.storeId, storeId) : sql`${promptMetrics.storeId} IS NULL`,
+      ));
+    if (existing[0]) {
+      await tx.update(promptMetrics).set({
+        invocations: (existing[0].invocations ?? 0) + 1,
+        conversions: (existing[0].conversions ?? 0) + (converted ? 1 : 0),
+        successRate: Math.round(((existing[0].conversions ?? 0) + (converted ? 1 : 0)) / ((existing[0].invocations ?? 0) + 1) * 100),
+        updatedAt: new Date(),
+      }).where(eq(promptMetrics.id, existing[0].id));
+      return;
+    }
+    await tx.insert(promptMetrics).values({
       variantId,
       storeId,
       invocations: 1,
       conversions: converted ? 1 : 0,
       successRate: converted ? 100 : 0,
     });
-  }
+  });
 }
 
 export async function getPromptMetricsByVariant(variantId: number) {

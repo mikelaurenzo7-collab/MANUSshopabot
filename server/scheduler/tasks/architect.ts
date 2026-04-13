@@ -15,6 +15,7 @@ import * as db from "../../db";
 import { getEcommerceAdapter, buildCredentials } from "../../adapters/ecommerce";
 import { logAgentAction } from "../../telemetry";
 import { emitBotEvent } from "../../engine/botCoordination";
+import { refreshPlatformToken } from "../../ecommerceOAuth";
 
 export async function handleStoreHealthCheck(): Promise<void> {
   const allStores = await db.getActiveStores();
@@ -171,9 +172,28 @@ export async function handleTokenRefresh(): Promise<void> {
       }
 
       try {
-        const storeInfo = await adapter.verifyConnection(credentials);
-        refreshed++;
-        logger.info("scheduler_token_refresh", { storeName: store.name, platform: store.platform, status: storeInfo.status, expiresInHours: Math.round((expiresAt - now) / (60 * 60 * 1000)) });
+        // ── Enhanced: Actually exchange the refresh token for a new access token ──
+        const tokenData = await refreshPlatformToken(store.platform, creds.refreshToken);
+        if (tokenData) {
+          const newExpiresAt = tokenData.expires_in
+            ? new Date(Date.now() + tokenData.expires_in * 1000)
+            : null;
+          await db.updatePlatformCredential(creds.id, {
+            accessToken: tokenData.access_token,
+            refreshToken: tokenData.refresh_token || creds.refreshToken,
+            tokenExpiresAt: newExpiresAt,
+            lastHealthCheck: new Date(),
+          });
+          refreshed++;
+          logger.info("scheduler_token_refreshed", { storeName: store.name, platform: store.platform, newExpiresInHours: tokenData.expires_in ? Math.round(tokenData.expires_in / 3600) : "unknown" });
+        } else {
+          // Platform doesn't support refresh (e.g., Shopify), just verify
+          const adapter = getEcommerceAdapter(store.platform);
+          const credentials = buildCredentials(creds, store);
+          const storeInfo = await adapter.verifyConnection(credentials);
+          refreshed++;
+          logger.info("scheduler_token_verified", { storeName: store.name, platform: store.platform, status: storeInfo.status });
+        }
       } catch (refreshErr: any) {
         if (refreshErr.message?.includes("401") || refreshErr.message?.includes("unauthorized")) {
           expired++;

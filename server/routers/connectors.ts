@@ -281,27 +281,27 @@ export const connectorsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Platform does not support API key connection" });
       }
 
-      // Store credentials
-      const cred = await db.createPlatformCredential({
-        userId: ctx.user.id,
-        storeId: input.storeId,
-        platform: input.platform,
-        accessToken: JSON.stringify(input.credentials), // Store as JSON for multi-field API keys
-        status: "active",
-        metadata: input.credentials,
-      });
+      const cred = await db.withTransaction(async (tx) => {
+        const createdCredential = await db.createPlatformCredential({
+          userId: ctx.user.id,
+          storeId: input.storeId,
+          platform: input.platform,
+          accessToken: JSON.stringify(input.credentials),
+          status: "active",
+          metadata: input.credentials,
+        }, tx);
 
-      // Update store status
-      await db.updateStore(input.storeId, { status: "active" });
+        await db.updateStore(input.storeId, { status: "active" }, tx);
+        await db.createAgentTask({
+          agentType: "architect",
+          taskType: "platform_connected",
+          title: `Connected ${platformConfig.name} store "${store.name}"`,
+          description: `API key credentials saved for ${platformConfig.name}`,
+          status: "completed",
+          storeId: input.storeId,
+        }, tx);
 
-      // Log the connection
-      await db.createAgentTask({
-        agentType: "architect",
-        taskType: "platform_connected",
-        title: `Connected ${platformConfig.name} store "${store.name}"`,
-        description: `API key credentials saved for ${platformConfig.name}`,
-        status: "completed",
-        storeId: input.storeId,
+        return createdCredential;
       });
 
       return { credentialId: cred.id };
@@ -322,29 +322,30 @@ export const connectorsRouter = router({
       metadata: z.any().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const result = await db.createSocialAccount({
-        userId: ctx.user.id,
-        platform: input.platform,
-        accountName: input.accountName,
-        accountId: input.accountId,
-        accessToken: input.accessToken,
-        refreshToken: input.refreshToken,
-        tokenExpiresAt: input.tokenExpiresAt,
-        scopes: input.scopes,
-        profileUrl: input.profileUrl,
-        profileImageUrl: input.profileImageUrl,
-        status: "active",
-        metadata: input.metadata,
-      });
-
-      // Log the connection
       const platformName = SOCIAL_PLATFORMS[input.platform]?.name || input.platform;
-      await db.createAgentTask({
-        agentType: "social",
-        taskType: "social_connected",
-        title: `Connected ${platformName} account${input.accountName ? ` "${input.accountName}"` : ""}`,
-        description: `Social media account linked for content publishing`,
-        status: "completed",
+      const result = await db.withTransaction(async (tx) => {
+        const createdAccount = await db.createSocialAccount({
+          userId: ctx.user.id,
+          platform: input.platform,
+          accountName: input.accountName,
+          accountId: input.accountId,
+          accessToken: input.accessToken,
+          refreshToken: input.refreshToken,
+          tokenExpiresAt: input.tokenExpiresAt,
+          scopes: input.scopes,
+          profileUrl: input.profileUrl,
+          profileImageUrl: input.profileImageUrl,
+          status: "active",
+          metadata: input.metadata,
+        }, tx);
+        await db.createAgentTask({
+          agentType: "social",
+          taskType: "social_connected",
+          title: `Connected ${platformName} account${input.accountName ? ` "${input.accountName}"` : ""}`,
+          description: `Social media account linked for content publishing`,
+          status: "completed",
+        }, tx);
+        return createdAccount;
       });
 
       return { id: result.id };
@@ -358,19 +359,18 @@ export const connectorsRouter = router({
       if (!cred || cred.userId !== ctx.user.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
       }
-      await db.deletePlatformCredential(input.id);
-
-      // If linked to a store, update store status
-      if (cred.storeId) {
-        await db.updateStore(cred.storeId, { status: "paused" });
-      }
-
-      await db.createAgentTask({
-        agentType: "architect",
-        taskType: "platform_disconnected",
-        title: `Disconnected ${cred.platform} credential`,
-        status: "completed",
-        storeId: cred.storeId ?? undefined,
+      await db.withTransaction(async (tx) => {
+        await db.deletePlatformCredential(input.id, tx);
+        if (cred.storeId) {
+          await db.updateStore(cred.storeId, { status: "paused" }, tx);
+        }
+        await db.createAgentTask({
+          agentType: "architect",
+          taskType: "platform_disconnected",
+          title: `Disconnected ${cred.platform} credential`,
+          status: "completed",
+          storeId: cred.storeId ?? undefined,
+        }, tx);
       });
 
       return { success: true };
@@ -384,14 +384,15 @@ export const connectorsRouter = router({
       if (!account || account.userId !== ctx.user.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Social account not found" });
       }
-      await db.deleteSocialAccount(input.id);
-
       const platformName = SOCIAL_PLATFORMS[account.platform]?.name || account.platform;
-      await db.createAgentTask({
-        agentType: "social",
-        taskType: "social_disconnected",
-        title: `Disconnected ${platformName} account${account.accountName ? ` "${account.accountName}"` : ""}`,
-        status: "completed",
+      await db.withTransaction(async (tx) => {
+        await db.deleteSocialAccount(input.id, tx);
+        await db.createAgentTask({
+          agentType: "social",
+          taskType: "social_disconnected",
+          title: `Disconnected ${platformName} account${account.accountName ? ` "${account.accountName}"` : ""}`,
+          status: "completed",
+        }, tx);
       });
 
       return { success: true };

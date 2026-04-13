@@ -45,6 +45,8 @@ import {
   handleDLQProcessor,
 } from "./tasks/system";
 
+import { signalRegistry } from "../signals"; // <-- THE PROACTIVENESS ENGINE
+
 // ─── Types ────────────────────────────────────────────────────────────────
 
 export interface ScheduledTask {
@@ -62,6 +64,7 @@ export interface ScheduledTask {
 class AgentScheduler {
   private tasks: Map<string, ReturnType<typeof cron.schedule>> = new Map();
   private taskConfigs: Map<string, ScheduledTask> = new Map();
+  private runningTasks: Set<string> = new Set();
   private isRunning = false;
 
   register(config: ScheduledTask): void {
@@ -118,6 +121,7 @@ class AgentScheduler {
     cronExpression: string;
     enabled: boolean;
     isScheduled: boolean;
+    isRunning: boolean;
   }> {
     return Array.from(this.taskConfigs.values()).map(config => ({
       id: config.id,
@@ -127,6 +131,7 @@ class AgentScheduler {
       cronExpression: config.cronExpression,
       enabled: config.enabled,
       isScheduled: this.tasks.has(config.id),
+      isRunning: this.runningTasks.has(config.id),
     }));
   }
 
@@ -134,7 +139,35 @@ class AgentScheduler {
     const config = this.taskConfigs.get(taskId);
     if (!config) throw new Error(`Task ${taskId} not found`);
     logger.info("scheduler_manual_trigger", { taskId, taskName: config.name });
-    await config.handler();
+    await this.runTask(config, "manual");
+  }
+
+  private async runTask(config: ScheduledTask, trigger: "cron" | "manual"): Promise<void> {
+    if (this.runningTasks.has(config.id)) {
+      logger.warn("scheduler_task_overlap_skipped", {
+        taskId: config.id,
+        taskName: config.name,
+        trigger,
+      });
+      return;
+    }
+
+    this.runningTasks.add(config.id);
+    logger.info("scheduler_task_start", { taskId: config.id, taskName: config.name, trigger });
+
+    try {
+      await config.handler();
+      logger.info("scheduler_task_complete", { taskId: config.id, taskName: config.name, trigger });
+    } catch (err) {
+      logger.error("scheduler_task_failed", {
+        taskId: config.id,
+        taskName: config.name,
+        trigger,
+        error: (err as any)?.message ?? String(err),
+      });
+    } finally {
+      this.runningTasks.delete(config.id);
+    }
   }
 
   private startTask(config: ScheduledTask): void {
@@ -147,13 +180,7 @@ class AgentScheduler {
     }
 
     const task = cron.schedule(config.cronExpression, async () => {
-      logger.info("scheduler_task_start", { taskId: config.id, taskName: config.name });
-      try {
-        await config.handler();
-        logger.info("scheduler_task_complete", { taskId: config.id, taskName: config.name });
-      } catch (err) {
-        logger.error("scheduler_task_failed", { taskId: config.id, taskName: config.name, error: (err as any)?.message ?? String(err) });
-      }
+      await this.runTask(config, "cron");
     });
 
     this.tasks.set(config.id, task);
@@ -167,6 +194,23 @@ export const agentScheduler = new AgentScheduler();
 // ─── Register Default Tasks ─────────────────────────────────────────────
 
 export function registerDefaultTasks(): void {
+  // ─── PROACTIVE EVENT LOOP (The Brain) ──────────────────
+  agentScheduler.register({
+    id: "system:proactive-signal-loop",
+    name: "Bot Proactiveness Signal Evaluator",
+    // Run frequently, scanning environment for thresholds
+    cronExpression: "*/30 * * * *", 
+    agentType: "system" as any,
+    taskType: "signal_evaluator",
+    handler: async () => {
+      const stores = await require("../db").getActiveStores();
+      for (const store of stores) {
+        await signalRegistry.executeAllForStore(store.userId, store.id);
+      }
+    },
+    enabled: true
+  });
+
   // ─── Merchant Bot Tasks ────────────────────────────────────────
   agentScheduler.register({
     id: "merchant:inventory-check",

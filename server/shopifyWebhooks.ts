@@ -318,6 +318,27 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
   }
 }
 
+// ─── Webhook Deduplication ────────────────────────────────────────────────
+// Shopify may retry webhooks if it doesn't receive a 200 within 5 seconds.
+// This in-memory set prevents duplicate processing. Entries expire after 5 minutes.
+
+const processedWebhooks = new Map<string, number>();
+
+// Cleanup expired entries every 2 minutes to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, ts] of Array.from(processedWebhooks.entries())) {
+    if (now - ts > 5 * 60 * 1000) processedWebhooks.delete(key);
+  }
+}, 2 * 60 * 1000);
+
+function isWebhookDuplicate(shopDomain: string, topic: string, resourceId: string): boolean {
+  const key = `${shopDomain}:${topic}:${resourceId}`;
+  if (processedWebhooks.has(key)) return true;
+  processedWebhooks.set(key, Date.now());
+  return false;
+}
+
 // ─── Main Webhook Dispatcher ──────────────────────────────────────────────
 
 async function handleShopifyWebhook(req: Request, res: Response) {
@@ -350,6 +371,13 @@ async function handleShopifyWebhook(req: Request, res: Response) {
   }
 
   console.log(`[Webhook] Processing ${topic} from ${shopDomain}`);
+
+  // ── Deduplication: prevent duplicate processing on retries ──
+  const resourceId = String(payload.id || payload.inventory_item_id || "unknown");
+  if (isWebhookDuplicate(shopDomain, topic, resourceId)) {
+    console.log(`[Webhook] Duplicate webhook skipped: ${topic} ${resourceId} from ${shopDomain}`);
+    return;
+  }
 
   try {
     switch (topic) {

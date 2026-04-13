@@ -16,7 +16,7 @@ import {
   createWorkflow, updateWorkflow, getWorkflowById,
   createWorkflowSteps, getWorkflowSteps, updateWorkflowStep, getBestPromptVariant, getWorkflowStepById,
   createAgentTask, createNotification, createApprovalItem,
-  getStoresByUser, getStoreById, getBotConfigs,
+  getStoresByUser, getStoreById, getBotConfigs, withTransaction,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
@@ -119,30 +119,30 @@ export async function launchWorkflow(userId: number, definition: WorkflowDefinit
     input: definition.input ?? {},
   };
 
-  const { id: workflowId } = await createWorkflow(workflowData);
+  const workflowId = await withTransaction(async (tx) => {
+    const { id } = await createWorkflow(workflowData, tx);
+    const stepRecords: InsertWorkflowStep[] = steps.map((step, index) => ({
+      workflowId: id,
+      stepIndex: index,
+      stepType: step.stepType,
+      title: step.title,
+      description: step.description,
+      requiresApproval: step.requiresApproval ?? false,
+      input: step.input ?? {},
+    }));
 
-  // Create step records
-  const stepRecords: InsertWorkflowStep[] = steps.map((step, index) => ({
-    workflowId,
-    stepIndex: index,
-    stepType: step.stepType,
-    title: step.title,
-    description: step.description,
-    requiresApproval: step.requiresApproval ?? false,
-    input: step.input ?? {},
-  }));
+    await createWorkflowSteps(stepRecords, tx);
+    await createAgentTask({
+      agentType: definition.agentType,
+      taskType: definition.workflowType,
+      title: `Workflow started: ${definition.title}`,
+      description: `${steps.length}-step workflow initiated`,
+      status: "running",
+      storeId: definition.storeId ?? null,
+      metadata: { workflowId: id },
+    }, tx);
 
-  await createWorkflowSteps(stepRecords);
-
-  // Log the bot task
-  await createAgentTask({
-    agentType: definition.agentType,
-    taskType: definition.workflowType,
-    title: `Workflow started: ${definition.title}`,
-    description: `${steps.length}-step workflow initiated`,
-    status: "running",
-    storeId: definition.storeId ?? null,
-    metadata: { workflowId },
+    return id;
   });
 
   // Start execution (non-blocking)

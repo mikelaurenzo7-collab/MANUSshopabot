@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import helmet from "helmet";
+import cors from "cors";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
@@ -16,6 +18,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { agentScheduler, registerDefaultTasks } from "../scheduler";
 import { seedDefaultPlugins } from "../seedPlugins";
+import { validateRequiredEnv } from "./env";
+import { getDb } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -37,8 +41,54 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // ─── Fail-fast: validate required environment variables ────────────────
+  validateRequiredEnv();
+
   const app = express();
   const server = createServer(app);
+
+  // ─── Security Headers (helmet) ──────────────────────────────────────────
+  app.use(helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // ─── CORS ───────────────────────────────────────────────────────────────
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
+    : ["http://localhost:3000", "http://localhost:5173"];
+  app.use(cors({
+    origin: process.env.NODE_ENV === "production"
+      ? allowedOrigins
+      : true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  }));
+
+  app.get("/api/health", async (_req, res) => {
+    const db = await getDb();
+    const schedulerStatus = agentScheduler.getStatus();
+    const runningTasks = schedulerStatus.filter(task => task.isRunning).length;
+    const scheduledTasks = schedulerStatus.filter(task => task.isScheduled).length;
+    const status = db ? "ok" : "degraded";
+
+    res.status(status === "ok" ? 200 : 503).json({
+      status,
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+      database: {
+        connected: Boolean(db),
+      },
+      scheduler: {
+        registeredTasks: schedulerStatus.length,
+        scheduledTasks,
+        runningTasks,
+        tasks: schedulerStatus,
+      },
+    });
+  });
+
   // Inject requestId + child logger into every request for distributed tracing
   app.use(correlationMiddleware);
   // Stripe webhook MUST receive raw body for signature verification — register BEFORE express.json()

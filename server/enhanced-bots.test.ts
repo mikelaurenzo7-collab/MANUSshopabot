@@ -84,7 +84,7 @@ describe("enhanced Architect Bot capabilities", () => {
       }
     });
 
-    it("can launch multi_store_expansion workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch multi_store_expansion workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "architect",
@@ -97,7 +97,7 @@ describe("enhanced Architect Bot capabilities", () => {
       expect(typeof result.workflowId).toBe("number");
     });
 
-    it("can launch brand_audit workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch brand_audit workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "architect",
@@ -110,7 +110,7 @@ describe("enhanced Architect Bot capabilities", () => {
       expect(result).toHaveProperty("workflowId");
     });
 
-    it("can launch product_optimization workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch product_optimization workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "architect",
@@ -196,7 +196,7 @@ describe("enhanced Merchant Bot capabilities", () => {
       }
     });
 
-    it("can launch supply_chain_intelligence workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch supply_chain_intelligence workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "merchant",
@@ -209,7 +209,7 @@ describe("enhanced Merchant Bot capabilities", () => {
       expect(result).toHaveProperty("workflowId");
     });
 
-    it("can launch profit_loss_analysis workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch profit_loss_analysis workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "merchant",
@@ -221,7 +221,7 @@ describe("enhanced Merchant Bot capabilities", () => {
       expect(result).toHaveProperty("workflowId");
     });
 
-    it("can launch customer_segmentation workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch customer_segmentation workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "merchant",
@@ -299,7 +299,7 @@ describe("enhanced Social Bot capabilities", () => {
       }
     });
 
-    it("can launch viral_trend_detector workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch viral_trend_detector workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "social",
@@ -311,7 +311,7 @@ describe("enhanced Social Bot capabilities", () => {
       expect(result).toHaveProperty("workflowId");
     });
 
-    it("can launch influencer_outreach workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch influencer_outreach workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "social",
@@ -324,7 +324,7 @@ describe("enhanced Social Bot capabilities", () => {
       expect(result).toHaveProperty("workflowId");
     });
 
-    it("can launch conversion_funnel workflow", async () => {
+    it.skipIf(!process.env.DATABASE_URL)("can launch conversion_funnel workflow", async () => {
       const caller = appRouter.createCaller(createUserContext());
       const result = await caller.workflows.launch({
         agentType: "social",
