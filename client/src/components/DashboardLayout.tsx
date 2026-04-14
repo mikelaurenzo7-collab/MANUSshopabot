@@ -83,8 +83,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {group.items.map((item) => {
                   const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
                   return (
-                    <Link key={item.title} href={item.url}>
-                      <a className={`flex items-center h-8 pl-7 pr-4 rounded-none border border-transparent transition-colors duration-200 relative group
+                    <Link key={item.title} href={item.url} className={`flex items-center h-8 pl-7 pr-4 rounded-none border border-transparent transition-colors duration-200 relative group
                         ${isActive ? "bg-[#1e293b]/50 border-l-[#00ff41] !border-l-2 text-[#f8fafc]" : "hover:bg-[#1e293b]/10 text-[#94a3b8] hover:text-[#e2e8f0]"}
                       `}>
                         <div className="absolute left-3 top-1/2 -mt-px w-2 h-px bg-[#1e293b]" />
@@ -92,7 +91,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <span className="font-mono text-[10px] uppercase tracking-wider truncate">
                           {item.title}
                         </span>
-                      </a>
                     </Link>
                   );
                 })}
