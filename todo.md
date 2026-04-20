@@ -1,5 +1,14 @@
 # ShopBOTS Development TODO
 
+## Phase 0: UX Polish & Production Ready (COMPLETED ✅)
+
+### Error Handling & User Feedback
+- [x] Subscription gate error messaging with upgrade CTA (Architect)
+- [x] Loading states on critical buttons (store selection, EXECUTE SCAN, ad copy generation)
+- [x] Improved empty states across all bot pages (friendly messaging + icons)
+- [x] Shopify OAuth redirect URL configuration
+- [x] Fixed workflows.ts null user handling
+
 ## Phase 1: Foundation (COMPLETED ✅)
 
 ### User Authentication & OAuth

@@ -12,6 +12,7 @@ export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
   const [keyword, setKeyword] = useState("");
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const utils = trpc.useUtils();
   const { data: status } = trpc.dashboard.agentStatus.useQuery();
@@ -24,12 +25,18 @@ export default function Architect() {
     onSuccess: () => {
       toast.success("INITIATING_NICHE_ANALYSIS");
       setKeyword("");
+      setError(null);
       utils.dashboard.agentStatus.invalidate();
       utils.workflows.list?.invalidate?.();
       utils.dashboard.recentActivity.invalidate();
     },
     onError: (err) => {
-      toast.error(`ERR: ${err.message}`);
+      const isSubscriptionGate = err.message.includes("upgrade") || err.message.includes("paid plan");
+      if (isSubscriptionGate) {
+        setError("Upgrade required to launch bot workflows. Choose a plan to continue.");
+      } else {
+        setError(err.message);
+      }
     }
   });
 
@@ -74,6 +81,24 @@ export default function Architect() {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
           <div className="max-w-4xl mx-auto space-y-6">
             
+            {/* Error Banner */}
+            {error && (
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-mono text-[10px] uppercase tracking-widest font-bold text-red-500 mb-2">{error}</p>
+                  {error.includes("Upgrade") && (
+                    <a href="/pricing" className="inline-flex items-center gap-2 text-[9px] font-mono uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
+                      View Plans <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+                <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400 transition-colors mt-0.5">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            
             {/* Input Module */}
             <div className="border border-[#1e293b] bg-[#0a0a0a] p-5 relative">
               <div className="absolute top-0 left-0 w-1 h-full bg-sky-400/50" />
@@ -109,7 +134,11 @@ export default function Architect() {
                 {reportsLoading ? (
                   <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
                 ) : reports?.length === 0 ? (
-                  <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Ledger Empty. Input coordinate to begin.</div>
+                  <div className="p-12 text-center">
+                    <Lightbulb className="w-8 h-8 text-[#64748b]/40 mx-auto mb-3" />
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748b] font-bold">No Niches Analyzed Yet</p>
+                    <p className="font-mono text-[9px] text-[#64748b] mt-2 opacity-70">Enter a niche keyword above to begin market research and viability analysis.</p>
+                  </div>
                 ) : (
                   <table className="w-full text-left font-mono text-xs border-collapse">
                     <thead>

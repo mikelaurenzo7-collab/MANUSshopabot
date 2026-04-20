@@ -262,7 +262,8 @@ export default function SocialPage() {
               <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Sparkles className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No ad campaigns yet</p>
+                  <p className="text-sm font-medium text-foreground">No Ad Campaigns Yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Use the form above to generate AI-powered ad copy for your products.</p>
                 </CardContent>
               </Card>
             )}
@@ -360,7 +361,8 @@ export default function SocialPage() {
               <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Search className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No SEO keywords yet</p>
+                  <p className="text-sm font-medium text-foreground">No SEO Keywords Yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Enter a topic above to generate SEO-optimized keywords for your store.</p>
                 </CardContent>
               </Card>
             )}
@@ -432,7 +434,8 @@ export default function SocialPage() {
               <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Share2 className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No social posts yet</p>
+                  <p className="text-sm font-medium text-foreground">No Social Posts Yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Generate AI-powered posts tailored to your chosen platform above.</p>
                 </CardContent>
               </Card>
             )}
@@ -512,7 +515,8 @@ export default function SocialPage() {
               <Card className="bento-card">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Mail className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No email campaigns yet</p>
+                  <p className="text-sm font-medium text-foreground">No Email Campaigns Yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Create automated email sequences using the form above.</p>
                 </CardContent>
               </Card>
             )}

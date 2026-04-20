@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import {
   getWorkflowsByUser, getWorkflowById, getWorkflowSteps,
   getActiveWorkflows, getWorkflowCounts, getPendingApprovalSteps,
+  getUserByOpenId,
 } from "../db";
 import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workflowEngine";
 
@@ -30,7 +31,8 @@ export const workflowRouter = router({
       input: z.record(z.string(), z.any()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = await require("../db").getUserByOpenId(ctx.user.openId);
+      const user = await getUserByOpenId(ctx.user.openId);
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       
       // The Revenue Moat: Hard enforcement
       const isSubscribed = user.stripeSubscriptionStatus === "active" || user.stripeSubscriptionStatus === "trialing";

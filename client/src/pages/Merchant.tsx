@@ -12,7 +12,7 @@ export default function MerchantPage() {
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [entityType, setEntityType] = useState<"product" | "order" | null>(null);
 
-  const { data: stores } = trpc.stores.list.useQuery();
+  const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
   const { data: products, isLoading: productsLoading } = trpc.merchant.products.useQuery(
     { storeId: storeId! },
     { enabled: !!storeId }
@@ -75,20 +75,24 @@ export default function MerchantPage() {
               <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />
               <div className="flex items-center gap-4 w-full pl-2">
                 <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b] shrink-0">Active Source:</span>
-                <select
-                  value={selectedStore}
-                  onChange={(e) => {
-                    setSelectedStore(e.target.value);
-                    setSelectedEntity(null);
-                    setEntityType(null);
-                  }}
-                  className="bg-[#050505] border border-[#1e293b] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 flex-1 max-w-[300px]"
-                >
-                  <option value="">SELECT_TARGET_STORE</option>
-                  {stores?.map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.name} [{s.platform}]</option>
-                  ))}
-                </select>
+                <div className="flex-1 max-w-[300px] relative">
+                  <select
+                    value={selectedStore}
+                    onChange={(e) => {
+                      setSelectedStore(e.target.value);
+                      setSelectedEntity(null);
+                      setEntityType(null);
+                    }}
+                    disabled={storesLoading}
+                    className="bg-[#050505] border border-[#1e293b] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"}</option>
+                    {stores?.map((s: any) => (
+                      <option key={s.id} value={s.id}>{s.name} [{s.platform}]</option>
+                    ))}
+                  </select>
+                  {storesLoading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 animate-spin text-cyan-400" />}
+                </div>
                 
                 {lowStock && lowStock.length > 0 && (
                   <div className="ml-auto flex items-center bg-red-500/10 border border-red-500/30 px-3 py-1">
@@ -100,10 +104,10 @@ export default function MerchantPage() {
             </div>
 
             {!storeId ? (
-              <div className="border border-[#1e293b] border-dashed p-12 flex flex-col items-center justify-center text-center opacity-50">
-                <Store className="w-8 h-8 text-[#64748b] mb-4" />
-                <p className="font-mono text-xs uppercase tracking-widest text-[#64748b]">Awaiting Target Source Configuration</p>
-                <p className="font-mono text-[9px] text-[#64748b] mt-2">Connect to a synchronized data stream to visualize inventory matrices.</p>
+              <div className="border border-[#1e293b] border-dashed p-12 flex flex-col items-center justify-center text-center">
+                <Store className="w-8 h-8 text-[#64748b]/40 mb-4" />
+                <p className="font-mono text-xs uppercase tracking-widest text-[#64748b] font-bold">No Store Selected</p>
+                <p className="font-mono text-[9px] text-[#64748b] mt-2 opacity-70">Choose a store from the dropdown above to view inventory and order data.</p>
               </div>
             ) : (
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -118,7 +122,11 @@ export default function MerchantPage() {
                       {productsLoading ? (
                         <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
                       ) : !products?.length ? (
-                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Entity List Empty</div>
+                        <div className="p-8 text-center">
+                          <Package className="w-6 h-6 text-[#64748b]/40 mx-auto mb-2" />
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748b] font-bold">No Products</p>
+                          <p className="font-mono text-[9px] text-[#64748b] mt-1 opacity-70">Products will appear here once synced from your store.</p>
+                        </div>
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
@@ -164,7 +172,11 @@ export default function MerchantPage() {
                       {ordersLoading ? (
                         <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
                       ) : !orders?.length ? (
-                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Stream Empty</div>
+                        <div className="p-8 text-center">
+                          <ShoppingCart className="w-6 h-6 text-[#64748b]/40 mx-auto mb-2" />
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748b] font-bold">No Orders</p>
+                          <p className="font-mono text-[9px] text-[#64748b] mt-1 opacity-70">Orders will appear here as they arrive from your store.</p>
+                        </div>
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
