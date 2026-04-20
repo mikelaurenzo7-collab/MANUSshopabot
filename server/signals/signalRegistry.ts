@@ -1,5 +1,5 @@
 /**
- * orchAIstrate / ShopBOTS — Proactive Signal Registry
+ * SHOPaBOT / ShopBOTS — Proactive Signal Registry
  * 
  * This is the core "Proactiveness Engine" that transitions our bots 
  * from reactive tools (waiting for a click) to autonomous operators.

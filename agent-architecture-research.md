@@ -1,4 +1,4 @@
-# Agent Architecture Research - orchAIstrate
+# Agent Architecture Research - SHOPaBOT
 
 ## Key Findings
 

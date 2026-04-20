@@ -1,5 +1,5 @@
 /**
- * orchAIstrate / ShopBOTS — Proactive Event Loop Root
+ * SHOPaBOT / ShopBOTS — Proactive Event Loop Root
  * Registers all specialized Bot Signals to the global Signal Registry.
  */
 

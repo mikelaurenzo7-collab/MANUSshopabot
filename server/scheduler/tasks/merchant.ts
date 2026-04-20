@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Merchant Bot Scheduler Tasks
+ * SHOPaBOT — Merchant Bot Scheduler Tasks
  *
  * Handles: inventory checks, order fulfillment, product sync
  *

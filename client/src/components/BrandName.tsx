@@ -1,7 +1,6 @@
 /**
- * orchAIstrate — Brand Name Component
- * The "AI" is the hero: bold, gradient, slightly larger, with a subtle glow.
- * "orch" and "strate" are understated lowercase to let "AI" dominate.
+ * SHOPaBOT — Brand Name Component
+ * "SHOP" in white, "a" in cyan gradient, "BOT" in white
  */
 
 interface BrandNameProps {
@@ -9,37 +8,35 @@ interface BrandNameProps {
   size?: "sm" | "md" | "lg" | "xl" | "2xl" | "hero";
 }
 
-const sizeMap: Record<string, { base: string; ai: string }> = {
-  sm:   { base: "text-sm",   ai: "text-base"  },
-  md:   { base: "text-base", ai: "text-lg"    },
-  lg:   { base: "text-lg",   ai: "text-xl"    },
-  xl:   { base: "text-xl",   ai: "text-2xl"   },
-  "2xl":{ base: "text-2xl",  ai: "text-3xl"   },
-  hero: { base: "text-4xl md:text-5xl", ai: "text-5xl md:text-6xl" },
+const sizeMap: Record<string, string> = {
+  sm:    "text-sm",
+  md:    "text-base",
+  lg:    "text-lg",
+  xl:    "text-xl",
+  "2xl": "text-2xl",
+  hero:  "text-4xl md:text-5xl",
 };
 
 export function BrandName({ className = "", size = "md" }: BrandNameProps) {
-  const s = sizeMap[size] || sizeMap.md;
+  const sizeClass = sizeMap[size] || sizeMap.md;
   return (
     <span
-      className={`inline-flex items-baseline font-medium tracking-tight ${s.base} ${className}`}
-      aria-label="orchAIstrate"
+      className={`inline-flex items-baseline font-black tracking-tight ${sizeClass} ${className}`}
+      aria-label="SHOPaBOT"
     >
-      <span className="text-muted-foreground/80">orch</span>
-      <span
-        className={`${s.ai} font-black bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(14,165,233,0.5)]`}
-      >
-        AI
+      <span className="text-white">SHOP</span>
+      <span className="bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
+        a
       </span>
-      <span className="text-muted-foreground/80">strate</span>
+      <span className="text-white">BOT</span>
     </span>
   );
 }
 
 /** Plain text version for non-JSX contexts (tooltips, aria-labels, etc.) */
-export const BRAND_NAME = "orchAIstrate";
+export const BRAND_NAME = "SHOPaBOT";
 
 /** Technical/package name (no special chars) */
-export const BRAND_SLUG = "orchaistrate";
+export const BRAND_SLUG = "shopabots";
 
 export default BrandName;

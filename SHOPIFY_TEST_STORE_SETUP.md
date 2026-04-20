@@ -1,8 +1,8 @@
-# orchAIstrate — Shopify Test Store Setup Guide
+# SHOPaBOT — Shopify Test Store Setup Guide
 
 ## Overview
 
-This guide walks you through connecting your personal Shopify store to orchAIstrate for pre-launch testing. You'll run the three bots (Architect, Merchant, Hype-Man) in **supervised mode** — they'll suggest actions, you'll approve them before execution.
+This guide walks you through connecting your personal Shopify store to SHOPaBOT for pre-launch testing. You'll run the three bots (Architect, Merchant, Hype-Man) in **supervised mode** — they'll suggest actions, you'll approve them before execution.
 
 ---
 
@@ -10,33 +10,33 @@ This guide walks you through connecting your personal Shopify store to orchAIstr
 
 - ✅ Shopify Partner App credentials configured (SHOPIFY_PARTNER_CLIENT_ID, SHOPIFY_PARTNER_CLIENT_SECRET)
 - ✅ Active Shopify store (or create a test store)
-- ✅ orchAIstrate platform running and accessible
+- ✅ SHOPaBOT platform running and accessible
 - ✅ Admin access to your Shopify store
 
 ---
 
 ## Step 1: Connect Your Shopify Store
 
-### In orchAIstrate:
+### In SHOPaBOT:
 
 1. Go to **Integrations** → **E-Commerce Platforms** → **Shopify**
 2. Click **"Connect Your Store"**
 3. You'll be redirected to Shopify's OAuth login
 4. Log in with your Shopify account
-5. Click **"Install App"** to authorize orchAIstrate
-6. You'll be redirected back to orchAIstrate with your store connected ✅
+5. Click **"Install App"** to authorize SHOPaBOT
+6. You'll be redirected back to SHOPaBOT with your store connected ✅
 
 ### What Just Happened:
 
-- orchAIstrate received a **permanent access token** from Shopify
-- Your store is now linked to your orchAIstrate account
+- SHOPaBOT received a **permanent access token** from Shopify
+- Your store is now linked to your SHOPaBOT account
 - The three bots can now read/write to your store
 
 ---
 
 ## Step 2: Configure Autonomy Levels (Supervised Mode)
 
-### In orchAIstrate:
+### In SHOPaBOT:
 
 1. Go to **Settings** → **Bot Config**
 2. Set autonomy levels for each agent:
@@ -259,4 +259,4 @@ Questions or issues? Check:
 - **Bot Config** for autonomy level settings
 - **Integrations** for credential status
 
-For technical support, contact the orchAIstrate team.
+For technical support, contact the SHOPaBOT team.

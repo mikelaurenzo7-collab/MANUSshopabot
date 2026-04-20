@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Social Bot Scheduler Tasks
+ * SHOPaBOT — Social Bot Scheduler Tasks
  *
  * Handles: ad monitoring, scheduled posts, SEO audit, email recovery, bot coordination
  *

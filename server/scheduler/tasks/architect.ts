@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Architect Bot Scheduler Tasks
+ * SHOPaBOT — Architect Bot Scheduler Tasks
  *
  * Handles: store health checks, token refresh, competitor scan
  *

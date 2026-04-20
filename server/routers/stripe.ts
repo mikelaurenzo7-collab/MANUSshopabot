@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Stripe tRPC Router
+ * SHOPaBOT — Stripe tRPC Router
  * Handles checkout session creation and subscription status queries.
  */
 import { z } from "zod";
@@ -73,7 +73,7 @@ export const stripeRouter = router({
               currency: "usd",
               recurring: { interval: "month" },
               product_data: {
-                name: `orchAIstrate ${plan.name}`,
+                name: `SHOPaBOT ${plan.name}`,
                 description: plan.description,
               },
               unit_amount: plan.priceCents,

@@ -1,4 +1,4 @@
-# orchAIstrate Platform Credentials Guide
+# SHOPaBOT Platform Credentials Guide
 
 This guide documents all API credentials needed for the 14 platform integrations. Each platform has specific setup requirements and credential types.
 
@@ -295,7 +295,7 @@ This guide documents all API credentials needed for the 14 platform integrations
 - Create apps on: Etsy, eBay, TikTok Shop, Walmart, Meta, TikTok Business, Twitter/X, Pinterest, Google Cloud (OAuth), LinkedIn
 - Navigate all developer portals
 - Extract credentials once apps are created
-- Configure secrets in orchAIstrate
+- Configure secrets in SHOPaBOT
 
 ### ⛔ You Need to Do (Browser Blocked or Account Required)
 - **Amazon SP-API**: Seller Central is blocked. You'll need to set up and provide credentials.
@@ -310,7 +310,7 @@ This guide documents all API credentials needed for the 14 platform integrations
 
 2. **If I create them**: I'll need you to take over the browser for login on each platform, then I'll extract the credentials.
 
-3. **If you create them**: Provide the credentials for each platform, and I'll configure them in orchAIstrate.
+3. **If you create them**: Provide the credentials for each platform, and I'll configure them in SHOPaBOT.
 
 4. **Amazon SP-API**: This one requires your direct setup since Seller Central is blocked.
 

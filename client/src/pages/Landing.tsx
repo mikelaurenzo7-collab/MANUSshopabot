@@ -108,8 +108,8 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#1e293b] bg-[#0a0a0a]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={APP_LOGO} alt="orchAIstrate" className="h-8 w-8" />
-            <span className="font-mono text-sm font-bold uppercase tracking-widest">orchAIstrate</span>
+            <img src={APP_LOGO} alt="SHOPaBOT" className="h-8 w-8" />
+            <span className="font-mono text-sm font-bold uppercase tracking-widest">SHOPaBOT</span>
           </div>
           <div className="flex items-center gap-3">
             {user ? (
@@ -261,8 +261,8 @@ export default function Landing() {
       <footer className="border-t border-[#1e293b] bg-[#050505] py-8 px-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <img src={APP_LOGO} alt="orchAIstrate" className="h-6 w-6" />
-            <span className="font-mono text-xs uppercase tracking-widest text-[#64748b]">© 2026 orchAIstrate</span>
+            <img src={APP_LOGO} alt="SHOPaBOT" className="h-6 w-6" />
+            <span className="font-mono text-xs uppercase tracking-widest text-[#64748b]">© 2026 SHOPaBOT</span>
           </div>
           <div className="flex gap-6 text-[#64748b] font-mono text-xs">
             <a href="#" className="hover:text-sky-400 transition-colors">Terms</a>

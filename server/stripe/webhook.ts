@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Stripe Webhook Handler
+ * SHOPaBOT — Stripe Webhook Handler
  * Handles subscription lifecycle events and updates user plan status in DB.
  */
 import type { Express, Request, Response } from "express";

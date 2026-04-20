@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Structured Logger (powered by Pino in production)
+ * SHOPaBOT — Structured Logger (powered by Pino in production)
  *
  * Keeps the same external API (logger.info/warn/error/debug + withContext).
  * In production: uses Pino for high-performance JSON logging with transport support.

@@ -1,7 +1,7 @@
 /**
  * Onboarding Wizard
  * Guides new users through the 4 steps to get their first bot running:
- * 1. Welcome — understand what orchAIstrate does
+ * 1. Welcome — understand what SHOPaBOT does
  * 2. Connect Store — link a Shopify/WooCommerce store
  * 3. Connect Socials — link Meta/TikTok/Twitter for the Social Bot
  * 4. Launch — pick a niche and fire the Builder Bot
@@ -36,7 +36,7 @@ import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const STEPS = [
-  { id: 1, title: "Welcome to orchAIstrate", icon: Sparkles },
+  { id: 1, title: "Welcome to SHOPaBOT", icon: Sparkles },
   { id: 2, title: "Connect Your Store", icon: Store },
   { id: 3, title: "Connect Socials", icon: Share2 },
   { id: 4, title: "Launch Your First Bot", icon: Zap },
@@ -622,7 +622,7 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    localStorage.setItem("orchaistrate_onboarded", "true");
+    localStorage.setItem("shopabots_onboarded", "true");
     setLocation("/");
   };
 

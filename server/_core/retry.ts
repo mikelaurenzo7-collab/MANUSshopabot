@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Resilience Layer (powered by cockatiel)
+ * SHOPaBOT — Resilience Layer (powered by cockatiel)
  *
  * Replaces hand-rolled retry + circuit-breaker logic with cockatiel
  * (1.2k ⭐, used by VS Code) — composable, battle-tested, TypeScript-native.

@@ -1,4 +1,4 @@
-# orchAIstrate — SDK Research: All Platform Connectors
+# SHOPaBOT — SDK Research: All Platform Connectors
 
 ## E-Commerce Platform SDKs
 

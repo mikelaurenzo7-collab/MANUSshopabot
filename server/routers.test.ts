@@ -54,7 +54,7 @@ function createUnauthContext(): TrpcContext {
   };
 }
 
-describe("orchAIstrate Routers", () => {
+describe("SHOPaBOT Routers", () => {
   // ─── Auth ──────────────────────────────────────────────────────────────
   describe("auth.me", () => {
     it("returns user when authenticated", async () => {

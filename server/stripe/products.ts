@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Stripe Subscription Plans
+ * SHOPaBOT — Stripe Subscription Plans
  * Centralized plan definitions. Price IDs are created on first checkout
  * using Stripe's inline price creation (no pre-seeding required).
  */

@@ -1,5 +1,5 @@
 /**
- * orchAIstrate — Platform Rate Limiter
+ * SHOPaBOT — Platform Rate Limiter
  *
  * Dual implementation:
  * - TokenBucket: original hand-rolled class with full API (tryConsume, available,

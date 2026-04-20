@@ -1,8 +1,8 @@
-# orchAIstrate Learning Systems Roadmap
+# SHOPaBOT Learning Systems Roadmap
 
 ## Overview
 
-orchAIstrate agents are designed to improve autonomously over time. This document outlines the three-phase rollout of learning capabilities, from rule-based automation to full machine learning optimization.
+SHOPaBOT agents are designed to improve autonomously over time. This document outlines the three-phase rollout of learning capabilities, from rule-based automation to full machine learning optimization.
 
 ---
 
@@ -171,7 +171,7 @@ A: No. Your data stays in your account. We only use anonymized aggregates for cr
 A: Yes. You can disable learning at any time in Bot Config → Learning Settings.
 
 **Q: How much will learning systems cost?**  
-A: No additional cost. It's included in your orchAIstrate subscription.
+A: No additional cost. It's included in your SHOPaBOT subscription.
 
 ---
 

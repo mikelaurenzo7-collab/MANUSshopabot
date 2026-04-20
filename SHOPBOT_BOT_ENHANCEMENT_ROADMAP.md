@@ -1,4 +1,4 @@
-# orchAIstrate — Bot Capability Enhancement & Proactiveness Roadmap
+# SHOPaBOT — Bot Capability Enhancement & Proactiveness Roadmap
 
 **Prepared by:** Manus AI (CTO Role)
 **Date:** April 2026
@@ -8,9 +8,9 @@
 
 ## Executive Summary
 
-orchAIstrate's three bots currently operate in a **reactive, on-demand** model: a user triggers a workflow, the bot executes it, and the result is returned. This is functional but leaves enormous value on the table. The path to a truly autonomous Commerce-as-a-Service platform requires evolving each bot from a **tool** (does what you ask) to an **autonomous operator** (acts on your behalf without being asked).
+SHOPaBOT's three bots currently operate in a **reactive, on-demand** model: a user triggers a workflow, the bot executes it, and the result is returned. This is functional but leaves enormous value on the table. The path to a truly autonomous Commerce-as-a-Service platform requires evolving each bot from a **tool** (does what you ask) to an **autonomous operator** (acts on your behalf without being asked).
 
-This document maps the current capability baseline, identifies the highest-leverage enhancements for each bot, and proposes a proactiveness architecture that makes orchAIstrate the most autonomous e-commerce platform in the market.
+This document maps the current capability baseline, identifies the highest-leverage enhancements for each bot, and proposes a proactiveness architecture that makes SHOPaBOT the most autonomous e-commerce platform in the market.
 
 ---
 
@@ -193,7 +193,7 @@ The Hype-Man Bot generates marketing content and schedules posts when triggered.
 
 ## Part VI: Cross-Bot Coordination — The Missing Layer
 
-The most powerful capability orchAIstrate does not yet have is **cross-bot communication**. Currently, each bot operates in complete isolation. The Architect Bot does not know what the Hype-Man Bot is doing, and the Merchant Bot does not know what the Architect Bot has built.
+The most powerful capability SHOPaBOT does not yet have is **cross-bot communication**. Currently, each bot operates in complete isolation. The Architect Bot does not know what the Hype-Man Bot is doing, and the Merchant Bot does not know what the Architect Bot has built.
 
 ### The Bot Coordination Bus
 
@@ -285,7 +285,7 @@ The following table ranks all proposed enhancements by impact and implementation
 
 ## Part IX: The Autonomy Spectrum
 
-Not all users want the same level of bot autonomy. orchAIstrate should support a clear spectrum:
+Not all users want the same level of bot autonomy. SHOPaBOT should support a clear spectrum:
 
 | Mode | Description | Who It's For |
 |---|---|---|
@@ -300,6 +300,6 @@ The `autonomy_level` field already exists in `bot_config`. The implementation wo
 
 ## Conclusion
 
-orchAIstrate's bots are currently at approximately **30% of their potential capability**. The LLM intelligence is strong, but the proactiveness, cross-bot coordination, and learning layers are entirely missing. Implementing the Bot Coordination Bus, Content Calendar Engine, and Predictive Inventory Intelligence in Sprint 2 would immediately elevate the platform to a genuinely differentiated product — one that no competitor currently offers at this level of autonomy.
+SHOPaBOT's bots are currently at approximately **30% of their potential capability**. The LLM intelligence is strong, but the proactiveness, cross-bot coordination, and learning layers are entirely missing. Implementing the Bot Coordination Bus, Content Calendar Engine, and Predictive Inventory Intelligence in Sprint 2 would immediately elevate the platform to a genuinely differentiated product — one that no competitor currently offers at this level of autonomy.
 
 The vision of "Commerce-as-a-Service" is achievable. The path is clear. The bots are ready to be unleashed.

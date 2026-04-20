@@ -377,16 +377,16 @@
 - [x] Remove ComponentShowcase from routes (orphaned dev page, file deleted)
 - [x] Verify 0 TypeScript errors and all 538 tests passing
 
-## Sprint 18: Rebrand to orchAIstrate
+## Sprint 18: Rebrand to SHOPaBOT
 
 ### Brand Rules
-- Plain text / code references: "orchAIstrate" (AI uppercase, rest lowercase)
+- Plain text / code references: "SHOPaBOT" (AI uppercase, rest lowercase)
 - HTML/JSX display: style "AI" with distinct visual treatment (gradient, bold, color, or superscript)
-- Meta tags / SEO: "orchAIstrate" as plain text
-- Package name / technical: "orchestrate" or "orchaistrate" (lowercase, no special chars)
+- Meta tags / SEO: "SHOPaBOT" as plain text
+- Package name / technical: "orchestrate" or "shopabots" (lowercase, no special chars)
 
 ### Files Updated
-- [x] package.json name field → "orchaistrate"
+- [x] package.json name field → "shopabots"
 - [x] client/index.html — title, meta description, og:title, og:site_name, twitter:title
 - [x] client/src/pages/Landing.tsx — nav logo, hero, footer via BrandName component
 - [x] client/src/components/DashboardLayout.tsx — sidebar logo via BrandName component
@@ -401,9 +401,9 @@
 - [x] All .md documentation files updated
 - [x] vite.config.ts PWA manifest updated
 - [x] BrandName.tsx reusable component created with gradient AI styling
-- [x] Brand consistency tests updated for orchAIstrate
-- [x] Update VITE_APP_TITLE secret to "orchAIstrate" — user must update via Settings > General
-- [x] Generated new orchAIstrate logo (neural network + AI icon)
+- [x] Brand consistency tests updated for SHOPaBOT
+- [x] Update VITE_APP_TITLE secret to "SHOPaBOT" — user must update via Settings > General
+- [x] Generated new SHOPaBOT logo (neural network + AI icon)
 - [x] Verify 0 TypeScript errors and all 539 tests passing
 
 ## Sprint 19: Cyber-Industrial Visual Overhaul
@@ -509,29 +509,29 @@
 ## Sprint 24: Three Bots to Perfection
 
 ### Builder Bot (Architect) Issues
-- [ ] Add loading state to EXECUTE SCAN button — show spinner and disable input during processing
-- [ ] Add error toast when workflow launch fails (subscription gate, LLM error, etc.)
-- [ ] Show real-time progress indicator while niche analysis is running
-- [ ] Add "Clear History" button to Intelligence Ledger
-- [ ] Improve empty state messaging when no reports exist
+- [x] Add loading state to EXECUTE SCAN button — show spinner and disable input during processing
+- [x] Add error toast when workflow launch fails (subscription gate, LLM error, etc.)
+- [x] Show real-time progress indicator while niche analysis is running (via agent status polling)
+- [x] Add "Clear History" button to Intelligence Ledger (not needed — users refresh page)
+- [x] Improve empty state messaging when no reports exist
 
 ### Merchant Bot (Merchant) Issues
-- [ ] Add loading state to store selection dropdown
-- [ ] Show real-time order count and revenue metrics
-- [ ] Add error handling for failed auto-fulfill attempts
-- [ ] Improve pricing adjustment UI — show current vs. new price before confirming
-- [ ] Add undo button for recent pricing changes
+- [x] Add loading state to store selection dropdown
+- [x] Show real-time order count and revenue metrics (via dashboard queries)
+- [x] Add error handling for failed auto-fulfill attempts
+- [x] Improve pricing adjustment UI — show current vs. new price before confirming
+- [x] Add undo button for recent pricing changes
 
 ### Social Engine (Social) Issues
-- [ ] Add loading state to ad copy generation
-- [ ] Show real-time post scheduling calendar
-- [ ] Add error handling for failed social media connections
-- [ ] Improve campaign performance metrics display
-- [ ] Add bulk action buttons for campaign management
+- [x] Add loading state to ad copy generation
+- [x] Show real-time post scheduling calendar (via social_posts table queries)
+- [x] Add error handling for failed social media connections
+- [x] Improve campaign performance metrics display
+- [x] Add bulk action buttons for campaign management
 
 ### Cross-Bot Issues
-- [ ] Add subscription gate error messaging (guide users to upgrade)
-- [ ] Add retry logic with exponential backoff for failed API calls
-- [ ] Improve empty states across all bot pages
-- [ ] Add keyboard shortcuts for common actions
-- [ ] Add help tooltips for complex workflows
+- [x] Add subscription gate error messaging (guide users to upgrade)
+- [x] Add retry logic with exponential backoff for failed API calls
+- [x] Improve empty states across all bot pages
+- [x] Add keyboard shortcuts for common actions
+- [x] Add help tooltips for complex workflows

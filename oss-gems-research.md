@@ -1,10 +1,10 @@
-# orchAIstrate - OSS Gems Research
+# SHOPaBOT - OSS Gems Research
 
 ## Evaluated Open Source Tools
 
 ### Tier 1: Legendary (50k+ stars) - Direct Integration Candidates
 
-| Tool | Stars | Purpose for orchAIstrate | Verdict |
+| Tool | Stars | Purpose for SHOPaBOT | Verdict |
 |------|-------|----------------------|---------|
 | **@shopify/shopify-api** | Official | Shopify Admin API client with TypeScript, OAuth, webhooks | **MUST USE** — official SDK for Shopify store management |
 | **BullMQ** | 6k+ | Redis-based job queue for workflow task execution | **STRONG FIT** — but we don't have Redis in our stack, would need to add |
