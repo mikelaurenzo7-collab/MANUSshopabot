@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -7,6 +8,7 @@ import {
 } from "lucide-react";
 
 export default function MerchantPage() {
+  const isMobile = useIsMobile();
   const [selectedStore, setSelectedStore] = useState<string>("");
   const storeId = selectedStore ? Number(selectedStore) : undefined;
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
@@ -46,9 +48,9 @@ export default function MerchantPage() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0]">
+    <div className={`flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0] ${isMobile ? 'flex-col' : ''}`}>
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full border-r border-[#1e293b]">
+      <div className={`flex-1 flex flex-col h-full ${isMobile ? '' : 'border-r'} border-[#1e293b]`}>
         {/* Header Bar */}
         <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
           <div className="flex items-center gap-3">
@@ -110,7 +112,7 @@ export default function MerchantPage() {
                 <p className="font-mono text-[9px] text-[#64748b] mt-2 opacity-70">Choose a store from the dropdown above to view inventory and order data.</p>
               </div>
             ) : (
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'} gap-6`}>
                  
                  {/* Product DB */}
                  <div className="border border-[#1e293b] bg-[#0a0a0a] flex flex-col min-h-[400px]">
@@ -219,8 +221,8 @@ export default function MerchantPage() {
         </div>
       </div>
 
-      {/* Metadata Inspector (Right Panel) */}
-      <aside className="w-[380px] shrink-0 bg-[#0a0a0a] flex flex-col z-20 box-border border-l border-[#1e293b]">
+      {/* Metadata Inspector (Rig      {/* Right Inspector */}
+      <aside className={`${isMobile ? 'w-full' : 'w-[380px] shrink-0'} bg-[#0a0a0a] flex flex-col ${isMobile ? 'border-t' : 'border-l'} border-[#1e293b]`}>
         <div className="h-14 flex items-center px-4 border-b border-[#1e293b] justify-between shrink-0 bg-[#050505]">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b]">
             Merchant Inspector

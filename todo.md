@@ -9,6 +9,14 @@
 - [x] Shopify OAuth redirect URL configuration
 - [x] Fixed workflows.ts null user handling
 
+### UI Theme Extension & Mobile Optimization (COMPLETED ✅)
+- [x] Refactored DashboardLayout with landing/onboarding theme + mobile drawer
+- [x] Updated Merchant.tsx with mobile responsiveness (flex-col on mobile, grid layout)
+- [x] Updated Social.tsx with mobile responsiveness (responsive tabs, full-width selects)
+- [x] Added mobile utilities to index.css (responsive spacing, text, layout, touch targets)
+- [x] SHOPaBOT branding applied consistently across all pages
+- [x] Updated BrandName component with cyan accent styling
+
 ## Phase 1: Foundation (COMPLETED ✅)
 
 ### User Authentication & OAuth

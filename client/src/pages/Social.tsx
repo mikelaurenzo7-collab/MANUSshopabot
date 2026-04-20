@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 
 export default function SocialPage() {
+  const isMobile = useIsMobile();
   const [selectedStore, setSelectedStore] = useState<string>("");
   const storeId = selectedStore ? Number(selectedStore) : undefined;
   const [adPrompt, setAdPrompt] = useState("");

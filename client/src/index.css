@@ -1142,3 +1142,53 @@
     animation: none !important;
   }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile Responsive Utilities
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Mobile-first responsive spacing */
+  .mobile-px-3 { @apply px-3 sm:px-4 md:px-6; }
+  .mobile-py-2 { @apply py-2 sm:py-3 md:py-4; }
+  .mobile-gap-2 { @apply gap-2 sm:gap-3 md:gap-4; }
+  .mobile-gap-3 { @apply gap-3 sm:gap-4 md:gap-6; }
+  
+  /* Mobile-first responsive text */
+  .mobile-text-sm { @apply text-xs sm:text-sm md:text-base; }
+  .mobile-text-base { @apply text-sm sm:text-base md:text-lg; }
+  .mobile-text-lg { @apply text-base sm:text-lg md:text-xl; }
+  
+  /* Mobile-first responsive layout */
+  .mobile-flex-col { @apply flex flex-col sm:flex-row; }
+  .mobile-grid-1 { @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4; }
+  .mobile-grid-2 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3; }
+  
+  /* Mobile-first responsive width */
+  .mobile-w-full { @apply w-full sm:w-auto; }
+  .mobile-max-w-none { @apply max-w-none sm:max-w-2xl md:max-w-4xl; }
+  
+  /* Touch-friendly sizing */
+  .touch-target { @apply h-10 w-10 sm:h-8 sm:w-8; }
+  .touch-padding { @apply p-3 sm:p-2; }
+  
+  /* Mobile-safe table */
+  .mobile-table-scroll { @apply overflow-x-auto sm:overflow-x-visible; }
+  
+  /* Mobile-safe inspector panel */
+  .mobile-inspector { @apply w-full sm:w-96 md:w-[380px]; }
+  
+  /* Mobile-safe split layout */
+  .mobile-split { @apply flex flex-col sm:flex-row gap-4 sm:gap-0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reduced Motion Preferences
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
