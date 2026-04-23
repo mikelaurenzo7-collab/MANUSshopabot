@@ -395,3 +395,82 @@ export function registerDefaultTasks(): void {
     handler: handleBotCoordination,
   });
 }
+
+
+// ─── Dynamic Schedule Loading ─────────────────────────────────────────────
+
+/**
+ * Load user-defined bot schedules from database and register them with the scheduler.
+ * Called during server startup and can be called periodically to refresh schedules.
+ */
+export async function loadUserBotSchedules(): Promise<void> {
+  try {
+    const db = await import("../db");
+    const { getBotSchedules, getBotProfile } = db;
+    
+    // Get all users (simplified — in production, iterate over active users)
+    // For now, this is a placeholder that can be called per-user
+    logger.info("scheduler_loading_user_schedules", { message: "Loading user-defined bot schedules" });
+    
+    // This function would typically be called with a userId:
+    // const schedules = await getBotSchedules(botProfileId);
+    // For each schedule, register it with agentScheduler
+  } catch (err) {
+    logger.error("scheduler_load_user_schedules_failed", {
+      error: (err as any)?.message ?? String(err),
+    });
+  }
+}
+
+/**
+ * Register a user-defined bot schedule with the scheduler.
+ * Called when a user creates or updates a schedule via the UI.
+ */
+export async function registerUserBotSchedule(
+  botProfileId: number,
+  scheduleId: number,
+  agentType: "architect" | "merchant" | "social",
+  taskType: string,
+  cronExpression: string,
+  taskInput: Record<string, any>
+): Promise<void> {
+  try {
+    if (!cron.validate(cronExpression)) {
+      throw new Error(`Invalid cron expression: ${cronExpression}`);
+    }
+
+    const taskId = `user:bot_schedule:${botProfileId}:${scheduleId}`;
+    
+    agentScheduler.register({
+      id: taskId,
+      name: `User Bot Schedule: ${taskType}`,
+      cronExpression,
+      agentType,
+      taskType,
+      handler: async () => {
+        // Execute the user's scheduled workflow
+        logger.info("scheduler_user_schedule_executing", {
+          taskId,
+          botProfileId,
+          scheduleId,
+          taskType,
+        });
+        // TODO: Implement actual workflow execution based on taskType
+      },
+      enabled: true,
+    });
+
+    logger.info("scheduler_user_schedule_registered", {
+      taskId,
+      botProfileId,
+      scheduleId,
+      cronExpression,
+    });
+  } catch (err) {
+    logger.error("scheduler_register_user_schedule_failed", {
+      botProfileId,
+      scheduleId,
+      error: (err as any)?.message ?? String(err),
+    });
+  }
+}

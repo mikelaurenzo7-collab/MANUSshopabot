@@ -17,6 +17,7 @@ import {
   createWorkflowSteps, getWorkflowSteps, updateWorkflowStep, getBestPromptVariant, getWorkflowStepById,
   createAgentTask, createNotification, createApprovalItem,
   getStoresByUser, getStoreById, getBotConfigs, withTransaction,
+  getBotProfile, getBotMemory,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
@@ -70,6 +71,8 @@ export interface StepContext {
   input: Record<string, any>;
   previousOutputs: Record<string, any>[]; // outputs from all previous steps
   allStores?: any[]; // available when scope is "all_stores"
+  botMemory?: any[]; // bot's persistent memory entries
+  botProfile?: any; // bot profile with instructions, autonomy level, safety rules
 }
 
 // ─── Workflow Registry ─────────────────────────────────────────────────────
@@ -189,6 +192,13 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
     allStores = await getStoresByUser(userId);
   }
 
+  // Load bot profile and memory
+  const botProfile = await getBotProfile(userId, workflow.agentType as any);
+  let botMemory: any[] = [];
+  if (botProfile) {
+    botMemory = await getBotMemory(botProfile.id, 50);
+  }
+
   for (let i = workflow.currentStepIndex; i < dbSteps.length; i++) {
     // Check timeout (startTime is in outer scope)
     if (Date.now() - startTime > timeoutMs) {
@@ -262,6 +272,8 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         input: { ...(dbStep.input as Record<string, any> ?? {}), ...(stepDef.input ?? {}) },
         previousOutputs,
         allStores,
+        botMemory,
+        botProfile,
       };
 
       let output: any;
@@ -701,3 +713,69 @@ async function executeApiCallStep(context: StepContext): Promise<any> {
   }
 }
 
+
+
+// ─── Safety Rule Enforcement ──────────────────────────────────────────────
+
+/**
+ * Check if a proposed action violates any of the bot's safety rules.
+ * Returns { allowed: boolean, reason?: string }
+ */
+export async function enforceSafetyRules(
+  context: StepContext,
+  proposedAction: Record<string, any>
+): Promise<{ allowed: boolean; reason?: string }> {
+  if (!context.botProfile?.requiresApproval) {
+    return { allowed: true };
+  }
+
+  const db = await import("../db");
+  const { getBotSafetyRules } = db;
+  const safetyRules = await getBotSafetyRules(context.botProfile.id);
+
+  for (const rule of safetyRules) {
+    switch (rule.ruleType) {
+      case "spending_limit":
+        if (proposedAction.amount && proposedAction.amount > parseFloat(rule.limit)) {
+          return {
+            allowed: false,
+            reason: `Spending limit exceeded: ${proposedAction.amount} > ${rule.limit}`,
+          };
+        }
+        break;
+
+      case "price_limit":
+        if (proposedAction.price && proposedAction.price > parseFloat(rule.limit)) {
+          return {
+            allowed: false,
+            reason: `Price limit exceeded: ${proposedAction.price} > ${rule.limit}`,
+          };
+        }
+        break;
+
+      case "action_restriction":
+        if (rule.restrictedActions?.includes(proposedAction.actionType)) {
+          return {
+            allowed: false,
+            reason: `Action restricted: ${proposedAction.actionType}`,
+          };
+        }
+        break;
+
+      case "approval_required":
+        if (rule.requiresApproval) {
+          return {
+            allowed: false,
+            reason: `This action requires manual approval`,
+          };
+        }
+        break;
+
+      case "rate_limit":
+        // TODO: Implement rate limit checking (e.g., max 10 actions per hour)
+        break;
+    }
+  }
+
+  return { allowed: true };
+}
