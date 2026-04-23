@@ -47,7 +47,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     {
       label: "Operations",
       items: [
-        { title: "Workflows", url: "/workflows", icon: Workflow },
         { title: "Integrations", url: "/integrations", icon: Zap },
         { title: "Analytics", url: "/analytics", icon: Settings },
       ],

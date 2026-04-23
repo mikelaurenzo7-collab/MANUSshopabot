@@ -17,13 +17,13 @@ const ActivityPage = lazy(() => import("./pages/Activity"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const ConfigPage = lazy(() => import("./pages/Config"));
 const IntegrationsPage = lazy(() => import("./pages/Integrations"));
-const WorkflowsPage = lazy(() => import("./pages/Workflows"));
+
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
 const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const OrchestratorGraphPage = lazy(() => import("./pages/OrchestratorGraph"));
+
 const PluginStorePage = lazy(() => import("./pages/PluginStore"));
 const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
@@ -78,11 +78,11 @@ function Router() {
                     <Route path="/activity" component={ActivityPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/integrations" component={IntegrationsPage} />
-                    <Route path="/workflows" component={WorkflowsPage} />
+
                     <Route path="/health" component={PlatformHealthPage} />
                     <Route path="/intelligence" component={IntelligencePage} />
                     <Route path="/config" component={ConfigPage} />
-                    <Route path="/orchestrator" component={OrchestratorGraphPage} />
+
                     <Route path="/plugins" component={PluginStorePage} />
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
