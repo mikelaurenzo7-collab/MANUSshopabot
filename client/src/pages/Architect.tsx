@@ -57,44 +57,44 @@ export default function Architect() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0]">
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0] flex-col md:flex-row">
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full border-r border-[#1e293b]">
+      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-[#1e293b]">
         {/* Header Bar */}
-        <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
-          <div className="flex items-center gap-3">
-            <Bot className="text-sky-400 w-5 h-5" />
-            <div>
-              <h1 className="font-mono text-[11px] uppercase tracking-widest font-bold text-white">Builder Bot: Architect Module</h1>
-              <p className="font-mono text-[9px] text-[#64748b]">Niche evaluation, brand generation, store scaffolding.</p>
+        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <Bot className="text-sky-400 w-4 md:w-5 h-4 md:h-5 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest font-bold text-white truncate">Builder Bot</h1>
+              <p className="font-mono text-[8px] md:text-[9px] text-[#64748b] hidden sm:block">Niche evaluation, brand generation, store scaffolding.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-             <span className="font-mono text-[9px] tracking-widest uppercase text-[#64748b]">Engine State:</span>
-             <span className={`font-mono text-[10px] uppercase font-bold ${architectStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
-               {architectStatus.status === 'running' ? 'PROCESSING' : 'STANDBY'}
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+             <span className="font-mono text-[8px] md:text-[9px] tracking-widest uppercase text-[#64748b] hidden sm:inline">Engine:</span>
+             <span className={`font-mono text-[9px] md:text-[10px] uppercase font-bold ${architectStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
+               {architectStatus.status === 'running' ? 'ON' : 'IDLE'}
              </span>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
-          <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
+          <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
             
             {/* Error Banner */}
             {error && (
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-mono text-[10px] uppercase tracking-widest font-bold text-red-500 mb-2">{error}</p>
+              <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                <AlertTriangle className="w-4 md:w-5 h-4 md:h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-red-500 mb-2 break-words">{error}</p>
                   {error.includes("Upgrade") && (
-                    <a href="/pricing" className="inline-flex items-center gap-2 text-[9px] font-mono uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
+                    <a href="/pricing" className="inline-flex items-center gap-1 md:gap-2 text-[8px] md:text-[9px] font-mono uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
                       View Plans <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
                 </div>
-                <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400 transition-colors mt-0.5">
-                  <X className="w-4 h-4" />
+                <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400 transition-colors mt-0.5 shrink-0">
+                  <X className="w-3 md:w-4 h-3 md:h-4" />
                 </button>
               </div>
             )}

@@ -145,18 +145,18 @@ export default function SocialPage() {
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
-            <Megaphone className="h-5 w-5 text-amber-400" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <div className="h-8 md:h-10 w-8 md:w-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+            <Megaphone className="h-4 md:h-5 w-4 md:w-5 text-amber-400" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Social Bot</h1>
-            <p className="text-sm text-muted-foreground">Ad copy, social media, SEO, and email campaigns</p>
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-xl font-bold tracking-tight text-foreground truncate">Social Bot</h1>
+            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Ad copy, social media, SEO, and email campaigns</p>
           </div>
         </div>
         <Select value={selectedStore} onValueChange={setSelectedStore}>
-          <SelectTrigger className="w-48 bg-input/50">
+          <SelectTrigger className="w-full md:w-48 bg-input/50">
             <SelectValue placeholder="Select store" />
           </SelectTrigger>
           <SelectContent>
@@ -176,13 +176,13 @@ export default function SocialPage() {
         </Card>
       ) : (
         <Tabs defaultValue="ads" className="space-y-4">
-          <TabsList className="bg-secondary/50">
-            <TabsTrigger value="ads">Ad Copy</TabsTrigger>
-            <TabsTrigger value="images">Image Gen</TabsTrigger>
-            <TabsTrigger value="seo">SEO</TabsTrigger>
-            <TabsTrigger value="social">Social</TabsTrigger>
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="tools">AI Tools</TabsTrigger>
+          <TabsList className="bg-secondary/50 flex-wrap h-auto">
+            <TabsTrigger value="ads" className="text-xs md:text-sm">Ad Copy</TabsTrigger>
+            <TabsTrigger value="images" className="text-xs md:text-sm">Image Gen</TabsTrigger>
+            <TabsTrigger value="seo" className="text-xs md:text-sm">SEO</TabsTrigger>
+            <TabsTrigger value="social" className="text-xs md:text-sm">Social</TabsTrigger>
+            <TabsTrigger value="email" className="text-xs md:text-sm">Email</TabsTrigger>
+            <TabsTrigger value="tools" className="text-xs md:text-sm">AI Tools</TabsTrigger>
           </TabsList>
 
           {/* Ad Copy Tab */}

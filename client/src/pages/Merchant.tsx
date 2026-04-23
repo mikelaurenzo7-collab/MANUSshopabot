@@ -48,32 +48,32 @@ export default function MerchantPage() {
   };
 
   return (
-    <div className={`flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0] ${isMobile ? 'flex-col' : ''}`}>
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0] flex-col md:flex-row">
       {/* Main Workspace */}
-      <div className={`flex-1 flex flex-col h-full ${isMobile ? '' : 'border-r'} border-[#1e293b]`}>
+      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-[#1e293b]">
         {/* Header Bar */}
-        <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
-          <div className="flex items-center gap-3">
-            <Package className="text-cyan-400 w-5 h-5" />
-            <div>
-              <h1 className="font-mono text-[11px] uppercase tracking-widest font-bold text-white">Merchant Bot: Operations Module</h1>
-              <p className="font-mono text-[9px] text-[#64748b]">Inventory sync, auto-fulfillment, pricing matrices.</p>
+        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <Package className="text-cyan-400 w-4 md:w-5 h-4 md:h-5 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest font-bold text-white truncate">Merchant Bot</h1>
+              <p className="font-mono text-[8px] md:text-[9px] text-[#64748b] hidden sm:block">Inventory sync, auto-fulfillment, pricing matrices.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-             <span className="font-mono text-[9px] tracking-widest uppercase text-[#64748b]">Engine State:</span>
-             <span className={`font-mono text-[10px] uppercase font-bold ${merchantStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
-               {merchantStatus.status === 'running' ? 'PROCESSING' : 'STANDBY'}
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
+             <span className="font-mono text-[8px] md:text-[9px] tracking-widest uppercase text-[#64748b] hidden sm:inline">Engine:</span>
+             <span className={`font-mono text-[9px] md:text-[10px] uppercase font-bold ${merchantStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
+               {merchantStatus.status === 'running' ? 'ON' : 'IDLE'}
              </span>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
-          <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
+          <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
             
             {/* Store Triage Selector */}
-            <div className="border border-[#1e293b] bg-[#0a0a0a] p-4 relative flex items-center justify-between">
+            <div className="border border-[#1e293b] bg-[#0a0a0a] p-3 md:p-4 relative flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
               <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />
               <div className="flex items-center gap-4 w-full pl-2">
                 <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b] shrink-0">Active Source:</span>
