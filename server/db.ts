@@ -32,6 +32,11 @@ import {
   poLineItems, InsertPoLineItem,
   promptVariants, InsertPromptVariant,
   promptMetrics, InsertPromptMetric,
+  botProfiles, InsertBotProfile,
+  botMemory, InsertBotMemory,
+  botSchedules, InsertBotSchedule,
+  botSafetyRules, InsertBotSafetyRule,
+  botExecutionLogs, InsertBotExecutionLog,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -1388,4 +1393,99 @@ export async function getUserByStripeSubscriptionId(subscriptionId: string) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.stripeSubscriptionId, subscriptionId)).limit(1);
   return result[0] ?? undefined;
+}
+
+
+// ─── Bot Profile helpers ────────────────────────────────────────────────────
+
+export async function getBotProfile(userId: number, agentType: "architect" | "merchant" | "social") {
+  const db = await getDb();
+  if (!db) return null;
+  return db.query.botProfiles.findFirst({
+    where: (t, { and, eq }) => and(eq(t.userId, userId), eq(t.agentType, agentType)),
+  });
+}
+
+export async function upsertBotProfile(data: InsertBotProfile) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db.query.botProfiles.findFirst({
+    where: (t, { and, eq }) => and(eq(t.userId, data.userId!), eq(t.agentType, data.agentType!)),
+  });
+  if (existing) {
+    await db.update(botProfiles).set(data).where((t) => t.id === existing.id);
+    return existing.id;
+  } else {
+    const result = await db.insert(botProfiles).values(data);
+    return result[0].insertId;
+  }
+}
+
+export async function getBotMemory(botProfileId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.query.botMemory.findMany({
+    where: (t: any, { eq }: any) => eq(t.botProfileId, botProfileId),
+    limit,
+    orderBy: (t: any, { desc }: any) => desc(t.lastAccessedAt || t.createdAt),
+  });
+}
+
+export async function addBotMemory(data: InsertBotMemory) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(botMemory).values(data);
+  return result[0].insertId;
+}
+
+export async function getBotSchedules(botProfileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return (db.query as any).botSchedules.findMany({
+    where: (t: any, { eq }: any) => eq(t.botProfileId, botProfileId),
+  });
+}
+
+export async function upsertBotSchedule(data: InsertBotSchedule) {
+  const db = await getDb();
+  if (!db) return null;
+  if (data.id) {
+    await db.update(botSchedules).set(data).where((t) => t.id === data.id);
+    return data.id;
+  } else {
+    const result = await db.insert(botSchedules).values(data);
+    return result[0].insertId;
+  }
+}
+
+export async function getBotSafetyRules(botProfileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return (db.query as any).botSafetyRules.findMany({
+    where: (t: any, { eq }: any) => eq(t.botProfileId, botProfileId),
+  });
+}
+
+export async function addBotSafetyRule(data: InsertBotSafetyRule) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(botSafetyRules).values(data);
+  return result[0].insertId;
+}
+
+export async function logBotExecution(data: InsertBotExecutionLog) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(botExecutionLogs).values(data);
+  return result[0].insertId;
+}
+
+export async function getBotExecutionHistory(botProfileId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return (db.query as any).botExecutionLogs.findMany({
+    where: (t: any, { eq }: any) => eq(t.botProfileId, botProfileId),
+    limit,
+    orderBy: (t: any, { desc }: any) => desc(t.createdAt),
+  });
 }

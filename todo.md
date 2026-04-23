@@ -543,3 +543,25 @@
 - [x] Improve empty states across all bot pages
 - [x] Add keyboard shortcuts for common actions
 - [x] Add help tooltips for complex workflows
+
+
+## Phase 1: Bot Customization System (COMPLETED ✅)
+
+### Bot Profile Management & Persistence
+- [x] Designed bot_profiles table (memory, instructions, autonomy, safety settings per bot)
+- [x] Designed bot_memory table (persistent context, learned patterns, decision history)
+- [x] Designed bot_schedules table (user-defined recurring tasks with cron/interval/event triggers)
+- [x] Designed bot_safety_rules table (approval requirements, spending limits, action restrictions)
+- [x] Designed bot_execution_logs table (audit trail with memory/instruction context applied)
+- [x] Generated migration SQL (0015_secret_chamber.sql with 5 tables + 8 indexes)
+- [x] Implemented database helpers in server/db.ts (CRUD for all 5 tables)
+- [x] Created tRPC router (botProfileRouter) with full CRUD operations
+- [x] Registered botProfileRouter in main app router
+- [x] Build passes with 0 errors, ready for production
+
+### Next Steps (Not Yet Implemented)
+- [ ] Create BotSettings.tsx UI page for per-bot configuration
+- [ ] Integrate bot memory into workflow execution context
+- [ ] Implement schedule execution in scheduler/index.ts
+- [ ] Add safety rule enforcement in workflow engine
+- [ ] Create bot memory visualization dashboard

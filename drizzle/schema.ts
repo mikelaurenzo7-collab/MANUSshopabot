@@ -690,3 +690,197 @@ export const promptMetrics = mysqlTable("prompt_metrics", {
 export type PromptMetric = typeof promptMetrics.$inferSelect;
 export type InsertPromptMetric = typeof promptMetrics.$inferInsert;
 
+
+
+// ─── BOT CUSTOMIZATION: MEMORY, INSTRUCTIONS, SCHEDULES, SAFETY ─────────────
+
+/**
+ * Bot Profiles — Per-bot configuration with memory, instructions, and safety settings.
+ * Each bot (architect, merchant, social) has its own profile per user.
+ */
+export const botProfiles = mysqlTable("bot_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
+  
+  // Identity & Display
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "My Builder Bot", "Inventory Manager"
+  description: text("description"),
+  avatarUrl: text("avatarUrl"),
+  
+  // Instructions & Behavior
+  systemPrompt: text("systemPrompt"), // custom LLM system instructions
+  customInstructions: text("customInstructions"), // user-defined behavior guidelines
+  personality: varchar("personality", { length: 100 }), // e.g., "professional", "casual", "technical"
+  
+  // Safety & Autonomy
+  autonomyLevel: mysqlEnum("autonomyLevel", ["fully_autonomous", "supervised", "manual"]).default("supervised").notNull(),
+  requiresApproval: boolean("requiresApproval").default(false).notNull(),
+  approvalThreshold: varchar("approvalThreshold", { length: 100 }), // e.g., "decisions > $500", "all_changes"
+  safetyRules: json("safetyRules"), // { maxDailySpend, maxOrderValue, disabledActions: [...] }
+  
+  // Memory & Context
+  memoryEnabled: boolean("memoryEnabled").default(true).notNull(),
+  memoryType: mysqlEnum("memoryType", ["short_term", "long_term", "hybrid"]).default("hybrid").notNull(),
+  memoryMaxItems: int("memoryMaxItems").default(100), // max stored memory entries
+  
+  // Status
+  enabled: boolean("enabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userAgentIdx: index("bot_profiles_user_agent_idx").on(table.userId, table.agentType),
+}));
+
+export type BotProfile = typeof botProfiles.$inferSelect;
+export type InsertBotProfile = typeof botProfiles.$inferInsert;
+
+/**
+ * Bot Memory — Persistent context and conversation history for each bot.
+ * Stores learned patterns, past decisions, and context for future workflows.
+ */
+export const botMemory = mysqlTable("bot_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  botProfileId: int("botProfileId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Memory Entry
+  memoryType: mysqlEnum("memoryType", ["fact", "pattern", "decision", "outcome", "context"]).notNull(),
+  key: varchar("key", { length: 255 }).notNull(), // e.g., "best_margin_for_electronics", "customer_pain_point_shipping"
+  value: text("value").notNull(), // the actual memory content
+  confidence: int("confidence").default(50), // 0-100 confidence score
+  
+  // Context
+  relatedWorkflowId: int("relatedWorkflowId"), // workflow that generated this memory
+  relatedStoreId: int("relatedStoreId"),
+  tags: json("tags"), // ["pricing", "inventory", "customer_service"]
+  
+  // Lifecycle
+  lastAccessedAt: timestamp("lastAccessedAt"),
+  accessCount: int("accessCount").default(0),
+  expiresAt: timestamp("expiresAt"), // auto-expire old memories
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  botProfileIdIdx: index("bot_memory_bot_profile_id_idx").on(table.botProfileId),
+  memoryTypeIdx: index("bot_memory_type_idx").on(table.memoryType, table.createdAt),
+  keyIdx: index("bot_memory_key_idx").on(table.key),
+}));
+
+export type BotMemory = typeof botMemory.$inferSelect;
+export type InsertBotMemory = typeof botMemory.$inferInsert;
+
+/**
+ * Bot Schedules — User-defined recurring tasks and triggers for each bot.
+ * Supports cron expressions, intervals, and manual triggers.
+ */
+export const botSchedules = mysqlTable("bot_schedules", {
+  id: int("id").autoincrement().primaryKey(),
+  botProfileId: int("botProfileId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Schedule Definition
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Daily Inventory Check", "Weekly Pricing Review"
+  description: text("description"),
+  taskType: varchar("taskType", { length: 100 }).notNull(), // e.g., "inventory_check", "price_optimization", "ad_campaign"
+  
+  // Trigger Type
+  triggerType: mysqlEnum("triggerType", ["cron", "interval", "manual", "event"]).default("manual").notNull(),
+  cronExpression: varchar("cronExpression", { length: 255 }), // e.g., "0 10 * * *" for daily at 10am
+  intervalSeconds: int("intervalSeconds"), // e.g., 86400 for daily
+  eventType: varchar("eventType", { length: 100 }), // e.g., "order_received", "inventory_low"
+  
+  // Execution
+  taskInput: json("taskInput"), // workflow input parameters
+  targetStoreIds: json("targetStoreIds"), // array of store IDs, or null for all stores
+  maxConcurrent: int("maxConcurrent").default(1), // prevent overlapping executions
+  
+  // Status & Metrics
+  enabled: boolean("enabled").default(true).notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  totalRuns: int("totalRuns").default(0),
+  successfulRuns: int("successfulRuns").default(0),
+  failedRuns: int("failedRuns").default(0),
+  lastError: text("lastError"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  botProfileIdIdx: index("bot_schedules_bot_profile_id_idx").on(table.botProfileId),
+  enabledIdx: index("bot_schedules_enabled_idx").on(table.enabled, table.nextRunAt),
+}));
+
+export type BotSchedule = typeof botSchedules.$inferSelect;
+export type InsertBotSchedule = typeof botSchedules.$inferInsert;
+
+/**
+ * Bot Safety Rules — Detailed safety constraints and approval requirements.
+ * Enforced during workflow execution to prevent harmful actions.
+ */
+export const botSafetyRules = mysqlTable("bot_safety_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  botProfileId: int("botProfileId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // Rule Definition
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Max Daily Spend", "Price Floor"
+  description: text("description"),
+  ruleType: mysqlEnum("ruleType", ["spending_limit", "price_limit", "action_restriction", "approval_required", "rate_limit"]).notNull(),
+  
+  // Rule Parameters
+  condition: json("condition"), // { field: "dailySpend", operator: "<=", value: 500 }
+  action: mysqlEnum("action", ["block", "warn", "approve_required", "log"]).default("warn").notNull(),
+  
+  // Scope
+  appliesToWorkflows: json("appliesToWorkflows"), // array of workflow types, or null for all
+  appliesToStores: json("appliesToStores"), // array of store IDs, or null for all
+  
+  // Status
+  enabled: boolean("enabled").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  botProfileIdIdx: index("bot_safety_rules_bot_profile_id_idx").on(table.botProfileId),
+}));
+
+export type BotSafetyRule = typeof botSafetyRules.$inferSelect;
+export type InsertBotSafetyRule = typeof botSafetyRules.$inferInsert;
+
+/**
+ * Bot Execution Logs — Audit trail of all bot actions with memory/instruction context.
+ * Helps track bot behavior and debug issues.
+ */
+export const botExecutionLogs = mysqlTable("bot_execution_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  botProfileId: int("botProfileId").notNull(),
+  workflowId: int("workflowId"),
+  userId: int("userId").notNull(),
+  
+  // Execution Context
+  actionType: varchar("actionType", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "blocked"]).default("pending").notNull(),
+  
+  // Input & Output
+  input: json("input"),
+  output: json("output"),
+  error: text("error"),
+  
+  // Memory & Instructions Applied
+  memoryUsed: json("memoryUsed"), // memory entries that influenced this action
+  instructionsApplied: text("instructionsApplied"), // which custom instructions were active
+  safetyRulesApplied: json("safetyRulesApplied"), // which safety rules were checked
+  
+  // Metrics
+  durationMs: int("durationMs"),
+  tokensUsed: int("tokensUsed"),
+  costCents: int("costCents"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  botProfileIdIdx: index("bot_execution_logs_bot_profile_id_idx").on(table.botProfileId),
+  workflowIdIdx: index("bot_execution_logs_workflow_id_idx").on(table.workflowId),
+}));
+
+export type BotExecutionLog = typeof botExecutionLogs.$inferSelect;
+export type InsertBotExecutionLog = typeof botExecutionLogs.$inferInsert;

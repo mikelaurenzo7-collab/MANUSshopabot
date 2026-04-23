@@ -22,6 +22,7 @@ import { pluginRouter } from "./routers/pluginStore";
 import { supplierRouter } from "./routers/supplier";
 import { promptRLRouter } from "./routers/promptRL";
 import { stripeRouter } from "./routers/stripe";
+import { botProfileRouter } from "./routers/botProfile";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -54,6 +55,7 @@ export const appRouter = router({
   supplier: supplierRouter,
   promptRL: promptRLRouter,
   stripe: stripeRouter,
+  botProfile: botProfileRouter,
 
   // Notifications — scoped to current user
   notifications: router({
