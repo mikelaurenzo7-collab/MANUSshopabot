@@ -57,8 +57,8 @@ export default function ActivityPage() {
     agentType: agentFilter === "all" ? undefined : (agentFilter as any),
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
-  });
-  const { data: pendingApprovals, isLoading: approvalsLoading } = trpc.approvals.pending.useQuery();
+  }, { refetchInterval: 30_000 });
+  const { data: pendingApprovals, isLoading: approvalsLoading } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 30_000 });
   const { data: allApprovals } = trpc.approvals.all.useQuery({ limit: 50 });
   const utils = trpc.useUtils();
 

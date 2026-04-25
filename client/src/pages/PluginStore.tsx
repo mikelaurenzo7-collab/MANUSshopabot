@@ -85,7 +85,7 @@ export default function PluginStore() {
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">{plugin.description}</p>
                   {installedIds.has(plugin.id) ? (
-                    <Badge className="bg-green-100 text-green-800">Installed</Badge>
+                    <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Installed</Badge>
                   ) : (
                     <Button
                       size="sm"
