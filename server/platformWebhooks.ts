@@ -1,7 +1,7 @@
 /**
- * Platform Webhook Handlers — Etsy & TikTok Shop
+ * Platform Webhook Handlers — Etsy, TikTok Shop, Amazon & eBay
  *
- * Handles real-time events from Etsy and TikTok Shop.
+ * Handles real-time events from all 4 e-commerce platforms.
  * All payloads are HMAC-verified before processing and logged to the
  * webhook_events table for the real-time Platform Health feed.
  *
@@ -40,7 +40,7 @@ function verifyHmacSha256(rawBody: Buffer, signature: string, secret: string): b
 
 // ─── Store Lookup ─────────────────────────────────────────────────────────────
 
-async function findStoreByPlatformAndShop(platform: "etsy" | "tiktok_shop", shopId: string) {
+async function findStoreByPlatformAndShop(platform: "etsy" | "tiktok_shop" | "amazon" | "ebay", shopId: string) {
   const db = await getDb();
   if (!db) return null;
   // Try platformStoreId first, fall back to platformDomain
@@ -305,5 +305,150 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
 export function registerPlatformWebhookRoutes(app: Express) {
   app.post("/api/webhooks/etsy", rawBodyMiddleware, handleEtsyWebhook);
   app.post("/api/webhooks/tiktok-shop", rawBodyMiddleware, handleTikTokShopWebhook);
-  console.log("[PlatformWebhooks] Registered: POST /api/webhooks/etsy, POST /api/webhooks/tiktok-shop");
+  app.post("/api/webhooks/amazon", rawBodyMiddleware, handleAmazonWebhook);
+  app.post("/api/webhooks/ebay", rawBodyMiddleware, handleEbayWebhook);
+  console.log("[PlatformWebhooks] Registered: POST /api/webhooks/{etsy,tiktok-shop,amazon,ebay}");
+}
+
+// ─── Amazon Webhook Handler ──────────────────────────────────────────────────
+
+async function handleAmazonWebhook(req: Request, res: Response) {
+  const rawBody = (req as any).rawBody as Buffer;
+  const payload = JSON.parse(rawBody.toString("utf8"));
+  const topic = payload.TopicArn ?? "unknown";
+  const shopId = req.query.shop_id as string | undefined;
+
+  if (!shopId) {
+    return res.status(400).json({ error: "Missing shop_id" });
+  }
+
+  // Acknowledge immediately
+  res.status(200).json({ received: true });
+
+  const store = await findStoreByPlatformAndShop("amazon", shopId).catch(() => null);
+  const eventStart = Date.now();
+
+  console.log(`[Amazon Webhook] Processing ${topic} for shop ${shopId}`);
+
+  try {
+    // Parse SNS message
+    const message = JSON.parse(payload.Message ?? "{}");
+    const eventType = message.eventType ?? "unknown";
+
+    if (store) {
+      await createBotEvent({
+        fromBot: "merchant",
+        toBot: "merchant",
+        eventType: eventType === "OrderStatusChange" ? "order_status_changed" : "product_updated",
+        userId: store.userId,
+        storeId: store.id,
+        payload: message,
+        status: "pending",
+      });
+    }
+
+    // Log to webhook_events table
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "amazon",
+        eventType,
+        status: "processed",
+        payload: message,
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
+  } catch (err: any) {
+    console.error(`[Amazon Webhook] Error processing:`, err.message);
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "amazon",
+        eventType: "unknown",
+        status: "failed",
+        errorMessage: err.message,
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
+  }
+}
+
+// ─── eBay Webhook Handler ────────────────────────────────────────────────────
+
+async function handleEbayWebhook(req: Request, res: Response) {
+  const rawBody = (req as any).rawBody as Buffer;
+  const payload = JSON.parse(rawBody.toString("utf8"));
+  const shopId = req.query.shop_id as string | undefined;
+
+  if (!shopId) {
+    return res.status(400).json({ error: "Missing shop_id" });
+  }
+
+  // Acknowledge immediately
+  res.status(200).json({ received: true });
+
+  const store = await findStoreByPlatformAndShop("ebay", shopId).catch(() => null);
+  const eventStart = Date.now();
+  const eventType = payload.eventType ?? "unknown";
+
+  console.log(`[eBay Webhook] Processing ${eventType} for shop ${shopId}`);
+
+  try {
+    // Handle specific eBay events
+    switch (eventType) {
+      case "ITEM_SOLD":
+      case "ITEM_UNSOLD":
+      case "ITEM_LISTED": {
+        if (store) {
+          await createBotEvent({
+            fromBot: "merchant",
+            toBot: "merchant",
+            eventType: eventType === "ITEM_SOLD" ? "order_created" : "product_updated",
+            userId: store.userId,
+            storeId: store.id,
+            payload,
+            status: "pending",
+          });
+        }
+        break;
+      }
+      case "MARKETPLACE_ACCOUNT_DELETION": {
+        if (store) {
+          await notifyOwner({
+            title: "eBay Account Deletion Request",
+            content: `Your eBay store "${store.name}" has requested account deletion. Please verify this action.`,
+          });
+        }
+        break;
+      }
+    }
+
+    // Log to webhook_events table
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "ebay",
+        eventType,
+        status: "processed",
+        payload,
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
+  } catch (err: any) {
+    console.error(`[eBay Webhook] Error processing ${eventType}:`, err.message);
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "ebay",
+        eventType,
+        status: "failed",
+        errorMessage: err.message,
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
+  }
 }

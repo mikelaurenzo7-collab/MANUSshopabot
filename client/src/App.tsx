@@ -5,6 +5,8 @@ import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
+import { CommandPalette } from "./components/CommandPalette";
+import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -124,6 +126,8 @@ function App() {
               },
             }}
           />
+          <StripeSuccessBanner />
+          <CommandPalette />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

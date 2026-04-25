@@ -871,3 +871,11 @@
 - [x] Connect Bot Chat to per-bot system prompts (Builder/Merchant/Social context routing) — already fully wired in chat.ts with BOT_SYSTEM_PROMPTS + getRenderedStoreContext
 - [x] Add Etsy webhook handler (POST /api/webhooks/etsy) with HMAC-SHA256 verification + logWebhookEvent logging
 - [x] Add TikTok Shop webhook handler (POST /api/webhooks/tiktok-shop) with HMAC-SHA256 verification + logWebhookEvent logging
+
+## Final Polish Sprint (COMPLETE ✅)
+
+- [x] Build ⌘K command palette with cmdk (page navigation, bot workflows, product search)
+- [x] Add Stripe success redirect banner (StripeSuccessBanner component with session verification)
+- [x] Add Amazon webhook handler (POST /api/webhooks/amazon) with SNS event logging
+- [x] Add eBay webhook handler (POST /api/webhooks/ebay) with event logging
+- [x] Update platformWebhooks.ts to handle all 4 platforms (Etsy, TikTok Shop, Amazon, eBay)
