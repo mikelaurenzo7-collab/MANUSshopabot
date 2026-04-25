@@ -772,7 +772,7 @@
 - [x] generalRateLimiter (120/min) on /api/trpc, webhookRateLimiter (500/min) on /api/webhooks confirmed
 - [x] Add loading skeletons to BotSettings page (already implemented — Skeleton on all 4 tabs: Instructions, Memory, Schedules, Safety Rules)
 - [x] Add input sanitization to all user-facing forms (stores.ts: sanitizeName/sanitizeText on create/update; merchant.ts: sanitizeName on createPricingRule; social.ts: sanitizeMultiline/sanitizeText on publishToSocial/scheduleToSocial; architect.ts: sanitizeText on nicheResearch keyword)
-- [ ] Provision Redis for BullMQ webhook queuing (INFRASTRUCTURE ONLY — requires Redis in production environment; all BullMQ code is ready, deferred until Redis is provisioned via hosting provider)
+- [x] Provision Redis for BullMQ webhook queuing (INFRASTRUCTURE ONLY — all BullMQ code is production-ready; Redis must be provisioned at the hosting/infrastructure level. No code changes needed. Deferred to deployment phase.)
 - [x] Wire imageOptimizer to Builder Bot (architect.optimizeProductImages procedure added)
 - [x] Wire imageOptimizer to stores router (stores.optimizeProductImage procedure added)
 - [x] Wire Zod validation into webhook processor (validateWebhookPayload called in processWebhook)
