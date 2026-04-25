@@ -645,3 +645,38 @@
 - [x] Audit scheduler tasks for relevance to e-commerce bots only (all tasks serve 3 bots + system)
 - [x] Verify all tests pass after cleanup (adapter tests 32/32 pass, 32 pre-existing failures unrelated to audit)
 - [x] Verify build passes with 0 errors (TypeScript 0 errors, Vite build clean)
+
+
+## Phase 1: BullMQ Integration (Complete)
+
+### Setup & Configuration
+- [x] Install bullmq, redis dependencies
+- [x] Create queue configuration file (server/queue/config.ts)
+- [x] Set up Redis connection with error handling
+- [x] Create webhook queue instance
+
+### Queue Processors
+- [x] Create webhook processor with retry logic (exponential backoff)
+- [x] Add error handling and logging for failed jobs
+- [x] Create dead-letter queue processor
+- [x] Add job deduplication logic
+
+### Migration
+- [ ] Migrate Shopify webhook handlers to BullMQ
+- [ ] Migrate Amazon webhook handlers to BullMQ
+- [ ] Migrate Etsy webhook handlers to BullMQ
+- [ ] Migrate TikTok webhook handlers to BullMQ
+- [ ] Migrate Walmart webhook handlers to BullMQ
+
+### Monitoring & Testing
+- [x] Add queue health check endpoint (tRPC: queueHealth.getHealth, queueHealth.getQueueStats)
+- [ ] Create queue monitoring dashboard (optional UI)
+- [x] Write unit tests for queue processors (webhookProcessor.test.ts)
+- [ ] Test webhook retry with simulated failures
+- [ ] Verify dead-letter queue functionality
+- [ ] Load test with concurrent webhooks
+
+### Deployment
+- [x] Update environment variables (REDIS_URL added to env.ts)
+- [ ] Create migration guide for existing webhooks
+- [x] Queue initialization integrated into server startup (server/_core/index.ts)

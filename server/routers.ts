@@ -24,6 +24,7 @@ import { promptRLRouter } from "./routers/promptRL";
 import { stripeRouter } from "./routers/stripe";
 import { botProfileRouter } from "./routers/botProfile";
 import { gmailBotRouter } from "./routers/gmailBot";
+import { queueHealthRouter } from "./routers/queueHealth";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -58,6 +59,7 @@ export const appRouter = router({
   stripe: stripeRouter,
   botProfile: botProfileRouter,
   gmailBot: gmailBotRouter,
+  queueHealth: queueHealthRouter,
 
   // Notifications — scoped to current user
   notifications: router({

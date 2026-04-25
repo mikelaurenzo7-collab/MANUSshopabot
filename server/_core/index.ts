@@ -20,6 +20,7 @@ import { agentScheduler, registerDefaultTasks } from "../scheduler";
 import { seedDefaultPlugins } from "../seedPlugins";
 import { validateRequiredEnv } from "./env";
 import { getDb } from "../db";
+import { initializeQueues, shutdownQueues } from "../queue/init";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -138,6 +139,10 @@ async function startServer() {
 
   server.listen(port, () => {
     logger.info("server_started", { port, url: `http://localhost:${port}/` });
+    // Initialize BullMQ queues for webhook processing
+    initializeQueues().catch((err) => {
+      logger.error("queue_initialization_failed", { error: err?.message ?? String(err) });
+    });
     // Start the bot task scheduler
     registerDefaultTasks();
     agentScheduler.start();
@@ -145,6 +150,16 @@ async function startServer() {
     // Seed default plugins (idempotent — skips if already populated)
     seedDefaultPlugins().then((r) => {
       if (r.seeded) logger.info("plugins_seeded", { count: r.count });
+    });
+  });
+
+  // Graceful shutdown
+  process.on("SIGTERM", async () => {
+    logger.info("server_shutdown_requested");
+    await shutdownQueues();
+    server.close(() => {
+      logger.info("server_shutdown_complete");
+      process.exit(0);
     });
   });
 }
