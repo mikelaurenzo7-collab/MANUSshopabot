@@ -74,7 +74,7 @@ export default function PromptLab() {
       ) : (
         <div className="space-y-3">
           {variants.data.map((v: any) => (
-            <Card key={v.id} className={v.isActive ? "border-green-300 bg-green-50/50" : ""}>
+            <Card key={v.id} className={v.isActive ? "border-emerald-500/40 bg-emerald-500/5" : ""}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -82,7 +82,7 @@ export default function PromptLab() {
                       <span className="font-medium text-sm">{v.variantName}</span>
                       <Badge variant="outline" className="text-xs">{v.taskType}</Badge>
                       {v.isActive && (
-                        <Badge className="bg-green-100 text-green-800 text-xs">
+                        <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs">
                           <Trophy className="w-3 h-3 mr-1" /> Active Winner
                         </Badge>
                       )}

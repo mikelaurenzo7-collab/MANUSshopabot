@@ -1,11 +1,12 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard,
-  Settings,
+  BarChart3,
   Workflow,
   Zap,
   Activity,
@@ -19,6 +20,9 @@ import {
   Sliders,
   HeartPulse,
   GitBranch,
+  Brain,
+  Store,
+  Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -31,31 +35,45 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 30_000,
+  });
+  const pendingCount = pendingApprovals?.length ?? 0;
+
   const navGroups = [
     {
       label: "Dashboard",
       items: [
-        { title: "Command Center", path: "/", icon: LayoutDashboard },
-        { title: "Activity", path: "/activity", icon: Activity },
-        { title: "Intelligence", path: "/intelligence", icon: Globe },
+        { title: "Command Center", path: "/", icon: LayoutDashboard, badge: 0 },
+        { title: "Activity", path: "/activity", icon: Activity, badge: pendingCount },
+        { title: "Intelligence", path: "/intelligence", icon: Globe, badge: 0 },
       ],
     },
     {
       label: "Bots",
       items: [
-        { title: "Builder Bot", path: "/architect", icon: Bot },
-        { title: "Merchant Bot", path: "/merchant", icon: Package },
-        { title: "Social Bot", path: "/social", icon: Megaphone },
+        { title: "Builder Bot", path: "/architect", icon: Bot, badge: 0 },
+        { title: "Merchant Bot", path: "/merchant", icon: Package, badge: 0 },
+        { title: "Social Bot", path: "/social", icon: Megaphone, badge: 0 },
       ],
     },
     {
       label: "Operations",
       items: [
-        { title: "Workflows", path: "/workflows", icon: GitBranch },
-        { title: "Integrations", path: "/integrations", icon: Zap },
-        { title: "Analytics", path: "/analytics", icon: Settings },
-        { title: "Platform Health", path: "/health", icon: HeartPulse },
-        { title: "Bot Settings", path: "/bot-settings", icon: Sliders },
+        { title: "Workflows", path: "/workflows", icon: GitBranch, badge: 0 },
+        { title: "Integrations", path: "/integrations", icon: Zap, badge: 0 },
+        { title: "Analytics", path: "/analytics", icon: BarChart3, badge: 0 },
+        { title: "Platform Health", path: "/health", icon: HeartPulse, badge: 0 },
+        { title: "Bot Settings", path: "/bot-settings", icon: Sliders, badge: 0 },
+      ],
+    },
+    {
+      label: "Tools",
+      items: [
+        { title: "Plugin Store", path: "/plugins", icon: Store, badge: 0 },
+        { title: "Prompt Lab", path: "/prompt-lab", icon: Brain, badge: 0 },
+        { title: "Supplier POs", path: "/supplier", icon: Truck, badge: 0 },
       ],
     },
   ];
@@ -93,7 +111,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <item.icon className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
                     isActive ? "text-sky-400" : "opacity-50 group-hover:opacity-80"
                   }`} />
-                  <span className="text-sm font-medium truncate">{item.title}</span>
+                  <span className="text-sm font-medium truncate flex-1">{item.title}</span>
+                  {item.badge > 0 && (
+                    <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -105,17 +128,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const SidebarFooter = () => (
     <div className="border-t border-white/[0.05] p-3">
-      <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] transition-colors">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/30 to-cyan-500/20 border border-sky-500/30 flex items-center justify-center shrink-0">
-          <span className="text-xs font-bold text-sky-300">
-            {user?.name?.charAt(0)?.toUpperCase() || "U"}
-          </span>
+      <Link href="/profile" onClick={() => isMobile && setMobileMenuOpen(false)}>
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-sky-500/20 transition-colors cursor-pointer">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/30 to-cyan-500/20 border border-sky-500/30 flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-sky-300">
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </span>
+          </div>
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-xs font-semibold text-white/80 truncate">{user?.name}</span>
+            <span className="text-[10px] text-white/30 truncate">{user?.email}</span>
+          </div>
         </div>
-        <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-xs font-semibold text-white/80 truncate">{user?.name}</span>
-          <span className="text-[10px] text-white/30 truncate">{user?.email}</span>
-        </div>
-      </div>
+      </Link>
       <Button
         onClick={handleLogout}
         variant="ghost"
