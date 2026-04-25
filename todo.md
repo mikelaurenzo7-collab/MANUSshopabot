@@ -772,3 +772,26 @@
 - [ ] Audit and fix any remaining dead-click nav items
 - [ ] Add Pinterest API credential validation to CI (external dependency)
 - [ ] Add Twitter OAuth2 credential validation to CI (external dependency)
+
+## Gmail Bot Merge into Social Bot + Sprint 2 (Complete ✅)
+
+### Gmail → Social Bot Merge
+- [x] Add Email Campaigns sub-tabs to Social.tsx Email tab (inbox, compose, auto-reply, templates via trpc.gmailBot.*)
+- [x] Remove standalone /gmail-bot route from App.tsx (now redirects to /social)
+- [x] Remove Gmail Bot nav item from DashboardLayout
+- [x] Keep server/routers/gmailBot.ts (backend stays, UI merged into Social Bot)
+- [x] Keep client/src/pages/GmailBot.tsx (preserved for reference, not routed)
+
+### Sprint 2: Production Readiness
+- [x] PlatformHealth.tsx page already existed (confirmed in Sprint 1 audit)
+- [x] /health route already in App.tsx (confirmed in Sprint 1 audit)
+- [x] Create SubscriptionGate component (hard gate + soft banner, wired to trpc.stripe.createCheckoutSession)
+- [x] Add SubscriptionGate soft banner to Workflows page launch button
+- [x] Add error boundaries to Builder Bot, Merchant Bot, Social Bot, Platform Health, Bot Settings, Workflows pages
+- [x] Add workflowRateLimiter to /api/trpc/workflows (10 req/min per user)
+- [x] generalRateLimiter (120/min) on /api/trpc, webhookRateLimiter (500/min) on /api/webhooks confirmed
+- [ ] Add loading skeletons to BotSettings page (future sprint)
+- [ ] Add input sanitization to all user-facing forms (future sprint)
+
+### Test Results
+- **546/548 tests passing** (2 remaining require live API credentials: Pinterest + Twitter)

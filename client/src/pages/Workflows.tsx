@@ -39,7 +39,7 @@ import {
   Bot,
   Zap,
 } from "lucide-react";
-
+import SubscriptionGate from "@/components/SubscriptionGate";
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
@@ -282,11 +282,13 @@ export default function Workflows() {
           <h1 className="text-2xl font-bold text-white">Workflows</h1>
           <p className="text-sm text-slate-400 mt-0.5">Monitor and manage all bot workflows</p>
         </div>
-        <LaunchWorkflowDialog onLaunched={() => {
-          utils.workflows.active.invalidate();
-          utils.workflows.list.invalidate();
-          utils.workflows.counts.invalidate();
-        }} />
+        <SubscriptionGate feature="Workflow Automation" soft>
+          <LaunchWorkflowDialog onLaunched={() => {
+            utils.workflows.active.invalidate();
+            utils.workflows.list.invalidate();
+            utils.workflows.counts.invalidate();
+          }} />
+        </SubscriptionGate>
       </div>
 
       {/* Stats Row */}

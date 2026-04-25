@@ -11,7 +11,7 @@ import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
-import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
+import { generalRateLimiter, webhookRateLimiter, workflowRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -103,6 +103,7 @@ async function startServer() {
   // Rate limiting — protect API and webhook endpoints
   app.use("/api/trpc", generalRateLimiter);
   app.use("/api/webhooks", webhookRateLimiter);
+  app.use("/api/trpc/workflows", workflowRateLimiter); // stricter: 10 launches/min per user
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // Shopify OAuth for user store connections

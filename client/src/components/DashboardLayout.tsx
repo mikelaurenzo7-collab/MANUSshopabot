@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   Globe,
-  Mail,
   Sliders,
   HeartPulse,
   GitBranch,
@@ -47,7 +46,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { title: "Builder Bot", path: "/architect", icon: Bot },
         { title: "Merchant Bot", path: "/merchant", icon: Package },
         { title: "Social Bot", path: "/social", icon: Megaphone },
-        { title: "Gmail Bot", path: "/gmail-bot", icon: Mail },
       ],
     },
     {

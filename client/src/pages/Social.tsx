@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +27,14 @@ import {
   ThumbsUp,
   TrendingUp,
   X,
+  Send,
+  MailPlus,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 export default function SocialPage() {
@@ -41,6 +49,15 @@ export default function SocialPage() {
   const [socialPlatform, setSocialPlatform] = useState("instagram");
   const [emailType, setEmailType] = useState("welcome");
   const [emailTopic, setEmailTopic] = useState("");
+
+  // Gmail integration state
+  const [gmailSubTab, setGmailSubTab] = useState<"campaigns" | "inbox" | "compose" | "auto-reply" | "templates">("campaigns");
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [autoReplySubject, setAutoReplySubject] = useState("");
+  const [autoReplyMessage, setAutoReplyMessage] = useState("");
+  const [composeTo, setComposeTo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeBody, setComposeBody] = useState("");
 
   const { data: stores } = trpc.stores.list.useQuery();
   const { data: campaigns } = trpc.social.adCampaigns.useQuery({ storeId: storeId! }, { enabled: !!storeId });
@@ -95,6 +112,40 @@ export default function SocialPage() {
   });
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
+
+  // Gmail tRPC queries — only fetch when on email tab
+  const inboxQuery = trpc.gmailBot.getInbox.useQuery(
+    { query: "is:unread", maxResults: 20 },
+    { enabled: gmailSubTab === "inbox" }
+  );
+  const autoReplyQuery = trpc.gmailBot.getAutoReply.useQuery(undefined, {
+    enabled: gmailSubTab === "auto-reply",
+  });
+  const templatesQuery = trpc.gmailBot.getTemplates.useQuery(undefined, {
+    enabled: gmailSubTab === "templates",
+  });
+
+  const sendEmailMutation = trpc.gmailBot.sendEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Email sent!");
+      setComposeTo(""); setComposeSubject(""); setComposeBody("");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateAutoReplyMutation = trpc.gmailBot.updateAutoReply.useMutation({
+    onSuccess: () => { toast.success("Auto-reply saved"); autoReplyQuery.refetch(); },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Sync auto-reply settings from query
+  useEffect(() => {
+    if (gmailSubTab === "auto-reply" && autoReplyQuery.data) {
+      setAutoReplyEnabled(autoReplyQuery.data.enabled);
+      setAutoReplySubject(autoReplyQuery.data.subject || "");
+      setAutoReplyMessage(autoReplyQuery.data.message || "");
+    }
+  }, [autoReplyQuery.data, gmailSubTab]);
 
   // AI Tools state
   const [abTestResult, setAbTestResult] = useState<any>(null);
@@ -445,80 +496,252 @@ export default function SocialPage() {
 
           {/* Email Tab */}
           <TabsContent value="email" className="space-y-4">
-            <Card className="bento-card">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">AI Email Campaign Builder</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Campaign Type</Label>
-                    <Select value={emailType} onValueChange={setEmailType}>
-                      <SelectTrigger className="bg-input/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="welcome">Welcome Series</SelectItem>
-                        <SelectItem value="abandoned_cart">Abandoned Cart</SelectItem>
-                        <SelectItem value="promotion">Promotion</SelectItem>
-                        <SelectItem value="win_back">Win-Back</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Topic / Product</Label>
-                    <Input
-                      placeholder="e.g., Summer collection launch"
-                      value={emailTopic}
-                      onChange={(e) => setEmailTopic(e.target.value)}
-                      className="bg-input/50"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      className="w-full"
-                      onClick={() => generateEmail.mutate({ storeId: storeId!, campaignType: emailType as any, productName: emailTopic })}
-                      disabled={!emailTopic.trim() || generateEmail.isPending}
-                    >
-                      {generateEmail.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />}
-                      Generate
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Gmail sub-navigation */}
+            <div className="flex gap-1 flex-wrap">
+              {(["campaigns", "inbox", "compose", "auto-reply", "templates"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setGmailSubTab(t)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    gmailSubTab === t
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {t === "campaigns" ? "AI Campaigns" : t === "auto-reply" ? "Auto-Reply" : t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </div>
 
-            {emailCampaigns && emailCampaigns.length > 0 ? (
-              <div className="space-y-3">
-                {emailCampaigns.map((ec: any) => (
-                  <Card key={ec.id} className="bento-card">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="text-sm font-medium text-foreground">{ec.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{ec.campaignType} · {new Date(ec.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <Badge variant="outline" className={`text-[10px] ${ec.status === "active" ? "border-emerald-400/30 text-emerald-400" : "border-border text-muted-foreground"}`}>
-                          {ec.status}
-                        </Badge>
+            {/* AI Campaigns sub-tab (original email builder) */}
+            {gmailSubTab === "campaigns" && (
+              <>
+                <Card className="bento-card">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">AI Email Campaign Builder</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">Campaign Type</Label>
+                        <Select value={emailType} onValueChange={setEmailType}>
+                          <SelectTrigger className="bg-input/50"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="welcome">Welcome Series</SelectItem>
+                            <SelectItem value="abandoned_cart">Abandoned Cart</SelectItem>
+                            <SelectItem value="promotion">Promotion</SelectItem>
+                            <SelectItem value="win_back">Win-Back</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      {ec.subject && <p className="text-sm text-foreground font-medium mt-2">Subject: {ec.subject}</p>}
-                      {ec.body && (
-                        <div className="text-sm text-muted-foreground bg-white/[0.03] rounded-md p-3 mt-2 whitespace-pre-wrap max-h-40 overflow-y-auto">
-                          {ec.body}
-                        </div>
-                      )}
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1.5 block">Topic / Product</Label>
+                        <Input placeholder="e.g., Summer collection launch" value={emailTopic} onChange={(e) => setEmailTopic(e.target.value)} className="bg-input/50" />
+                      </div>
+                      <div className="flex items-end">
+                        <Button className="w-full" onClick={() => generateEmail.mutate({ storeId: storeId!, campaignType: emailType as any, productName: emailTopic })} disabled={!emailTopic.trim() || generateEmail.isPending}>
+                          {generateEmail.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />}
+                          Generate
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                {emailCampaigns && emailCampaigns.length > 0 ? (
+                  <div className="space-y-3">
+                    {emailCampaigns.map((ec: any) => (
+                      <Card key={ec.id} className="bento-card">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="text-sm font-medium text-foreground">{ec.name}</h4>
+                              <p className="text-xs text-muted-foreground capitalize">{ec.campaignType} · {new Date(ec.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <Badge variant="outline" className={`text-[10px] ${ec.status === "active" ? "border-emerald-400/30 text-emerald-400" : "border-border text-muted-foreground"}`}>{ec.status}</Badge>
+                          </div>
+                          {ec.subject && <p className="text-sm text-foreground font-medium mt-2">Subject: {ec.subject}</p>}
+                          {ec.body && <div className="text-sm text-muted-foreground bg-white/[0.03] rounded-md p-3 mt-2 whitespace-pre-wrap max-h-40 overflow-y-auto">{ec.body}</div>}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bento-card">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Mail className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                      <p className="text-sm font-medium text-foreground">No Email Campaigns Yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">Create automated email sequences using the form above.</p>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            ) : (
+                )}
+              </>
+            )}
+
+            {/* Inbox sub-tab */}
+            {gmailSubTab === "inbox" && (
               <Card className="bento-card">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Mail className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-medium text-foreground">No Email Campaigns Yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">Create automated email sequences using the form above.</p>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">Unread Messages</h3>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => inboxQuery.refetch()} disabled={inboxQuery.isFetching}>
+                      <RefreshCw className={`h-3.5 w-3.5 ${inboxQuery.isFetching ? "animate-spin" : ""}`} />
+                    </Button>
+                  </div>
+                  {inboxQuery.isLoading && <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
+                  {inboxQuery.error && (
+                    <div className="flex items-start gap-3 p-4 rounded-md bg-destructive/10 border border-destructive/20">
+                      <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-destructive">Gmail not connected</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Connect your Gmail account in Integrations to use inbox features.</p>
+                      </div>
+                    </div>
+                  )}
+                  {!inboxQuery.isLoading && !inboxQuery.error && inboxQuery.data?.messages?.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <CheckCircle className="h-8 w-8 text-emerald-400/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">All caught up — no unread messages</p>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {inboxQuery.data?.messages?.map((msg: any) => (
+                      <div key={msg.id} className="p-3 rounded-md bg-white/[0.03] border border-white/[0.06] hover:border-primary/20 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{msg.subject}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">From: {msg.from}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{msg.body}</p>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] shrink-0">{msg.date}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Compose sub-tab */}
+            {gmailSubTab === "compose" && (
+              <Card className="bento-card">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Send className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Compose Email</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1.5 block">To</Label>
+                      <Input type="email" placeholder="recipient@example.com" value={composeTo} onChange={(e) => setComposeTo(e.target.value)} className="bg-input/50" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1.5 block">Subject</Label>
+                      <Input placeholder="Email subject" value={composeSubject} onChange={(e) => setComposeSubject(e.target.value)} className="bg-input/50" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1.5 block">Message</Label>
+                      <Textarea placeholder="Write your message..." rows={7} value={composeBody} onChange={(e) => setComposeBody(e.target.value)} className="bg-input/50" />
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={!composeTo.trim() || !composeSubject.trim() || !composeBody.trim() || sendEmailMutation.isPending}
+                      onClick={() => sendEmailMutation.mutate({ to: composeTo, subject: composeSubject, body: composeBody })}
+                    >
+                      {sendEmailMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                      {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Auto-Reply sub-tab */}
+            {gmailSubTab === "auto-reply" && (
+              <Card className="bento-card">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Auto-Reply Settings</h3>
+                  </div>
+                  {autoReplyQuery.isLoading && <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 rounded-md bg-white/[0.03] border border-white/[0.06]">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Enable Auto-Reply</p>
+                        <p className="text-xs text-muted-foreground">Automatically respond to incoming emails</p>
+                      </div>
+                      <button
+                        onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoReplyEnabled ? "bg-primary" : "bg-secondary"
+                        }`}
+                        aria-label="Toggle auto-reply"
+                      >
+                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          autoReplyEnabled ? "translate-x-4" : "translate-x-0.5"
+                        }`} />
+                      </button>
+                    </div>
+                    {autoReplyEnabled && (
+                      <>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1.5 block">Subject</Label>
+                          <Input value={autoReplySubject} onChange={(e) => setAutoReplySubject(e.target.value)} placeholder="Auto-reply subject" className="bg-input/50" />
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground mb-1.5 block">Message</Label>
+                          <Textarea value={autoReplyMessage} onChange={(e) => setAutoReplyMessage(e.target.value)} placeholder="Auto-reply message" rows={5} className="bg-input/50" />
+                        </div>
+                        <Button
+                          className="w-full"
+                          disabled={updateAutoReplyMutation.isPending}
+                          onClick={() => updateAutoReplyMutation.mutate({ enabled: autoReplyEnabled, subject: autoReplySubject, message: autoReplyMessage })}
+                        >
+                          {updateAutoReplyMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                          {updateAutoReplyMutation.isPending ? "Saving..." : "Save Settings"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Templates sub-tab */}
+            {gmailSubTab === "templates" && (
+              <Card className="bento-card">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MailPlus className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Email Templates</h3>
+                  </div>
+                  {templatesQuery.isLoading && <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
+                  {templatesQuery.data?.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <MailPlus className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">No templates yet</p>
+                    </div>
+                  )}
+                  <div className="space-y-3">
+                    {templatesQuery.data?.map((t: any) => (
+                      <div key={t.id} className="p-3 rounded-md bg-white/[0.03] border border-white/[0.06] hover:border-primary/20 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">{t.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Subject: {t.subject}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.body}</p>
+                          </div>
+                          <Button variant="outline" size="sm" className="text-xs shrink-0" onClick={() => { setComposeSubject(t.subject); setComposeBody(t.body); setGmailSubTab("compose"); toast.success("Template loaded — go to Compose"); }}>
+                            Use
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}

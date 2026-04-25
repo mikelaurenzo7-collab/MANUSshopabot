@@ -28,7 +28,6 @@ const PluginStorePage = lazy(() => import("./pages/PluginStore"));
 const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
-const GmailBotPage = lazy(() => import("./pages/GmailBot"));
 const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
 const WorkflowsPage = lazy(() => import("./pages/Workflows"));
 
@@ -75,14 +74,14 @@ function Router() {
                 <ErrorBoundary inline label="page">
                   <Switch>
                     <Route path="/" component={Home} />
-                    <Route path="/architect" component={ArchitectPage} />
-                    <Route path="/merchant" component={MerchantPage} />
-                    <Route path="/social" component={SocialPage} />
+                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><ArchitectPage /></ErrorBoundary>}</Route>
+                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><MerchantPage /></ErrorBoundary>}</Route>
+                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><SocialPage /></ErrorBoundary>}</Route>
                     <Route path="/activity" component={ActivityPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/integrations" component={IntegrationsPage} />
 
-                    <Route path="/health" component={PlatformHealthPage} />
+                    <Route path="/health">{() => <ErrorBoundary inline label="Platform Health"><PlatformHealthPage /></ErrorBoundary>}</Route>
                     <Route path="/intelligence" component={IntelligencePage} />
                     <Route path="/config" component={ConfigPage} />
 
@@ -90,9 +89,9 @@ function Router() {
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/profile" component={ProfilePage} />
-                    <Route path="/gmail-bot" component={GmailBotPage} />
-                    <Route path="/bot-settings" component={BotSettingsPage} />
-                    <Route path="/workflows" component={WorkflowsPage} />
+                    <Route path="/gmail-bot">{() => { window.location.replace("/social"); return null; }}</Route>
+                    <Route path="/bot-settings">{() => <ErrorBoundary inline label="Bot Settings"><BotSettingsPage /></ErrorBoundary>}</Route>
+                    <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>
