@@ -5,28 +5,40 @@
 
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Brain, Clock, Shield, Zap } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Settings,
+  Brain,
+  Clock,
+  Shield,
+  Zap,
+  Bot,
+  Package,
+  Megaphone,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Save,
+} from "lucide-react";
 import { toast } from "sonner";
 
 type AgentType = "architect" | "merchant" | "social";
+
+const BOT_CONFIG: Record<AgentType, { name: string; icon: React.ElementType; color: string; accent: string }> = {
+  architect: { name: "Builder Bot", icon: Bot, color: "text-cyan-400", accent: "bg-cyan-500/10 border-cyan-500/20" },
+  merchant: { name: "Merchant Bot", icon: Package, color: "text-violet-400", accent: "bg-violet-500/10 border-violet-500/20" },
+  social: { name: "Social Bot", icon: Megaphone, color: "text-pink-400", accent: "bg-pink-500/10 border-pink-500/20" },
+};
 
 export default function BotSettings() {
   const [selectedBot, setSelectedBot] = useState<AgentType>("architect");
   const [selectedTab, setSelectedTab] = useState("instructions");
 
-  const bots: { id: AgentType; name: string; icon: any }[] = [
-    { id: "architect", name: "Builder Bot", icon: Zap },
-    { id: "merchant", name: "Merchant Bot", icon: Zap },
-    { id: "social", name: "Social Bot", icon: Zap },
-  ];
-
-  // Queries
   const profileQuery = trpc.botProfile.getProfile.useQuery(
     { agentType: selectedBot },
     { enabled: !!selectedBot }
@@ -34,20 +46,19 @@ export default function BotSettings() {
 
   const memoryQuery = trpc.botProfile.getMemory.useQuery(
     { agentType: selectedBot },
-    { enabled: selectedBot && selectedTab === "memory" }
+    { enabled: !!selectedBot && selectedTab === "memory" }
   );
 
   const schedulesQuery = trpc.botProfile.getSchedules.useQuery(
     { agentType: selectedBot },
-    { enabled: selectedBot && selectedTab === "schedules" }
+    { enabled: !!selectedBot && selectedTab === "schedules" }
   );
 
   const safetyRulesQuery = trpc.botProfile.getSafetyRules.useQuery(
     { agentType: selectedBot },
-    { enabled: selectedBot && selectedTab === "safety" }
+    { enabled: !!selectedBot && selectedTab === "safety" }
   );
 
-  // Mutations
   const updateProfileMutation = trpc.botProfile.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Bot profile updated");
@@ -58,226 +69,269 @@ export default function BotSettings() {
     },
   });
 
+  const bot = BOT_CONFIG[selectedBot];
+  const BotIcon = bot.icon;
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="page-enter p-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="w-8 h-8 text-blue-500" />
-            Bot Settings
-          </h1>
-          <p className="text-gray-400 mt-1">Configure individual bot behavior, memory, and safety rules</p>
-        </div>
+      <div>
+        <p className="micro-label mb-1">Configuration</p>
+        <h1 className="text-2xl font-bold text-white">Bot Settings</h1>
+        <p className="text-sm text-white/40 mt-0.5">Configure individual bot behavior, memory, and safety rules</p>
       </div>
 
       {/* Bot Selector */}
       <div className="flex gap-2 flex-wrap">
-        {bots.map((bot) => (
-          <button
-            key={bot.id}
-            onClick={() => setSelectedBot(bot.id)}
-            className={`px-4 py-2 rounded-lg transition ${
-              selectedBot === bot.id
-                ? "bg-blue-600 text-white"
-                : "bg-gray-900 text-gray-300 hover:bg-gray-800"
-            }`}
-          >
-            {bot.name}
-          </button>
-        ))}
+        {(Object.entries(BOT_CONFIG) as [AgentType, typeof BOT_CONFIG[AgentType]][]).map(([id, cfg]) => {
+          const Icon = cfg.icon;
+          const isSelected = selectedBot === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setSelectedBot(id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                isSelected
+                  ? `${cfg.accent} ${cfg.color} shadow-sm`
+                  : "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {cfg.name}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="instructions">Instructions</TabsTrigger>
-          <TabsTrigger value="memory">Memory</TabsTrigger>
-          <TabsTrigger value="schedules">Schedules</TabsTrigger>
-          <TabsTrigger value="safety">Safety Rules</TabsTrigger>
+        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 h-auto gap-1">
+          {[
+            { value: "instructions", label: "Instructions", icon: Zap },
+            { value: "memory", label: "Memory", icon: Brain },
+            { value: "schedules", label: "Schedules", icon: Clock },
+            { value: "safety", label: "Safety Rules", icon: Shield },
+          ].map((tab) => {
+            const TabIcon = tab.icon;
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-1.5 text-xs font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 rounded-lg px-3 py-1.5"
+              >
+                <TabIcon className="w-3.5 h-3.5" />
+                {tab.label}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         {/* Instructions Tab */}
-        <TabsContent value="instructions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                Bot Instructions
-              </CardTitle>
-              <CardDescription>Customize how this bot behaves and makes decisions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {profileQuery.isLoading && <div className="text-center py-8 text-gray-400">Loading profile...</div>}
-              {profileQuery.data && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Bot Name</label>
-                    <Input
-                      defaultValue={profileQuery.data.name}
-                      placeholder="e.g., My Builder Bot"
-                      className="bg-gray-900 border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Description</label>
-                    <Textarea
-                      defaultValue={profileQuery.data.description || ""}
-                      placeholder="What does this bot do?"
-                      rows={3}
-                      className="bg-gray-900 border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Personality</label>
-                    <select className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white">
-                      <option value="professional">Professional</option>
-                      <option value="casual">Casual</option>
-                      <option value="technical">Technical</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Custom Instructions</label>
-                    <Textarea
-                      defaultValue={profileQuery.data.customInstructions || ""}
-                      placeholder="Add specific guidelines for this bot..."
-                      rows={6}
-                      className="bg-gray-900 border-gray-700"
-                    />
-                  </div>
-                  <Button
-                    onClick={() => updateProfileMutation.mutate({ agentType: selectedBot })}
-                    disabled={updateProfileMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {updateProfileMutation.isPending ? "Saving..." : "Save Instructions"}
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="instructions" className="mt-4 space-y-4">
+          <div className={`rounded-xl border p-5 ${bot.accent}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <BotIcon className={`w-5 h-5 ${bot.color}`} />
+              <h3 className="font-semibold text-white">Bot Instructions</h3>
+              <span className="text-xs text-white/30 ml-auto">Customize how {bot.name} behaves</span>
+            </div>
+
+            {profileQuery.isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full bg-white/5" />)}
+              </div>
+            ) : profileQuery.data ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Bot Name</label>
+                  <Input
+                    defaultValue={profileQuery.data.name}
+                    placeholder="e.g., My Builder Bot"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Description</label>
+                  <Textarea
+                    defaultValue={profileQuery.data.description || ""}
+                    placeholder="What does this bot do?"
+                    rows={3}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Personality</label>
+                  <select className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/20">
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual</option>
+                    <option value="technical">Technical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Custom Instructions</label>
+                  <Textarea
+                    defaultValue={profileQuery.data.customInstructions || ""}
+                    placeholder="Add specific guidelines for this bot..."
+                    rows={6}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20 resize-none font-mono text-xs"
+                  />
+                </div>
+                <Button
+                  onClick={() => updateProfileMutation.mutate({ agentType: selectedBot })}
+                  disabled={updateProfileMutation.isPending}
+                  className={`w-full font-semibold ${
+                    selectedBot === "architect" ? "bg-cyan-500 hover:bg-cyan-600 text-black" :
+                    selectedBot === "merchant" ? "bg-violet-500 hover:bg-violet-600 text-white" :
+                    "bg-pink-500 hover:bg-pink-600 text-white"
+                  }`}
+                >
+                  {updateProfileMutation.isPending ? (
+                    <><span className="animate-pulse">Saving...</span></>
+                  ) : (
+                    <><Save className="w-4 h-4 mr-2" />Save Instructions</>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-white/30 text-sm">No profile data available</div>
+            )}
+          </div>
         </TabsContent>
 
         {/* Memory Tab */}
-        <TabsContent value="memory" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5" />
-                Bot Memory
-              </CardTitle>
-              <CardDescription>Learned patterns, decisions, and context</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {memoryQuery.isLoading && <div className="text-center py-8 text-gray-400">Loading memory...</div>}
-              {memoryQuery.data && memoryQuery.data.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No memories yet. Bot will learn as it operates.</div>
-              )}
-              <div className="space-y-3">
-                {memoryQuery.data?.map((mem: any, idx: number) => (
-                  <div key={idx} className="border border-gray-700 rounded p-4 bg-gray-900/50">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-semibold text-white">{mem.key}</p>
-                        <Badge variant="outline" className="mt-1">
-                          {mem.memoryType}
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-400">Confidence: {mem.confidence}%</p>
-                        <p className="text-xs text-gray-500 mt-1">Accessed {mem.accessCount} times</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-300 mt-2 line-clamp-2">{mem.value}</p>
-                  </div>
-                ))}
+        <TabsContent value="memory" className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="w-4 h-4 text-white/40" />
+            <h3 className="font-semibold text-white/70 text-sm">Learned Patterns & Context</h3>
+          </div>
+          {memoryQuery.isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-white/5" />)}
+            </div>
+          ) : !memoryQuery.data || memoryQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <Brain className="h-6 w-6 text-white/20" />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-white/50 font-medium">No memories yet</p>
+              <p className="text-white/25 text-sm mt-1">Bot will learn patterns as it operates</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {memoryQuery.data.map((mem: any, idx: number) => (
+                <div key={idx} className="bento-card p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-semibold text-white text-sm">{mem.key}</p>
+                      <Badge variant="outline" className="mt-1 text-[10px] border-white/10 text-white/40">
+                        {mem.memoryType}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-white/40">Confidence: <span className="text-white/70">{mem.confidence}%</span></p>
+                      <p className="text-[10px] text-white/25 mt-0.5">Accessed {mem.accessCount}×</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-white/50 mt-2 line-clamp-2">{mem.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Schedules Tab */}
-        <TabsContent value="schedules" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Bot Schedules
-              </CardTitle>
-              <CardDescription>Recurring tasks and automation triggers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {schedulesQuery.isLoading && <div className="text-center py-8 text-gray-400">Loading schedules...</div>}
-              {schedulesQuery.data && schedulesQuery.data.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No schedules configured yet</div>
-              )}
-              <div className="space-y-3">
-                {schedulesQuery.data?.map((schedule: any, idx: number) => (
-                  <div key={idx} className="border border-gray-700 rounded p-4 bg-gray-900/50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white">{schedule.name}</p>
-                        <p className="text-sm text-gray-400 mt-1">{schedule.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{schedule.triggerType}</Badge>
-                          {schedule.enabled ? (
-                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Active</Badge>
-                          ) : (
-                            <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Disabled</Badge>
-                          )}
-                        </div>
+        <TabsContent value="schedules" className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-white/40" />
+            <h3 className="font-semibold text-white/70 text-sm">Recurring Tasks & Automation Triggers</h3>
+          </div>
+          {schedulesQuery.isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
+            </div>
+          ) : !schedulesQuery.data || schedulesQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <Clock className="h-6 w-6 text-white/20" />
+              </div>
+              <p className="text-white/50 font-medium">No schedules configured</p>
+              <p className="text-white/25 text-sm mt-1">Add recurring automation tasks for this bot</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {schedulesQuery.data.map((schedule: any, idx: number) => (
+                <div key={idx} className="bento-card p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-semibold text-white text-sm">{schedule.name}</p>
+                      <p className="text-xs text-white/40 mt-0.5">{schedule.description}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/40">{schedule.triggerType}</Badge>
+                        {schedule.enabled ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">
+                            <CheckCircle2 className="w-2.5 h-2.5 mr-1" />Active
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-white/5 text-white/30 border-white/10 text-[10px]">
+                            <XCircle className="w-2.5 h-2.5 mr-1" />Disabled
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Safety Rules Tab */}
-        <TabsContent value="safety" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Safety Rules
-              </CardTitle>
-              <CardDescription>Approval requirements and spending limits</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {safetyRulesQuery.isLoading && <div className="text-center py-8 text-gray-400">Loading safety rules...</div>}
-              {safetyRulesQuery.data && safetyRulesQuery.data.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No safety rules configured</div>
-              )}
-              <div className="space-y-3">
-                {safetyRulesQuery.data?.map((rule: any, idx: number) => (
-                  <div key={idx} className="border border-gray-700 rounded p-4 bg-gray-900/50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white">{rule.name}</p>
-                        <p className="text-sm text-gray-400 mt-1">{rule.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{rule.ruleType}</Badge>
-                          <Badge
-                            className={
-                              rule.action === "block"
-                                ? "bg-red-500/20 text-red-400 border-red-500/30"
-                                : rule.action === "approve_required"
-                                  ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                  : "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                            }
-                          >
-                            {rule.action}
-                          </Badge>
-                        </div>
+        <TabsContent value="safety" className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="w-4 h-4 text-white/40" />
+            <h3 className="font-semibold text-white/70 text-sm">Approval Requirements & Spending Limits</h3>
+          </div>
+          {safetyRulesQuery.isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
+            </div>
+          ) : !safetyRulesQuery.data || safetyRulesQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+                <Shield className="h-6 w-6 text-amber-400/60" />
+              </div>
+              <p className="text-white/50 font-medium">No safety rules configured</p>
+              <p className="text-white/25 text-sm mt-1">Add rules to control bot spending and actions</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {safetyRulesQuery.data.map((rule: any, idx: number) => (
+                <div key={idx} className="bento-card p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-semibold text-white text-sm">{rule.name}</p>
+                      <p className="text-xs text-white/40 mt-0.5">{rule.description}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/40">{rule.ruleType}</Badge>
+                        <Badge
+                          className={`text-[10px] ${
+                            rule.action === "block"
+                              ? "bg-red-500/10 text-red-400 border-red-500/20"
+                              : rule.action === "approve_required"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                : "bg-sky-500/10 text-sky-400 border-sky-500/20"
+                          }`}
+                        >
+                          {rule.action === "block" && <XCircle className="w-2.5 h-2.5 mr-1" />}
+                          {rule.action === "approve_required" && <AlertTriangle className="w-2.5 h-2.5 mr-1" />}
+                          {rule.action}
+                        </Badge>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

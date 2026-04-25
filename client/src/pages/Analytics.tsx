@@ -29,7 +29,9 @@ import {
   Cell,
 } from "recharts";
 
-const CHART_COLORS = ["#a78bfa", "#22d3ee", "#fbbf24", "#f87171", "#34d399", "#818cf8"];
+const CHART_COLORS = ["#0ea5e9", "#a78bfa", "#10b981", "#f59e0b", "#f87171", "#22d3ee"];
+const TOOLTIP_STYLE = { backgroundColor: "#0a0b0f", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", fontSize: "11px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" };
+const LABEL_STYLE = { color: "rgba(255,255,255,0.35)", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.08em", fontSize: "9px" };
 
 type AnalyticsSnapshot = {
   date: string;
@@ -327,19 +329,15 @@ export default function AnalyticsPage() {
                 <AreaChart data={revenueData}>
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                   <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
-                    labelStyle={{ color: "#9ca3af" }}
-                    itemStyle={{ color: "#a78bfa" }}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="#a78bfa" fill="url(#revenueGrad)" strokeWidth={2} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} itemStyle={{ color: "#0ea5e9" }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" fill="url(#revenueGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -386,9 +384,7 @@ export default function AnalyticsPage() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
-                  />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -436,11 +432,8 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
                 <YAxis type="category" dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} tickLine={false} axisLine={false} width={150} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "12px" }}
-                  formatter={(value: number) => [`$${value}`, "Revenue"]}
-                />
-                <Bar dataKey="revenue" fill="#a78bfa" radius={[0, 4, 4, 0]} barSize={16} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} formatter={(value: number) => [`$${value}`, "Revenue"]} />
+                <Bar dataKey="revenue" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={16} />
               </BarChart>
             </ResponsiveContainer>
           </div>

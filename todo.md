@@ -795,3 +795,26 @@
 
 ### Test Results
 - **546/548 tests passing** (2 remaining require live API credentials: Pinterest + Twitter)
+
+## ## Design Audit & Polish Sprint (Complete ✅)
+### Landing Page Polish
+- [x] Replace font-mono body text with Inter (full Landing.tsx rewrite with proper typography)
+- [x] Upgrade hero headline with gradient text treatment
+- [x] Add subtle grid-bg to hero section for depth
+- [x] Increase hero subtext size and contrast
+- [x] Unify button styles: primary=sky-500 solid, secondary=transparent+border
+- [x] Bot cards: add colored icon backgrounds per bot
+- [x] Pricing cards: gradient tint on featured card
+- [x] Footer: improved layout with links
+### Dashboard & Sidebar Polish
+- [x] Sidebar: left border accent + stronger bg on active nav item
+- [x] Home (Command Center): full redesign — top status bar, rounded nodes, color-coded edges, MiniMap, better inspector, system log
+- [x] Home: 10 nodes (DB, Workflows, BullMQ, Connectors, Revenue, Builder Bot, Merchant Bot, Social Bot, Image Pipeline, tRPC Server)
+### Analytics Polish
+- [x] Updated chart colors to sky/violet/emerald/amber palette
+- [x] Dark tooltip styles applied to all 3 charts
+- [x] Area chart gradient updated to sky-400
+### Component Polish
+- [ ] SubscriptionGate: improve visual hierarchy of upgrade card (future sprint)
+- [ ] Error boundaries: add branded icon/illustration to error state (future sprint)
+- [ ] Onboarding: step indicator labels, bot card hover glow (future sprint)

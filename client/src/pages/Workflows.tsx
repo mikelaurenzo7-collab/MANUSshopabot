@@ -279,8 +279,9 @@ export default function Workflows() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
+          <p className="micro-label mb-1">Operations</p>
           <h1 className="text-2xl font-bold text-white">Workflows</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Monitor and manage all bot workflows</p>
+          <p className="text-sm text-white/40 mt-0.5">Monitor and manage all bot workflows</p>
         </div>
         <SubscriptionGate feature="Workflow Automation" soft>
           <LaunchWorkflowDialog onLaunched={() => {
@@ -292,19 +293,17 @@ export default function Workflows() {
       </div>
 
       {/* Stats Row */}
-      <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total", value: counts?.total ?? 0, color: "text-white" },
-          { label: "Running", value: counts?.running ?? 0, color: "text-blue-400" },
-          { label: "Completed", value: counts?.completed ?? 0, color: "text-green-400" },
-          { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400" },
+          { label: "Total", value: counts?.total ?? 0, color: "text-white", bg: "" },
+          { label: "Running", value: counts?.running ?? 0, color: "text-sky-400", bg: "bg-sky-500/5 border-sky-500/15" },
+          { label: "Completed", value: counts?.completed ?? 0, color: "text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/15" },
+          { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400", bg: "bg-red-500/5 border-red-500/15" },
         ].map((stat) => (
-          <Card key={stat.label} className="bg-white/[0.02] border-white/5">
-            <CardContent className="p-4">
-              <p className="text-xs text-slate-400">{stat.label}</p>
-              <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
-            </CardContent>
-          </Card>
+          <div key={stat.label} className={`bento-card p-4 ${stat.bg}`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">{stat.label}</p>
+            <p className={`text-2xl font-black metric-number ${stat.color}`}>{stat.value}</p>
+          </div>
         ))}
       </div>
 
@@ -331,10 +330,12 @@ export default function Workflows() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : (activeWorkflows?.length ?? 0) === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/10 text-center">
-              <Bot className="h-10 w-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 font-medium">No active workflows</p>
-              <p className="text-slate-500 text-sm mt-1">Launch a workflow to get started</p>
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
+              <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
+                <Bot className="h-6 w-6 text-sky-400/60" />
+              </div>
+              <p className="text-white/50 font-medium">No active workflows</p>
+              <p className="text-white/25 text-sm mt-1">Launch a workflow to get started</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -357,10 +358,12 @@ export default function Workflows() {
               {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : historyWorkflows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/10 text-center">
-              <Clock className="h-10 w-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 font-medium">No workflow history yet</p>
-              <p className="text-slate-500 text-sm mt-1">Completed workflows will appear here</p>
+            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <Clock className="h-6 w-6 text-white/20" />
+              </div>
+              <p className="text-white/50 font-medium">No workflow history yet</p>
+              <p className="text-white/25 text-sm mt-1">Completed workflows will appear here</p>
             </div>
           ) : (
             <div className="space-y-3">
