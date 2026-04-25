@@ -16,6 +16,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import { ENV } from "../../_core/env";
 
@@ -44,6 +45,7 @@ export class InstagramAdapter implements SocialPlatformAdapter {
           method: (options?.method || "GET") as any,
           data: options?.body,
           headers: { "Content-Type": "application/json" },
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

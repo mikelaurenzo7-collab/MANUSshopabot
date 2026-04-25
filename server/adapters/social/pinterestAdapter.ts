@@ -14,6 +14,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 const PINTEREST_BASE = "https://api.pinterest.com/v5";
@@ -36,6 +37,7 @@ export class PinterestAdapter implements SocialPlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

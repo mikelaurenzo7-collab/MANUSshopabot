@@ -18,6 +18,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1";
 
@@ -33,7 +34,7 @@ export class GmailAdapter implements SocialPlatformAdapter {
       client_secret: credentials.metadata?.clientSecret || process.env.GOOGLE_CLIENT_SECRET,
       refresh_token: credentials.refreshToken,
       grant_type: "refresh_token",
-    });
+    }, { timeout: ADAPTER_HTTP_TIMEOUT_MS });
     return response.data.access_token;
   }
 
@@ -51,6 +52,7 @@ export class GmailAdapter implements SocialPlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

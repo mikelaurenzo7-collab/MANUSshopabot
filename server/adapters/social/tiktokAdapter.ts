@@ -17,6 +17,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 const TIKTOK_CONTENT_BASE = "https://open.tiktokapis.com/v2";
 const TIKTOK_ADS_BASE = "https://business-api.tiktok.com/open_api/v1.3";
@@ -39,6 +40,7 @@ export class TikTokAdapter implements SocialPlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         if (response.data.error?.code !== "ok" && response.data.error?.code !== undefined) {
           throw new Error(response.data.error.message);
@@ -64,6 +66,7 @@ export class TikTokAdapter implements SocialPlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         if (response.data.code !== 0) {
           throw new Error(response.data.message);

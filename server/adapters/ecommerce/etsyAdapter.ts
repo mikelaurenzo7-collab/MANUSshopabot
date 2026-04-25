@@ -16,6 +16,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 const ETSY_API_BASE = "https://openapi.etsy.com/v3";
@@ -38,6 +39,7 @@ export class EtsyAdapter implements EcommercePlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

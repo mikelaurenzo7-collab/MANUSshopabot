@@ -16,6 +16,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
 export class ShopifyAdapter implements EcommercePlatformAdapter {
@@ -45,6 +46,7 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
           headers,
           method: (options?.method || "GET") as any,
           data: options?.body ? JSON.parse(options.body) : undefined,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

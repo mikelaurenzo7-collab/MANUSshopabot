@@ -7,6 +7,12 @@
  * and LinkedIn through a single, consistent contract.
  */
 
+/**
+ * Per-request HTTP timeout for social adapter calls. See the e-commerce
+ * adapters/types.ts for the rationale — same value, same intent.
+ */
+export const ADAPTER_HTTP_TIMEOUT_MS = 30_000;
+
 // ─── Shared Types ──────────────────────────────────────────────────────────
 
 export interface SocialPost {

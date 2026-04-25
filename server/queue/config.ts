@@ -141,6 +141,52 @@ export async function getQueueHealth() {
   }
 }
 
+// ─── Failed-Job Inspection (admin) ──────────────────────────────────────
+
+export interface FailedJobSummary {
+  id: string;
+  name: string;
+  attemptsMade: number;
+  failedAt: number | null;
+  failedReason: string | null;
+  data: any;
+}
+
+/**
+ * Return the most recent failed jobs across the webhook + external API
+ * queues, capped at `limit` per queue. Used by the admin UI to triage
+ * stuck integrations without shelling into Redis.
+ *
+ * Failures here are best-effort — if Redis is unreachable we return an
+ * empty list and surface the error in the response wrapper at the router.
+ */
+export async function listRecentFailedJobs(limit = 25): Promise<{
+  webhooks: FailedJobSummary[];
+  externalApis: FailedJobSummary[];
+}> {
+  const summarize = async (q: Queue): Promise<FailedJobSummary[]> => {
+    const jobs = await q.getFailed(0, Math.max(0, limit - 1));
+    return jobs.map((j) => ({
+      id: String(j.id ?? ""),
+      name: j.name,
+      attemptsMade: j.attemptsMade,
+      failedAt: typeof j.finishedOn === "number" ? j.finishedOn : null,
+      failedReason: j.failedReason ?? null,
+      data: j.data,
+    }));
+  };
+
+  const [webhooksQ, apisQ] = await Promise.all([
+    getWebhookQueue(),
+    getExternalApiQueue(),
+  ]);
+  const [webhooks, externalApis] = await Promise.all([
+    summarize(webhooksQ),
+    summarize(apisQ),
+  ]);
+  return { webhooks, externalApis };
+}
+
 // ─── Cleanup ────────────────────────────────────────────────────────────
 
 export async function closeQueues() {

@@ -17,6 +17,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 export class TwitterAdapter implements SocialPlatformAdapter {
   readonly platform = "twitter";
@@ -152,6 +153,7 @@ export class TwitterAdapter implements SocialPlatformAdapter {
           Authorization: `Bearer ${credentials.accessToken}`,
           "Content-Type": "application/json",
         },
+        timeout: ADAPTER_HTTP_TIMEOUT_MS,
       }
     );
 
@@ -183,6 +185,7 @@ export class TwitterAdapter implements SocialPlatformAdapter {
           end_time: new Date().toISOString(),
         },
         headers: { Authorization: `Bearer ${credentials.accessToken}` },
+        timeout: ADAPTER_HTTP_TIMEOUT_MS,
       }
     );
 
@@ -206,7 +209,10 @@ export class TwitterAdapter implements SocialPlatformAdapter {
     if (!accountId) return [];
     const response = await axios.get(
       `https://ads-api.twitter.com/12/accounts/${accountId}/campaigns`,
-      { headers: { Authorization: `Bearer ${credentials.accessToken}` } }
+      {
+        headers: { Authorization: `Bearer ${credentials.accessToken}` },
+        timeout: ADAPTER_HTTP_TIMEOUT_MS,
+      }
     );
     return (response.data.data || []).map((c: any) => ({
       platformId: c.id,
@@ -227,7 +233,10 @@ export class TwitterAdapter implements SocialPlatformAdapter {
     await axios.put(
       `https://ads-api.twitter.com/12/accounts/${accountId}/campaigns/${campaignId}`,
       { entity_status: "PAUSED" },
-      { headers: { Authorization: `Bearer ${credentials.accessToken}` } }
+      {
+        headers: { Authorization: `Bearer ${credentials.accessToken}` },
+        timeout: ADAPTER_HTTP_TIMEOUT_MS,
+      }
     );
   }
 
