@@ -26,6 +26,7 @@ import { botProfileRouter } from "./routers/botProfile";
 import { gmailBotRouter } from "./routers/gmailBot";
 import { queueHealthRouter } from "./routers/queueHealth";
 import { chatRouter } from "./routers/chat";
+import { resumeWorkflow, cancelWorkflow } from "./engine/workflowEngine";
 import * as db from "./db";
 
 export const appRouter = router({
@@ -109,10 +110,31 @@ export const appRouter = router({
         reviewNote: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // 1. Update the approval_queue row
         await db.updateApproval(input.id, {
           status: input.status,
           reviewNote: input.reviewNote,
         });
+
+        // 2. If the approval item has a linked workflow, resume or cancel it
+        const allApprovals = await db.getAllApprovals(200);
+        const item = allApprovals.find((a: any) => a.id === input.id);
+        const proposed = item?.proposedAction as { workflowId?: number; stepId?: number } | null;
+
+        if (proposed?.workflowId && proposed?.stepId) {
+          try {
+            await resumeWorkflow(
+              proposed.workflowId,
+              proposed.stepId,
+              input.status === "approved",
+              input.reviewNote,
+            );
+          } catch (err: any) {
+            // Workflow may have already been resolved — log but don't fail the mutation
+            console.warn(`[Approvals] resumeWorkflow(${proposed.workflowId}) skipped:`, err.message);
+          }
+        }
+
         return { success: true };
       }),
   }),

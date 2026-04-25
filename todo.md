@@ -863,3 +863,11 @@
 - [x] Fix Analytics sidebar label (BarChart3 icon confirmed in DashboardLayout)
 - [x] Add keyboard shortcut hints to sidebar nav items (tooltips on hover)
 - [x] Add "Subscription Success" toast/banner when user returns from Stripe checkout
+
+## Next Steps Sprint (COMPLETE ✅)
+
+- [x] Wire Approval Queue approve/reject mutations to workflow state machine (approvals.review now calls resumeWorkflow() — awaiting_approval → running/cancelled)
+- [x] Update Approvals.tsx UI to call approve/reject mutations with optimistic updates (already wired via trpc.approvals.review.useMutation)
+- [x] Connect Bot Chat to per-bot system prompts (Builder/Merchant/Social context routing) — already fully wired in chat.ts with BOT_SYSTEM_PROMPTS + getRenderedStoreContext
+- [x] Add Etsy webhook handler (POST /api/webhooks/etsy) with HMAC-SHA256 verification + logWebhookEvent logging
+- [x] Add TikTok Shop webhook handler (POST /api/webhooks/tiktok-shop) with HMAC-SHA256 verification + logWebhookEvent logging

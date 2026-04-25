@@ -10,6 +10,7 @@ import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
 import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
+import { registerPlatformWebhookRoutes } from "../platformWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { generalRateLimiter, webhookRateLimiter, workflowRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
@@ -150,6 +151,8 @@ async function startServer() {
   registerEcommerceOAuthRoutes(app);
   // Shopify webhook handlers (orders/create, orders/paid, products/update, inventory)
   registerShopifyWebhookRoutes(app);
+  // Etsy + TikTok Shop webhook handlers (orders, products, inventory)
+  registerPlatformWebhookRoutes(app);
   // Stripe webhook (subscription lifecycle: created, updated, canceled, payment_failed)
   registerStripeWebhook(app);
   // tRPC API
