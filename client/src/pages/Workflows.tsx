@@ -277,10 +277,10 @@ export default function Workflows() {
   return (
     <div className="page-enter p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between page-header">
         <div>
           <p className="micro-label mb-1">Operations</p>
-          <h1 className="text-2xl font-bold text-white">Workflows</h1>
+          <h1 className="text-2xl font-heading font-bold text-white">Workflows</h1>
           <p className="text-sm text-white/40 mt-0.5">Monitor and manage all bot workflows</p>
         </div>
         <SubscriptionGate feature="Workflow Automation" soft>

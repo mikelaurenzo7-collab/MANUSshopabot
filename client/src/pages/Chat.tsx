@@ -171,7 +171,7 @@ export default function Chat() {
           )}
 
           {/* Bot selector */}
-          <div className="flex rounded-lg overflow-hidden border border-white/10">
+          <div className="flex rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.02] p-0.5 gap-0.5">
             {(Object.keys(BOTS) as AgentType[]).map((key) => {
               const b = BOTS[key];
               const Icon = b.icon;
@@ -180,10 +180,10 @@ export default function Chat() {
                 <button
                   key={key}
                   onClick={() => handleBotSwitch(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     isActive
-                      ? `${b.accent} ${b.color} shadow-inner`
-                      : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
+                      ? `${b.accent} ${b.color} shadow-sm`
+                      : "text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />

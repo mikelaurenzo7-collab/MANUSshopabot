@@ -378,12 +378,15 @@ export default function Landing() {
               return (
                 <div
                   key={bot.name}
-                  className="bento-card p-8 group relative overflow-hidden"
+                  className="bento-card p-8 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as React.CSSProperties}
                 >
+                  {/* Top gradient accent */}
+                  <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}60, ${colors.hex}10)` }} />
+
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                    style={{ background: colors.bg, border: `1px solid ${colors.border}` }}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
+                    style={{ background: colors.bg, border: `1px solid ${colors.border}`, boxShadow: `0 0 12px ${colors.glow}` }}
                   >
                     <bot.icon className={`w-6 h-6 ${colors.icon}`} />
                   </div>
@@ -391,7 +394,7 @@ export default function Landing() {
                   <p className="micro-label mb-2" style={{ color: colors.hex }}>
                     {bot.tagline}
                   </p>
-                  <h3 className="text-xl font-bold text-white mb-3">{bot.name}</h3>
+                  <h3 className="text-xl font-heading font-bold text-white mb-3">{bot.name}</h3>
                   <p className="text-white/45 text-sm leading-relaxed mb-6">{bot.description}</p>
 
                   <ul className="space-y-2.5">

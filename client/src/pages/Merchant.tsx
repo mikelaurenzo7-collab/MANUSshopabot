@@ -48,35 +48,40 @@ export default function MerchantPage() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0] flex-col md:flex-row">
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col md:flex-row">
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-[#1e293b]">
+      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08]">
         {/* Header Bar */}
-        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0 gap-2">
+        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <Package className="text-cyan-400 w-4 md:w-5 h-4 md:h-5 shrink-0" />
+            <div className="relative shrink-0">
+              <Package className="text-cyan-400 w-4 md:w-5 h-4 md:h-5" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+            </div>
             <div className="min-w-0">
-              <h1 className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest font-bold text-white truncate">Merchant Bot</h1>
-              <p className="font-mono text-[8px] md:text-[9px] text-[#64748b] hidden sm:block">Inventory sync, auto-fulfillment, pricing matrices.</p>
+              <h1 className="font-heading text-xs md:text-sm font-bold text-white truncate tracking-tight">Merchant Bot</h1>
+              <p className="font-mono text-[8px] md:text-[9px] text-muted-foreground hidden sm:block">Inventory sync · auto-fulfillment · pricing matrices</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 md:gap-2 shrink-0">
-             <span className="font-mono text-[8px] md:text-[9px] tracking-widest uppercase text-[#64748b] hidden sm:inline">Engine:</span>
-             <span className={`font-mono text-[9px] md:text-[10px] uppercase font-bold ${merchantStatus.status === 'running' ? 'text-[#f59e0b]' : 'text-[#00ff41]'}`}>
-               {merchantStatus.status === 'running' ? 'ON' : 'IDLE'}
-             </span>
+          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+            <span className={`font-mono text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5 ${merchantStatus.status === 'running' ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${merchantStatus.status === 'running' ? 'bg-amber-400 animate-pulse' : 'bg-cyan-400'}`} />
+              {merchantStatus.status === 'running' ? 'RUNNING' : 'READY'}
+            </span>
           </div>
         </div>
+        {/* Accent gradient line under header */}
+        <div className="h-px bg-gradient-to-r from-cyan-500/50 via-cyan-500/10 to-transparent shrink-0" />
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
           <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
             
             {/* Store Triage Selector */}
-            <div className="border border-[#1e293b] bg-[#0a0a0a] p-3 md:p-4 relative flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+            <div className="border border-white/[0.08] bg-black/40 p-3 md:p-4 relative flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
               <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />
               <div className="flex items-center gap-4 w-full pl-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b] shrink-0">Active Source:</span>
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground shrink-0">Active Source:</span>
                 <div className="flex-1 max-w-[300px] relative">
                   <select
                     value={selectedStore}
@@ -86,7 +91,7 @@ export default function MerchantPage() {
                       setEntityType(null);
                     }}
                     disabled={storesLoading}
-                    className="bg-[#050505] border border-[#1e293b] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">{storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"}</option>
                     {stores?.map((s: any) => (
@@ -106,53 +111,53 @@ export default function MerchantPage() {
             </div>
 
             {!storeId ? (
-              <div className="border border-[#1e293b] border-dashed p-12 flex flex-col items-center justify-center text-center">
-                <Store className="w-8 h-8 text-[#64748b]/40 mb-4" />
-                <p className="font-mono text-xs uppercase tracking-widest text-[#64748b] font-bold">No Store Selected</p>
-                <p className="font-mono text-[9px] text-[#64748b] mt-2 opacity-70">Choose a store from the dropdown above to view inventory and order data.</p>
+              <div className="border border-white/[0.08] border-dashed p-12 flex flex-col items-center justify-center text-center">
+                <Store className="w-8 h-8 text-muted-foreground/40 mb-4" />
+                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground font-bold">No Store Selected</p>
+                <p className="font-mono text-[9px] text-muted-foreground mt-2 opacity-70">Choose a store from the dropdown above to view inventory and order data.</p>
               </div>
             ) : (
                <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'} gap-6`}>
                  
                  {/* Product DB */}
-                 <div className="border border-[#1e293b] bg-[#0a0a0a] flex flex-col min-h-[400px]">
-                    <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                 <div className="border border-white/[0.08] bg-black/40 flex flex-col min-h-[400px]">
+                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-[#050505]">
                       <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Layers className="w-3 h-3 text-cyan-400 mr-2" /> Data: Products</h2>
                       <Badge count={products?.length || 0} />
                     </div>
                     <div className="flex-1 p-0 overflow-auto custom-scrollbar">
                       {productsLoading ? (
-                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                        <div className="p-8 text-center text-muted-foreground font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
                       ) : !products?.length ? (
                         <div className="p-8 text-center">
-                          <Package className="w-6 h-6 text-[#64748b]/40 mx-auto mb-2" />
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748b] font-bold">No Products</p>
-                          <p className="font-mono text-[9px] text-[#64748b] mt-1 opacity-70">Products will appear here once synced from your store.</p>
+                          <Package className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground font-bold">No Products</p>
+                          <p className="font-mono text-[9px] text-muted-foreground mt-1 opacity-70">Products will appear here once synced from your store.</p>
                         </div>
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
-                            <tr className="border-b border-[#1e293b] bg-[#050505]">
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal w-1/2">Product Title</th>
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Stock</th>
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Price</th>
+                            <tr className="border-b border-white/[0.08] bg-[#050505]">
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal w-1/2">Product Title</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal">Stock</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal text-right">Price</th>
                             </tr>
                           </thead>
                           <tbody>
                             {products.map((p: any) => {
                               const isSelected = selectedEntity?.id === p.id && entityType === "product";
-                              const stockColor = p.stockQuantity && p.stockQuantity < 5 ? "text-red-500 font-bold" : "text-[#00ff41]";
+                              const stockColor = p.stockQuantity && p.stockQuantity < 5 ? "text-red-500 font-bold" : "text-emerald-400";
                               return (
                                 <tr 
                                   key={p.id} 
                                   onClick={() => handleEntitySelect("product", p)}
-                                  className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-cyan-400' : 'hover:bg-[#1e293b]/20'} relative`}
+                                  className={`border-b border-white/[0.08] cursor-pointer transition-colors ${isSelected ? 'bg-white/[0.04] border-l border-l-cyan-400' : 'hover:bg-white/[0.025]'} relative`}
                                 >
-                                 <td className="px-4 py-2 font-bold text-[#e2e8f0] text-[10px] uppercase truncate max-w-[150px]">
+                                 <td className="px-4 py-2 font-bold text-white text-[10px] uppercase truncate max-w-[150px]">
                                    {p.title}
                                  </td>
                                  <td className={`px-4 py-2 text-[10px] ${stockColor}`}>{p.stockQuantity ?? "N/A"}</td>
-                                 <td className="px-4 py-2 text-right text-[#00ff41] text-[10px] tracking-wider">
+                                 <td className="px-4 py-2 text-right text-emerald-400 text-[10px] tracking-wider">
                                    ${((p.price ?? 0) / 100).toFixed(2)}
                                  </td>
                                 </tr>
@@ -165,44 +170,44 @@ export default function MerchantPage() {
                  </div>
 
                  {/* Order Stream */}
-                 <div className="border border-[#1e293b] bg-[#0a0a0a] flex flex-col min-h-[400px]">
-                    <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
-                      <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Activity className="w-3 h-3 text-[#f59e0b] mr-2" /> Stream: Orders</h2>
+                 <div className="border border-white/[0.08] bg-black/40 flex flex-col min-h-[400px]">
+                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                      <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Activity className="w-3 h-3 text-amber-400 mr-2" /> Stream: Orders</h2>
                       <Badge count={orders?.length || 0} />
                     </div>
                     <div className="flex-1 p-0 overflow-auto custom-scrollbar">
                       {ordersLoading ? (
-                        <div className="p-8 text-center text-[#64748b] font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                        <div className="p-8 text-center text-muted-foreground font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
                       ) : !orders?.length ? (
                         <div className="p-8 text-center">
-                          <ShoppingCart className="w-6 h-6 text-[#64748b]/40 mx-auto mb-2" />
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748b] font-bold">No Orders</p>
-                          <p className="font-mono text-[9px] text-[#64748b] mt-1 opacity-70">Orders will appear here as they arrive from your store.</p>
+                          <ShoppingCart className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground font-bold">No Orders</p>
+                          <p className="font-mono text-[9px] text-muted-foreground mt-1 opacity-70">Orders will appear here as they arrive from your store.</p>
                         </div>
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
-                            <tr className="border-b border-[#1e293b] bg-[#050505]">
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal w-1/3">Order ID</th>
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Status</th>
-                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Total</th>
+                            <tr className="border-b border-white/[0.08] bg-[#050505]">
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal w-1/3">Order ID</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal">Status</th>
+                              <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal text-right">Total</th>
                             </tr>
                           </thead>
                           <tbody>
                             {orders.map((o: any) => {
                               const isSelected = selectedEntity?.id === o.id && entityType === "order";
-                              const sCol = o.financialStatus === "paid" ? "text-[#00ff41]" : "text-[#f59e0b]";
+                              const sCol = o.financialStatus === "paid" ? "text-emerald-400" : "text-amber-400";
                               return (
                                 <tr 
                                   key={o.id} 
                                   onClick={() => handleEntitySelect("order", o)}
-                                  className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-[#f59e0b]' : 'hover:bg-[#1e293b]/20'} relative`}
+                                  className={`border-b border-white/[0.08] cursor-pointer transition-colors ${isSelected ? 'bg-white/[0.04] border-l border-l-amber-400' : 'hover:bg-white/[0.025]'} relative`}
                                 >
-                                 <td className="px-4 py-2 font-bold text-[#e2e8f0] text-[10px] uppercase truncate max-w-[120px]">
+                                 <td className="px-4 py-2 font-bold text-white text-[10px] uppercase truncate max-w-[120px]">
                                    #{o.externalId || o.id}
                                  </td>
                                  <td className={`px-4 py-2 text-[9px] uppercase tracking-widest ${sCol}`}>{o.financialStatus}</td>
-                                 <td className="px-4 py-2 text-right text-[#00ff41] text-[10px] tracking-wider">
+                                 <td className="px-4 py-2 text-right text-emerald-400 text-[10px] tracking-wider">
                                    ${((o.totalAmount ?? 0) / 100).toFixed(2)}
                                  </td>
                                 </tr>
@@ -222,9 +227,9 @@ export default function MerchantPage() {
       </div>
 
       {/* Metadata Inspector (Rig      {/* Right Inspector */}
-      <aside className={`${isMobile ? 'w-full' : 'w-[380px] shrink-0'} bg-[#0a0a0a] flex flex-col ${isMobile ? 'border-t' : 'border-l'} border-[#1e293b]`}>
-        <div className="h-14 flex items-center px-4 border-b border-[#1e293b] justify-between shrink-0 bg-[#050505]">
-          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b]">
+      <aside className={`${isMobile ? 'w-full' : 'w-[380px] shrink-0'} bg-black/40 flex flex-col ${isMobile ? 'border-t' : 'border-l'} border-white/[0.08]`}>
+        <div className="h-14 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
+          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
             Merchant Inspector
           </span>
           <span className="flex items-center gap-2">
@@ -235,15 +240,15 @@ export default function MerchantPage() {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
            {!selectedEntity ? (
              <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
-                <Target className="w-6 h-6 text-[#64748b] mb-4" />
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b]">Select an entity stream to view telemetry</p>
+                <Target className="w-6 h-6 text-muted-foreground mb-4" />
+                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Select an entity stream to view telemetry</p>
              </div>
            ) : entityType === "product" ? (
              <div className="space-y-6">
                 <div>
-                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2 break-all">{selectedEntity.title}</h2>
+                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-white/[0.08] pb-2 break-all">{selectedEntity.title}</h2>
                    <div className="flex justify-between items-center mt-3">
-                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Drizzle ID</span>
+                      <span className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase">Drizzle ID</span>
                       <span className="font-mono text-[10px] text-white">[{selectedEntity.id}]</span>
                    </div>
                 </div>
@@ -252,15 +257,15 @@ export default function MerchantPage() {
                    <InspectorRow label="Platform ID" value={`${selectedEntity.externalId || 'N/A'}`} />
                    <InspectorRow label="Vendor" value={`${selectedEntity.vendor || 'UNKNOWN'}`} />
                    <InspectorRow label="Stock Vol" value={`${selectedEntity.stockQuantity ?? '0'}`} 
-                     valueColor={selectedEntity.stockQuantity < 5 ? "text-red-500" : "text-[#00ff41]"} />
+                     valueColor={selectedEntity.stockQuantity < 5 ? "text-red-500" : "text-emerald-400"} />
                    <InspectorRow label="Unit Price" value={`$${((selectedEntity.price ?? 0) / 100).toFixed(2)}`} valueColor="text-white" />
-                   <InspectorRow label="Competitor Avg" value={`$${((selectedEntity.competitorPrice ?? 0) / 100).toFixed(2)}`} valueColor="text-[#64748b]" />
-                   <InspectorRow label="AI Sync State" value={selectedEntity.synced ? "OK" : "PENDING"} valueColor={selectedEntity.synced ? "text-[#00ff41]" : "text-[#f59e0b]"} />
+                   <InspectorRow label="Competitor Avg" value={`$${((selectedEntity.competitorPrice ?? 0) / 100).toFixed(2)}`} valueColor="text-muted-foreground" />
+                   <InspectorRow label="AI Sync State" value={selectedEntity.synced ? "OK" : "PENDING"} valueColor={selectedEntity.synced ? "text-emerald-400" : "text-amber-400"} />
                 </div>
                 
-                <div className="pt-4 border-t border-[#1e293b]">
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Linked Actions</p>
-                  <button className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
+                <div className="pt-4 border-t border-white/[0.08]">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-3">Linked Actions</p>
+                  <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
                      Force DB Sync <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
                   </button>
                 </div>
@@ -268,10 +273,10 @@ export default function MerchantPage() {
            ) : (
              <div className="space-y-6">
                 <div>
-                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2">ORDER #{selectedEntity.externalId || selectedEntity.id}</h2>
+                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-white/[0.08] pb-2">ORDER #{selectedEntity.externalId || selectedEntity.id}</h2>
                    <div className="flex justify-between items-center mt-3">
-                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Transaction Net</span>
-                      <span className="font-mono text-xl font-bold text-[#00ff41]">
+                      <span className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase">Transaction Net</span>
+                      <span className="font-mono text-xl font-bold text-emerald-400">
                          ${((selectedEntity.totalAmount ?? 0) / 100).toFixed(2)}
                       </span>
                    </div>
@@ -280,20 +285,20 @@ export default function MerchantPage() {
                 <div className="space-y-2">
                    <InspectorRow label="Customer Target" value={selectedEntity.customerEmail || 'N/A'} />
                    <InspectorRow label="Fulfillment Stage" value={selectedEntity.fulfillmentStatus?.toUpperCase() || 'UNFULFILLED'} 
-                     valueColor={selectedEntity.fulfillmentStatus === 'fulfilled' ? "text-[#00ff41]" : "text-[#f59e0b]"} />
+                     valueColor={selectedEntity.fulfillmentStatus === 'fulfilled' ? "text-emerald-400" : "text-amber-400"} />
                    <InspectorRow label="Financial Stage" value={selectedEntity.financialStatus?.toUpperCase() || 'PENDING'} 
-                     valueColor={selectedEntity.financialStatus === 'paid' ? "text-[#00ff41]" : "text-[#f59e0b]"} />
-                   <InspectorRow label="Creation Timestamp" value={new Date(selectedEntity.createdAt).toLocaleString()} valueColor="text-[#64748b]" />
+                     valueColor={selectedEntity.financialStatus === 'paid' ? "text-emerald-400" : "text-amber-400"} />
+                   <InspectorRow label="Creation Timestamp" value={new Date(selectedEntity.createdAt).toLocaleString()} valueColor="text-muted-foreground" />
                 </div>
                 
-                <div className="pt-4 border-t border-[#1e293b]">
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Processing Overrides</p>
+                <div className="pt-4 border-t border-white/[0.08]">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-3">Processing Overrides</p>
                   <button 
                     onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id, storeId: storeId! })}
                     disabled={autoFulfill.isPending || selectedEntity.fulfillmentStatus === 'fulfilled'}
-                    className="w-full bg-[#050505] border border-[#1e293b] hover:border-[#f59e0b] hover:text-[#f59e0b] disabled:opacity-50 disabled:border-[#1e293b] disabled:text-[#64748b] text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-[#f59e0b] hover:text-amber-400 disabled:opacity-50 disabled:border-white/[0.08] disabled:text-muted-foreground text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >
-                     {autoFulfill.isPending ? "PROCESSING..." : "Override & Fulfill"} <Truck className="w-3 h-3 group-hover:text-[#f59e0b]" />
+                     {autoFulfill.isPending ? "PROCESSING..." : "Override & Fulfill"} <Truck className="w-3 h-3 group-hover:text-amber-400" />
                   </button>
                 </div>
              </div>
@@ -306,16 +311,16 @@ export default function MerchantPage() {
 
 function Badge({ count }: { count: number }) {
   return (
-    <div className="bg-[#1e293b] text-[#e2e8f0] font-mono text-[9px] font-bold px-2 py-0.5 rounded-none">
+    <div className="bg-[#1e293b] text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded-none">
       {count}
     </div>
   );
 }
 
-function InspectorRow({ label, value, valueColor = "text-[#e2e8f0]" }: { label: string, value: string, valueColor?: string }) {
+function InspectorRow({ label, value, valueColor = "text-white" }: { label: string, value: string, valueColor?: string }) {
   return (
-    <div className="flex justify-between items-center border-b border-[#1e293b]/50 py-1.5">
-      <span className="font-mono text-[10px] uppercase text-[#64748b]">{label}</span>
+    <div className="flex justify-between items-center border-b border-white/[0.08]/50 py-1.5">
+      <span className="font-mono text-[10px] uppercase text-muted-foreground">{label}</span>
       <span className={`font-mono text-[10px] font-bold ${valueColor} text-right max-w-[60%] truncate`}>{value}</span>
     </div>
   );
