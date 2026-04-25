@@ -815,6 +815,6 @@
 - [x] Dark tooltip styles applied to all 3 charts
 - [x] Area chart gradient updated to sky-400
 ### Component Polish
-- [ ] SubscriptionGate: improve visual hierarchy of upgrade card (future sprint)
-- [ ] Error boundaries: add branded icon/illustration to error state (future sprint)
-- [ ] Onboarding: step indicator labels, bot card hover glow (future sprint)
+- [x] SubscriptionGate: premium redesign — gradient border, ambient glow, icon badge, gradient CTA button, feature list with icon circles
+- [x] Error boundaries: branded Bot icon illustration, gradient CTA, Try Again + Reload actions, ambient glow
+- [x] Onboarding: step indicator labels with sky/emerald color states, gradient connector lines, bot card hover glow + scale effect

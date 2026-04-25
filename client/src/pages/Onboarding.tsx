@@ -44,25 +44,38 @@ const STEPS = [
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {STEPS.map((step, i) => (
-        <div key={step.id} className="flex items-center gap-2">
-          <div
-            className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-              step.id < currentStep
-                ? "bg-emerald-500 text-white"
-                : step.id === currentStep
-                  ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                  : "bg-secondary text-muted-foreground"
-            }`}
-          >
-            {step.id < currentStep ? <CheckCircle2 className="h-4 w-4" /> : step.id}
+    <div className="flex items-center justify-center gap-1 mb-8">
+      {STEPS.map((step, i) => {
+        const isComplete = step.id < currentStep;
+        const isActive = step.id === currentStep;
+        return (
+          <div key={step.id} className="flex items-center gap-1">
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  isComplete
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                    : isActive
+                      ? "bg-sky-500 text-white ring-4 ring-sky-500/20 shadow-lg shadow-sky-500/30"
+                      : "bg-white/[0.05] text-muted-foreground border border-white/[0.08]"
+                }`}
+              >
+                {isComplete ? <CheckCircle2 className="h-4 w-4" /> : step.id}
+              </div>
+              <span className={`text-[10px] font-medium hidden sm:block transition-colors ${
+                isActive ? "text-sky-400" : isComplete ? "text-emerald-400" : "text-muted-foreground"
+              }`}>
+                {step.title.split(" ").slice(0, 2).join(" ")}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`h-0.5 w-10 mb-5 transition-all duration-500 ${
+                isComplete ? "bg-gradient-to-r from-emerald-500 to-sky-500" : "bg-white/[0.06]"
+              }`} />
+            )}
           </div>
-          {i < STEPS.length - 1 && (
-            <div className={`h-0.5 w-8 transition-all duration-300 ${step.id < currentStep ? "bg-emerald-500" : "bg-border"}`} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -103,19 +116,23 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {bots.map(({ name, icon: Icon, color, description }) => (
-          <Card key={name} className={`border ${color.split(" ").find(c => c.startsWith("border")) || "border-border/50"} bg-card`}>
-            <CardContent className="p-4 space-y-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-foreground">{name}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{description}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {bots.map(({ name, icon: Icon, color, description }) => {
+          const borderClass = color.split(" ").find(c => c.startsWith("border")) || "border-white/[0.08]";
+          const glowColor = color.includes("sky") ? "hover:shadow-sky-500/10" : color.includes("cyan") ? "hover:shadow-cyan-500/10" : "hover:shadow-amber-500/10";
+          return (
+            <Card key={name} className={`border ${borderClass} bg-card/50 backdrop-blur-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${glowColor} cursor-default`}>
+              <CardContent className="p-5 space-y-3">
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${color} border`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm text-foreground">{name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="flex justify-center">
