@@ -11,7 +11,6 @@ import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
-import { registerProfitBotScheduledRoute } from "../scheduledProfitBot";
 import { generalRateLimiter, webhookRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
@@ -115,8 +114,6 @@ async function startServer() {
   registerShopifyWebhookRoutes(app);
   // Stripe webhook (subscription lifecycle: created, updated, canceled, payment_failed)
   registerStripeWebhook(app);
-  // Profit Bot scheduled endpoint (daily 10am analysis from Manus scheduled task)
-  registerProfitBotScheduledRoute(app);
   // tRPC API
   app.use(
     "/api/trpc",

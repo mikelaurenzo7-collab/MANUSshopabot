@@ -3,7 +3,7 @@
  *
  * The central factory for all social media adapters.
  * The Social Bot uses this registry to post content,
- * manage ads, and pull analytics across all 6 platforms.
+ * manage ads, and pull analytics across all 7 platforms.
  *
  * Usage:
  *   const adapter = getSocialAdapter("instagram");
@@ -17,6 +17,7 @@ export { TikTokAdapter } from "./tiktokAdapter";
 export { TwitterAdapter } from "./twitterAdapter";
 export { PinterestAdapter } from "./pinterestAdapter";
 export { GoogleAdsAdapter } from "./googleAdsAdapter";
+export { GmailAdapter } from "./gmailAdapter";
 
 import type { SocialPlatformAdapter } from "./types";
 import { MetaAdapter } from "./metaAdapter";
@@ -25,6 +26,7 @@ import { TikTokAdapter } from "./tiktokAdapter";
 import { TwitterAdapter } from "./twitterAdapter";
 import { PinterestAdapter } from "./pinterestAdapter";
 import { GoogleAdsAdapter } from "./googleAdsAdapter";
+import { GmailAdapter } from "./gmailAdapter";
 
 // Singleton instances per platform (adapters are stateless)
 const adapters: Record<string, SocialPlatformAdapter> = {
@@ -36,6 +38,7 @@ const adapters: Record<string, SocialPlatformAdapter> = {
   x: new TwitterAdapter(), // alias
   pinterest: new PinterestAdapter(),
   google_ads: new GoogleAdsAdapter(),
+  gmail: new GmailAdapter(),
 };
 
 /**
@@ -56,7 +59,7 @@ export function getSocialAdapter(platform: string): SocialPlatformAdapter {
 /**
  * List all supported social platform identifiers (no aliases).
  */
-export const SUPPORTED_SOCIAL_PLATFORMS = ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"];
+export const SUPPORTED_SOCIAL_PLATFORMS = ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"];
 
 export function getSupportedSocialPlatforms(): string[] {
   return SUPPORTED_SOCIAL_PLATFORMS;

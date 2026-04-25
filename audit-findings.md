@@ -62,3 +62,46 @@
 8. **Analytics Date Range Picker** — 7d/30d/90d/all filter
 9. **Workflow Launch Confirmation** — dialog before launching
 10. **Remove ComponentShowcase** from routes (dev-only page)
+
+---
+
+# Sprint 26: Profit Bot Removal & Full Codebase Audit — April 25, 2026
+
+## Profit Bot Removal — COMPLETE
+All Profit Bot artifacts removed:
+- server/routers/profitBot.ts — deleted
+- server/scheduledProfitBot.ts — deleted
+- server/profitBot.test.ts — deleted
+- client/src/pages/ProfitBot.tsx — deleted
+- routers.ts import/registration — removed
+- _core/index.ts scheduled route — removed
+- DashboardLayout nav item — removed
+- App.tsx route/import — removed
+
+## Remaining "profit" references — ALL LEGITIMATE
+These are e-commerce profit margin/P&L features, not Profit Bot:
+- server/engine/merchantWorkflows.ts: `profit_loss_analysis` workflow (Merchant Bot P&L)
+- server/engine/architectWorkflows.ts: niche research profit margin scoring
+- server/engine/platformEliteWorkflows.ts: `profit_margin` metafield for products
+- server/routers/merchant.ts: margin analysis, profitLeaks, profitability
+- server/enhanced-bots.test.ts: tests for `profit_loss_analysis` workflow
+- client/src/pages/Architect.tsx: profitMarginScore display
+- client/src/pages/Onboarding.tsx: onboarding text about profit margins
+
+## Router Audit — CLEAN
+19 router files, all registered in routers.ts. No orphan routers.
+
+## Client Pages Audit — CLEAN
+17 page files, all registered in App.tsx routes. No orphan pages.
+
+## Nav Audit — CLEAN
+DashboardLayout sidebar: Dashboard (3), Bots (3), Operations (2). All match routes.
+
+## Schema Audit — CLEAN
+All agentType enums: ["architect", "merchant", "social"]. No Profit Bot references.
+
+## Scheduler Audit — CLEAN
+All tasks serve e-commerce bots only.
+
+## Minor Issues Found
+1. adapters.test.ts social platform count may be stale (expects 6, should be 7 with Gmail)

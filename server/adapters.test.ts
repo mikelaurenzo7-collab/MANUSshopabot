@@ -106,16 +106,16 @@ describe("E-Commerce Adapter Registry", () => {
 // ─── Social Adapter Registry Tests ────────────────────────────────────────
 
 describe("Social Adapter Registry", () => {
-  it("supports all 6 social media platforms", () => {
+  it("supports all 7 social media platforms", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toBeInstanceOf(Array);
-    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(6);
+    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(7);
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("meta");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("instagram");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("tiktok");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("twitter");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("pinterest");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("google_ads");
-    
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("gmail");
   });
 
   it("returns an adapter for each supported platform", () => {
