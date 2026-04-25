@@ -30,6 +30,8 @@ const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
 const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
 const WorkflowsPage = lazy(() => import("./pages/Workflows"));
+const ChatPage = lazy(() => import("./pages/Chat"));
+const ApprovalsPage = lazy(() => import("./pages/Approvals"));
 
 function PageLoader() {
   return (
@@ -92,6 +94,8 @@ function Router() {
                     <Route path="/gmail-bot">{() => { window.location.replace("/social"); return null; }}</Route>
                     <Route path="/bot-settings">{() => <ErrorBoundary inline label="Bot Settings"><BotSettingsPage /></ErrorBoundary>}</Route>
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
+                    <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>
+                    <Route path="/approvals">{() => <ErrorBoundary inline label="Approvals"><ApprovalsPage /></ErrorBoundary>}</Route>
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>
