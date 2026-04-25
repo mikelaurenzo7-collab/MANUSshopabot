@@ -77,8 +77,7 @@ export const chatRouter = router({
 
       const result = await invokeLLM({ messages: llmMessages, maxTokens: 1024 });
 
-      const reply =
-        result.choices?.[0]?.message?.content;
+      const reply = result.choices?.[0]?.message?.content;
 
       if (!reply || typeof reply !== "string") {
         throw new Error("Empty response from AI");
