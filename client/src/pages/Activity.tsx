@@ -88,12 +88,12 @@ export default function ActivityPage() {
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-          <Activity className="h-5 w-5 text-primary" />
+      <div className="flex items-center gap-3 page-header">
+        <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
+          <Activity className="h-5 w-5 text-sky-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Activity Log</h1>
+          <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Bot Activity Log</h1>
           <p className="text-sm text-muted-foreground">Timestamped history, approval queue, and manual overrides</p>
         </div>
       </div>

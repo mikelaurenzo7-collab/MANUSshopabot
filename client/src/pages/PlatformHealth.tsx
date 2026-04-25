@@ -191,10 +191,11 @@ export default function PlatformHealth() {
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between page-header">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <Activity className="w-6 h-6 text-primary" />
+          <p className="micro-label mb-1">System Status</p>
+          <h1 className="text-2xl font-heading font-bold tracking-tight flex items-center gap-2">
+            <Activity className="w-6 h-6 text-sky-400" />
             Platform Health
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

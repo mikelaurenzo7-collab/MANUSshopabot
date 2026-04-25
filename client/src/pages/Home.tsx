@@ -359,14 +359,16 @@ export default function Home() {
         <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.05] bg-[#040406] flex flex-col z-20">
           {/* Inspector Header */}
           <div className="h-11 flex items-center px-4 border-b border-white/[0.05] justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/25">
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
               Inspector
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400" />
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
               <span className="text-[9px] font-mono text-emerald-400/70">UPLINK_OK</span>
             </span>
           </div>
+          {/* Gradient line under inspector header */}
+          <div className="h-px bg-gradient-to-r from-sky-500/30 via-transparent to-transparent shrink-0" />
 
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {selectedNode ? (

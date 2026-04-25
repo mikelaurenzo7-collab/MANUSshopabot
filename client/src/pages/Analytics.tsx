@@ -64,10 +64,12 @@ function EmptyAnalyticsState({
   description: string;
 }) {
   return (
-    <div className="h-full min-h-52 flex flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.02] px-6 text-center">
-      <Package className="h-8 w-8 text-white/30 mb-3" />
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground mt-1 max-w-sm">{description}</p>
+    <div className="empty-state">
+      <div className="empty-state-icon">
+        <Package className="h-5 w-5 text-white/25" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1.5 max-w-sm leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -202,13 +204,13 @@ export default function AnalyticsPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between page-header">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-            <BarChart3 className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
+            <BarChart3 className="h-5 w-5 text-sky-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Analytics Dashboard</h1>
+            <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Analytics Dashboard</h1>
             <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
           </div>
         </div>

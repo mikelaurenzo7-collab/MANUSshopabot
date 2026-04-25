@@ -75,9 +75,9 @@ export default function BotSettings() {
   return (
     <div className="page-enter p-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div>
+      <div className="page-header">
         <p className="micro-label mb-1">Configuration</p>
-        <h1 className="text-2xl font-bold text-white">Bot Settings</h1>
+        <h1 className="text-2xl font-heading font-bold text-white">Bot Settings</h1>
         <p className="text-sm text-white/40 mt-0.5">Configure individual bot behavior, memory, and safety rules</p>
       </div>
 
