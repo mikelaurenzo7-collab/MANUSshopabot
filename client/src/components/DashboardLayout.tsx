@@ -16,6 +16,8 @@ import {
   Menu,
   X,
   Globe,
+  Mail,
+  Sliders,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -42,6 +44,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { title: "Builder Bot", url: "/architect", icon: Bot },
         { title: "Merchant Bot", url: "/merchant", icon: Package },
         { title: "Social Bot", url: "/social", icon: Megaphone },
+        { title: "Gmail Bot", url: "/gmail-bot", icon: Mail },
       ],
     },
     {
@@ -49,6 +52,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       items: [
         { title: "Integrations", url: "/integrations", icon: Zap },
         { title: "Analytics", url: "/analytics", icon: Settings },
+        { title: "Bot Settings", url: "/bot-settings", icon: Sliders },
       ],
     },
   ];

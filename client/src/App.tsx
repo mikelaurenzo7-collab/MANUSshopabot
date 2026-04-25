@@ -28,6 +28,8 @@ const PluginStorePage = lazy(() => import("./pages/PluginStore"));
 const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
+const GmailBotPage = lazy(() => import("./pages/GmailBot"));
+const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
 
 function PageLoader() {
   return (
@@ -87,6 +89,8 @@ function Router() {
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/profile" component={ProfilePage} />
+                    <Route path="/gmail-bot" component={GmailBotPage} />
+                    <Route path="/bot-settings" component={BotSettingsPage} />
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>

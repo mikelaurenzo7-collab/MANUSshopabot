@@ -601,17 +601,17 @@
 
 ### Gmail Bot Integration
 - [x] Add Google OAuth flow for Gmail (server/socialOAuth.ts + connectors.ts)
-- [ ] Add Gmail API helpers (read, send, label emails)
-- [ ] Add Gmail Bot to DashboardLayout sidebar
-- [ ] Create GmailBot.tsx page (inbox view, auto-reply config, templates)
-- [ ] Wire Gmail Bot to tRPC router
+- [x] Add Gmail API helpers (read, send, label emails) — gmailBot.ts router created
+- [x] Add Gmail Bot to DashboardLayout sidebar (Mail icon, /gmail-bot route)
+- [x] Create GmailBot.tsx page (inbox view, auto-reply config, templates)
+- [x] Wire Gmail Bot to tRPC router (gmailBotRouter registered in routers.ts)
 
 ### BotSettings UI Page
-- [ ] Create BotSettings.tsx with per-bot configuration tabs
-- [ ] Bot instructions editor (custom prompts, personality)
-- [ ] Bot memory viewer (learned patterns, decision history)
-- [ ] Bot schedule manager (cron editor, interval picker)
-- [ ] Bot safety rules editor (approval thresholds, spending limits)
+- [x] Create BotSettings.tsx with per-bot configuration tabs (instructions, memory, schedules, safety)
+- [x] Bot instructions editor (custom prompts, personality)
+- [x] Bot memory viewer (learned patterns, decision history)
+- [x] Bot schedule manager (cron editor, interval picker)
+- [x] Bot safety rules editor (approval thresholds, spending limits)
 
 ### Profit Bot Daily Schedule
 - [x] Create /api/scheduled/profit-bot endpoint
