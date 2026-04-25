@@ -22,7 +22,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Loader2, Database, Zap, Bot, Activity, Box,
   ShoppingCart, Globe, Workflow, Package, Megaphone,
-  Server, TrendingUp, Layers, Cpu, CheckCircle2, AlertCircle
+  Server, TrendingUp, Layers, Cpu, CheckCircle2, AlertCircle, RefreshCw
 } from "lucide-react";
 
 // ─── Node Types ────────────────────────────────────────────────────────────────
@@ -258,9 +258,22 @@ export default function Home() {
   if (metricsError || agentError) {
     return (
       <div className="page-enter flex h-full w-full items-center justify-center bg-[#050505]">
-        <div className="text-center">
+        <div className="text-center rounded-2xl border border-red-500/20 bg-red-500/[0.03] px-8 py-7 shadow-[0_0_40px_rgba(239,68,68,0.08)]">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/25 bg-red-500/10">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+          </div>
           <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-2">Dashboard Error</p>
-          <p className="text-[10px] text-white/30">{(metricsError || agentError)?.message || "Failed to load dashboard data"}</p>
+          <p className="mx-auto max-w-sm text-[11px] leading-relaxed text-white/35">
+            {(metricsError || agentError)?.message || "Failed to load dashboard data"}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 transition-all hover:border-sky-500/30 hover:bg-sky-500/10 hover:text-sky-300"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -282,9 +295,9 @@ export default function Home() {
           <Loader2 className="w-3 h-3 animate-spin text-white/20" />
         ) : (
           <>
-            <StatusPill label="Revenue" value={`$${revenue}`} color="text-emerald-400" />
-            <StatusPill label="Orders" value={String(metrics?.totalOrders ?? 0)} color="text-sky-400" />
-            <StatusPill label="Products" value={String(metrics?.activeProducts ?? 0)} color="text-violet-400" />
+            <StatusPill label="Revenue" value={`$${revenue}`} color="text-emerald-400" trend="↗" />
+            <StatusPill label="Orders" value={String(metrics?.totalOrders ?? 0)} color="text-sky-400" trend="↗" />
+            <StatusPill label="Products" value={String(metrics?.activeProducts ?? 0)} color="text-violet-400" trend="→" />
             <StatusPill label="Workflows" value={totalRunning > 0 ? `${totalRunning} active` : "idle"} color={totalRunning > 0 ? "text-amber-400" : "text-white/30"} />
             <StatusPill label="Integrations" value={`${totalConnected} linked`} color={totalConnected > 0 ? "text-cyan-400" : "text-white/30"} />
           </>
@@ -447,11 +460,12 @@ export default function Home() {
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 
-function StatusPill({ label, value, color }: { label: string; value: string; color: string }) {
+function StatusPill({ label, value, color, trend }: { label: string; value: string; color: string; trend?: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">{label}</span>
       <span className={`text-[10px] font-mono font-semibold ${color}`}>{value}</span>
+      {trend && <span className={`text-[10px] font-mono ${color}`}>{trend}</span>}
     </div>
   );
 }
