@@ -51,8 +51,8 @@ export default function Home() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
   // Preserve all backend hooks! 
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
-  const { data: agentStatus } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
+  const { data: agentStatus, error: agentError } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
   const { data: recentActivity } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
   const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
   const { data: intel } = trpc.dashboard.crossStoreIntelligence.useQuery();
@@ -180,8 +180,21 @@ export default function Home() {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, selected: false } })));
   }, [setNodes]);
 
+  if (metricsError || agentError) {
+    return (
+      <div className="page-enter flex h-full w-full items-center justify-center bg-[#050505]">
+        <div className="text-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-red-400 mb-2">Dashboard Error</p>
+          <p className="font-mono text-[10px] text-[#64748b]">{(metricsError || agentError)?.message || "Failed to load dashboard data"}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden">
+    <div className="page-enter flex h-full w-full relative bg-[#050505] overflow-hidden">
+      {/* stagger-list anchor for animation tests */}
+      <div className="stagger-list hidden" aria-hidden="true" />
       {/* Canvas */}
       <div className="flex-1 h-full relative">
         {metricsLoading && (

@@ -1,8 +1,39 @@
 /**
- * Webhook Processor Tests
+ * Webhook Processor Tests — uses vi.mock to avoid real Redis connection
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock BullMQ Queue before importing the processor so no real Redis is used
+vi.mock('bullmq', () => {
+  const mockJob = {
+    id: 'mock-job-id',
+    data: {} as any,
+    opts: {},
+  };
+
+  const MockQueue = vi.fn().mockImplementation(() => ({
+    add: vi.fn().mockImplementation((_name: string, data: any) => {
+      mockJob.data = data;
+      return Promise.resolve(mockJob);
+    }),
+    close: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+  }));
+
+  const MockWorker = vi.fn().mockImplementation(() => ({
+    on: vi.fn(),
+    close: vi.fn().mockResolvedValue(undefined),
+  }));
+
+  const MockQueueEvents = vi.fn().mockImplementation(() => ({
+    on: vi.fn(),
+    close: vi.fn().mockResolvedValue(undefined),
+  }));
+
+  return { Queue: MockQueue, Worker: MockWorker, QueueEvents: MockQueueEvents };
+});
+
 import { enqueueWebhook, WebhookPayload } from './processors/webhookProcessor';
 
 describe('Webhook Processor', () => {
@@ -19,16 +50,12 @@ describe('Webhook Processor', () => {
         timestamp: Date.now(),
       };
 
-      // This test will fail without Redis running, but demonstrates the structure
-      // In production, use Redis or mock the queue
-      try {
-        const job = await enqueueWebhook(payload);
-        expect(job).toBeDefined();
-        expect(job.data).toEqual(payload);
-      } catch (err) {
-        // Expected to fail without Redis in test environment
-        expect(err).toBeDefined();
-      }
+      const job = await enqueueWebhook(payload);
+      expect(job).toBeDefined();
+      expect(job.data).toMatchObject({
+        platform: 'shopify',
+        event: 'order.created',
+      });
     });
 
     it('should generate consistent job IDs for deduplication', async () => {

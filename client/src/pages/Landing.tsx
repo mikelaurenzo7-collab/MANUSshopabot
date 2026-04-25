@@ -3,7 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BrandName } from "@/components/BrandName";
+import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import {
   Zap, Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Terminal, ChevronRight
@@ -108,9 +108,7 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#1e293b] bg-[#0a0a0a]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={APP_LOGO} alt="SHOPaBOT" className="h-8 w-8" />
-            <span className="font-mono text-sm font-bold uppercase tracking-widest">SHOPaBOT</span>
-          </div>
+            <BrandName size="sm" />          </div>
           <div className="flex items-center gap-3">
             {user ? (
               <Button

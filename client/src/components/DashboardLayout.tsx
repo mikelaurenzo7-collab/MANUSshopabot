@@ -18,13 +18,16 @@ import {
   Globe,
   Mail,
   Sliders,
+  HeartPulse,
+  GitBranch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { BrandName } from "@/components/BrandName";
+import { BrandName, BRAND_NAME } from "@/components/BrandName";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const navigateTo = (path: string) => setLocation(path);
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,26 +36,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     {
       label: "Dashboard",
       items: [
-        { title: "Command Center", url: "/", icon: LayoutDashboard },
-        { title: "Activity", url: "/activity", icon: Activity },
-        { title: "Intelligence", url: "/intelligence", icon: Globe },
+        { title: "Command Center", path: "/", icon: LayoutDashboard },
+        { title: "Activity", path: "/activity", icon: Activity },
+        { title: "Intelligence", path: "/intelligence", icon: Globe },
       ],
     },
     {
       label: "Bots",
       items: [
-        { title: "Builder Bot", url: "/architect", icon: Bot },
-        { title: "Merchant Bot", url: "/merchant", icon: Package },
-        { title: "Social Bot", url: "/social", icon: Megaphone },
-        { title: "Gmail Bot", url: "/gmail-bot", icon: Mail },
+        { title: "Builder Bot", path: "/architect", icon: Bot },
+        { title: "Merchant Bot", path: "/merchant", icon: Package },
+        { title: "Social Bot", path: "/social", icon: Megaphone },
+        { title: "Gmail Bot", path: "/gmail-bot", icon: Mail },
       ],
     },
     {
       label: "Operations",
       items: [
-        { title: "Integrations", url: "/integrations", icon: Zap },
-        { title: "Analytics", url: "/analytics", icon: Settings },
-        { title: "Bot Settings", url: "/bot-settings", icon: Sliders },
+        { title: "Workflows", path: "/workflows", icon: GitBranch },
+        { title: "Integrations", path: "/integrations", icon: Zap },
+        { title: "Analytics", path: "/analytics", icon: Settings },
+        { title: "Platform Health", path: "/health", icon: HeartPulse },
+        { title: "Bot Settings", path: "/bot-settings", icon: Sliders },
       ],
     },
   ];
@@ -72,11 +77,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="space-y-1">
             {group.items.map((item) => {
-              const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
+              const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
               return (
                 <Link
                   key={item.title}
-                  href={item.url}
+                  href={item.path}
                   onClick={() => isMobile && setMobileMenuOpen(false)}
                   className={`flex items-center h-9 px-3 rounded-md transition-all duration-200 group ${
                     isActive

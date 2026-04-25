@@ -34,8 +34,10 @@ export default function Architect() {
       const isSubscriptionGate = err.message.includes("upgrade") || err.message.includes("paid plan");
       if (isSubscriptionGate) {
         setError("Upgrade required to launch bot workflows. Choose a plan to continue.");
+        toast.error("Upgrade required to launch bot workflows.");
       } else {
         setError(err.message);
+        toast.error(err.message || "Failed to launch workflow");
       }
     }
   });

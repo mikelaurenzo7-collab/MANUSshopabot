@@ -30,6 +30,7 @@ const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
 const GmailBotPage = lazy(() => import("./pages/GmailBot"));
 const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
+const WorkflowsPage = lazy(() => import("./pages/Workflows"));
 
 function PageLoader() {
   return (
@@ -91,6 +92,7 @@ function Router() {
                     <Route path="/profile" component={ProfilePage} />
                     <Route path="/gmail-bot" component={GmailBotPage} />
                     <Route path="/bot-settings" component={BotSettingsPage} />
+                    <Route path="/workflows" component={WorkflowsPage} />
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>
