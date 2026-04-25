@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
 import { createServer } from "http";
 import net from "net";
 import helmet from "helmet";
@@ -21,6 +21,7 @@ import { seedDefaultPlugins } from "../seedPlugins";
 import { validateRequiredEnv } from "./env";
 import { getDb } from "../db";
 import { initializeQueues, shutdownQueues } from "../queue/init";
+import { getQueueHealth } from "../queue/config";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,6 +49,12 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // ─── Hardening basics ───────────────────────────────────────────────────
+  // Hide framework fingerprint and trust the upstream proxy/load balancer so
+  // `req.ip` reflects the real client (used by the rate limiter).
+  app.disable("x-powered-by");
+  app.set("trust proxy", true);
+
   // ─── Security Headers (helmet) ──────────────────────────────────────────
   app.use(helmet({
     contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
@@ -72,14 +79,39 @@ async function startServer() {
     const schedulerStatus = agentScheduler.getStatus();
     const runningTasks = schedulerStatus.filter(task => task.isRunning).length;
     const scheduledTasks = schedulerStatus.filter(task => task.isScheduled).length;
-    const status = db ? "ok" : "degraded";
+
+    // Queue health is best-effort: if Redis is down we still want to return a
+    // health response (degraded), not hang. Cap the probe at 1.5s.
+    let queueHealth: Awaited<ReturnType<typeof getQueueHealth>> | { redis: { connected: false; error: string }; queues: null } = {
+      redis: { connected: false, error: "not_probed" },
+      queues: null,
+    };
+    try {
+      queueHealth = await Promise.race([
+        getQueueHealth(),
+        new Promise<typeof queueHealth>((resolve) =>
+          setTimeout(
+            () => resolve({ redis: { connected: false, error: "probe_timeout" }, queues: null }),
+            1500,
+          ),
+        ),
+      ]);
+    } catch (err) {
+      queueHealth = {
+        redis: { connected: false, error: err instanceof Error ? err.message : String(err) },
+        queues: null,
+      };
+    }
+
+    const dbOk = Boolean(db);
+    const status = dbOk ? "ok" : "degraded";
 
     res.status(status === "ok" ? 200 : 503).json({
       status,
       timestamp: new Date().toISOString(),
       uptimeSeconds: Math.round(process.uptime()),
       database: {
-        connected: Boolean(db),
+        connected: dbOk,
       },
       scheduler: {
         registeredTasks: schedulerStatus.length,
@@ -87,6 +119,7 @@ async function startServer() {
         runningTasks,
         tasks: schedulerStatus,
       },
+      queue: queueHealth,
     });
   });
 
@@ -124,12 +157,41 @@ async function startServer() {
       createContext,
     })
   );
+
+  // ─── Unknown /api/* routes → JSON 404 (do not fall through to the SPA) ──
+  app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) return next();
+    res.status(404).json({ error: "not_found", path: req.originalUrl });
+  });
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // ─── Global error handler (must be the last middleware) ─────────────────
+  // Catches sync + async errors thrown from any route or middleware. Returns
+  // JSON for /api/* paths and a generic 500 elsewhere; logs structured.
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+    const log = (req as any).log ?? logger;
+    log.error("request_error", {
+      path: req.originalUrl,
+      method: req.method,
+      error: err?.message ?? String(err),
+      stack: err?.stack,
+    });
+    if (res.headersSent) {
+      return;
+    }
+    const status = typeof err?.status === "number" ? err.status : 500;
+    if (req.originalUrl.startsWith("/api/")) {
+      res.status(status).json({ error: "internal_server_error" });
+    } else {
+      res.status(status).type("text/plain").send("Internal Server Error");
+    }
+  });
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
@@ -154,15 +216,53 @@ async function startServer() {
     });
   });
 
-  // Graceful shutdown
-  process.on("SIGTERM", async () => {
-    logger.info("server_shutdown_requested");
-    await shutdownQueues();
+  // ─── Graceful shutdown ──────────────────────────────────────────────────
+  let shuttingDown = false;
+  const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info("server_shutdown_requested", { signal });
+    // Stop pulling new work first.
+    try {
+      agentScheduler.stop();
+    } catch (err) {
+      logger.error("scheduler_shutdown_failed", { error: err instanceof Error ? err.message : String(err) });
+    }
+    // Drain queues, then close HTTP server.
+    try {
+      await shutdownQueues();
+    } catch (err) {
+      logger.error("queue_shutdown_failed", { error: err instanceof Error ? err.message : String(err) });
+    }
     server.close(() => {
-      logger.info("server_shutdown_complete");
+      logger.info("server_shutdown_complete", { signal });
       process.exit(0);
     });
+    // Hard-exit safety net so a hung connection cannot block redeploy.
+    setTimeout(() => {
+      logger.error("server_shutdown_forced", { signal });
+      process.exit(1);
+    }, 10_000).unref();
+  };
+
+  process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
+  process.on("SIGINT", () => { void shutdown("SIGINT"); });
+
+  // Surface async errors that escape every other handler instead of dying
+  // silently. We log structured and keep running — the orchestrator/scheduler
+  // is resilient to individual job failures.
+  process.on("unhandledRejection", (reason: unknown) => {
+    logger.error("unhandled_rejection", {
+      error: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+  });
+  process.on("uncaughtException", (err: Error) => {
+    logger.error("uncaught_exception", { error: err.message, stack: err.stack });
   });
 }
 
-startServer().catch((err) => logger.error("server_fatal", { error: err?.message ?? String(err) }));
+startServer().catch((err) => {
+  logger.error("server_fatal", { error: err?.message ?? String(err), stack: err?.stack });
+  process.exit(1);
+});
