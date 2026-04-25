@@ -265,7 +265,7 @@ export default function MerchantPage() {
                 
                 <div className="pt-4 border-t border-white/[0.08]">
                   <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-3">Linked Actions</p>
-                  <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
+                  <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
                      Force DB Sync <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
                   </button>
                 </div>
@@ -296,7 +296,7 @@ export default function MerchantPage() {
                   <button 
                     onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id, storeId: storeId! })}
                     disabled={autoFulfill.isPending || selectedEntity.fulfillmentStatus === 'fulfilled'}
-                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-[#f59e0b] hover:text-amber-400 disabled:opacity-50 disabled:border-white/[0.08] disabled:text-muted-foreground text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:border-white/[0.08] disabled:text-muted-foreground text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >
                      {autoFulfill.isPending ? "PROCESSING..." : "Override & Fulfill"} <Truck className="w-3 h-3 group-hover:text-amber-400" />
                   </button>
@@ -319,7 +319,7 @@ function Badge({ count }: { count: number }) {
 
 function InspectorRow({ label, value, valueColor = "text-white" }: { label: string, value: string, valueColor?: string }) {
   return (
-    <div className="flex justify-between items-center border-b border-white/[0.08]/50 py-1.5">
+    <div className="flex justify-between items-center border-b border-white/[0.04] py-1.5">
       <span className="font-mono text-[10px] uppercase text-muted-foreground">{label}</span>
       <span className={`font-mono text-[10px] font-bold ${valueColor} text-right max-w-[60%] truncate`}>{value}</span>
     </div>

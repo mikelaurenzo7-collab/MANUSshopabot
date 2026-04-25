@@ -168,7 +168,7 @@ export default function Architect() {
                           <tr 
                             key={r.id} 
                             onClick={() => setSelectedReportId(r.id)}
-                            className={`border-b border-white/[0.08] cursor-pointer transition-colors ${isSelected ? 'bg-white/[0.06]/40 border-l border-l-emerald-400' : 'hover:bg-white/[0.06]/20'} relative`}
+                            className={`border-b border-white/[0.08] cursor-pointer transition-colors ${isSelected ? 'bg-white/[0.024] border-l border-l-emerald-400' : 'hover:bg-white/[0.012]'} relative`}
                           >
                            <td className="px-4 py-3 font-bold text-white uppercase truncate">
                              {r.keyword}
@@ -363,7 +363,7 @@ function Badge({ count }: { count: number }) {
 
 function InspectorRow({ label, value }: { label: string, value: string }) {
   return (
-    <div className="flex justify-between items-center border-b border-white/[0.08]/50 py-1.5">
+    <div className="flex justify-between items-center border-b border-white/[0.04] py-1.5">
       <span className="font-mono text-[10px] uppercase text-muted-foreground">{label}</span>
       <span className="font-mono text-[10px] font-bold text-white">{value}</span>
     </div>
