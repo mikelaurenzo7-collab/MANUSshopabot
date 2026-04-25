@@ -773,8 +773,9 @@
 - [ ] Add loading skeletons to BotSettings page (next sprint)
 - [ ] Add input sanitization to all user-facing forms (next sprint)
 - [ ] Provision Redis for BullMQ webhook queuing (infrastructure task)
-- [ ] Wire imageOptimizer to Builder Bot + Merchant Bot (next sprint)
-- [ ] Wire Zod validation into webhook processor (next sprint)
+- [x] Wire imageOptimizer to Builder Bot (architect.optimizeProductImages procedure added)
+- [x] Wire imageOptimizer to stores router (stores.optimizeProductImage procedure added)
+- [x] Wire Zod validation into webhook processor (validateWebhookPayload called in processWebhook)
 
 ### Test Results
 - **546/548 tests passing** (2 remaining require live API credentials: Pinterest + Twitter)
@@ -805,25 +806,25 @@
 ## Store Dashboard — Deep Integration Views (In Progress)
 
 ### Backend: Store Data Procedures
-- [ ] Add storeProducts procedure to stores router (fetch from adapter or DB)
-- [ ] Add storeOrders procedure to stores router (fetch from adapter or DB)
-- [ ] Add storeRevenueSummary procedure to stores router (aggregate from orders)
-- [ ] Add storeBotActivity procedure to stores router (query agentTasks by storeId)
+- [x] stores.products procedure added to stores router (search + status filter)
+- [x] stores.orders procedure added to stores router (status filter + fulfillment)
+- [x] stores.revenueSummary procedure added (today/week/month, AOV, 30-day chart)
+- [x] stores.botActivity procedure added (agent tasks by storeId)
 
 ### Frontend: StoreView Component
-- [ ] Create StoreView.tsx component (tabbed: Overview, Products, Orders, Revenue, Bot Activity)
-- [ ] Overview tab: revenue KPIs, order count, top product, live status badge
-- [ ] Products tab: product grid with images, price, stock level, status badge
-- [ ] Orders tab: recent orders table with customer, total, status, fulfillment timeline
-- [ ] Revenue tab: 30-day sparkline, AOV, refund rate, top performers
-- [ ] Bot Activity tab: timeline of bot actions on this store
+- [x] StoreView.tsx created (slide-over panel, 5 tabs)
+- [x] Overview tab: revenue KPIs, order count, top product, live status badge
+- [x] Products tab: product grid with search, price, stock, status badge
+- [x] Orders tab: orders table with customer, total, status, fulfillment
+- [x] Revenue tab: 30-day area chart, AOV, refund rate, top products
+- [x] Bot Activity tab: timeline of agent tasks per store
 
 ### Frontend: Integrations Hub Redesign
-- [ ] Redesign Integrations page as Store Hub with live KPI cards per store
-- [ ] Add store drill-down modal/panel that opens StoreView
-- [ ] Add platform-specific color accents and icons per store card
-- [ ] Add "Add Store" CTA with platform selector
-- [ ] Add social accounts section with follower counts and last post preview
+- [x] Integrations page redesigned as Store Hub with live KPI cards
+- [x] Store drill-down slide-over panel opens StoreView on click
+- [x] Platform-specific color accents and icons per store card
+- [x] "Add Store" CTA with platform selector in Connect New tab
+- [x] Social Accounts tab with follower counts and disconnect action
 
 ## Store Dashboard — Deep Integration Views (Complete ✅)
 

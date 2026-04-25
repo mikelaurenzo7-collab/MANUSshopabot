@@ -5,6 +5,8 @@ import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { pushProductToStore, syncProductsFromStore } from "../engine/platformBridge";
 import { getRenderedStoreContext } from "../utils/userContext";
+import axios from "axios";
+import { optimizeProductImage } from "../utils/imageOptimizer";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -435,6 +437,63 @@ export const architectRouter = router({
         });
 
         return result;
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      }
+    }),
+
+  /**
+   * Optimize product images for a store — fetches image URLs from DB products,
+   * runs Sharp multi-size optimization, and updates each product's imageUrl with the
+   * CDN-hosted WebP thumbnail URL. Returns per-product results.
+   */
+  optimizeProductImages: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      productIds: z.array(z.number()).min(1).max(50),
+    }))
+    .mutation(async ({ input }) => {
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "image_optimization",
+        title: `Optimizing images for ${input.productIds.length} products`,
+        description: `Running Sharp multi-size optimization for store #${input.storeId}`,
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      const results: { id: number; success: boolean; thumbnailUrl?: string; error?: string }[] = [];
+
+      try {
+        const products = await db.getProductsByStore(input.storeId);
+        const targets = products.filter((p: any) => input.productIds.includes(p.id));
+
+        for (const product of targets) {
+          const imageUrl = (product as any).imageUrl;
+          if (!imageUrl) {
+            results.push({ id: product.id, success: false, error: "No image URL" });
+            continue;
+          }
+          try {
+            const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+            const buffer = Buffer.from(response.data);
+            const optimized = await optimizeProductImage(buffer, `${input.storeId}/${product.id}`);
+            const thumb = optimized.find((o: any) => o.size === "thumbnail" && o.format === "webp");
+            const primaryUrl = thumb?.url || optimized[0]?.url;
+            if (primaryUrl) {
+              await db.updateProduct(product.id, { imageUrl: primaryUrl });
+            }
+            results.push({ id: product.id, success: true, thumbnailUrl: primaryUrl });
+          } catch (err: any) {
+            results.push({ id: product.id, success: false, error: err.message });
+          }
+        }
+
+        const succeeded = results.filter((r) => r.success).length;
+        const failed = results.filter((r) => !r.success).length;
+        await db.updateAgentTask(task.id, { status: failed === targets.length ? "failed" : "completed", result: { succeeded, failed } });
+        return { succeeded, failed, results };
       } catch (error) {
         await db.updateAgentTask(task.id, { status: "failed" });
         throw error;

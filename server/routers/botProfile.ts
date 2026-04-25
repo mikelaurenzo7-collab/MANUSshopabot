@@ -13,6 +13,7 @@ import {
   logBotExecution,
 } from "../db";
 import { TRPCError } from "@trpc/server";
+import { sanitizeName, sanitizeMultiline } from "../utils/sanitize";
 
 const AgentType = z.enum(["architect", "merchant", "social"]);
 const MemoryType = z.enum(["fact", "pattern", "decision", "outcome", "context"]);
@@ -49,6 +50,11 @@ export const botProfileRouter = router({
     )
     .mutation(async ({ ctx, input }: any) => {
       const { agentType, ...updateData } = input;
+      if (updateData.name) updateData.name = sanitizeName(updateData.name, 100);
+      if (updateData.description) updateData.description = sanitizeMultiline(updateData.description, 500);
+      if (updateData.systemPrompt) updateData.systemPrompt = sanitizeMultiline(updateData.systemPrompt, 5000);
+      if (updateData.customInstructions) updateData.customInstructions = sanitizeMultiline(updateData.customInstructions, 5000);
+      if (updateData.personality) updateData.personality = sanitizeMultiline(updateData.personality, 1000);
       const profileId = await upsertBotProfile({
         userId: ctx.user.id,
         agentType,
@@ -88,8 +94,8 @@ export const botProfileRouter = router({
         botProfileId: profile.id,
         userId: ctx.user.id,
         memoryType: input.memoryType,
-        key: input.key,
-        value: input.value,
+        key: sanitizeName(input.key, 200),
+        value: sanitizeMultiline(input.value, 2000),
         confidence: input.confidence || 50,
         tags: input.tags ? JSON.stringify(input.tags) : undefined,
         relatedWorkflowId: input.relatedWorkflowId,
@@ -134,8 +140,8 @@ export const botProfileRouter = router({
         id: input.id,
         botProfileId: profile.id,
         userId: ctx.user.id,
-        name: input.name,
-        description: input.description || undefined,
+        name: sanitizeName(input.name, 100),
+        description: input.description ? sanitizeMultiline(input.description, 500) : undefined,
         taskType: input.taskType,
         triggerType: input.triggerType,
         cronExpression: input.cronExpression || undefined,
@@ -180,8 +186,8 @@ export const botProfileRouter = router({
       const ruleId = await addBotSafetyRule({
         botProfileId: profile.id,
         userId: ctx.user.id,
-        name: input.name,
-        description: input.description || undefined,
+        name: sanitizeName(input.name, 100),
+        description: input.description ? sanitizeMultiline(input.description, 500) : undefined,
         ruleType: input.ruleType,
         condition: JSON.stringify(input.condition),
         action: input.action || "warn",

@@ -6,6 +6,7 @@
 import { Worker, Job } from 'bullmq';
 import { getWebhookQueue } from '../config';
 import { ENV } from '../../_core/env';
+import { validateWebhookPayload } from '../../adapters/validation';
 
 // ─── Webhook Handler Types ────────────────────────────────────────────
 
@@ -98,6 +99,15 @@ async function processWebhook(job: Job<WebhookPayload>) {
     if (job.data.signature) {
       // TODO: Implement signature verification for each platform
       console.log(`[Webhook] Verifying signature for ${platform}`);
+    }
+
+    // ─── Zod Payload Validation ───────────────────────────────────────────
+    const validation = validateWebhookPayload(platform, event, data);
+    if (!validation.valid) {
+      // Log validation failure — don't throw (unknown events are expected)
+      console.warn(`[Webhook] Job ${jobId} payload validation warning (${platform}:${event}): ${validation.error}`);
+    } else {
+      console.log(`[Webhook] Job ${jobId} payload validated successfully (${platform}:${event})`);
     }
 
     // Route to platform-specific handler

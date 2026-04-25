@@ -3,6 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
+import axios from "axios";
+import { optimizeProductImage } from "../utils/imageOptimizer";
 
 const platformEnum = z.enum(["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]);
 
@@ -275,6 +277,38 @@ export const storesRouter = router({
         recentActivity: recentTasks,
         lastOrder: recentOrders[0] || null,
       };
+    }),
+
+  /**
+   * Optimize a product image — resize to thumbnail/medium/large, convert to WebP, upload to S3.
+   * Returns CDN URLs for all sizes plus savings stats.
+   */
+  optimizeProductImage: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      imageUrl: z.string().url(),
+      productId: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const store = await db.getStoreById(input.storeId);
+      if (!store || store.userId !== ctx.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
+      }
+      try {
+        // Fetch the image buffer from the URL, then pass Buffer to the optimizer
+        const response = await axios.get(input.imageUrl, { responseType: "arraybuffer" });
+        const imageBuffer = Buffer.from(response.data);
+        const result = await optimizeProductImage(
+          imageBuffer,
+          `${input.storeId}/${input.productId || "product"}`
+        );
+        return result;
+      } catch (err: any) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Image optimization failed: ${err.message}`,
+        });
+      }
     }),
 
   // ─── Shopify OAuth ──────────────────────────────────────────────────────────

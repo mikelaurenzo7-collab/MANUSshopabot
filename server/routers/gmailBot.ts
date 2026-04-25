@@ -9,6 +9,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSocialAccountsByPlatform } from "../db";
 import { invokeLLM } from "../_core/llm";
+import { sanitizeEmail, sanitizeName, sanitizeMultiline } from "../utils/sanitize";
 
 // ─── Input Schemas ───────────────────────────────────────────────────────
 
@@ -157,11 +158,16 @@ export const gmailBotRouter = router({
     .input(SendEmailInput)
     .mutation(async ({ ctx, input }) => {
       const credentials = await getGmailCredentials(ctx.user.id);
+      // Sanitize inputs before sending
+      const safeSubject = sanitizeName(input.subject, 500);
+      const safeBody = input.isHtml ? input.body : sanitizeMultiline(input.body, 50000);
+      const safeTo = sanitizeEmail(input.to);
+      if (!safeTo) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid email address" });
 
       // Build RFC 2822 MIME message
       const messageParts = [
-        `To: ${input.to}`,
-        `Subject: ${input.subject}`,
+        `To: ${safeTo}`,
+        `Subject: ${safeSubject}`,
         "MIME-Version: 1.0",
         `Content-Type: text/${input.isHtml ? "html" : "plain"}; charset="UTF-8"`,
         "",
