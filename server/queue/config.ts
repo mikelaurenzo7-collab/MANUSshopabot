@@ -6,6 +6,22 @@
 import { Queue, QueueOptions } from 'bullmq';
 import { createClient, RedisClientType } from 'redis';
 import { ENV } from '../_core/env';
+import { logger } from '../_core/logger';
+
+// ─── Redis URL Sanitization ──────────────────────────────────────────────
+// Strip credentials from a Redis URL before exposing it via health endpoints.
+// Returns "redis://<host>:<port>" — never the password.
+export function sanitizeRedisUrl(url: string | undefined | null): string {
+  if (!url) return "";
+  try {
+    const u = new URL(url);
+    const host = u.hostname || "localhost";
+    const port = u.port || (u.protocol === "rediss:" ? "6380" : "6379");
+    return `${u.protocol}//${host}:${port}`;
+  } catch {
+    return "redis://[unparseable]";
+  }
+}
 
 // ─── Redis Connection ────────────────────────────────────────────────────
 
@@ -19,11 +35,11 @@ export async function getRedisClient(): Promise<RedisClientType> {
   });
 
   redisClient.on('error', (err: any) => {
-    console.error('[Redis] Connection error:', err);
+    logger.error('redis_connection_error', { error: err?.message ?? String(err) });
   });
 
   redisClient.on('connect', () => {
-    console.log('[Redis] Connected successfully');
+    logger.info('redis_connected');
   });
 
   await redisClient.connect();
@@ -62,7 +78,7 @@ export async function getWebhookQueue(): Promise<Queue> {
   });
 
   webhookQueue.on('error', (err: any) => {
-    console.error('[Webhook Queue] Error:', err);
+    logger.error('webhook_queue_error', { error: err?.message ?? String(err) });
   });
 
   return webhookQueue;
@@ -76,7 +92,7 @@ export async function getExternalApiQueue(): Promise<Queue> {
   });
 
   externalApiQueue.on('error', (err: any) => {
-    console.error('[External API Queue] Error:', err);
+    logger.error('external_api_queue_error', { error: err?.message ?? String(err) });
   });
 
   return externalApiQueue;
@@ -95,7 +111,7 @@ export async function getQueueHealth() {
     return {
       redis: {
         connected: true,
-        url: ENV.redisUrl,
+        url: sanitizeRedisUrl(ENV.redisUrl),
       },
       queues: {
         webhooks: {
@@ -123,6 +139,52 @@ export async function getQueueHealth() {
       queues: null,
     };
   }
+}
+
+// ─── Failed-Job Inspection (admin) ──────────────────────────────────────
+
+export interface FailedJobSummary {
+  id: string;
+  name: string;
+  attemptsMade: number;
+  failedAt: number | null;
+  failedReason: string | null;
+  data: any;
+}
+
+/**
+ * Return the most recent failed jobs across the webhook + external API
+ * queues, capped at `limit` per queue. Used by the admin UI to triage
+ * stuck integrations without shelling into Redis.
+ *
+ * Failures here are best-effort — if Redis is unreachable we return an
+ * empty list and surface the error in the response wrapper at the router.
+ */
+export async function listRecentFailedJobs(limit = 25): Promise<{
+  webhooks: FailedJobSummary[];
+  externalApis: FailedJobSummary[];
+}> {
+  const summarize = async (q: Queue): Promise<FailedJobSummary[]> => {
+    const jobs = await q.getFailed(0, Math.max(0, limit - 1));
+    return jobs.map((j) => ({
+      id: String(j.id ?? ""),
+      name: j.name,
+      attemptsMade: j.attemptsMade,
+      failedAt: typeof j.finishedOn === "number" ? j.finishedOn : null,
+      failedReason: j.failedReason ?? null,
+      data: j.data,
+    }));
+  };
+
+  const [webhooksQ, apisQ] = await Promise.all([
+    getWebhookQueue(),
+    getExternalApiQueue(),
+  ]);
+  const [webhooks, externalApis] = await Promise.all([
+    summarize(webhooksQ),
+    summarize(apisQ),
+  ]);
+  return { webhooks, externalApis };
 }
 
 // ─── Cleanup ────────────────────────────────────────────────────────────

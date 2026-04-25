@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import {
@@ -247,7 +247,7 @@ export const merchantRouter = router({
           },
         });
 
-        const suggestion = JSON.parse(llmResult.choices[0].message.content as string);
+        const suggestion = parseLLMJson<any>(llmResult.choices[0].message.content, "merchant.priceOptimization");
         await db.updateAgentTask(task.id, { status: "completed", result: suggestion });
 
         // Create approval item for high-impact pricing changes
@@ -334,7 +334,7 @@ export const merchantRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "merchant.demandForecast");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {
@@ -401,7 +401,7 @@ export const merchantRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "merchant.profitabilityAnalysis");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {
@@ -467,7 +467,7 @@ export const merchantRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "merchant.returnAnalysis");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {

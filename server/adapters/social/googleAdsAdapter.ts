@@ -16,6 +16,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 const GOOGLE_ADS_BASE = "https://googleads.googleapis.com/v17";
 
@@ -31,7 +32,7 @@ export class GoogleAdsAdapter implements SocialPlatformAdapter {
       client_secret: credentials.metadata?.clientSecret || process.env.GOOGLE_ADS_CLIENT_SECRET,
       refresh_token: credentials.refreshToken,
       grant_type: "refresh_token",
-    });
+    }, { timeout: ADAPTER_HTTP_TIMEOUT_MS });
     return response.data.access_token;
   }
 
@@ -53,6 +54,7 @@ export class GoogleAdsAdapter implements SocialPlatformAdapter {
             "Content-Type": "application/json",
           },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

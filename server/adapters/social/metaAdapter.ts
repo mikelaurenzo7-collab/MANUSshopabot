@@ -15,6 +15,7 @@ import type {
   CreateAdCampaignInput,
   AdCampaign,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 import { ENV } from "../../_core/env";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
@@ -44,6 +45,7 @@ export class MetaAdapter implements SocialPlatformAdapter {
           method: (options?.method || "GET") as any,
           data: options?.body,
           headers: { "Content-Type": "application/json" },
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         return response.data;
       } catch (err: any) {

@@ -313,23 +313,59 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
+  // Cap a single LLM round-trip at 90s. The retry policy may try multiple
+  // round-trips, so wall-clock time can exceed this on contested upstreams,
+  // but no individual call can hang the request indefinitely.
+  const requestTimeoutMs = 90_000;
+
   return withRetry(async () => {
-    const response = await fetch(resolveApiUrl(), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), requestTimeoutMs);
+    try {
+      const response = await fetch(resolveApiUrl(), {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${ENV.forgeApiKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+        );
+      }
+
+      return (await response.json()) as InvokeResult;
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        throw new Error(`LLM invoke timed out after ${requestTimeoutMs}ms`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
     }
-
-    return (await response.json()) as InvokeResult;
   }, { maxAttempts: 3, baseDelayMs: 2000, label: "invokeLLM" });
+}
+
+/**
+ * Parse a JSON content string returned by the LLM with a clear, debuggable
+ * error message instead of the raw `SyntaxError: Unexpected token …`.
+ *
+ * Use this everywhere you do `JSON.parse(llmResult.choices[0].message.content)`
+ * — it preserves a snippet of the offending content for triage.
+ */
+export function parseLLMJson<T = any>(content: unknown, label = "llm_response"): T {
+  if (typeof content !== "string") {
+    throw new Error(`${label}: expected string content, got ${typeof content}`);
+  }
+  try {
+    return JSON.parse(content) as T;
+  } catch (err: any) {
+    const snippet = content.slice(0, 200).replace(/\s+/g, " ");
+    throw new Error(`${label}: invalid JSON from LLM (${err?.message ?? "parse error"}). Snippet: "${snippet}"`);
+  }
 }

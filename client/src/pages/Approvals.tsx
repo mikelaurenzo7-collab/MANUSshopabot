@@ -5,7 +5,7 @@
  * Admins can approve or reject each item with an optional review note.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +87,23 @@ interface ReviewDialogProps {
 
 function ReviewDialog({ approval, decision, open, onClose, onConfirm, isPending }: ReviewDialogProps) {
   const [note, setNote] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Auto-focus the textarea when the dialog opens. Radix UI's default focus
+  // lands on the close button which is correct for accessibility but feels
+  // sluggish for a power-user review flow — explicit focus moves typists
+  // straight into the note field.
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => textareaRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  function handleConfirm() {
+    if (!approval || isPending) return;
+    onConfirm(approval.id, decision, note);
+    setNote("");
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setNote(""); } }}>
@@ -107,10 +124,22 @@ function ReviewDialog({ approval, decision, open, onClose, onConfirm, isPending 
 
         <div className="space-y-3 mt-2">
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Review note (optional)</label>
+            <label className="text-xs text-slate-400 mb-1 block flex items-center justify-between">
+              <span>Review note (optional)</span>
+              <span className="text-[10px] text-white/30">
+                ⌘/Ctrl + Enter to confirm
+              </span>
+            </label>
             <Textarea
+              ref={textareaRef}
               value={note}
               onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  handleConfirm();
+                }
+              }}
               placeholder="Add context for this decision…"
               className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 min-h-[80px] resize-none"
             />
@@ -127,7 +156,7 @@ function ReviewDialog({ approval, decision, open, onClose, onConfirm, isPending 
               : "bg-red-600 hover:bg-red-700 text-white"
             }
             disabled={isPending}
-            onClick={() => { onConfirm(approval.id, decision, note); setNote(""); }}
+            onClick={handleConfirm}
           >
             {decision === "approved" ? "Approve" : "Reject"}
           </Button>

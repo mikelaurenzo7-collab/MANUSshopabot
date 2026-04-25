@@ -4,11 +4,11 @@
  */
 
 import { z } from 'zod';
-import { publicProcedure } from '../_core/trpc';
-import { getQueueHealth } from '../queue/config';
+import { adminProcedure } from '../_core/trpc';
+import { getQueueHealth, listRecentFailedJobs } from '../queue/config';
 
 export const queueHealthRouter = {
-  getHealth: publicProcedure.query(async () => {
+  getHealth: adminProcedure.query(async () => {
     try {
       const health = await getQueueHealth();
       return {
@@ -24,7 +24,26 @@ export const queueHealthRouter = {
     }
   }),
 
-  getQueueStats: publicProcedure
+  /**
+   * Inspect the most recent failed jobs across all queues. Use this to
+   * triage why a webhook is stuck or which platform is throwing — much
+   * faster than tailing logs. Limited to admins.
+   */
+  recentFailures: adminProcedure
+    .input(z.object({ limit: z.number().min(1).max(100).default(25) }).optional())
+    .query(async ({ input }) => {
+      try {
+        const data = await listRecentFailedJobs(input?.limit ?? 25);
+        return { success: true as const, data };
+      } catch (err) {
+        return {
+          success: false as const,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        };
+      }
+    }),
+
+  getQueueStats: adminProcedure
     .input(z.object({
       queueName: z.enum(['webhooks', 'external-apis']),
     }))

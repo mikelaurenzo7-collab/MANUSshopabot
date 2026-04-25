@@ -7,6 +7,15 @@
  * through a single, consistent contract.
  */
 
+/**
+ * Per-request HTTP timeout for platform adapter calls. Long enough to
+ * tolerate slow upstreams (image-heavy product fetches, paginated catalog
+ * sweeps) but short enough that a hung connection cannot pin a worker
+ * thread or stall a webhook job. The retry policy on top will give us
+ * total wall time = ADAPTER_HTTP_TIMEOUT_MS × maxRetries.
+ */
+export const ADAPTER_HTTP_TIMEOUT_MS = 30_000;
+
 // ─── Shared Types ──────────────────────────────────────────────────────────
 
 export interface PlatformProduct {

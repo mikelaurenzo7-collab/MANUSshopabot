@@ -18,6 +18,7 @@ import type {
   StoreInfo,
   ListParams,
 } from "./types";
+import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
 const TIKTOK_SHOP_BASE = "https://open-api.tiktokglobalshop.com";
 
@@ -57,6 +58,7 @@ export class TikTokShopAdapter implements EcommercePlatformAdapter {
           method: (options?.method || "GET") as any,
           headers: { "Content-Type": "application/json" },
           data: options?.body,
+          timeout: ADAPTER_HTTP_TIMEOUT_MS,
         });
         if (response.data.code !== 0) {
           throw new Error(`TikTok Shop API error: ${response.data.message}`);

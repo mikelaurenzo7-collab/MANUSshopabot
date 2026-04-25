@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, Loader2, RefreshCw, Activity,
   ShoppingBag, Share2, Zap, Clock, AlertTriangle, Wifi, WifiOff,
-  Radio, SkipForward, AlertOctagon
+  Radio, SkipForward, AlertOctagon, ShieldAlert
 } from "lucide-react";
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -156,7 +157,127 @@ function WebhookEventLog() {
   );
 }
 
+/**
+ * Admin-only triage view: lists the most recent failed BullMQ jobs across
+ * the webhook + external API queues. Hidden for non-admin users so we
+ * don't surface 403s. Auto-refreshes every 30s so admins can watch a
+ * misbehaving integration recover (or not).
+ */
+function QueueFailuresLog() {
+  const { data, isLoading, isError, refetch, isFetching } = trpc.queueHealth.recentFailures.useQuery(
+    { limit: 20 },
+    { refetchInterval: 30_000, retry: false },
+  );
+
+  const failures =
+    data && "success" in data && data.success ? data.data : null;
+
+  const total =
+    (failures?.webhooks.length ?? 0) + (failures?.externalApis.length ?? 0);
+
+  return (
+    <Card className="border-zinc-800">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              Queue Failures
+              {total > 0 && (
+                <span className="ml-1 text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full px-1.5 py-0.5">
+                  {total}
+                </span>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs mt-1">
+              Most recent failed jobs across webhook + external-API queues · admin only · auto-refreshes every 30s
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            disabled={isFetching}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : isError || (data && !("success" in data ? data.success : true)) ? (
+          <div className="text-center py-8">
+            <AlertOctagon className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Could not reach the queue layer
+            </p>
+            <p className="text-xs text-white/25 mt-1">
+              {data && "error" in data ? data.error : "Redis may be unreachable"}
+            </p>
+          </div>
+        ) : total === 0 ? (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500/30 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No failed jobs</p>
+            <p className="text-xs text-white/25 mt-1">
+              Every queue is processing cleanly.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(["webhooks", "externalApis"] as const).map((queue) => {
+              const jobs = failures?.[queue] ?? [];
+              if (jobs.length === 0) return null;
+              return (
+                <div key={queue} className="space-y-1.5">
+                  <div className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">
+                    {queue === "webhooks" ? "Webhook queue" : "External API queue"} · {jobs.length}
+                  </div>
+                  {jobs.map((j) => (
+                    <div
+                      key={`${queue}:${j.id}`}
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg border border-amber-500/10 bg-amber-500/[0.02] hover:bg-amber-500/[0.05] transition-colors"
+                    >
+                      <AlertOctagon className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-mono font-semibold text-white/85 truncate">
+                          {j.name}
+                        </div>
+                        {j.failedReason && (
+                          <div className="text-xs text-red-400/90 mt-0.5 line-clamp-2 break-words">
+                            {j.failedReason}
+                          </div>
+                        )}
+                        <div className="text-[11px] text-white/30 mt-0.5">
+                          attempt {j.attemptsMade}
+                          {j.failedAt
+                            ? ` · ${new Date(j.failedAt).toLocaleString()}`
+                            : ""}
+                          {" · "}
+                          <span className="font-mono">{j.id}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PlatformHealth() {
+  const { user } = useAuth();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const { data: summary } = trpc.health.summary.useQuery();
@@ -397,6 +518,9 @@ export default function PlatformHealth() {
 
           {/* Webhook Event Log */}
           <WebhookEventLog />
+
+          {/* Admin-only: failed-job triage view */}
+          {user?.role === "admin" && <QueueFailuresLog />}
         </div>
       )}
     </div>

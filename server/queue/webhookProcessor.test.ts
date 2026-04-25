@@ -4,18 +4,18 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Track the args passed to queue.add() so tests can assert dedup-key
+// behaviour without depending on shared mutable mock state.
+const addCalls: Array<{ name: string; data: any; opts: any }> = [];
+
 // Mock BullMQ Queue before importing the processor so no real Redis is used
 vi.mock('bullmq', () => {
-  const mockJob = {
-    id: 'mock-job-id',
-    data: {} as any,
-    opts: {},
-  };
-
   const MockQueue = vi.fn().mockImplementation(() => ({
-    add: vi.fn().mockImplementation((_name: string, data: any) => {
-      mockJob.data = data;
-      return Promise.resolve(mockJob);
+    add: vi.fn().mockImplementation((name: string, data: any, opts: any = {}) => {
+      addCalls.push({ name, data, opts });
+      // Each call returns its OWN job object so callers don't observe
+      // shared mutable state.
+      return Promise.resolve({ id: opts?.jobId ?? 'mock-job-id', data, opts });
     }),
     close: vi.fn().mockResolvedValue(undefined),
     on: vi.fn(),
@@ -39,6 +39,7 @@ import { enqueueWebhook, WebhookPayload } from './processors/webhookProcessor';
 describe('Webhook Processor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    addCalls.length = 0;
   });
 
   describe('enqueueWebhook', () => {
@@ -109,21 +110,66 @@ describe('Webhook Processor', () => {
   });
 
   describe('Job Deduplication', () => {
-    it('should prevent duplicate webhooks within 10-second window', () => {
-      const timestamp = 1000000;
-      const window = Math.floor(timestamp / 10000);
+    it('uses the upstream platform id so duplicate webhooks collapse', async () => {
+      await enqueueWebhook({
+        platform: 'shopify',
+        event: 'order.created',
+        data: { id: 'order_42' },
+        timestamp: 1_000_000,
+      } as WebhookPayload);
 
-      // Same window
-      const timestamp2 = 1000005;
-      const window2 = Math.floor(timestamp2 / 10000);
+      await enqueueWebhook({
+        platform: 'shopify',
+        event: 'order.created',
+        data: { id: 'order_42' },
+        // Same event resent 30s later — the old timestamp-window key
+        // would have changed here, breaking dedup. The new key MUST be
+        // identical so BullMQ collapses the retry.
+        timestamp: 1_030_000,
+      } as WebhookPayload);
 
-      expect(window).toBe(window2);
+      expect(addCalls).toHaveLength(2);
+      expect(addCalls[0].opts.jobId).toBe(addCalls[1].opts.jobId);
+      expect(addCalls[0].opts.jobId).toBe('shopify:order.created:order_42');
+    });
 
-      // Different window
-      const timestamp3 = 1010000;
-      const window3 = Math.floor(timestamp3 / 10000);
+    it('keeps distinct events distinct (different upstream ids)', async () => {
+      await enqueueWebhook({
+        platform: 'shopify',
+        event: 'order.created',
+        data: { id: 'order_1' },
+        timestamp: 1_000_000,
+      } as WebhookPayload);
 
-      expect(window).not.toBe(window3);
+      await enqueueWebhook({
+        platform: 'shopify',
+        event: 'order.created',
+        data: { id: 'order_2' },
+        timestamp: 1_000_000,
+      } as WebhookPayload);
+
+      expect(addCalls[0].opts.jobId).not.toBe(addCalls[1].opts.jobId);
+    });
+
+    it('falls back to a unique key when no upstream id is present', async () => {
+      // Two webhooks with no `id` field arriving in the same millisecond
+      // must NOT collide on the same dedup key — that would silently drop
+      // legitimately distinct events.
+      await enqueueWebhook({
+        platform: 'etsy',
+        event: 'shop.updated',
+        data: {},
+        timestamp: 1_000_000,
+      } as WebhookPayload);
+
+      await enqueueWebhook({
+        platform: 'etsy',
+        event: 'shop.updated',
+        data: {},
+        timestamp: 1_000_000,
+      } as WebhookPayload);
+
+      expect(addCalls[0].opts.jobId).not.toBe(addCalls[1].opts.jobId);
     });
   });
 });
