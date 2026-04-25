@@ -215,6 +215,20 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["campaign_management", "reporting", "optimization"],
   },
+  gmail: {
+    name: "Gmail",
+    icon: "📧",
+    color: "#EA4335",
+    connectionType: "oauth" as const,
+    description: "Send automated emails, manage customer communications via Gmail",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}&access_type=offline&prompt=consent`,
+      tokenUrl: "https://oauth2.googleapis.com/token",
+      scopes: "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly",
+    },
+    capabilities: ["email_sending", "customer_support", "abandoned_cart_recovery", "order_notifications"],
+  },
 };
 
 export const connectorsRouter = router({
@@ -310,7 +324,7 @@ export const connectorsRouter = router({
   /** Connect a social media account (stores OAuth token after redirect) */
   connectSocialAccount: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]),
       accountName: z.string().optional(),
       accountId: z.string().optional(),
       accessToken: z.string(),
@@ -512,7 +526,7 @@ export const connectorsRouter = router({
   /** Generate OAuth URL for a social media platform */
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]),
       origin: z.string(),
       returnTo: z.string().optional(),
     }))
@@ -530,6 +544,7 @@ export const connectorsRouter = router({
         twitter: ENV.twitterClientId,
         pinterest: ENV.pinterestAppId,
         google_ads: ENV.googleAdsClientId,
+        gmail: ENV.googleClientId,
       };
 
       const clientId = clientIdMap[input.platform];

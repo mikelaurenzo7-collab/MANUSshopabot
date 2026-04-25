@@ -28,6 +28,7 @@ const PluginStorePage = lazy(() => import("./pages/PluginStore"));
 const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const ProfilePage = lazy(() => import("./pages/Profile"));
+const ProfitBotPage = lazy(() => import("./pages/ProfitBot"));
 
 function PageLoader() {
   return (
@@ -86,6 +87,7 @@ function Router() {
                     <Route path="/plugins" component={PluginStorePage} />
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
+                    <Route path="/profit-bot" component={ProfitBotPage} />
                     <Route path="/profile" component={ProfilePage} />
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />

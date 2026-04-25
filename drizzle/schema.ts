@@ -202,7 +202,7 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms"]).default("meta").notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail"]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -387,7 +387,7 @@ export type InsertPlatformCredential = typeof platformCredentials.$inferInsert;
 export const socialAccounts = mysqlTable("social_accounts", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads"]).notNull(),
+  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accountId: varchar("accountId", { length: 255 }), // platform-specific account/page ID
   accessToken: text("accessToken"),

@@ -152,6 +152,36 @@ async function fetchPinterestProfile(accessToken: string): Promise<UserProfile> 
   };
 }
 
+// ─── Google / Gmail ──────────────────────────────────────────────────────
+async function exchangeGmailCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://oauth2.googleapis.com/token", new URLSearchParams({
+    client_id: ENV.googleClientId,
+    client_secret: ENV.googleClientSecret,
+    code,
+    grant_type: "authorization_code",
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return {
+    access_token: res.data.access_token,
+    refresh_token: res.data.refresh_token,
+    expires_in: res.data.expires_in,
+    scope: res.data.scope,
+  };
+}
+async function fetchGmailProfile(accessToken: string): Promise<UserProfile> {
+  const { default: axios } = await import("axios");
+  const res = await axios.get("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return {
+    accountId: res.data.emailAddress,
+    accountName: res.data.emailAddress,
+  };
+}
+
 // ─── State Parsing ──────────────────────────────────────────────────────
 
 interface ParsedState {
@@ -250,6 +280,10 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       case "pinterest":
         tokenData = await exchangePinterestCode(code, redirectUri);
         profile = await fetchPinterestProfile(tokenData.access_token);
+        break;
+      case "gmail":
+        tokenData = await exchangeGmailCode(code, redirectUri);
+        profile = await fetchGmailProfile(tokenData.access_token);
         break;
       default:
         return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);

@@ -113,6 +113,13 @@
       "when": 1776920971457,
       "tag": "0015_secret_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1777110152845,
+      "tag": "0016_awesome_bug",
+      "breakpoints": true
     }
   ]
 }

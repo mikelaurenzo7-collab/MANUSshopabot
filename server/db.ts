@@ -1401,19 +1401,19 @@ export async function getUserByStripeSubscriptionId(subscriptionId: string) {
 export async function getBotProfile(userId: number, agentType: "architect" | "merchant" | "social") {
   const db = await getDb();
   if (!db) return null;
-  return db.query.botProfiles.findFirst({
-    where: (t, { and, eq }) => and(eq(t.userId, userId), eq(t.agentType, agentType)),
+  return (db.query as any).botProfiles.findFirst({
+    where: (t: any, { and, eq }: any) => and(eq(t.userId, userId), eq(t.agentType, agentType)),
   });
 }
 
 export async function upsertBotProfile(data: InsertBotProfile) {
   const db = await getDb();
   if (!db) return null;
-  const existing = await db.query.botProfiles.findFirst({
-    where: (t, { and, eq }) => and(eq(t.userId, data.userId!), eq(t.agentType, data.agentType!)),
+  const existing = await (db.query as any).botProfiles.findFirst({
+    where: (t: any, { and, eq }: any) => and(eq(t.userId, data.userId!), eq(t.agentType, data.agentType!)),
   });
   if (existing) {
-    await db.update(botProfiles).set(data).where((t) => t.id === existing.id);
+    await db.update(botProfiles).set(data as any).where(eq(botProfiles.id, existing.id));
     return existing.id;
   } else {
     const result = await db.insert(botProfiles).values(data);
@@ -1424,7 +1424,7 @@ export async function upsertBotProfile(data: InsertBotProfile) {
 export async function getBotMemory(botProfileId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  return db.query.botMemory.findMany({
+  return (db.query as any).botMemory.findMany({
     where: (t: any, { eq }: any) => eq(t.botProfileId, botProfileId),
     limit,
     orderBy: (t: any, { desc }: any) => desc(t.lastAccessedAt || t.createdAt),
@@ -1450,7 +1450,7 @@ export async function upsertBotSchedule(data: InsertBotSchedule) {
   const db = await getDb();
   if (!db) return null;
   if (data.id) {
-    await db.update(botSchedules).set(data).where((t) => t.id === data.id);
+    await db.update(botSchedules).set(data).where(eq(botSchedules.id, data.id as number));
     return data.id;
   } else {
     const result = await db.insert(botSchedules).values(data);

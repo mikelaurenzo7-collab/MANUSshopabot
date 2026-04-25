@@ -591,3 +591,34 @@
 - [x] Verify viewport meta tag is correct (width=device-width, initial-scale=1.0)
 - [x] Optimize images for mobile (lazy loading, responsive sizes)
 - [x] Test on actual mobile devices (iOS Safari, Android Chrome)
+
+
+## Sprint 25: High-Impact Features
+
+### TypeScript Fixes
+- [x] Fix db.ts TypeScript errors (line 1453 type annotations)
+- [x] Fix botProfile.ts TypeScript errors (argument count)
+
+### Gmail Bot Integration
+- [x] Add Google OAuth flow for Gmail (server/socialOAuth.ts + connectors.ts)
+- [ ] Add Gmail API helpers (read, send, label emails)
+- [ ] Add Gmail Bot to DashboardLayout sidebar
+- [ ] Create GmailBot.tsx page (inbox view, auto-reply config, templates)
+- [ ] Wire Gmail Bot to tRPC router
+
+### BotSettings UI Page
+- [ ] Create BotSettings.tsx with per-bot configuration tabs
+- [ ] Bot instructions editor (custom prompts, personality)
+- [ ] Bot memory viewer (learned patterns, decision history)
+- [ ] Bot schedule manager (cron editor, interval picker)
+- [ ] Bot safety rules editor (approval thresholds, spending limits)
+
+### Profit Bot Daily Schedule
+- [x] Create /api/scheduled/profit-bot endpoint
+- [ ] Set up 10am Central daily schedule
+- [x] Build Profit Bot analysis engine (LLM-powered sports/crypto/stocks picks)
+- [x] Create profitBot tRPC router with runAnalysis + getHistory + getRecord procedures
+- [x] Create ProfitBot.tsx dashboard page with picks display, record tracker, P/L chart
+- [x] Add Profit Bot to sidebar navigation
+- [ ] Set up Manus scheduled task for daily 10am Central analysis
+- [ ] Wire scheduled task to POST picks via /api/scheduled/profit-bot endpoint

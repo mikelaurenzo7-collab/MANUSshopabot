@@ -57,7 +57,9 @@ export const ENV = {
   amazonSpClientId: process.env.AMAZON_SP_CLIENT_ID ?? "",
   amazonSpClientSecret: process.env.AMAZON_SP_CLIENT_SECRET ?? "",
 
-  // Google Ads
+  // Google OAuth (Gmail + Ads)
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   googleAdsClientId: process.env.GOOGLE_ADS_CLIENT_ID ?? "",
   googleAdsClientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET ?? "",
   googleAdsDeveloperToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? "",

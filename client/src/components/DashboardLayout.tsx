@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Globe,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { title: "Builder Bot", url: "/architect", icon: Bot },
         { title: "Merchant Bot", url: "/merchant", icon: Package },
         { title: "Social Bot", url: "/social", icon: Megaphone },
+        { title: "Profit Bot", url: "/profit-bot", icon: DollarSign },
       ],
     },
     {
