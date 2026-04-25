@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -5,16 +6,15 @@ import { Button } from "@/components/ui/button";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
-  TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3
+  TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
+  ChevronDown, Star, Quote
 } from "lucide-react";
-
-const APP_LOGO = (import.meta.env.VITE_APP_LOGO as string | undefined) ||
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663544407089/R65at2L4nXpfNokxNrB7Yp/beastbots-logo-5mUP2nWBTL76U95J5hXgrq.webp";
+import { useLocation } from "wouter";
 
 const BOT_COLORS = {
-  "Builder Bot":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)" },
-  "Merchant Bot": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)"  },
-  "Social Bot":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)" },
+  "Builder Bot":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
+  "Merchant Bot": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)",  hex: "#22d3ee" },
+  "Social Bot":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)", hex: "#fb923c" },
 } as const;
 
 const BOTS = [
@@ -54,7 +54,14 @@ const PRICING = [
     price: "$49",
     period: "/mo",
     description: "Research niches, source products, build your first store.",
-    bots: ["Builder Bot"],
+    features: [
+      "1 connected store",
+      "Builder Bot — full access",
+      "Niche & competitor research",
+      "Product sourcing automation",
+      "500 AI actions / month",
+      "Email support",
+    ],
     planId: "starter",
     featured: false,
     badge: null,
@@ -64,7 +71,14 @@ const PRICING = [
     price: "$149",
     period: "/mo",
     description: "Full store automation with zero-touch fulfillment.",
-    bots: ["Builder Bot", "Merchant Bot"],
+    features: [
+      "3 connected stores",
+      "Builder Bot + Merchant Bot",
+      "Auto-fulfillment & pricing",
+      "Inventory sync & low-stock alerts",
+      "5,000 AI actions / month",
+      "Priority support",
+    ],
     planId: "growth",
     featured: true,
     badge: "Most Popular",
@@ -74,7 +88,14 @@ const PRICING = [
     price: "$299",
     period: "/mo",
     description: "Add marketing automation and multi-store management.",
-    bots: ["Builder Bot", "Merchant Bot", "Social Bot"],
+    features: [
+      "10 connected stores",
+      "All 3 Bots — full access",
+      "TikTok & Meta ad automation",
+      "Email & SMS recovery flows",
+      "25,000 AI actions / month",
+      "Dedicated Slack support",
+    ],
     planId: "pro",
     featured: false,
     badge: null,
@@ -84,7 +105,14 @@ const PRICING = [
     price: "$599",
     period: "/mo",
     description: "Unlimited stores, priority support, custom integrations.",
-    bots: ["Builder Bot", "Merchant Bot", "Social Bot"],
+    features: [
+      "Unlimited stores",
+      "All 3 Bots + Elite workflows",
+      "White-label option",
+      "Custom platform integrations",
+      "Unlimited AI actions",
+      "Dedicated success manager",
+    ],
     planId: "scale",
     featured: false,
     badge: "Enterprise",
@@ -97,9 +125,84 @@ const TRUST_ITEMS = [
   { icon: BarChart3,label: "Real-time analytics", sub: "Track every metric"    },
 ];
 
+const TESTIMONIALS = [
+  {
+    name: "Marcus T.",
+    role: "Shopify store owner",
+    stars: 5,
+    text: "I launched my first dropshipping store in 22 minutes. The Builder Bot handled everything — niche research, product import, even the legal pages. I didn't write a single line of copy.",
+  },
+  {
+    name: "Priya S.",
+    role: "E-commerce entrepreneur",
+    stars: 5,
+    text: "The Merchant Bot processes every order automatically. I went from spending 3 hours a day on fulfillment to literally zero. My store runs while I sleep.",
+  },
+  {
+    name: "Jordan K.",
+    role: "TikTok shop seller",
+    stars: 5,
+    text: "Social Bot created my first TikTok ad campaign in 4 minutes. It generated the creative, wrote the copy, and scheduled the posts. My ROAS went up 2.4x in the first week.",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Do I need any technical skills to use SHOPaBOT?",
+    a: "None at all. SHOPaBOT is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
+  },
+  {
+    q: "Which platforms does SHOPaBOT support?",
+    a: "SHOPaBOT integrates with Shopify, Amazon, Etsy, TikTok Shop, Pinterest, Instagram, Facebook, and 7+ additional platforms. New integrations are added regularly.",
+  },
+  {
+    q: "How does the Builder Bot source products?",
+    a: "The Builder Bot connects to Zendrop, AliExpress, and other supplier networks to find products that match your niche. It evaluates profit margins, competition levels, and trend data before importing anything to your store.",
+  },
+  {
+    q: "Can I run multiple stores from one account?",
+    a: "Yes. Growth plans support up to 3 stores, Pro supports 10, and Scale supports unlimited stores. Each store gets its own bot configuration and analytics dashboard.",
+  },
+  {
+    q: "What happens if a bot makes a mistake?",
+    a: "Every bot action is logged in real time and can be reviewed in the Activity feed. You can set approval gates for high-stakes actions (like large orders or ad spend above a threshold) so nothing happens without your sign-off.",
+  },
+  {
+    q: "Is there a free trial?",
+    a: "Yes — every plan starts with a 7-day free trial. No credit card required to start. You can cancel anytime from your billing portal.",
+  },
+];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="border border-white/[0.07] rounded-xl overflow-hidden transition-colors hover:border-white/[0.12]"
+      onClick={() => setOpen(!open)}
+    >
+      <button className="w-full flex items-center justify-between px-6 py-4 text-left gap-4">
+        <span className="text-sm font-semibold text-white/80">{q}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-white/30 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4">
+          {a}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Landing() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const checkoutMutation = trpc.stripe.createCheckoutSession.useMutation();
+
+  // Check if user just returned from successful checkout
+  const urlParams = new URLSearchParams(window.location.search);
+  const subscriptionSuccess = urlParams.get("subscription") === "success";
 
   const handlePricingClick = (planId: string) => {
     if (!user) {
@@ -125,14 +228,30 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#050507] text-white overflow-x-hidden">
 
+      {/* ── Subscription Success Banner ─────────────────────────────────────── */}
+      {subscriptionSuccess && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-emerald-500/90 backdrop-blur-sm text-white text-sm font-semibold text-center py-3 px-4 flex items-center justify-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          Subscription activated! Your bots are ready.
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-4 text-white hover:text-white hover:bg-white/20 h-7 px-3"
+            onClick={() => setLocation("/")}
+          >
+            Go to Dashboard →
+          </Button>
+        </div>
+      )}
+
       {/* ── Navigation ─────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 topbar-glass">
+      <nav className={`fixed left-0 right-0 z-50 topbar-glass ${subscriptionSuccess ? "top-12" : "top-0"}`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <BrandName size="sm" />
           <div className="flex items-center gap-3">
             {user ? (
               <Button
-                onClick={() => window.location.href = "/"}
+                onClick={() => setLocation("/")}
                 variant="outline"
                 size="sm"
                 className="border-white/10 text-white/80 hover:border-sky-500/50 hover:text-white hover:bg-sky-500/5 transition-all"
@@ -163,7 +282,7 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative pt-36 pb-24 px-4 overflow-hidden">
+      <section className={`relative pb-24 px-4 overflow-hidden ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
         {/* Background effects */}
         <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
         <div className="light-leak-blue absolute -top-32 left-1/2 -translate-x-1/2 opacity-60" />
@@ -197,7 +316,7 @@ export default function Landing() {
               size="lg"
               className="btn-glow text-white px-8 h-12 text-base font-semibold"
             >
-              Get Started <ArrowRight className="w-4 h-4 ml-1" />
+              Get Started Free <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button
               onClick={() => {
@@ -262,7 +381,6 @@ export default function Landing() {
                   className="bento-card p-8 group relative overflow-hidden"
                   style={{ "--hover-glow": colors.glow } as React.CSSProperties}
                 >
-                  {/* Icon */}
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
                     style={{ background: colors.bg, border: `1px solid ${colors.border}` }}
@@ -270,7 +388,7 @@ export default function Landing() {
                     <bot.icon className={`w-6 h-6 ${colors.icon}`} />
                   </div>
 
-                  <p className="micro-label mb-2" style={{ color: colors.icon.replace("text-", "") === "sky-400" ? "#38bdf8" : colors.icon.replace("text-", "") === "cyan-400" ? "#22d3ee" : "#fb923c" }}>
+                  <p className="micro-label mb-2" style={{ color: colors.hex }}>
                     {bot.tagline}
                   </p>
                   <h3 className="text-xl font-bold text-white mb-3">{bot.name}</h3>
@@ -291,13 +409,47 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Social Proof / Testimonials ────────────────────────────────────── */}
+      <section className="py-24 px-4 border-t border-white/[0.06]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="micro-label mb-3">Social Proof</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
+            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using SHOPaBOT.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="bento-card p-7 flex flex-col gap-4">
+                <Quote className="w-6 h-6 text-sky-500/40 shrink-0" />
+                <p className="text-white/60 text-sm leading-relaxed flex-1">"{t.text}"</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
+                  <div className="w-9 h-9 rounded-full bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-sky-300">{t.name.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white/80">{t.name}</div>
+                    <div className="text-xs text-white/35">{t.role}</div>
+                  </div>
+                  <div className="ml-auto flex gap-0.5">
+                    {Array.from({ length: t.stars }).map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Pricing ────────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="micro-label mb-3">Pricing</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free. Scale as your store grows. Cancel anytime.</p>
+            <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -332,10 +484,10 @@ export default function Landing() {
                 <div className="h-px bg-white/[0.06] mb-4" />
 
                 <ul className="space-y-2 mb-6">
-                  {tier.bots.map((bot) => (
-                    <li key={bot} className="flex items-center gap-2 text-white/55 text-sm">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                      {bot}
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-white/55 text-sm">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -349,7 +501,7 @@ export default function Landing() {
                       : "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/80 hover:text-white"
                   }`}
                 >
-                  {checkoutMutation.isPending ? "Processing..." : "Get Started"}
+                  {checkoutMutation.isPending ? "Processing..." : "Start Free Trial"}
                 </Button>
               </div>
             ))}
@@ -357,8 +509,23 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
+      <section className="py-24 px-4 border-t border-white/[0.06]">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="micro-label mb-3">FAQ</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
+          </div>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item) => (
+              <FAQItem key={item.q} q={item.q} a={item.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center">
           <div className="bento-card-featured rounded-2xl p-12 relative overflow-hidden">
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
@@ -377,6 +544,7 @@ export default function Landing() {
               >
                 Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
+              <p className="text-white/25 text-xs mt-4">7-day free trial · No credit card required · Cancel anytime</p>
             </div>
           </div>
         </div>

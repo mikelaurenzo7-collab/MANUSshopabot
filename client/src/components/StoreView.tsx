@@ -4,7 +4,7 @@ import {
   Package, ShoppingCart, TrendingUp, Bot, X, ExternalLink,
   AlertTriangle, CheckCircle2, XCircle, RefreshCw, Loader2,
   ArrowUpRight, ArrowDownRight, BarChart3, Tag, Clock,
-  ChevronRight, Boxes, DollarSign, Activity
+  ChevronRight, Boxes, DollarSign, Activity, Globe, Maximize2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ const TOOLTIP_STYLE = {
   fontSize: "12px",
 };
 
-type Tab = "overview" | "products" | "orders" | "revenue" | "activity";
+type Tab = "overview" | "products" | "orders" | "revenue" | "activity" | "storefront";
 
 interface StoreViewProps {
   storeId: number;
@@ -71,6 +71,7 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
     { id: "orders", label: "Orders", icon: <ShoppingCart className="w-3.5 h-3.5" /> },
     { id: "revenue", label: "Revenue", icon: <TrendingUp className="w-3.5 h-3.5" /> },
     { id: "activity", label: "Bot Activity", icon: <Bot className="w-3.5 h-3.5" /> },
+    { id: "storefront", label: "Storefront", icon: <Globe className="w-3.5 h-3.5" /> },
   ];
 
   const statusColor = (status: string) => {
@@ -436,6 +437,62 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
                 <p className="text-sm">Revenue data will appear once orders start coming in.</p>
               </div>
             )
+          )}
+
+          {/* ── STOREFRONT TAB ── */}
+          {tab === "storefront" && (
+            <div className="flex flex-col gap-4 h-full">
+              {store?.platformDomain ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-sky-400" />
+                      <span className="text-sm font-medium text-white/80">{store.platformDomain}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`https://${store.platformDomain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        Open in new tab
+                      </a>
+                    </div>
+                  </div>
+                  {/* Iframe preview */}
+                  <div className="relative flex-1 rounded-xl overflow-hidden border border-white/10 bg-white/4" style={{ minHeight: '520px' }}>
+                    <iframe
+                      src={`https://${store.platformDomain}`}
+                      className="w-full h-full absolute inset-0"
+                      style={{ minHeight: '520px' }}
+                      title={`${store.name} storefront`}
+                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                      loading="lazy"
+                    />
+                    {/* Overlay hint */}
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white/50 text-xs px-2.5 py-1.5 rounded-lg border border-white/10 pointer-events-none">
+                      Live preview · {store.platform}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 text-center">
+                    Some platforms restrict iframe embedding. If the preview is blank,
+                    <a href={`https://${store.platformDomain}`} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline ml-1">open the store directly</a>.
+                  </p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Globe className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-white/60 mb-1">No storefront domain configured</p>
+                    <p className="text-xs text-slate-500">Connect your store domain in the Integrations settings to enable the live preview.</p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* ── BOT ACTIVITY TAB ── */}

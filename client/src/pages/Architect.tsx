@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import {
   Bot, Search, Loader2, Target, ShieldCheck, AlertTriangle,
   Lightbulb, Package, Plus, Store, Globe, Zap, ExternalLink,
-  CheckCircle2, Trash2, Sparkles, X, BarChart3, FileText, Cpu
+  CheckCircle2, Trash2, Sparkles, X, BarChart3, FileText, Cpu,
+  ImageIcon, Wand2
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -124,6 +125,9 @@ export default function Architect() {
                 </button>
               </div>
             </div>
+
+            {/* Image Optimizer Module */}
+            <ImageOptimizerPanel />
 
             {/* Report Ledger */}
             <div className="border border-[#1e293b] bg-[#0a0a0a]">
@@ -260,6 +264,86 @@ export default function Architect() {
            )}
         </div>
       </aside>
+    </div>
+  );
+}
+
+function ImageOptimizerPanel() {
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const [optimizeResult, setOptimizeResult] = useState<{ succeeded: number; failed: number; results: any[] } | null>(null);
+  const { data: stores } = trpc.stores.list.useQuery();
+  const storeList = (stores as any[]) || [];
+
+  // Load products for the selected store (lazy — only when a store is picked)
+  const { data: products } = trpc.stores.products.useQuery(
+    { storeId: Number(selectedStoreId), status: "all" },
+    { enabled: !!selectedStoreId }
+  );
+  const productIds = ((products as any[]) || []).map((p: any) => p.id).slice(0, 50);
+
+  const optimizeMutation = trpc.architect.optimizeProductImages.useMutation({
+    onSuccess: (data: any) => {
+      setOptimizeResult(data);
+      toast.success(`Optimized ${data.succeeded}/${data.results.length} product images`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Image optimization failed");
+    },
+  });
+
+  const handleOptimize = () => {
+    if (!selectedStoreId) { toast.error("Select a store first"); return; }
+    if (!productIds.length) { toast.error("No products found in this store"); return; }
+    setOptimizeResult(null);
+    optimizeMutation.mutate({ storeId: Number(selectedStoreId), productIds });
+  };
+
+  return (
+    <div className="border border-[#1e293b] bg-[#0a0a0a] p-5 relative">
+      <div className="absolute top-0 left-0 w-1 h-full bg-violet-400/50" />
+      <div className="flex items-center gap-2 mb-3">
+        <ImageIcon className="w-4 h-4 text-violet-400" />
+        <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white">Bulk Image Optimizer</h2>
+      </div>
+      <p className="font-mono text-[9px] text-[#64748b] mb-4 leading-relaxed">Fetches all product images for a store and generates AI-optimized variants (thumbnail, card, hero). Runs in the background — up to 50 products per batch.</p>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <select
+          value={selectedStoreId}
+          onChange={(e) => setSelectedStoreId(e.target.value)}
+          className="flex-1 bg-[#050505] border border-[#1e293b] text-white font-mono text-xs px-3 py-2 focus:outline-none focus:border-violet-400 transition-colors"
+        >
+          <option value="">SELECT STORE TARGET</option>
+          {storeList.map((s: any) => (
+            <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+          ))}
+        </select>
+        <button
+          onClick={handleOptimize}
+          disabled={optimizeMutation.isPending || !selectedStoreId}
+          className="bg-[#1e293b] hover:bg-violet-500/20 border border-[#1e293b] hover:border-violet-400 text-white font-mono text-[10px] uppercase tracking-widest px-6 py-2 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {optimizeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" /> : <Wand2 className="w-3.5 h-3.5 text-violet-400" />}
+          {optimizeMutation.isPending ? "Optimizing..." : "Run Optimizer"}
+        </button>
+      </div>
+      {optimizeMutation.isPending && (
+        <div className="mt-4">
+          <div className="h-1 bg-[#1e293b] rounded-full overflow-hidden">
+            <div className="h-full bg-violet-500 animate-pulse" style={{ width: "60%" }} />
+          </div>
+          <p className="font-mono text-[9px] text-violet-400 mt-2 uppercase tracking-widest">Processing product images...</p>
+        </div>
+      )}
+      {optimizeResult && (
+        <div className="mt-4 flex items-center gap-4 p-3 bg-violet-500/8 border border-violet-500/20 rounded">
+          <CheckCircle2 className="w-4 h-4 text-violet-400 shrink-0" />
+          <div className="font-mono text-[10px] text-[#e2e8f0]">
+            <span className="text-violet-400 font-bold">{optimizeResult.succeeded}</span> optimized &middot;
+            <span className="text-red-400 font-bold ml-2">{optimizeResult.failed}</span> failed &middot;
+            <span className="text-[#64748b] ml-2">{optimizeResult.results.length} total</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -115,6 +115,18 @@ export const healthRouter = router({
   }),
 
   /**
+   * Recent webhook events for the real-time event log in PlatformHealth.
+   */
+  webhookEvents: protectedProcedure
+    .input(z.object({ storeId: z.number().optional(), limit: z.number().min(1).max(100).default(50) }).optional())
+    .query(async ({ ctx, input }) => {
+      return db.getWebhookEvents(ctx.user.id, {
+        storeId: input?.storeId,
+        limit: input?.limit ?? 50,
+      });
+    }),
+
+  /**
    * Background systems summary for durable automation layers.
    */
   backgroundSystems: protectedProcedure.query(async () => {

@@ -37,6 +37,7 @@ import {
   botSchedules, InsertBotSchedule,
   botSafetyRules, InsertBotSafetyRule,
   botExecutionLogs, InsertBotExecutionLog,
+  webhookEvents, InsertWebhookEvent,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -1488,4 +1489,42 @@ export async function getBotExecutionHistory(botProfileId: number, limit = 50) {
     limit,
     orderBy: (t: any, { desc }: any) => desc(t.createdAt),
   });
+}
+
+// ── Webhook Event Log ──────────────────────────────────────────────────────
+export async function logWebhookEvent(data: InsertWebhookEvent) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(webhookEvents).values(data);
+  return result[0].insertId;
+}
+
+export async function getWebhookEvents(userId: number, options?: { storeId?: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const { eq, and, desc } = await import("drizzle-orm");
+  const conditions = [eq(webhookEvents.userId, userId)];
+  if (options?.storeId) conditions.push(eq(webhookEvents.storeId, options.storeId));
+  return db
+    .select()
+    .from(webhookEvents)
+    .where(and(...conditions))
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(options?.limit ?? 50);
+}
+
+export async function pruneWebhookEvents(userId: number, keepCount = 200) {
+  const db = await getDb();
+  if (!db) return;
+  const { eq, lt, desc } = await import("drizzle-orm");
+  // Find the cutoff id — keep the newest keepCount rows
+  const rows = await db
+    .select({ id: webhookEvents.id })
+    .from(webhookEvents)
+    .where(eq(webhookEvents.userId, userId))
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(keepCount);
+  if (rows.length < keepCount) return;
+  const minId = rows[rows.length - 1].id;
+  await db.delete(webhookEvents).where(lt(webhookEvents.id, minId));
 }

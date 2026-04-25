@@ -1,4 +1,23 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /app
+Disallow: /architect
+Disallow: /merchant
+Disallow: /social
+Disallow: /analytics
+Disallow: /integrations
+Disallow: /settings
+Disallow: /activity
+Disallow: /workflows
+Disallow: /intelligence
+Disallow: /platform-health
+Disallow: /prompt-lab
+Disallow: /supplier-pos
+Disallow: /plugin-store
+Disallow: /bot-settings
+Disallow: /profile
+Disallow: /billing
 
-Sitemap: https://beastbots-r65at2l4.manus.space/sitemap.xml
+Sitemap: https://shopabot.manus.space/sitemap.xml

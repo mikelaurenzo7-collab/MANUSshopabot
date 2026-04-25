@@ -16,7 +16,7 @@ import crypto from "crypto";
 import { getDb } from "./db";
 import { stores, orders, products } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { createBotEvent, createOrder, updateOrder, getBotConfigs, createAgentTask } from "./db";
+import { createBotEvent, createOrder, updateOrder, getBotConfigs, createAgentTask, logWebhookEvent } from "./db";
 import { launchWorkflow } from "./engine/workflowEngine";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
@@ -379,6 +379,10 @@ async function handleShopifyWebhook(req: Request, res: Response) {
     return;
   }
 
+  // Look up store for event log
+  const store = await findStoreByDomain(shopDomain).catch(() => null);
+  const eventStart = Date.now();
+
   try {
     switch (topic) {
       case "orders/create":
@@ -399,8 +403,32 @@ async function handleShopifyWebhook(req: Request, res: Response) {
       default:
         console.log(`[Webhook] Unhandled topic: ${topic}`);
     }
+    // Log processed event
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "shopify",
+        eventType: topic,
+        status: "processed",
+        payload: { id: payload.id, order_number: payload.order_number },
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
   } catch (err: any) {
     console.error(`[Webhook] Error processing ${topic}:`, err.message);
+    // Log failed event
+    if (store) {
+      logWebhookEvent({
+        userId: store.userId,
+        storeId: store.id,
+        platform: "shopify",
+        eventType: topic,
+        status: "failed",
+        errorMessage: err.message,
+        processingMs: Date.now() - eventStart,
+      }).catch(() => {});
+    }
   }
 }
 

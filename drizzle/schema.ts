@@ -884,3 +884,27 @@ export const botExecutionLogs = mysqlTable("bot_execution_logs", {
 
 export type BotExecutionLog = typeof botExecutionLogs.$inferSelect;
 export type InsertBotExecutionLog = typeof botExecutionLogs.$inferInsert;
+
+/**
+ * Webhook event log — stores the last N processed webhook events per store
+ * for real-time visibility in the Platform Health dashboard.
+ */
+export const webhookEvents = mysqlTable("webhook_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  storeId: int("storeId"),
+  platform: varchar("platform", { length: 64 }).notNull(),
+  eventType: varchar("eventType", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["received", "processed", "failed", "skipped"]).default("received").notNull(),
+  payload: json("payload"),
+  errorMessage: text("errorMessage"),
+  processingMs: int("processingMs"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("webhook_events_user_id_idx").on(table.userId),
+  storeIdIdx: index("webhook_events_store_id_idx").on(table.storeId),
+  createdAtIdx: index("webhook_events_created_at_idx").on(table.createdAt),
+}));
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type InsertWebhookEvent = typeof webhookEvents.$inferInsert;

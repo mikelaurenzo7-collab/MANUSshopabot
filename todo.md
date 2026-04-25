@@ -845,3 +845,21 @@
 
 ### Tests
 - [x] 546/548 tests passing (2 require live Pinterest/Twitter credentials — external)
+
+## Launch Readiness Sprint (COMPLETE ✅)
+- [x] Generate OG social preview image (1200x630) for SHOPaBOT
+- [x] Add og:image + twitter:image meta tags to index.html
+- [x] Add Outfit font to index.html preconnect/link (currently only in index.css @import)
+- [x] Add sitemap.xml to client/public/ (3 public routes)
+- [x] Update robots.txt to reference shopabot.manus.space sitemap + disallow all app routes
+- [x] Add FAQ section to Landing page (6 questions with accordion)
+- [x] Add social proof / testimonials section to Landing page (3 testimonials with star ratings)
+- [x] Add Storefront preview tab to StoreView (iframe with fallback to external link button)
+- [x] Add bulk "Optimize All Images" button to Architect page (ImageOptimizerPanel with store selector + progress)
+- [x] Add real-time webhook event log to PlatformHealth page (WebhookEventLog component, auto-refresh 15s)
+- [x] Add webhookEvents table to schema + migration (0017_uneven_the_order.sql applied)
+- [x] Wire logWebhookEvent into Shopify webhook dispatcher (processed + failed events logged)
+- [x] Expand pricing feature lists on Landing page (more specific features per tier)
+- [x] Fix Analytics sidebar label (BarChart3 icon confirmed in DashboardLayout)
+- [x] Add keyboard shortcut hints to sidebar nav items (tooltips on hover)
+- [x] Add "Subscription Success" toast/banner when user returns from Stripe checkout
