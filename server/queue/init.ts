@@ -6,41 +6,41 @@
 import { startWebhookWorker, stopWebhookWorker } from './processors/webhookProcessor';
 import { startDeadLetterWorker, stopDeadLetterWorker } from './processors/deadLetterProcessor';
 import { closeQueues } from './config';
+import { logger } from '../_core/logger';
 
 let isInitialized = false;
 
 export async function initializeQueues() {
   if (isInitialized) {
-    console.log('[Queue] Already initialized');
+    logger.info('queue_already_initialized');
     return;
   }
 
   try {
-    console.log('[Queue] Initializing...');
+    logger.info('queue_initializing');
 
-    // Start all workers
     await startWebhookWorker();
     await startDeadLetterWorker();
 
     isInitialized = true;
-    console.log('[Queue] Initialization complete');
+    logger.info('queue_initialized');
   } catch (err) {
-    console.error('[Queue] Initialization failed:', err);
+    logger.error('queue_initialization_failed', { error: err instanceof Error ? err.message : String(err) });
     throw err;
   }
 }
 
 export async function shutdownQueues() {
   try {
-    console.log('[Queue] Shutting down...');
+    logger.info('queue_shutting_down');
 
     await stopWebhookWorker();
     await stopDeadLetterWorker();
     await closeQueues();
 
     isInitialized = false;
-    console.log('[Queue] Shutdown complete');
+    logger.info('queue_shutdown_complete');
   } catch (err) {
-    console.error('[Queue] Shutdown failed:', err);
+    logger.error('queue_shutdown_failed', { error: err instanceof Error ? err.message : String(err) });
   }
 }

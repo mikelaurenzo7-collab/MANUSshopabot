@@ -90,7 +90,9 @@ export const appRouter = router({
     }),
   }),
 
-  // Approval Queue — admin only for reviewing decisions
+  // Approval Queue — listing is shared across the workspace (approvals are
+  // not scoped to a user; the table has no userId column). Only review
+  // (approve/reject) is restricted to admins.
   approvals: router({
     pending: protectedProcedure.query(async () => {
       return db.getPendingApprovals();

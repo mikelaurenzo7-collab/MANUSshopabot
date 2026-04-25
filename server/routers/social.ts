@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -70,7 +70,7 @@ export const socialRouter = router({
           },
         });
 
-        const adCopy = JSON.parse(llmResult.choices[0].message.content as string);
+        const adCopy = parseLLMJson<any>(llmResult.choices[0].message.content, "social.generateAdCopy");
 
         const campaign = await db.createAdCampaign({
           storeId: input.storeId,
@@ -191,7 +191,7 @@ export const socialRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "social.suggestSeoKeywords");
 
         await db.createSeoKeywords(
           result.keywords.map((k: any) => ({
@@ -284,7 +284,7 @@ export const socialRouter = router({
           },
         });
 
-        const postData = JSON.parse(llmResult.choices[0].message.content as string);
+        const postData = parseLLMJson<any>(llmResult.choices[0].message.content, "social.generatePost");
 
         const post = await db.createSocialPost({
           storeId: input.storeId,
@@ -367,7 +367,7 @@ export const socialRouter = router({
           },
         });
 
-        const emailData = JSON.parse(llmResult.choices[0].message.content as string);
+        const emailData = parseLLMJson<any>(llmResult.choices[0].message.content, "social.generateEmail");
 
         const campaign = await db.createEmailCampaign({
           storeId: input.storeId,
@@ -605,7 +605,7 @@ export const socialRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "social.abTestCopyGenerator");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {
@@ -673,7 +673,7 @@ export const socialRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "social.smsRecoveryFlow");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {
@@ -741,7 +741,7 @@ export const socialRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "social.socialProofGenerator");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {

@@ -4,11 +4,11 @@
  */
 
 import { z } from 'zod';
-import { publicProcedure } from '../_core/trpc';
+import { adminProcedure } from '../_core/trpc';
 import { getQueueHealth } from '../queue/config';
 
 export const queueHealthRouter = {
-  getHealth: publicProcedure.query(async () => {
+  getHealth: adminProcedure.query(async () => {
     try {
       const health = await getQueueHealth();
       return {
@@ -24,7 +24,7 @@ export const queueHealthRouter = {
     }
   }),
 
-  getQueueStats: publicProcedure
+  getQueueStats: adminProcedure
     .input(z.object({
       queueName: z.enum(['webhooks', 'external-apis']),
     }))

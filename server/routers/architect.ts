@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { pushProductToStore, syncProductsFromStore } from "../engine/platformBridge";
@@ -82,7 +82,7 @@ export const architectRouter = router({
           },
         });
 
-        const reportData = JSON.parse(llmResult.choices[0].message.content as string);
+        const reportData = parseLLMJson<any>(llmResult.choices[0].message.content, "architect.nicheResearch");
         await db.updateNicheReport(report.id, {
           report: reportData,
           score: reportData.viabilityScore,
@@ -177,7 +177,7 @@ export const architectRouter = router({
           },
         });
 
-        const catalogData = JSON.parse(llmResult.choices[0].message.content as string);
+        const catalogData = parseLLMJson<any>(llmResult.choices[0].message.content, "architect.generateCatalog");
         const createdProducts = [];
 
         for (const p of catalogData.products) {
@@ -355,7 +355,7 @@ export const architectRouter = router({
           },
         });
 
-        const healthReport = JSON.parse(llmResult.choices[0].message.content as string);
+        const healthReport = parseLLMJson<any>(llmResult.choices[0].message.content, "architect.storeHealthCheck");
         await db.updateAgentTask(task.id, { status: "completed", result: healthReport });
         return healthReport;
       } catch (error) {
@@ -430,7 +430,7 @@ export const architectRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "architect.rewriteDescriptions");
         await db.updateAgentTask(task.id, { status: "completed", result });
 
         await notifyOwner({
@@ -555,7 +555,7 @@ export const architectRouter = router({
           },
         });
 
-        const result = JSON.parse(llmResult.choices[0].message.content as string);
+        const result = parseLLMJson<any>(llmResult.choices[0].message.content, "architect.pricingStrategy");
         await db.updateAgentTask(task.id, { status: "completed", result });
         return result;
       } catch (error) {

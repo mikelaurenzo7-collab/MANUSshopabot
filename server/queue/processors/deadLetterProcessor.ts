@@ -6,7 +6,7 @@
 import { Worker, Job } from 'bullmq';
 import { getWebhookQueue } from '../config';
 import { ENV } from '../../_core/env';
-import { getDb } from '../../db';
+import { logger } from '../../_core/logger';
 
 // ─── Dead-Letter Job Record ────────────────────────────────────────────
 
@@ -29,36 +29,35 @@ async function processDeadLetter(job: Job) {
   try {
     const { jobId, queueName, jobName, payload, error, attempts } = job.data;
 
-    console.log(`[Dead-Letter] Processing failed job ${jobId}:`, {
+    logger.error('dead_letter_received', {
+      originalJobId: jobId,
       queue: queueName,
       name: jobName,
       attempts,
       error,
     });
 
-    // TODO: Store in database for manual inspection
-    // const db = await getDb();
-    // await db.insert(deadLetterJobs).values({
-    //   jobId,
-    //   queueName,
-    //   jobName,
-    //   payload,
-    //   error,
-    //   attempts,
-    //   failedAt: new Date(),
-    //   status: 'pending_review',
-    // });
+    // Best-effort owner notification. We import dynamically to avoid a hard
+    // dependency cycle and we never let a notification failure crash the
+    // dead-letter pipeline — the structured log above is the source of truth.
+    try {
+      const { notifyOwner } = await import('../../_core/notification');
+      await notifyOwner({
+        title: `⚠️ Webhook Dead-Lettered: ${jobName}`,
+        content: `Job ${jobId} on queue "${queueName}" failed after ${attempts} attempts. Error: ${error}. Inspect via the queue health admin tools.`,
+      });
+    } catch (notifyErr) {
+      logger.warn('dead_letter_notify_failed', {
+        originalJobId: jobId,
+        error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+      });
+    }
 
-    // TODO: Send notification to owner
-    // await notifyOwner({
-    //   title: `Webhook Failed: ${jobName}`,
-    //   content: `Job ${jobId} failed after ${attempts} attempts. Error: ${error}`,
-    // });
-
-    console.log(`[Dead-Letter] Job ${jobId} recorded for manual review`);
     return { recorded: true, jobId };
   } catch (err) {
-    console.error('[Dead-Letter] Error processing dead-letter job:', err);
+    logger.error('dead_letter_processing_error', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     throw err;
   }
 }
@@ -69,7 +68,7 @@ let deadLetterWorker: Worker | null = null;
 
 export async function startDeadLetterWorker() {
   if (deadLetterWorker) {
-    console.log('[Dead-Letter Worker] Already running');
+    logger.info('dead_letter_worker_already_running');
     return;
   }
 
@@ -81,25 +80,25 @@ export async function startDeadLetterWorker() {
   });
 
   deadLetterWorker.on('completed', (job) => {
-    console.log(`[Dead-Letter Worker] Job ${job.id} processed`);
+    logger.info('dead_letter_worker_job_completed', { jobId: job.id });
   });
 
   deadLetterWorker.on('failed', (job, err) => {
-    console.error(`[Dead-Letter Worker] Job ${job?.id} failed:`, err?.message);
+    logger.error('dead_letter_worker_job_failed', { jobId: job?.id, error: err?.message });
   });
 
   deadLetterWorker.on('error', (err) => {
-    console.error('[Dead-Letter Worker] Error:', err);
+    logger.error('dead_letter_worker_error', { error: err?.message ?? String(err) });
   });
 
-  console.log('[Dead-Letter Worker] Started with concurrency=5');
+  logger.info('dead_letter_worker_started', { concurrency: 5 });
 }
 
 export async function stopDeadLetterWorker() {
   if (deadLetterWorker) {
     await deadLetterWorker.close();
     deadLetterWorker = null;
-    console.log('[Dead-Letter Worker] Stopped');
+    logger.info('dead_letter_worker_stopped');
   }
 }
 
@@ -129,8 +128,11 @@ export async function moveToDeadLetter(
       }
     );
 
-    console.log(`[Dead-Letter] Moved job ${failedJob.id} to dead-letter queue`);
+    logger.warn('dead_letter_moved', { jobId: failedJob.id, error: error.message });
   } catch (err) {
-    console.error('[Dead-Letter] Error moving job to dead-letter queue:', err);
+    logger.error('dead_letter_move_failed', {
+      jobId: failedJob.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
