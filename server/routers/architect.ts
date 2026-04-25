@@ -7,6 +7,7 @@ import { pushProductToStore, syncProductsFromStore } from "../engine/platformBri
 import { getRenderedStoreContext } from "../utils/userContext";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { sanitizeText } from "../utils/sanitize";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -15,6 +16,7 @@ export const architectRouter = router({
       storeId: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
+      input = { ...input, keyword: sanitizeText(input.keyword, 255) };
       // Create the report record
       const report = await db.createNicheReport({
         keyword: input.keyword,

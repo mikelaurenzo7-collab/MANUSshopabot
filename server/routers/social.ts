@@ -6,6 +6,7 @@ import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
 import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
 import { getRenderedStoreContext } from "../utils/userContext";
+import { sanitizeMultiline, sanitizeText } from "../utils/sanitize";
 
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
@@ -434,10 +435,10 @@ export const socialRouter = router({
         const post = await publishSocialPost(
           input.socialAccountId,
           {
-            content: input.content,
-            imageUrl: input.imageUrl,
-            link: input.link,
-            hashtags: input.hashtags,
+            content: sanitizeMultiline(input.content, 5000),
+            imageUrl: input.imageUrl ? sanitizeText(input.imageUrl, 2048) : undefined,
+            link: input.link ? sanitizeText(input.link, 2048) : undefined,
+            hashtags: input.hashtags?.map((h) => sanitizeText(h, 100)),
           },
           input.storeId,
         );
@@ -474,10 +475,10 @@ export const socialRouter = router({
         const post = await scheduleSocialPost(
           input.socialAccountId,
           {
-            content: input.content,
-            imageUrl: input.imageUrl,
-            link: input.link,
-            hashtags: input.hashtags,
+            content: sanitizeMultiline(input.content, 5000),
+            imageUrl: input.imageUrl ? sanitizeText(input.imageUrl, 2048) : undefined,
+            link: input.link ? sanitizeText(input.link, 2048) : undefined,
+            hashtags: input.hashtags?.map((h) => sanitizeText(h, 100)),
           },
           new Date(input.scheduledAt),
           input.storeId,

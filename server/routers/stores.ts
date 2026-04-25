@@ -5,6 +5,7 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { sanitizeName, sanitizeText } from "../utils/sanitize";
 
 const platformEnum = z.enum(["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]);
 
@@ -35,10 +36,10 @@ export const storesRouter = router({
       const result = await db.withTransaction(async (tx) => {
         const createdStore = await db.createStore({
           userId: ctx.user.id,
-          name: input.name,
+          name: sanitizeName(input.name, 255),
           platform: input.platform,
-          platformDomain: input.platformDomain,
-          niche: input.niche,
+          platformDomain: input.platformDomain ? sanitizeText(input.platformDomain, 255) : undefined,
+          niche: input.niche ? sanitizeText(input.niche, 255) : undefined,
           currency: input.currency,
           status: "setup",
         }, tx);
@@ -72,7 +73,13 @@ export const storesRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
       }
       const { id, ...data } = input;
-      await db.updateStore(id, data);
+      const sanitized = {
+        ...data,
+        ...(data.name ? { name: sanitizeName(data.name, 255) } : {}),
+        ...(data.niche ? { niche: sanitizeText(data.niche, 255) } : {}),
+        ...(data.platformDomain ? { platformDomain: sanitizeText(data.platformDomain, 255) } : {}),
+      };
+      await db.updateStore(id, sanitized);
       return { success: true };
     }),
 

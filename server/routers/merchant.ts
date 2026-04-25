@@ -10,6 +10,7 @@ import {
   checkInventoryAcrossStores,
 } from "../engine/platformBridge";
 import { getRenderedStoreContext } from "../utils/userContext";
+import { sanitizeName, sanitizeText } from "../utils/sanitize";
 
 export const merchantRouter = router({
   // ─── Inventory ────────────────────────────────────────────────────────
@@ -158,7 +159,7 @@ export const merchantRouter = router({
       enabled: z.boolean().default(true),
     }))
     .mutation(async ({ input }) => {
-      const result = await db.createPricingRule(input);
+      const result = await db.createPricingRule({ ...input, name: sanitizeName(input.name, 200) });
 
       await db.createAgentTask({
         agentType: "merchant",
