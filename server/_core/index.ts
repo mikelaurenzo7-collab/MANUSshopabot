@@ -82,14 +82,17 @@ async function startServer() {
 
     // Queue health is best-effort: if Redis is down we still want to return a
     // health response (degraded), not hang. Cap the probe at 1.5s.
-    let queueHealth: Awaited<ReturnType<typeof getQueueHealth>> | { redis: { connected: false; error: string }; queues: null } = {
+    type QueueHealth =
+      | Awaited<ReturnType<typeof getQueueHealth>>
+      | { redis: { connected: false; error: string }; queues: null };
+    let queueHealth: QueueHealth = {
       redis: { connected: false, error: "not_probed" },
       queues: null,
     };
     try {
-      queueHealth = await Promise.race([
+      queueHealth = await Promise.race<QueueHealth>([
         getQueueHealth(),
-        new Promise<typeof queueHealth>((resolve) =>
+        new Promise<QueueHealth>((resolve) =>
           setTimeout(
             () => resolve({ redis: { connected: false, error: "probe_timeout" }, queues: null }),
             1500,
@@ -238,7 +241,10 @@ async function startServer() {
       logger.info("server_shutdown_complete", { signal });
       process.exit(0);
     });
-    // Hard-exit safety net so a hung connection cannot block redeploy.
+    // Hard-exit safety net so a hung connection cannot block redeploy. We
+    // exit non-zero here because reaching this branch means the graceful
+    // shutdown sequence (queues + HTTP server close) did NOT complete in
+    // time — process supervisors should treat that as an unclean exit.
     setTimeout(() => {
       logger.error("server_shutdown_forced", { signal });
       process.exit(1);
