@@ -1,259 +1,434 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useSearch } from "wouter";
 import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
-  Database, Network, Zap
+  ChevronRight, TrendingUp, Package, ShoppingCart, Activity, Zap,
+  DollarSign, BarChart3, Globe, Store
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
+const StoreView = lazy(() => import("@/components/StoreView"));
+
+const PLATFORM_COLORS: Record<string, string> = {
+  shopify: "#96BF48", woocommerce: "#96588A", amazon: "#FF9900",
+  etsy: "#F1641E", ebay: "#E53238", tiktok_shop: "#000000", walmart: "#0071CE",
+  meta: "#1877F2", instagram: "#E1306C", tiktok: "#010101", twitter: "#1DA1F2",
+  pinterest: "#E60023", youtube: "#FF0000", gmail: "#EA4335",
+};
 const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
   ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
   meta: "📘", instagram: "📸", tiktok: "🎵", twitter: "🐦",
+  pinterest: "📌", youtube: "▶️", gmail: "📧",
 };
 
 export default function IntegrationsPage() {
+  const [mainTab, setMainTab] = useState<"stores" | "social" | "connect">("stores");
   const [connectTab, setConnectTab] = useState<"ecommerce" | "social">("ecommerce");
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
-  const [activeSubTab, setActiveSubTab] = useState<"connected" | "catalogue">("connected");
 
-  // Queries
+  const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
   const { data: ecommercePlatforms } = trpc.connectors.ecommercePlatforms.useQuery();
   const { data: socialPlatforms } = trpc.connectors.socialPlatforms.useQuery();
   const { data: credentials, refetch: refetchCreds } = trpc.connectors.listCredentials.useQuery();
   const { data: socialAccounts, refetch: refetchSocial } = trpc.connectors.listSocialAccounts.useQuery();
   const { data: summary } = trpc.connectors.connectionSummary.useQuery();
 
-  // Search logic for redirects
+  // Handle OAuth redirects
   const searchString = useSearch();
   useEffect(() => {
     const params = new URLSearchParams(searchString);
     if (params.get("connected") && params.get("account")) {
-      toast.success(`${(params.get("name") || params.get("account"))?.toUpperCase()} CONNECTED SUCCESSFULLY`);
+      toast.success(`${(params.get("name") || params.get("account"))?.toUpperCase()} connected successfully`);
       history.replaceState(null, "", window.location.pathname);
+      refetchCreds();
+      refetchSocial();
     }
   }, [searchString]);
 
-  // Mutations
   const disconnectCred = trpc.connectors.disconnectCredential.useMutation({
-    onSuccess: () => { toast.success("AUTHORIZATION_REVOKED"); refetchCreds(); setSelectedEntity(null); },
-    onError: (err) => toast.error(`ERR: ${err.message}`),
+    onSuccess: () => { toast.success("Platform disconnected"); refetchCreds(); setSelectedEntity(null); },
+    onError: (err) => toast.error(err.message),
   });
   const disconnectSocial = trpc.connectors.disconnectSocialAccount.useMutation({
-    onSuccess: () => { toast.success("AUTHORIZATION_REVOKED"); refetchSocial(); setSelectedEntity(null); },
-    onError: (err) => toast.error(`ERR: ${err.message}`),
+    onSuccess: () => { toast.success("Account disconnected"); refetchSocial(); setSelectedEntity(null); },
+    onError: (err) => toast.error(err.message),
   });
   const checkHealth = trpc.connectors.checkCredentialHealth.useMutation({
-    onSuccess: (data) => { toast.success(`LINK_STATUS_${data.status.toUpperCase()}`); refetchCreds(); },
-    onError: (err) => toast.error(`ERR: ${err.message}`),
+    onSuccess: (data) => { toast.success(`Status: ${data.status}`); refetchCreds(); },
+    onError: (err) => toast.error(err.message),
   });
   const generateOAuth = trpc.connectors.generateOAuthUrl.useMutation({
-    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message); },
-    onError: (err) => toast.error(`ERR: ${err.message}`),
+    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message || "Failed"); },
+    onError: (err) => toast.error(err.message),
   });
   const generateSocialOAuth = trpc.connectors.generateSocialOAuthUrl.useMutation({
-    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message); },
-    onError: (err) => toast.error(`ERR: ${err.message}`),
+    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error((data as any).message || "Failed"); },
+    onError: (err) => toast.error(err.message),
   });
 
   const connectedPlatformIds = useMemo(() => new Set((credentials || []).map((c: any) => c.platform)), [credentials]);
   const connectedSocialIds = useMemo(() => new Set((socialAccounts || []).map((s: any) => s.platform)), [socialAccounts]);
 
-  const allConnected = useMemo(() => [
-    ...(credentials || []).map((c: any) => ({ ...c, kind: "ecommerce" })),
-    ...(socialAccounts || []).map((s: any) => ({ ...s, kind: "social" }))
-  ], [credentials, socialAccounts]);
-
-  const connectToPlatform = (platformId: string, kind: "ecommerce" | "social") => {
-     if (kind === "ecommerce") {
-        generateOAuth.mutate({ platform: platformId, origin: window.location.origin });
-     } else {
-        generateSocialOAuth.mutate({ platform: platformId as any, origin: window.location.origin });
-     }
+  const statusIcon = (status: string) => {
+    if (status === "active" || status === "healthy") return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />;
+    if (status === "error" || status === "unhealthy") return <XCircle className="w-3.5 h-3.5 text-red-400" />;
+    return <AlertCircle className="w-3.5 h-3.5 text-amber-400" />;
   };
 
+  const tabs = [
+    { id: "stores" as const, label: "My Stores", icon: <Store className="w-3.5 h-3.5" />, count: stores?.length || 0 },
+    { id: "social" as const, label: "Social Accounts", icon: <Share2 className="w-3.5 h-3.5" />, count: socialAccounts?.length || 0 },
+    { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
+  ];
+
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-[#e2e8f0]">
-      {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full border-r border-[#1e293b]">
-        {/* Header Bar */}
-        <div className="h-14 flex items-center px-6 border-b border-[#1e293b] justify-between bg-[#0a0a0a] shrink-0">
-          <div className="flex items-center gap-3">
-            <Zap className="text-cyan-400 w-5 h-5" />
-            <div>
-              <h1 className="font-mono text-[11px] uppercase tracking-widest font-bold text-white">System Data: Integration Nodes</h1>
-              <p className="font-mono text-[9px] text-[#64748b]">External APIs, authentication links, operational bridges.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-             <button onClick={() => { setActiveSubTab("connected"); setSelectedEntity(null); }} className={`font-mono text-[10px] uppercase font-bold tracking-widest pb-1 transition-colors border-b-2 ${activeSubTab === "connected" ? "border-cyan-400 text-white" : "border-transparent text-[#64748b] hover:text-white"}`}>ACTIVE_NODES</button>
-             <button onClick={() => { setActiveSubTab("catalogue"); setSelectedEntity(null); }} className={`font-mono text-[10px] uppercase font-bold tracking-widest pb-1 transition-colors border-b-2 ${activeSubTab === "catalogue" ? "border-cyan-400 text-white" : "border-transparent text-[#64748b] hover:text-white"}`}>NODE_CATALOGUE</button>
-          </div>
+    <div className="flex flex-col h-full bg-[#050505] text-slate-200 overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-white/8 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-white">Integration Hub</h1>
+          <p className="text-sm text-slate-400 mt-0.5">
+            {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
+          </p>
         </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050505]">
-          <div className="max-w-4xl mx-auto space-y-6">
-
-             {activeSubTab === "connected" ? (
-               <div className="border border-[#1e293b] bg-[#0a0a0a]">
-                 <div className="border-b border-[#1e293b] px-4 py-3 flex justify-between items-center bg-[#050505]">
-                   <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Network className="w-3 h-3 text-cyan-400 mr-2" /> Live Network Bridges</h2>
-                   <span className="font-mono text-[9px] tracking-widest text-[#64748b]">{allConnected.length} SYSTEMS ACTIVE</span>
-                 </div>
-                 <div className="p-0 overflow-auto custom-scrollbar min-h-[400px]">
-                   {!allConnected.length ? (
-                     <div className="p-12 text-center text-[#64748b] font-mono text-[10px] uppercase tracking-widest border-b border-[#1e293b]/50">
-                        NO_BRIDGES_DETECTED
-                     </div>
-                   ) : (
-                     <table className="w-full text-left font-mono border-collapse">
-                       <thead>
-                         <tr className="border-b border-[#1e293b] bg-[#050505]">
-                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal">Node Identity</th>
-                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-center">Type</th>
-                           <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-[#64748b] font-normal text-right">Link Status</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {allConnected.map((c: any) => {
-                           const isSelected = selectedEntity?.id === c.id;
-                           return (
-                             <tr 
-                               key={`${c.kind}-${c.id}`} 
-                               onClick={() => setSelectedEntity(c)}
-                               className={`border-b border-[#1e293b] cursor-pointer transition-colors ${isSelected ? 'bg-[#1e293b]/40 border-l border-l-cyan-400' : 'hover:bg-[#1e293b]/20'} relative`}
-                             >
-                              <td className="px-4 py-3 text-[10px] text-white flex items-center uppercase font-bold tracking-wider">
-                                <span className="mr-3 text-[#1e293b] text-sm hidden sm:inline-block">{PLATFORM_ICONS[c.platform] || "🛜"}</span>
-                                {c.storeName || c.accountName || c.name}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 border ${c.kind === 'ecommerce' ? 'border-[#00ff41]/30 text-[#00ff41]' : 'border-[#f59e0b]/30 text-[#f59e0b]'}`}>{c.kind}</span>
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                {c.status === "active" ? (
-                                  <span className="text-[#00ff41] font-bold text-[10px] uppercase tracking-widest flex items-center justify-end"><Wifi className="w-3 h-3 mr-1"/> SYNCED</span>
-                                ) : (
-                                  <span className="text-red-500 font-bold text-[10px] uppercase tracking-widest flex items-center justify-end"><WifiOff className="w-3 h-3 mr-1"/> ERR_DISCONNECT</span>
-                                )}
-                              </td>
-                             </tr>
-                           )
-                         })}
-                       </tbody>
-                     </table>
-                   )}
-                 </div>
-               </div>
-             ) : (
-               <div className="space-y-6">
-                 {/* Connection Form Modes */}
-                 <div className="flex items-center gap-2 border-b border-[#1e293b] pb-4">
-                   <button onClick={() => setConnectTab("ecommerce")} className={`px-4 py-2 border font-mono text-[10px] uppercase tracking-widest transition-colors ${connectTab === "ecommerce" ? "border-cyan-400 text-cyan-400 bg-cyan-400/5" : "border-[#1e293b] text-[#64748b] bg-[#0a0a0a] hover:text-white"}`}>E-Commerce Matrices</button>
-                   <button onClick={() => setConnectTab("social")} className={`px-4 py-2 border font-mono text-[10px] uppercase tracking-widest transition-colors ${connectTab === "social" ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/5" : "border-[#1e293b] text-[#64748b] bg-[#0a0a0a] hover:text-white"}`}>Social Networks</button>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                   {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
-                     const isConnected = connectTab === "ecommerce" ? connectedPlatformIds.has(platform.id) : connectedSocialIds.has(platform.id);
-                     return (
-                       <div key={platform.id} className="border border-[#1e293b] bg-[#0a0a0a] p-4 flex flex-col group relative">
-                         {isConnected && <div className="absolute top-0 right-0 w-16 h-16 bg-[#00ff41]/5 rounded-bl-[100%] pointer-events-none"/>}
-                         <div className="flex items-center justify-between mb-3">
-                           <div className="flex items-center gap-2">
-                             <span className="text-lg opacity-70 group-hover:opacity-100 transition-opacity">{PLATFORM_ICONS[platform.id] || "🛜"}</span>
-                             <span className="font-mono text-xs uppercase text-white font-bold">{platform.name}</span>
-                           </div>
-                           {isConnected && <CheckCircle2 className="w-3 h-3 text-[#00ff41]" />}
-                         </div>
-                         <p className="font-mono text-[9px] text-[#64748b] mb-4 flex-1 line-clamp-2">{platform.description}</p>
-                         
-                         <button 
-                           onClick={() => connectToPlatform(platform.id, connectTab)}
-                           disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
-                           className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-white font-mono text-[10px] uppercase font-bold tracking-widest px-4 py-2 transition-colors flex items-center justify-center disabled:opacity-50"
-                         >
-                            {isConnected ? "INITIALIZE_DUPLICATE_NODE" : "AUTHORIZE_LINK"} <ExternalLink className="w-3 h-3 ml-2" />
-                         </button>
-                       </div>
-                     )
-                   })}
-                 </div>
-               </div>
-             )}
-          </div>
+        <div className="flex items-center gap-2">
+          {summary && (
+            <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
+              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400" /> {summary.credentials} platforms</span>
+              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400" /> {summary.stores} stores</span>}
+              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> {summary.socialAccounts} social</span>}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Metadata Inspector (Right Panel) */}
-      <aside className="w-[380px] shrink-0 bg-[#0a0a0a] flex flex-col z-20 box-border border-l border-[#1e293b]">
-        <div className="h-14 flex items-center px-4 border-b border-[#1e293b] justify-between shrink-0 bg-[#050505]">
-          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-[#64748b]">
-            Integration Inspector
-          </span>
-          <span className="flex items-center gap-2">
-             <Shield className="w-3.5 h-3.5 text-cyan-400" />
-          </span>
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 px-4 py-2 border-b border-white/8 bg-white/2">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setMainTab(t.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              mainTab === t.id
+                ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
+                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+            }`}
+          >
+            {t.icon}
+            {t.label}
+            {"count" in t && (t.count ?? 0) > 0 && (
+              <span className="ml-0.5 bg-white/10 text-slate-300 rounded-full px-1.5 py-0.5 text-[10px]">{t.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
-           {!selectedEntity ? (
-             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
-                <Database className="w-6 h-6 text-[#64748b] mb-4" />
-                <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b]">Awaiting active node selection</p>
-             </div>
-           ) : (
-             <div className="space-y-6">
-                <div>
-                   <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-[#1e293b] pb-2 break-all">{selectedEntity.storeName || selectedEntity.accountName || selectedEntity.name}</h2>
-                   <div className="flex justify-between items-center mt-3">
-                      <span className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase">Target Vector</span>
-                      <span className="font-mono text-[10px] text-white uppercase font-bold">{selectedEntity.platform}</span>
-                   </div>
-                </div>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6">
 
-                <div className="space-y-2">
-                   <InspectorRow label="Uplink Kind" value={selectedEntity.kind.toUpperCase()} />
-                   <InspectorRow label="Node Key" value={`#${selectedEntity.id}`} valueColor="text-[#64748b]" />
-                   <InspectorRow label="Health" value={selectedEntity.status.toUpperCase()} valueColor={selectedEntity.status === 'active' ? "text-[#00ff41]" : "text-red-500"} />
-                   <InspectorRow label="Link Initiated" value={new Date(selectedEntity.createdAt).toLocaleString()} valueColor="text-[#64748b]" />
-                </div>
-                
-                <div className="pt-4 border-t border-[#1e293b] space-y-2">
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-[#64748b] mb-3">Security & Diagnostic Overrides</p>
-                  {selectedEntity.kind === "ecommerce" && (
-                    <button 
-                       onClick={() => checkHealth.mutate({ id: selectedEntity.id })}
-                       disabled={checkHealth.isPending}
-                       className="w-full bg-[#050505] border border-[#1e293b] hover:border-cyan-400 hover:text-cyan-400 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+        {/* ── STORES TAB ── */}
+        {mainTab === "stores" && (
+          <div className="space-y-4">
+            {!stores || stores.length === 0 ? (
+              <div className="text-center py-20">
+                <Store className="w-12 h-12 mx-auto mb-4 text-slate-600" />
+                <h3 className="text-base font-medium text-slate-300 mb-1">No stores connected yet</h3>
+                <p className="text-sm text-slate-500 mb-4">Connect your first store to start selling with AI-powered bots.</p>
+                <Button onClick={() => setMainTab("connect")} className="bg-sky-500 hover:bg-sky-400 text-white">
+                  <Plus className="w-4 h-4 mr-2" /> Connect a Store
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {stores.map((store: any) => {
+                  const color = PLATFORM_COLORS[store.platform] || "#64748b";
+                  const icon = PLATFORM_ICONS[store.platform] || "🏪";
+                  const cred = (credentials || []).find((c: any) => c.platform === store.platform);
+                  const isConnected = !!cred;
+
+                  return (
+                    <button
+                      key={store.id}
+                      onClick={() => setSelectedStoreId(store.id)}
+                      className="group text-left bg-white/4 border border-white/8 rounded-2xl p-5 hover:bg-white/7 hover:border-white/15 transition-all duration-200 relative overflow-hidden"
                     >
-                       DIAGNOSTIC_PING <RefreshCw className={`w-3 h-3 group-hover:text-cyan-400 ${checkHealth.isPending ? 'animate-spin' : ''}`} />
+                      {/* Platform color accent */}
+                      <div
+                        className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
+                        style={{ background: `linear-gradient(90deg, ${color}80, ${color}20)` }}
+                      />
+
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl">{icon}</div>
+                          <div>
+                            <div className="text-sm font-semibold text-white group-hover:text-sky-300 transition-colors">{store.name}</div>
+                            <div className="text-xs text-slate-500 truncate max-w-[140px]">{store.platformDomain || store.platform}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {isConnected ? (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+                              <Wifi className="w-2.5 h-2.5" /> Live
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-full">
+                              <WifiOff className="w-2.5 h-2.5" /> Setup
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Mini KPIs — placeholder, will be populated from overview query */}
+                      <StoreCardMetrics storeId={store.id} />
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/6">
+                        <div className="text-xs text-slate-500">{store.niche || store.platform}</div>
+                        <div className="flex items-center gap-1 text-xs text-sky-400 group-hover:gap-2 transition-all">
+                          View store <ChevronRight className="w-3 h-3" />
+                        </div>
+                      </div>
                     </button>
-                  )}
-                  <button 
-                     onClick={() => selectedEntity.kind === "ecommerce" ? disconnectCred.mutate({ id: selectedEntity.id }) : disconnectSocial.mutate({ id: selectedEntity.id })}
-                     disabled={disconnectCred.isPending || disconnectSocial.isPending}
-                     className="w-full bg-[#050505] border border-red-500/30 hover:border-red-500 hover:text-red-500 text-[#94a3b8] disabled:opacity-50 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
-                  >
-                     SEVER_CONNECTION <Trash2 className="w-3 h-3 group-hover:text-red-500" />
-                  </button>
+                  );
+                })}
+
+                {/* Add Store CTA */}
+                <button
+                  onClick={() => setMainTab("connect")}
+                  className="flex flex-col items-center justify-center gap-2 bg-white/2 border border-dashed border-white/10 rounded-2xl p-5 hover:bg-white/5 hover:border-white/20 transition-all text-slate-500 hover:text-slate-300 min-h-[180px]"
+                >
+                  <Plus className="w-8 h-8" />
+                  <span className="text-sm font-medium">Add Store</span>
+                </button>
+              </div>
+            )}
+
+            {/* Platform Credentials (API keys) */}
+            {credentials && credentials.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-sm font-medium text-slate-300 mb-3">Platform Credentials</h3>
+                <div className="space-y-2">
+                  {credentials.map((cred: any) => (
+                    <div key={cred.id} className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3">
+                      <div className="text-lg">{PLATFORM_ICONS[cred.platform] || "🔌"}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white">{cred.platform?.toUpperCase()}</div>
+                        <div className="text-xs text-slate-400">Added {new Date(cred.createdAt).toLocaleDateString()}</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {statusIcon(cred.status || "active")}
+                        <span className="text-xs text-slate-400">{cred.status || "active"}</span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-slate-400 hover:text-white"
+                          onClick={() => checkHealth.mutate({ id: cred.id })}
+                          disabled={checkHealth.isPending}
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${checkHealth.isPending ? "animate-spin" : ""}`} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-slate-400 hover:text-red-400"
+                          onClick={() => disconnectCred.mutate({ id: cred.id })}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-             </div>
-           )}
-        </div>
-      </aside>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── SOCIAL ACCOUNTS TAB ── */}
+        {mainTab === "social" && (
+          <div className="space-y-3">
+            {!socialAccounts || socialAccounts.length === 0 ? (
+              <div className="text-center py-20">
+                <Share2 className="w-12 h-12 mx-auto mb-4 text-slate-600" />
+                <h3 className="text-base font-medium text-slate-300 mb-1">No social accounts connected</h3>
+                <p className="text-sm text-slate-500 mb-4">Connect your social platforms to automate posts, ads, and email campaigns.</p>
+                <Button onClick={() => { setMainTab("connect"); setConnectTab("social"); }} className="bg-sky-500 hover:bg-sky-400 text-white">
+                  <Plus className="w-4 h-4 mr-2" /> Connect Social Account
+                </Button>
+              </div>
+            ) : (
+              socialAccounts.map((acc: any) => {
+                const color = PLATFORM_COLORS[acc.platform] || "#64748b";
+                const icon = PLATFORM_ICONS[acc.platform] || "📱";
+                return (
+                  <div
+                    key={acc.id}
+                    className="flex items-center gap-4 bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
+                    style={{ borderLeft: `3px solid ${color}40` }}
+                  >
+                    <div className="text-2xl">{icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{acc.accountName || acc.platform}</span>
+                        <Badge className="text-[10px] border border-white/10 text-slate-400">{acc.platform}</Badge>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        {acc.followersCount ? `${acc.followersCount.toLocaleString()} followers` : ""}
+                        {acc.accountId ? ` · @${acc.accountId}` : ""}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+                        <CheckCircle2 className="w-2.5 h-2.5" /> Connected
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-slate-400 hover:text-red-400"
+                        onClick={() => disconnectSocial.mutate({ id: acc.id })}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {/* ── CONNECT NEW TAB ── */}
+        {mainTab === "connect" && (
+          <div className="space-y-6">
+            <div className="flex gap-2">
+              {(["ecommerce", "social"] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setConnectTab(t)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    connectTab === t
+                      ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
+                      : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
+                  }`}
+                >
+                  {t === "ecommerce" ? "🛍️ E-Commerce" : "📱 Social Media"}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
+                const isConnected = connectTab === "ecommerce"
+                  ? connectedPlatformIds.has(platform.id)
+                  : connectedSocialIds.has(platform.id);
+                const color = PLATFORM_COLORS[platform.id] || "#64748b";
+
+                return (
+                  <div
+                    key={platform.id}
+                    className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{PLATFORM_ICONS[platform.id] || "🔌"}</span>
+                        <div>
+                          <div className="text-sm font-semibold text-white">{platform.name}</div>
+                          <div className="text-xs text-slate-500">{platform.description?.slice(0, 40)}...</div>
+                        </div>
+                      </div>
+                      {isConnected && <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                    </div>
+
+                    {platform.capabilities && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {platform.capabilities.slice(0, 3).map((cap: string) => (
+                          <span key={cap} className="text-[10px] bg-white/6 text-slate-400 px-1.5 py-0.5 rounded">{cap}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    <Button
+                      size="sm"
+                      className={`w-full text-xs ${
+                        isConnected
+                          ? "bg-white/6 text-slate-300 hover:bg-white/10 border border-white/10"
+                          : "text-white hover:opacity-90"
+                      }`}
+                      style={!isConnected ? { backgroundColor: color } : {}}
+                      onClick={() => {
+                        if (connectTab === "ecommerce") {
+                          generateOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                        } else {
+                          generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                        }
+                      }}
+                      disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
+                    >
+                      {generateOAuth.isPending || generateSocialOAuth.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      ) : null}
+                      {isConnected ? "Reconnect" : "Connect"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* StoreView Slide-Over */}
+      {selectedStoreId !== null && (
+        <Suspense fallback={<div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"><Loader2 className="w-8 h-8 text-sky-400 animate-spin" /></div>}>
+          <StoreView storeId={selectedStoreId} onClose={() => setSelectedStoreId(null)} />
+        </Suspense>
+      )}
     </div>
   );
 }
 
-function InspectorRow({ label, value, valueColor = "text-[#e2e8f0]" }: { label: string, value: string, valueColor?: string }) {
+/** Mini metrics card shown on each store card — fetches overview lazily */
+function StoreCardMetrics({ storeId }: { storeId: number }) {
+  const { data: overview, isLoading } = trpc.stores.overview.useQuery({ storeId });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-3 gap-2">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!overview) return null;
+
   return (
-    <div className="flex justify-between items-center border-b border-[#1e293b]/50 py-1.5">
-      <span className="font-mono text-[9px] uppercase text-[#64748b]">{label}</span>
-      <span className={`font-mono text-[10px] font-bold ${valueColor} text-right max-w-[60%] truncate uppercase tracking-widest`}>{value}</span>
+    <div className="grid grid-cols-3 gap-2">
+      <div className="bg-white/4 rounded-lg p-2 text-center">
+        <div className="text-sm font-semibold text-emerald-400">${overview.metrics.todayRevenue.toFixed(0)}</div>
+        <div className="text-[10px] text-slate-500">Today</div>
+      </div>
+      <div className="bg-white/4 rounded-lg p-2 text-center">
+        <div className="text-sm font-semibold text-sky-400">{overview.metrics.totalOrders}</div>
+        <div className="text-[10px] text-slate-500">Orders</div>
+      </div>
+      <div className="bg-white/4 rounded-lg p-2 text-center">
+        <div className={`text-sm font-semibold ${overview.metrics.lowStockProducts > 0 ? "text-amber-400" : "text-slate-400"}`}>
+          {overview.metrics.totalProducts}
+        </div>
+        <div className="text-[10px] text-slate-500">Products</div>
+      </div>
     </div>
   );
 }

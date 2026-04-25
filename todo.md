@@ -801,3 +801,46 @@
 - [x] SubscriptionGate: premium redesign — gradient border, ambient glow, icon badge, gradient CTA button, feature list with icon circles
 - [x] Error boundaries: branded Bot icon illustration, gradient CTA, Try Again + Reload actions, ambient glow
 - [x] Onboarding: step indicator labels with sky/emerald color states, gradient connector lines, bot card hover glow + scale effect
+
+## Store Dashboard — Deep Integration Views (In Progress)
+
+### Backend: Store Data Procedures
+- [ ] Add storeProducts procedure to stores router (fetch from adapter or DB)
+- [ ] Add storeOrders procedure to stores router (fetch from adapter or DB)
+- [ ] Add storeRevenueSummary procedure to stores router (aggregate from orders)
+- [ ] Add storeBotActivity procedure to stores router (query agentTasks by storeId)
+
+### Frontend: StoreView Component
+- [ ] Create StoreView.tsx component (tabbed: Overview, Products, Orders, Revenue, Bot Activity)
+- [ ] Overview tab: revenue KPIs, order count, top product, live status badge
+- [ ] Products tab: product grid with images, price, stock level, status badge
+- [ ] Orders tab: recent orders table with customer, total, status, fulfillment timeline
+- [ ] Revenue tab: 30-day sparkline, AOV, refund rate, top performers
+- [ ] Bot Activity tab: timeline of bot actions on this store
+
+### Frontend: Integrations Hub Redesign
+- [ ] Redesign Integrations page as Store Hub with live KPI cards per store
+- [ ] Add store drill-down modal/panel that opens StoreView
+- [ ] Add platform-specific color accents and icons per store card
+- [ ] Add "Add Store" CTA with platform selector
+- [ ] Add social accounts section with follower counts and last post preview
+
+## Store Dashboard — Deep Integration Views (Complete ✅)
+
+### Backend (server/routers/stores.ts)
+- [x] stores.overview — today revenue, orders, products, low stock, top product, last order, recent bot activity
+- [x] stores.products — full product catalog with search + status filter
+- [x] stores.orders — order list with status filter and fulfillment status
+- [x] stores.revenueSummary — today/week/month, AOV, refund rate, 30-day chart, top products
+- [x] stores.botActivity — all agent tasks linked to a store
+
+### Frontend
+- [x] StoreView.tsx — slide-over panel with 5 tabs (Overview, Products, Orders, Revenue, Bot Activity)
+- [x] Integrations.tsx — rewritten as Store Hub with live store cards, mini KPI metrics, StoreView drill-down
+- [x] Store cards: platform color accent, live/setup badge, today revenue, orders, product count
+- [x] Social Accounts tab — connected accounts with follower count, disconnect action
+- [x] Connect New tab — platform grid with color-coded connect buttons
+- [x] StoreCardMetrics component — lazy-loads per-store KPIs on the hub
+
+### Tests
+- [x] 546/548 tests passing (2 require live Pinterest/Twitter credentials — external)
