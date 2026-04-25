@@ -23,6 +23,8 @@ import {
   Brain,
   Store,
   Truck,
+  MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,7 +48,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       label: "Dashboard",
       items: [
         { title: "Command Center", path: "/", icon: LayoutDashboard, badge: 0 },
-        { title: "Activity", path: "/activity", icon: Activity, badge: pendingCount },
+        { title: "Activity", path: "/activity", icon: Activity, badge: 0 },
         { title: "Intelligence", path: "/intelligence", icon: Globe, badge: 0 },
       ],
     },
@@ -56,12 +58,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         { title: "Builder Bot", path: "/architect", icon: Bot, badge: 0 },
         { title: "Merchant Bot", path: "/merchant", icon: Package, badge: 0 },
         { title: "Social Bot", path: "/social", icon: Megaphone, badge: 0 },
+        { title: "Bot Chat", path: "/chat", icon: MessageSquare, badge: 0 },
       ],
     },
     {
       label: "Operations",
       items: [
         { title: "Workflows", path: "/workflows", icon: GitBranch, badge: 0 },
+        { title: "Approvals", path: "/approvals", icon: ShieldCheck, badge: pendingCount },
         { title: "Integrations", path: "/integrations", icon: Zap, badge: 0 },
         { title: "Analytics", path: "/analytics", icon: BarChart3, badge: 0 },
         { title: "Platform Health", path: "/health", icon: HeartPulse, badge: 0 },
