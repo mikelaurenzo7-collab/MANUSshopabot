@@ -90,8 +90,17 @@ export default function Home() {
   const { user } = useAuth();
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
-  const { data: metrics, isLoading: metricsLoading, error: metricsError } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
-  const { data: agentStatus, error: agentError } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
+  const {
+    data: metrics,
+    isLoading: metricsLoading,
+    error: metricsError,
+    refetch: refetchMetrics,
+  } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
+  const {
+    data: agentStatus,
+    error: agentError,
+    refetch: refetchAgentStatus,
+  } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
   const { data: recentActivity } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
   const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
   const { data: intel } = trpc.dashboard.crossStoreIntelligence.useQuery();
@@ -268,7 +277,10 @@ export default function Home() {
           </p>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              void refetchMetrics();
+              void refetchAgentStatus();
+            }}
             className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 transition-all hover:border-sky-500/30 hover:bg-sky-500/10 hover:text-sky-300"
           >
             <RefreshCw className="h-3 w-3" />
@@ -295,9 +307,9 @@ export default function Home() {
           <Loader2 className="w-3 h-3 animate-spin text-white/20" />
         ) : (
           <>
-            <StatusPill label="Revenue" value={`$${revenue}`} color="text-emerald-400" trend="↗" />
-            <StatusPill label="Orders" value={String(metrics?.totalOrders ?? 0)} color="text-sky-400" trend="↗" />
-            <StatusPill label="Products" value={String(metrics?.activeProducts ?? 0)} color="text-violet-400" trend="→" />
+            <StatusPill label="Revenue" value={`$${revenue}`} color="text-emerald-400" />
+            <StatusPill label="Orders" value={String(metrics?.totalOrders ?? 0)} color="text-sky-400" />
+            <StatusPill label="Products" value={String(metrics?.activeProducts ?? 0)} color="text-violet-400" />
             <StatusPill label="Workflows" value={totalRunning > 0 ? `${totalRunning} active` : "idle"} color={totalRunning > 0 ? "text-amber-400" : "text-white/30"} />
             <StatusPill label="Integrations" value={`${totalConnected} linked`} color={totalConnected > 0 ? "text-cyan-400" : "text-white/30"} />
           </>
@@ -460,12 +472,11 @@ export default function Home() {
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 
-function StatusPill({ label, value, color, trend }: { label: string; value: string; color: string; trend?: string }) {
+function StatusPill({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">{label}</span>
       <span className={`text-[10px] font-mono font-semibold ${color}`}>{value}</span>
-      {trend && <span className={`text-[10px] font-mono ${color}`}>{trend}</span>}
     </div>
   );
 }

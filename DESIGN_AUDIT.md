@@ -34,7 +34,7 @@ The app has a solid dark-theme foundation with a consistent monospace/techy aest
 ### P2 — Dashboard Polish
 - [x] Sidebar: Active nav item needs stronger visual treatment (left border accent + bg)
 - [x] Sidebar: Logo area — add subtle bottom border separator
-- [x] Home: Metric cards — add trend arrows and percentage change indicators
+- [x] Home: Metric cards — strengthen live status indicators without misleading static trends
 - [x] Home: Bot status cards — add real-time pulse animation when bot is "running"
 - [x] Home: Empty state — improve with illustration or icon + clear CTA
 
