@@ -456,6 +456,13 @@ export async function getPricingRules(storeId: number) {
   return db.select().from(pricingRules).where(eq(pricingRules.storeId, storeId)).orderBy(desc(pricingRules.createdAt));
 }
 
+export async function getPricingRuleById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(pricingRules).where(eq(pricingRules.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
 export async function updatePricingRule(id: number, data: Partial<InsertPricingRule>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

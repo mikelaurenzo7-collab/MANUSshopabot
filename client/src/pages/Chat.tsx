@@ -180,7 +180,11 @@ export default function Chat() {
           )}
 
           {/* Bot selector */}
-          <div className="flex rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.02] p-0.5 gap-0.5">
+          <div
+            className="flex rounded-xl overflow-hidden border border-white/[0.08] bg-white/[0.02] p-0.5 gap-0.5"
+            role="tablist"
+            aria-label="Select bot to chat with"
+          >
             {(Object.keys(BOTS) as AgentType[]).map((key) => {
               const b = BOTS[key];
               const Icon = b.icon;
@@ -189,13 +193,16 @@ export default function Chat() {
                 <button
                   key={key}
                   onClick={() => handleBotSwitch(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`Chat with ${b.label}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                     isActive
                       ? `${b.accent} ${b.color} shadow-sm`
                       : "text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon aria-hidden="true" className="h-3.5 w-3.5" />
                   {b.label}
                 </button>
               );

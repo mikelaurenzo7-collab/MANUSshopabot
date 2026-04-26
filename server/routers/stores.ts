@@ -311,9 +311,15 @@ export const storesRouter = router({
         );
         return result;
       } catch (err: any) {
+        // Log full error server-side, but never leak details to the client
+        console.error("[stores.optimizeProductImage] failed", {
+          storeId: input.storeId,
+          imageUrl: input.imageUrl,
+          message: err?.message,
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Image optimization failed: ${err.message}`,
+          message: "Image optimization failed. Please try again or contact support.",
         });
       }
     }),

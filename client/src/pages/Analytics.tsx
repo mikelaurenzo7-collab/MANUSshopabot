@@ -175,274 +175,276 @@ export default function AnalyticsPage() {
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6">
-      {/* Error States */}
-      {(storesError || analyticsError) && (
-        <Card className="bg-red-500/5 border-red-500/20">
-          <CardContent className="p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-red-400">Analytics Error</p>
-              <p className="text-xs text-red-400/70 mt-1">
-                {storesError?.message || analyticsError?.message || "Failed to load analytics data."}
-              </p>
+
+      <div className="space-y-6">
+        {/* Error States */}
+        {(storesError || analyticsError) && (
+          <Card className="bg-red-500/5 border-red-500/20">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-400">Analytics Error</p>
+                <p className="text-xs text-red-400/70 mt-1">
+                  {storesError?.message || analyticsError?.message || "Failed to load analytics data."}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                onClick={() => {
+                  utils.stores.list.invalidate();
+                  utils.analytics.overview.invalidate();
+                }}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Header */}
+        <div className="flex items-center justify-between page-header">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
+              <BarChart3 className="h-5 w-5 text-sky-400" />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
-              onClick={() => {
-                utils.stores.list.invalidate();
-                utils.analytics.overview.invalidate();
-              }}
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between page-header">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
-            <BarChart3 className="h-5 w-5 text-sky-400" />
+            <div>
+              <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Analytics Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Analytics Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
+          <div className="flex items-center gap-3">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-28 bg-input/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">7 Days</SelectItem>
+                <SelectItem value="30">30 Days</SelectItem>
+                <SelectItem value="90">90 Days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
+              <SelectTrigger className="w-48 bg-input/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stores</SelectItem>
+                {storeOptions.map((s: any) => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-28 bg-input/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">7 Days</SelectItem>
-              <SelectItem value="30">30 Days</SelectItem>
-              <SelectItem value="90">90 Days</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
-            <SelectTrigger className="w-48 bg-input/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Stores</SelectItem>
-              {storeOptions.map((s: any) => (
-                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* KPI Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="bento-card">
+        {/* KPI Cards */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="bento-card">
+                <CardContent className="p-4 space-y-3">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-8 w-28" />
+                  <Skeleton className="h-3 w-24" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bento-card">
               <CardContent className="p-4">
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-7 w-28" />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Revenue</span>
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  ${((analytics?.totalRevenue || 0) / 100).toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bento-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Revenue</span>
-                <DollarSign className="h-4 w-4 text-emerald-400" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                ${((analytics?.totalRevenue || 0) / 100).toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
-            </CardContent>
-          </Card>
-          <Card className="bento-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
-                <ShoppingCart className="h-4 w-4 text-cyan-400" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">{analytics?.totalOrders || 0}</p>
-              <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
-            </CardContent>
-          </Card>
-          <Card className="bento-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Avg Order</span>
-                <TrendingUp className="h-4 w-4 text-sky-400" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
-            </CardContent>
-          </Card>
-          <Card className="bento-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Conversion</span>
-                <Users className="h-4 w-4 text-amber-400" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                {analytics?.totalOrders ? ((analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10).toFixed(1) : "0.0"}%
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Heuristic based on recorded orders and active products</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            <Card className="bento-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
+                  <ShoppingCart className="h-4 w-4 text-cyan-400" />
+                </div>
+                <p className="text-2xl font-bold text-foreground">{analytics?.totalOrders || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
+              </CardContent>
+            </Card>
+            <Card className="bento-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Avg Order</span>
+                  <TrendingUp className="h-4 w-4 text-sky-400" />
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
+              </CardContent>
+            </Card>
+            <Card className="bento-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Conversion</span>
+                  <Users className="h-4 w-4 text-amber-400" />
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  {analytics?.totalOrders ? ((analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10).toFixed(1) : "0.0"}%
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Heuristic based on recorded orders and active products</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Revenue Trend */}
-        <Card className="bg-card border-white/[0.08] lg:col-span-2">
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Revenue Trend */}
+          <Card className="bg-card border-white/[0.08] lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold text-foreground">Revenue Trend (30 Days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="h-64 flex flex-col gap-2">
+                  <Skeleton className="h-full w-full rounded-lg" />
+                </div>
+              ) : showStoreSelectionHint ? (
+                <EmptyAnalyticsState
+                  title="Select a Store for Trend Data"
+                  description="Revenue trends are only shown when a specific store has recorded analytics snapshots."
+                />
+              ) : !hasSnapshotData ? (
+                <EmptyAnalyticsState
+                  title="No Revenue Snapshots Yet"
+                  description="This store does not have 30-day analytics snapshots yet, so trend charts stay empty instead of using simulated values."
+                />
+              ) : (
+              <div className="h-64" role="img" aria-label={`Revenue trend chart showing ${revenueData.length} data points`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueData}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} itemStyle={{ color: "#0ea5e9" }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" fill="url(#revenueGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Traffic Sources */}
+          <Card className="bento-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold text-foreground">Traffic Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-48 w-full rounded-lg" />
+                  {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-4 w-full" />)}
+                </div>
+              ) : showStoreSelectionHint ? (
+                <EmptyAnalyticsState
+                  title="Store Snapshot Required"
+                  description="Traffic-source breakdown comes from the latest analytics snapshot for a selected store."
+                />
+              ) : trafficSources.length === 0 ? (
+                <EmptyAnalyticsState
+                  title="No Traffic Source Data"
+                  description="The latest analytics snapshot for this store does not contain a traffic-source breakdown yet."
+                />
+              ) : (
+              <>
+              <div className="h-48" role="img" aria-label="Traffic sources pie chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={trafficSources}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {trafficSources.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-1.5 mt-2">
+                {trafficSources.map((s) => (
+                  <div key={s.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                      <span className="text-muted-foreground">{s.name}</span>
+                    </div>
+                    <span className="text-foreground font-medium">{s.value}%</span>
+                  </div>
+                ))}
+              </div>
+              </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Top Products */}
+        <Card className="bento-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-foreground">Revenue Trend (30 Days)</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-64 flex flex-col gap-2">
+              <div className="h-52">
                 <Skeleton className="h-full w-full rounded-lg" />
               </div>
             ) : showStoreSelectionHint ? (
               <EmptyAnalyticsState
-                title="Select a Store for Trend Data"
-                description="Revenue trends are only shown when a specific store has recorded analytics snapshots."
+                title="Select a Store for Product Ranking"
+                description="Top-product rankings come from a store's latest analytics snapshot rather than placeholder data."
               />
-            ) : !hasSnapshotData ? (
+            ) : topProducts.length === 0 ? (
               <EmptyAnalyticsState
-                title="No Revenue Snapshots Yet"
-                description="This store does not have 30-day analytics snapshots yet, so trend charts stay empty instead of using simulated values."
+                title="No Top Product Data"
+                description="This store has no product-level revenue data in its latest analytics snapshot yet."
               />
             ) : (
-            <div className="h-64">
+            <div className="h-52" role="img" aria-label={`Top products bar chart with ${topProducts.length} items`}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} itemStyle={{ color: "#0ea5e9" }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" fill="url(#revenueGrad)" strokeWidth={2} />
-                </AreaChart>
+                <BarChart data={topProducts} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} tickLine={false} axisLine={false} width={150} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} formatter={(value: number) => [`$${value}`, "Revenue"]} />
+                  <Bar dataKey="revenue" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={16} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Traffic Sources */}
-        <Card className="bento-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-foreground">Traffic Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-48 w-full rounded-lg" />
-                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-4 w-full" />)}
-              </div>
-            ) : showStoreSelectionHint ? (
-              <EmptyAnalyticsState
-                title="Store Snapshot Required"
-                description="Traffic-source breakdown comes from the latest analytics snapshot for a selected store."
-              />
-            ) : trafficSources.length === 0 ? (
-              <EmptyAnalyticsState
-                title="No Traffic Source Data"
-                description="The latest analytics snapshot for this store does not contain a traffic-source breakdown yet."
-              />
-            ) : (
-            <>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={trafficSources}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {trafficSources.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-1.5 mt-2">
-              {trafficSources.map((s) => (
-                <div key={s.name} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-white/5" style={{ backgroundColor: s.color }} />
-                    <span className="text-muted-foreground">{s.name}</span>
-                  </div>
-                  <span className="text-foreground font-medium">{s.value}%</span>
-                </div>
-              ))}
-            </div>
-            </>
             )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Top Products */}
-      <Card className="bento-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-52">
-              <Skeleton className="h-full w-full rounded-lg" />
-            </div>
-          ) : showStoreSelectionHint ? (
-            <EmptyAnalyticsState
-              title="Select a Store for Product Ranking"
-              description="Top-product rankings come from a store's latest analytics snapshot rather than placeholder data."
-            />
-          ) : topProducts.length === 0 ? (
-            <EmptyAnalyticsState
-              title="No Top Product Data"
-              description="This store has no product-level revenue data in its latest analytics snapshot yet."
-            />
-          ) : (
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topProducts} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                <YAxis type="category" dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} tickLine={false} axisLine={false} width={150} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} formatter={(value: number) => [`$${value}`, "Revenue"]} />
-                <Bar dataKey="revenue" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={16} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
     </div>
   );
 }

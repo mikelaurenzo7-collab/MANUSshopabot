@@ -5,7 +5,7 @@
  * Legacy /analytics and /intelligence deep-links still resolve.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3 } from "lucide-react";
 import AnalyticsPage from "./Analytics";
@@ -22,6 +22,8 @@ function readTabFromHash(): InsightsTab {
 
 export default function InsightsPage() {
   const [tab, setTab] = useState<InsightsTab>(() => readTabFromHash());
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevTabRef = useRef<InsightsTab>(tab);
 
   useEffect(() => {
     const onHash = () => setTab(readTabFromHash());
@@ -29,13 +31,27 @@ export default function InsightsPage() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  // Animate tab content on tab switch
+  useEffect(() => {
+    if (prevTabRef.current !== tab) {
+      setIsTransitioning(true);
+      prevTabRef.current = tab;
+      const t = setTimeout(() => setIsTransitioning(false), 250);
+      return () => clearTimeout(t);
+    }
+  }, [tab]);
+
   const handleTabChange = (value: string) => {
     const next = (TAB_VALUES.includes(value as InsightsTab) ? value : "stores") as InsightsTab;
+    if (next === tab) return;
+    setIsTransitioning(true);
     setTab(next);
     if (typeof window !== "undefined") {
       const { pathname, search } = window.location;
       window.history.replaceState(null, "", `${pathname}${search}#${next}`);
     }
+    // Reset after animation
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   return (
@@ -53,15 +69,43 @@ export default function InsightsPage() {
       <div className="px-6 mb-4" />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-6">
-        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
-          <TabsTrigger value="stores" className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50">My Stores</TabsTrigger>
-          <TabsTrigger value="intelligence" className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50">Cross-Store &amp; Market</TabsTrigger>
+        <TabsList
+          className="bg-white/[0.03] border border-white/[0.06] p-1"
+          role="tablist"
+          aria-label="Insights sections"
+        >
+          <TabsTrigger
+            value="stores"
+            role="tab"
+            aria-selected={tab === "stores"}
+            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+          >
+            My Stores
+          </TabsTrigger>
+          <TabsTrigger
+            value="intelligence"
+            role="tab"
+            aria-selected={tab === "intelligence"}
+            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+          >
+            Cross-Store &amp; Market
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stores" className="mt-4">
+        <TabsContent
+          value="stores"
+          role="tabpanel"
+          aria-labelledby="stores-tab"
+          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+        >
           <AnalyticsPage />
         </TabsContent>
-        <TabsContent value="intelligence" className="mt-4">
+        <TabsContent
+          value="intelligence"
+          role="tabpanel"
+          aria-labelledby="intelligence-tab"
+          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+        >
           <IntelligencePage />
         </TabsContent>
       </Tabs>

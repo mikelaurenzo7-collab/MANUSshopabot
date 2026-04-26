@@ -324,6 +324,7 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
 // This in-memory set prevents duplicate processing. Entries expire after 5 minutes.
 
 const processedWebhooks = new Map<string, number>();
+const MAX_DEDUP_ENTRIES = 10_000;
 
 // Cleanup expired entries every 2 minutes to prevent memory leak
 setInterval(() => {
@@ -336,6 +337,11 @@ setInterval(() => {
 function isWebhookDuplicate(shopDomain: string, topic: string, resourceId: string): boolean {
   const key = `${shopDomain}:${topic}:${resourceId}`;
   if (processedWebhooks.has(key)) return true;
+  // Hard cap: under abusive load, drop oldest entries to prevent unbounded growth
+  if (processedWebhooks.size >= MAX_DEDUP_ENTRIES) {
+    const oldestKey = processedWebhooks.keys().next().value;
+    if (oldestKey !== undefined) processedWebhooks.delete(oldestKey);
+  }
   processedWebhooks.set(key, Date.now());
   return false;
 }

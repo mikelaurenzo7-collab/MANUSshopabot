@@ -209,19 +209,31 @@ const FAQ_ITEMS = [
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
+  const id = q.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40);
+  const panelId = `faq-panel-${id}`;
+  const buttonId = `faq-button-${id}`;
   return (
-    <div
-      className="border border-white/[0.07] rounded-xl overflow-hidden transition-colors hover:border-white/[0.12]"
-      onClick={() => setOpen(!open)}
-    >
-      <button className="w-full flex items-center justify-between px-6 py-4 text-left gap-4">
+    <div className="border border-white/[0.07] rounded-xl overflow-hidden transition-colors hover:border-white/[0.12]">
+      <button
+        id={buttonId}
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="w-full flex items-center justify-between px-6 py-4 text-left gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-xl"
+      >
         <span className="text-sm font-semibold text-white/80">{q}</span>
         <ChevronDown
+          aria-hidden="true"
           className={`w-4 h-4 text-white/30 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={buttonId}
+          className="px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4"
+        >
           {a}
         </div>
       )}

@@ -29,6 +29,19 @@ import {
   Clock,
 } from "lucide-react";
 
+// ─── Scheduler task card ───────────────────────────────────────────────────────
+function SchedulerTask({ name, freq, agent }: { name: string; freq: string; agent: string }) {
+  return (
+    <div className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03]">
+      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" aria-hidden="true" />
+      <div className="min-w-0">
+        <p className="text-xs text-foreground truncate">{name}</p>
+        <p className="text-[10px] text-white/40">{freq}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Severity badge ────────────────────────────────────────────────────────────
 function SeverityBadge({ severity }: { severity: string }) {
   const map: Record<string, string> = {
@@ -148,12 +161,19 @@ export default function Intelligence() {
         </div>
         <div className="flex items-center gap-2">
           {/* Period selector */}
-          <div className="flex rounded-lg border border-white/[0.08] overflow-hidden">
+          <div
+            className="flex rounded-lg border border-white/[0.08] overflow-hidden"
+            role="radiogroup"
+            aria-label="Time period"
+          >
             {(["24h", "7d", "30d"] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                role="radio"
+                aria-checked={period === p}
+                aria-label={`Show data for ${p === "24h" ? "last 24 hours" : p === "7d" ? "last 7 days" : "last 30 days"}`}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                   period === p
                     ? "bg-sky-600 text-white"
                     : "text-muted-foreground hover:text-white hover:bg-secondary/50"
@@ -266,14 +286,23 @@ export default function Intelligence() {
       )}
 
       <Tabs defaultValue="anomalies" className="space-y-4">
-        <TabsList className="bg-secondary/40 border border-border/40">
-          <TabsTrigger value="anomalies" className="data-[state=active]:bg-sky-600">
+        <TabsList
+          className="bg-secondary/40 border border-border/40"
+          role="tablist"
+          aria-label="Intelligence sections"
+        >
+          <TabsTrigger
+            value="anomalies"
+            role="tab"
+            aria-selected={true}
+            className="data-[state=active]:bg-sky-600"
+          >
             Anomalies {allAnomalies.length > 0 && <Badge className="ml-1.5 bg-red-500/30 text-red-300 text-[10px]">{allAnomalies.length}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="platforms" className="data-[state=active]:bg-sky-600">Platform Breakdown</TabsTrigger>
-          <TabsTrigger value="buybox" className="data-[state=active]:bg-sky-600">Buy Box Monitor</TabsTrigger>
-          <TabsTrigger value="controls" className="data-[state=active]:bg-sky-600">Automation Controls</TabsTrigger>
-          <TabsTrigger value="dlq" className="data-[state=active]:bg-sky-600">Dead-Letter Queue</TabsTrigger>
+          <TabsTrigger value="platforms" role="tab" className="data-[state=active]:bg-sky-600">Platform Breakdown</TabsTrigger>
+          <TabsTrigger value="buybox" role="tab" className="data-[state=active]:bg-sky-600">Buy Box Monitor</TabsTrigger>
+          <TabsTrigger value="controls" role="tab" className="data-[state=active]:bg-sky-600">Automation Controls</TabsTrigger>
+          <TabsTrigger value="dlq" role="tab" className="data-[state=active]:bg-sky-600">Dead-Letter Queue</TabsTrigger>
         </TabsList>
 
         {/* Anomalies Tab */}
@@ -602,13 +631,7 @@ export default function Intelligence() {
                   { name: "Competitor Scan", freq: "Wed & Sat 4AM", agent: "Architect" },
                   { name: "DLQ Processor", freq: "Every 10min", agent: "System" },
                 ].map((task) => (
-                  <div key={task.name} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03]">
-                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs text-foreground truncate">{task.name}</p>
-                      <p className="text-[10px] text-white/40">{task.freq}</p>
-                    </div>
-                  </div>
+                  <SchedulerTask key={task.name} name={task.name} freq={task.freq} agent={task.agent} />
                 ))}
               </div>
             </CardContent>
