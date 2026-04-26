@@ -4,7 +4,9 @@ import { Route, Switch, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import DashboardLayout from "./components/DashboardLayout";
+import BotPageShell from "./components/BotPageShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -34,6 +36,10 @@ const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
 const WorkflowsPage = lazy(() => import("./pages/Workflows"));
 const ChatPage = lazy(() => import("./pages/Chat"));
 const ApprovalsPage = lazy(() => import("./pages/Approvals"));
+const InboxPage = lazy(() => import("./pages/Inbox"));
+const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
+const InsightsPage = lazy(() => import("./pages/Insights"));
+const SettingsPage = lazy(() => import("./pages/Settings"));
 
 function PageLoader() {
   return (
@@ -78,9 +84,9 @@ function Router() {
                 <ErrorBoundary inline label="page">
                   <Switch>
                     <Route path="/" component={Home} />
-                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><ArchitectPage /></ErrorBoundary>}</Route>
-                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><MerchantPage /></ErrorBoundary>}</Route>
-                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><SocialPage /></ErrorBoundary>}</Route>
+                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/activity" component={ActivityPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/integrations" component={IntegrationsPage} />
@@ -98,6 +104,10 @@ function Router() {
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>
                     <Route path="/approvals">{() => <ErrorBoundary inline label="Approvals"><ApprovalsPage /></ErrorBoundary>}</Route>
+                    <Route path="/inbox">{() => <ErrorBoundary inline label="Inbox"><InboxPage /></ErrorBoundary>}</Route>
+                    <Route path="/storefronts">{() => <ErrorBoundary inline label="Storefronts"><StorefrontsPage /></ErrorBoundary>}</Route>
+                    <Route path="/insights">{() => <ErrorBoundary inline label="Insights"><InsightsPage /></ErrorBoundary>}</Route>
+                    <Route path="/settings">{() => <ErrorBoundary inline label="Settings"><SettingsPage /></ErrorBoundary>}</Route>
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>
@@ -127,8 +137,11 @@ function App() {
             }}
           />
           <StripeSuccessBanner />
-          <CommandPalette />
-          <Router />
+          <WorkspaceProvider>
+            <CommandPalette>
+              <Router />
+            </CommandPalette>
+          </WorkspaceProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

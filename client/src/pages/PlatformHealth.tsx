@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, Loader2, RefreshCw, Activity,
   ShoppingBag, Share2, Zap, Clock, AlertTriangle, Wifi, WifiOff,
-  Radio, SkipForward, AlertOctagon, ShieldAlert
+  Radio, SkipForward, AlertOctagon, ShieldAlert, Network, ChevronDown, ChevronRight
 } from "lucide-react";
+import InfraTopology from "@/components/InfraTopology";
 
 const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
@@ -280,6 +281,7 @@ export default function PlatformHealth() {
   const { user } = useAuth();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [topologyOpen, setTopologyOpen] = useState(false);
   const { data: summary } = trpc.health.summary.useQuery();
   const { data: backgroundSystems } = trpc.health.backgroundSystems.useQuery(undefined, { refetchInterval: 30000 });
 
@@ -385,6 +387,37 @@ export default function PlatformHealth() {
           </Card>
         </div>
       )}
+
+      {/* Infra Topology — operator-only system map (moved from Command Center) */}
+      <Card className="border-sky-500/20 bg-sky-500/[0.03]">
+        <CardHeader className="pb-3">
+          <button
+            type="button"
+            onClick={() => setTopologyOpen((o) => !o)}
+            className="flex w-full items-center justify-between text-left"
+          >
+            <div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Network className="w-4 h-4" />
+                Infrastructure Topology
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Live system map — TiDB, workflow engine, BullMQ, image pipeline, tRPC server
+              </CardDescription>
+            </div>
+            {topologyOpen ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+        </CardHeader>
+        {topologyOpen && (
+          <CardContent>
+            <InfraTopology />
+          </CardContent>
+        )}
+      </Card>
 
       {backgroundSystems && (
         <Card className="border-zinc-800">

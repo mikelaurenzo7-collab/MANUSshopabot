@@ -100,11 +100,21 @@ describe("Platform Health Router", () => {
     expect(src).toContain("PlatformHealthPage");
   });
 
-  it("Platform Health appears in DashboardLayout sidebar", () => {
-    const src = readFile("client/src/components/DashboardLayout.tsx");
-    expect(src).toContain("Platform Health");
-    expect(src).toContain("path: \"/health\"");
-    expect(src).toContain("HeartPulse");
+  it("Platform Health is reachable from DashboardLayout chrome (now via Settings shell)", () => {
+    // Post-consolidation, Platform Health lives inside the Settings tabbed
+    // shell rather than as a top-level sidebar item. Verify the sidebar
+    // surfaces a Settings entry pointing at /settings (which renders the
+    // PlatformHealth tab for admins).
+    const layout = readFile("client/src/components/DashboardLayout.tsx");
+    expect(layout).toMatch(/path:\s*"\/settings"/);
+
+    const settingsShell = readFile("client/src/pages/Settings.tsx");
+    expect(settingsShell).toContain("PlatformHealthPage");
+    expect(settingsShell).toContain("./PlatformHealth");
+
+    const app = readFile("client/src/App.tsx");
+    expect(app).toContain("path=\"/health\"");
+    expect(app).toContain("PlatformHealthPage");
   });
 });
 
@@ -202,13 +212,23 @@ describe("DashboardLayout duplicate useLocation fix", () => {
     expect(importMatches.length).toBe(1);
   });
 
-  it("DashboardLayout outer component uses navigateTo alias to avoid collision", () => {
+  it("DashboardLayout does not re-introduce duplicate useLocation calls", () => {
+    // The original sprint6 fix renamed one of two clashing `useLocation()`
+    // destructurings via a `navigateTo` alias. Post-refactor the layout
+    // only calls `useLocation()` once, so the collision can't happen — but
+    // we still guard against regressions by asserting there is at most one
+    // call site in the component.
     const src = readFile("client/src/components/DashboardLayout.tsx");
-    expect(src).toContain("navigateTo");
+    const callMatches = src.match(/useLocation\s*\(\s*\)/g) ?? [];
+    expect(callMatches.length).toBeLessThanOrEqual(1);
   });
 
-  it("DashboardLayout inner component still uses location for active path", () => {
+  it("DashboardLayout uses location for active path detection", () => {
     const src = readFile("client/src/components/DashboardLayout.tsx");
-    expect(src).toContain("const [location, setLocation] = useLocation()");
+    // The destructured `location` (from wouter's useLocation) must still
+    // drive active-state highlighting — whether destructured with
+    // `setLocation` or just `[location]`.
+    expect(src).toMatch(/const \[location[^\]]*\] = useLocation\(\)/);
+    expect(src).toMatch(/location\s*===|location\.startsWith/);
   });
 });

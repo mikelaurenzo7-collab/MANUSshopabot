@@ -82,7 +82,16 @@ const BOTS: Record<
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Chat() {
-  const [agentType, setAgentType] = useState<AgentType>("architect");
+  // If invoked as /chat?bot=architect from a per-bot Chat tab or the
+  // Command Center inspector, prefill the agent selector accordingly.
+  const initialAgent = (() => {
+    if (typeof window === "undefined") return "architect" as AgentType;
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("bot");
+    if (v === "architect" || v === "merchant" || v === "social") return v;
+    return "architect" as AgentType;
+  })();
+  const [agentType, setAgentType] = useState<AgentType>(initialAgent);
   const [storeId, setStoreId] = useState<number | undefined>(undefined);
 
   // Per-bot conversation history (keyed by agentType so switching bots
