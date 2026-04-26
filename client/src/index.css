@@ -1409,6 +1409,7 @@
       conic-gradient(from 180deg, rgba(14,165,233,0.45), rgba(6,182,212,0.08), rgba(249,115,22,0.28), rgba(14,165,233,0.45));
     filter: blur(42px);
     opacity: 0.52;
+    will-change: transform;
     animation: commerce-orbit 12s linear infinite;
   }
   @keyframes commerce-orbit {
@@ -1437,14 +1438,22 @@
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent),
       linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 180% 100%, 100% 38px;
+    background-size: 100% 38px;
+  }
+  .command-preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    transform: translateX(-120%);
+    will-change: transform;
     animation: glass-sweep 7s ease-in-out infinite;
   }
   @keyframes glass-sweep {
-    0%, 40% { background-position: -140% 0, 0 0; opacity: 0.35; }
-    70%, 100% { background-position: 180% 0, 0 0; opacity: 0.18; }
+    0%, 40% { transform: translateX(-120%); opacity: 0.35; }
+    70%, 100% { transform: translateX(120%); opacity: 0.18; }
   }
   .bot-flight-card,
   .revenue-card,

@@ -125,7 +125,7 @@ const TRUST_ITEMS = [
   { icon: BarChart3,label: "Real-time analytics", sub: "Track every metric"    },
 ];
 
-const BOT_PREVIEW_PROGRESS = [82, 67, 91];
+const BOT_PREVIEW_PROGRESS_PERCENTAGES = [82, 67, 91];
 const HERO_GROWTH_BARS = [32, 48, 38, 70, 58, 84, 96];
 const HERO_ACTION_FEED = [
   "Imported 18 margin-safe SKUs",
@@ -133,8 +133,10 @@ const HERO_ACTION_FEED = [
   "Generated 12 TikTok creatives",
 ];
 
-type BotAccentStyle = CSSProperties & { "--accent": string };
-type HoverGlowStyle = CSSProperties & { "--hover-glow": string };
+/** CSS variables for the hero's bot preview cards. */
+type BotAccentCSSVars = CSSProperties & { "--accent": string };
+/** CSS variables for reusable hover glow effects. */
+type HoverGlowCSSVars = CSSProperties & { "--hover-glow": string };
 
 const TESTIMONIALS = [
   {
@@ -377,9 +379,9 @@ export default function Landing() {
                 <div className="space-y-4">
                   {BOTS.map((bot, index) => {
                     const colors = BOT_COLORS[bot.name];
-                    const progress = BOT_PREVIEW_PROGRESS[index];
+                    const progress = BOT_PREVIEW_PROGRESS_PERCENTAGES[index];
                     return (
-                      <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentStyle}>
+                      <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentCSSVars}>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
                             <bot.icon className={`w-5 h-5 ${colors.icon}`} />
@@ -458,7 +460,7 @@ export default function Landing() {
                 <div
                   key={bot.name}
                   className="bento-card p-8 group relative overflow-hidden hover-lift"
-                  style={{ "--hover-glow": colors.glow } as HoverGlowStyle}
+                  style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}60, ${colors.hex}10)` }} />
