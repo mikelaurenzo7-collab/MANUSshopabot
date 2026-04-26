@@ -254,8 +254,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             : "text-white/40 hover:text-white/85 hover:bg-white/[0.035]"
         }`}
       >
-        {isActive && <span className="nav-active-bar" />}
+        {isActive && <span className="nav-active-bar" aria-hidden="true" />}
         <item.icon
+          aria-hidden="true"
           className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
             isActive ? "text-sky-400" : "opacity-40 group-hover:opacity-70"
           }`}
@@ -264,16 +265,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {item.title}
         </span>
         {brandCls && (
-          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} aria-hidden="true" />
         )}
         {dotCls && (
           <span
             className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0`}
-            aria-label={`status ${item.dot}`}
+            role="status"
+            aria-label={`${item.title} status: ${item.dot}`}
           />
         )}
         {item.badge && item.badge > 0 ? (
-          <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+          <span
+            className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0"
+            aria-label={`${item.badge} pending`}
+          >
             {item.badge > 99 ? "99+" : item.badge}
           </span>
         ) : null}
@@ -418,7 +423,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open navigation menu">
                 <Menu className="w-4 h-4" />
               </Button>
             </SheetTrigger>

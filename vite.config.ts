@@ -161,12 +161,13 @@ const plugins = [
     registerType: "autoUpdate",
     includeAssets: ["favicon.ico", "robots.txt"],
     manifest: {
-      name: "SHOPaBOT — Autonomous E-Commerce",
-      short_name: "SHOPaBOT",
+      name: "Shop_a_Bot — Autonomous E-Commerce",
+      short_name: "Shop_a_Bot",
       description: "Autonomous AI bots that build, run, and grow your e-commerce store 24/7.",
-      theme_color: "#0a0a0f",
-      background_color: "#0a0a0f",
+      theme_color: "#050507",
+      background_color: "#050507",
       display: "standalone",
+      orientation: "portrait",
       icons: [
         { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
       ],
