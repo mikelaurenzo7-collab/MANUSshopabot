@@ -46,6 +46,20 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+/* Premium SaaS Typography — Monospace limited to code/terminals only */
+body, p, button, input, select, textarea {
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Monospace reserved for terminals, code, metrics, labels */
+.font-mono, code, pre, .terminal, .metric-number, .micro-label {
+  font-family: var(--font-mono);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    orchAIstrate — Cyber-Industrial Theme
    Color System: Electric Blue (#0EA5E9) + Steel Cyan (#06B6D4) + Sharp Orange (#F97316)
@@ -310,6 +324,19 @@
     transition: all 0.1s ease;
   }
 
+  /* Unified primary button style — solid cyan with premium glow */
+  .btn-primary {
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    color: #000;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.3), 0 4px 12px rgba(14, 165, 233, 0.2);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.5), 0 6px 20px rgba(14, 165, 233, 0.4);
+    transform: translateY(-1px);
+  }
+
   /* ── Cyan Glow (Merchant Bot) — Godly Edition ──────────────────────── */
   .btn-cyan-glow {
     box-shadow:
@@ -411,20 +438,31 @@
      BOT CARDS & STATUS INDICATORS
      ══════════════════════════════════════════════════════════════════════════ */
 
-  /* Pulsing status dot */
+  /* Pulsing status dot — stronger for live bot status */
   .bot-status-pulse {
-    animation: bot-pulse-glow 3s ease-in-out infinite;
-    box-shadow: 0 0 6px currentColor;
+    animation: bot-pulse-glow 2s ease-in-out infinite;
+    box-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
   }
 
   @keyframes bot-pulse-glow {
-    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 6px currentColor; }
-    50% { transform: scale(1.2); opacity: 0.75; box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; }
+    50% { transform: scale(1.15); opacity: 0.9; box-shadow: 0 0 20px currentColor, 0 0 32px currentColor; }
   }
 
-  /* Active bot card pulsing border */
+  /* Active bot card pulsing border — unified premium glow */
   .bot-card-active {
     border: 1px solid;
+    position: relative;
+  }
+  .bot-card-active::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(14,165,233,0.15), rgba(6,182,212,0.15));
+    z-index: -1;
+    opacity: 0.6;
+    animation: border-glow-pulse 3s ease-in-out infinite;
   }
   .bot-card-active.architect {
     animation: bot-border-pulse-blue 2s ease-in-out infinite alternate;
@@ -467,6 +505,11 @@
     }
   }
 
+  @keyframes border-glow-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
   /* ══════════════════════════════════════════════════════════════════════════
      HERO & LANDING
      ══════════════════════════════════════════════════════════════════════════ */
@@ -504,22 +547,22 @@
     animation: page-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Staggered list entrance */
+  /* Staggered list entrance — smoother for metrics and cards */
   @keyframes stagger-in {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .stagger-list > * {
-    animation: stagger-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: stagger-in 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
   .stagger-list > *:nth-child(1)  { animation-delay: 0ms; }
-  .stagger-list > *:nth-child(2)  { animation-delay: 50ms; }
-  .stagger-list > *:nth-child(3)  { animation-delay: 100ms; }
-  .stagger-list > *:nth-child(4)  { animation-delay: 150ms; }
-  .stagger-list > *:nth-child(5)  { animation-delay: 200ms; }
-  .stagger-list > *:nth-child(6)  { animation-delay: 250ms; }
-  .stagger-list > *:nth-child(7)  { animation-delay: 300ms; }
-  .stagger-list > *:nth-child(8)  { animation-delay: 350ms; }
+  .stagger-list > *:nth-child(2)  { animation-delay: 40ms; }
+  .stagger-list > *:nth-child(3)  { animation-delay: 80ms; }
+  .stagger-list > *:nth-child(4)  { animation-delay: 120ms; }
+  .stagger-list > *:nth-child(5)  { animation-delay: 160ms; }
+  .stagger-list > *:nth-child(6)  { animation-delay: 200ms; }
+  .stagger-list > *:nth-child(7)  { animation-delay: 240ms; }
+  .stagger-list > *:nth-child(8)  { animation-delay: 280ms; }
 
   /* Slide up */
   @keyframes slide-up {
