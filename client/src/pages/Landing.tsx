@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -124,6 +124,19 @@ const TRUST_ITEMS = [
   { icon: Shield,   label: "No code required",   sub: "Fully managed bots"     },
   { icon: BarChart3,label: "Real-time analytics", sub: "Track every metric"    },
 ];
+
+const BOT_PREVIEW_PROGRESS_PERCENTAGES = [82, 67, 91];
+const HERO_GROWTH_BARS = [32, 48, 38, 70, 58, 84, 96];
+const HERO_ACTION_FEED = [
+  "Imported 18 margin-safe SKUs",
+  "Synced inventory across 6 channels",
+  "Generated 12 TikTok creatives",
+];
+
+/** CSS variables for the hero's bot preview cards. */
+type BotAccentCSSVars = CSSProperties & { "--accent": string };
+/** CSS variables for reusable hover glow effects. */
+type HoverGlowCSSVars = CSSProperties & { "--hover-glow": string };
 
 const TESTIMONIALS = [
   {
@@ -282,67 +295,135 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
         {/* Background effects */}
-        <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
-        <div className="light-leak-blue absolute -top-32 left-1/2 -translate-x-1/2 opacity-60" />
-        <div className="light-leak-cyan absolute top-1/2 right-0 opacity-30" />
+        <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
+        <div className="light-leak-blue absolute -top-32 left-1/3 opacity-80" />
+        <div className="light-leak-cyan absolute top-1/3 right-0 opacity-50" />
+        <div className="light-leak-orange absolute bottom-0 left-0 opacity-40" />
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          {/* Announcement pill */}
-          <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
-            <span className="micro-label">NEW</span>
-            <span className="text-white/50 text-sm">Merchant Bot now supports Amazon FBA</span>
-            <ArrowRight className="w-3.5 h-3.5 text-white/30" />
-          </div>
+        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
+          <div className="text-center lg:text-left">
+            {/* Announcement pill */}
+            <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
+              <span className="micro-label">NEW</span>
+              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white/35" />
+            </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.95]">
-            <span className="text-white">Autonomous</span>
-            <br />
-            <span className="hero-line-gradient">E-Commerce</span>
-          </h1>
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.88]">
+              <span className="text-white">Your store</span>
+              <br />
+              <span className="hero-line-gradient">runs itself.</span>
+            </h1>
 
-          {/* Subtext */}
-          <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-            Three AI bots handle your entire store — from niche research to order fulfillment to marketing.
-            Launch in 30 minutes. Zero daily management.
-          </p>
+            {/* Subtext */}
+            <p className="text-lg md:text-xl text-white/58 max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal">
+              SHOPaBOT turns e-commerce into an autonomous operating system: Builder finds winners,
+              Merchant fulfills profitably, and Social manufactures demand while you sleep.
+            </p>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              onClick={() => handlePricingClick("growth")}
-              size="lg"
-              className="btn-glow text-white px-8 h-12 text-base font-semibold"
-            >
-              Get Started Free <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-            <Button
-              onClick={() => {
-                document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              variant="outline"
-              size="lg"
-              className="btn-glow-outline h-12 text-base font-semibold px-8"
-            >
-              View Pricing
-            </Button>
-          </div>
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <Button
+                onClick={() => handlePricingClick("growth")}
+                size="lg"
+                className="btn-glow text-white px-8 h-12 text-base font-semibold"
+              >
+                Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+              <Button
+                onClick={() => {
+                  document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                variant="outline"
+                size="lg"
+                className="btn-glow-outline h-12 text-base font-semibold px-8"
+              >
+                See the system
+              </Button>
+            </div>
 
-          {/* Trust strip */}
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
-            {TRUST_ITEMS.map((item) => (
-              <div key={item.label} className="flex items-center gap-2.5 text-left">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-sky-400" />
+            {/* Trust strip */}
+            <div className="mt-12 grid sm:grid-cols-3 gap-3">
+              {TRUST_ITEMS.map((item) => (
+                <div key={item.label} className="luxury-stat-card text-left">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
+                    <item.icon className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white/85">{item.label}</div>
+                    <div className="text-xs text-white/38">{item.sub}</div>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-2xl">
+            <div className="commerce-orb" />
+            <div className="command-preview">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
                 <div>
-                  <div className="text-sm font-semibold text-white/80">{item.label}</div>
-                  <div className="text-xs text-white/35">{item.sub}</div>
+                  <p className="micro-label mb-1">Live Autonomous Store</p>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
+                </div>
+                <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+                  24/7 Active
                 </div>
               </div>
-            ))}
+
+              <div className="grid md:grid-cols-[1fr_0.8fr] gap-4 p-5">
+                <div className="space-y-4">
+                  {BOTS.map((bot, index) => {
+                    const colors = BOT_COLORS[bot.name];
+                    const progress = BOT_PREVIEW_PROGRESS_PERCENTAGES[index];
+                    return (
+                      <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentCSSVars}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
+                            <bot.icon className={`w-5 h-5 ${colors.icon}`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-bold text-white truncate">{bot.name}</p>
+                              <span className="text-[10px] font-mono text-white/35">{progress}%</span>
+                            </div>
+                            <p className="text-[11px] text-white/40 truncate">{bot.tagline}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <div className="h-full rounded-full bot-progress" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${colors.hex}, rgba(255,255,255,0.75))` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="revenue-card">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Projected lift</p>
+                    <div className="mt-2 text-4xl font-black tracking-tighter text-white">2.4x</div>
+                    <div className="mt-3 flex h-24 items-end gap-1.5">
+                      {HERO_GROWTH_BARS.map((height, index) => (
+                        <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90" style={{ height: `${height}%` }} />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="action-feed-card">
+                    {HERO_ACTION_FEED.map((item) => (
+                      <div key={item} className="flex items-center gap-2 text-[11px] text-white/58">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -379,7 +460,7 @@ export default function Landing() {
                 <div
                   key={bot.name}
                   className="bento-card p-8 group relative overflow-hidden hover-lift"
-                  style={{ "--hover-glow": colors.glow } as React.CSSProperties}
+                  style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}60, ${colors.hex}10)` }} />

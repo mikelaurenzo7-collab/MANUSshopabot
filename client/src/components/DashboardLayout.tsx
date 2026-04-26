@@ -165,9 +165,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (isMobile) {
     return (
-      <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden">
+      <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between h-14 px-4 border-b border-white/[0.06] bg-[#050505]/90 backdrop-blur-sm sticky top-0 z-40">
+        <div className="flex items-center justify-between h-14 px-4 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.35)]">
               <Zap className="w-3.5 h-3.5 text-white" />
@@ -180,7 +180,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Menu className="w-4 h-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-[#040406] border-r border-white/[0.06]">
+            <SheetContent side="left" className="w-64 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
               <div className="flex h-full flex-col">
                 <div className="h-14 flex items-center px-4 border-b border-white/[0.05] gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.35)]">
@@ -202,9 +202,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white app-chrome">
       {/* Desktop Sidebar */}
-      <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406] relative z-20">
+      <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
         {/* Header */}
         <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.35)]">
@@ -221,7 +221,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505] overflow-hidden">
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505]/80 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(14,165,233,0.07),transparent_35%),radial-gradient(circle_at_85%_18%,rgba(6,182,212,0.05),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(249,115,22,0.04),transparent_28%)]" />
         {children}
       </main>
     </div>
