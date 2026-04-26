@@ -29,15 +29,16 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
   icon: any; label: string; value: string | number; color: string; loading?: boolean;
 }) {
   return (
-    <div className={`p-4 rounded-xl border transition-colors hover:bg-white/[0.02] ${color}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="h-4 w-4" />
+    <div className={`glass-card relative overflow-hidden p-4 rounded-xl border transition-colors hover:bg-white/[0.02] ${color}`}>
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className="h-4 w-4 opacity-70" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</span>
       </div>
       {loading ? (
         <Skeleton className="h-7 w-16" />
       ) : (
-        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className="text-2xl font-bold metric-number text-foreground">{value}</p>
       )}
     </div>
   );
@@ -57,16 +58,16 @@ export default function Profile() {
   const completedTasks = agentStatus?.reduce((sum: number, s: any) => sum + Number(s.completed || 0), 0) || 0;
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">PROFILE</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6 p-6 max-w-4xl mx-auto page-enter">
+    <div className="space-y-6 p-6 max-w-4xl mx-auto">
       {/* Profile Header */}
       <div className="flex items-start gap-6">
-        <Avatar className="h-20 w-20 border-2 border-primary/30 shadow-[0_0_20px_rgba(157,78,221,0.2)]">
+        <Avatar className="h-20 w-20 border-2 border-primary/30 shadow-[0_0_24px_rgba(14,165,233,0.15)]">
           <AvatarFallback className="text-2xl font-bold bg-primary/15 text-primary">
             {user?.name?.charAt(0).toUpperCase() || "?"}
           </AvatarFallback>
@@ -147,7 +148,8 @@ export default function Profile() {
       </div>
 
       {/* Connected Stores */}
-      <Card className="bento-card">
+      <Card className="bento-card relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
@@ -218,7 +220,8 @@ export default function Profile() {
       </Card>
 
       {/* Bot Performance Summary */}
-      <Card className="bento-card">
+      <Card className="bento-card relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
             <Bot className="h-4 w-4 text-sky-400" />
@@ -263,7 +266,8 @@ export default function Profile() {
       </Card>
 
       {/* Installed Plugins */}
-      <Card className="bento-card">
+      <Card className="bento-card relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
