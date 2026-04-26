@@ -78,10 +78,13 @@ function AgentBadge({ agentType }: { agentType: string }) {
 
 // ─── Workflow Card ────────────────────────────────────────────────────────────
 
-function WorkflowCard({ workflow, onRetry, retryLoading }: {
+function WorkflowCard({ workflow, onRetry, isRetryingThis, anyRetryInFlight }: {
   workflow: any;
   onRetry: (id: number) => void;
-  retryLoading: boolean;
+  /** True only when *this* workflow's retry is the one currently in flight. */
+  isRetryingThis: boolean;
+  /** True when any retry mutation is pending — used to disable other retry buttons. */
+  anyRetryInFlight: boolean;
 }) {
   const canRetry = workflow.status === "failed" || workflow.status === "cancelled";
   const createdAt = new Date(workflow.createdAt).toLocaleString();
@@ -113,16 +116,16 @@ function WorkflowCard({ workflow, onRetry, retryLoading }: {
           <Button
             size="sm"
             variant="outline"
-            className="shrink-0 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+            className="shrink-0 border-amber-500/30 text-amber-400 hover:bg-amber-500/10 disabled:opacity-60"
             onClick={() => onRetry(workflow.id)}
-            disabled={retryLoading}
+            disabled={anyRetryInFlight}
           >
-            {retryLoading ? (
+            {isRetryingThis ? (
               <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
               <RefreshCw className="h-3 w-3" />
             )}
-            <span className="ml-1 text-xs">Retry</span>
+            <span className="ml-1 text-xs">{isRetryingThis ? "Retrying…" : "Retry"}</span>
           </Button>
         )}
       </div>
@@ -353,7 +356,8 @@ export default function Workflows() {
                   key={w.id}
                   workflow={w}
                   onRetry={onRetry}
-                  retryLoading={retryLoading && retryingId === w.id}
+                  isRetryingThis={retryLoading && retryingId === w.id}
+                  anyRetryInFlight={retryLoading}
                 />
               ))}
             </div>
@@ -381,7 +385,8 @@ export default function Workflows() {
                   key={w.id}
                   workflow={w}
                   onRetry={onRetry}
-                  retryLoading={retryLoading && retryingId === w.id}
+                  isRetryingThis={retryLoading && retryingId === w.id}
+                  anyRetryInFlight={retryLoading}
                 />
               ))}
             </div>

@@ -8,7 +8,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
-  ChevronDown, Star, Quote, KeyRound,
+  ChevronDown, Star, Quote, KeyRound, Loader2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -354,10 +354,18 @@ export default function Landing() {
                 </Button>
                 <Button
                   onClick={() => handlePricingClick("growth")}
+                  disabled={checkoutMutation.isPending}
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition-all"
+                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition-all disabled:opacity-70"
                 >
-                  Get Started
+                  {checkoutMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    "Get Started"
+                  )}
                 </Button>
               </>
             )}
@@ -401,10 +409,20 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
               <Button
                 onClick={() => handlePricingClick("growth")}
+                disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-8 h-12 text-base font-semibold"
+                className="btn-glow text-white px-8 h-12 text-base font-semibold disabled:opacity-70"
               >
-                Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                {checkoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Opening checkout…
+                  </>
+                ) : (
+                  <>
+                    Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => {
@@ -740,10 +758,20 @@ export default function Landing() {
               </p>
               <Button
                 onClick={() => handlePricingClick("growth")}
+                disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto"
+                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto disabled:opacity-70"
               >
-                Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                {checkoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Opening checkout…
+                  </>
+                ) : (
+                  <>
+                    Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
               <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/25">
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> 7-day free trial</span>
@@ -766,9 +794,20 @@ export default function Landing() {
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
-              {["Terms", "Privacy", "Contact", "Docs", "Status"].map((link) => (
-                <a key={link} href="#" className="text-white/35 text-sm hover:text-sky-400 transition-colors">
-                  {link}
+              {[
+                { label: "Terms", href: "/terms" },
+                { label: "Privacy", href: "/privacy" },
+                { label: "Contact", href: "mailto:hello@shop-a-bot.app" },
+                { label: "Docs", href: "/docs" },
+                { label: "Status", href: "https://status.shop-a-bot.app", external: true },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  className="text-white/35 text-sm hover:text-sky-400 transition-colors"
+                >
+                  {link.label}
                 </a>
               ))}
             </div>

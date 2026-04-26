@@ -556,10 +556,14 @@ export default function Home() {
 
   const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
   const todayOrders = (metrics?.totalOrders ?? 0) as number;
-  const recommendation = (intel as any)?.totalLowStock > 0
-    ? `${(intel as any).totalLowStock} SKU${(intel as any).totalLowStock > 1 ? "s" : ""} low on inventory across your stores — review`
-    : (intel as any)?.topStore
-      ? `${(intel as any).topStore.name} is your top store this period — $${(((intel as any).topStore.revenue ?? 0) / 100).toFixed(0)}`
+  const intelData = intel as { totalLowStock?: number; topStore?: { name?: string; revenue?: number } } | undefined;
+  const lowStockCount = intelData?.totalLowStock ?? 0;
+  const topStoreName = intelData?.topStore?.name;
+  const topStoreRevenue = intelData?.topStore?.revenue ?? 0;
+  const recommendation = lowStockCount > 0
+    ? `${lowStockCount} SKU${lowStockCount > 1 ? "s" : ""} low on inventory across your stores — review`
+    : topStoreName
+      ? `${topStoreName} is your top store this period — $${(topStoreRevenue / 100).toFixed(0)}`
       : "No recommendations yet — connect a store to see insights";
 
   return (

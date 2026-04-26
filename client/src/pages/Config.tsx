@@ -285,7 +285,7 @@ export default function ConfigPage() {
       <div className="ghost-watermark" aria-hidden="true">CONFIG</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

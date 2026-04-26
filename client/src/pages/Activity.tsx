@@ -53,11 +53,15 @@ export default function ActivityPage() {
     setPage(0);
   };
 
-  const { data: tasks, isLoading: tasksLoading, error: tasksError } = trpc.activity.list.useQuery({
-    agentType: agentFilter === "all" ? undefined : (agentFilter as any),
-    limit: PAGE_SIZE,
+  // Fetch one extra row so we can detect whether a *next* page exists
+  // without an extra round-trip. `tasks` is sliced to PAGE_SIZE for display.
+  const { data: rawTasks, isLoading: tasksLoading, error: tasksError } = trpc.activity.list.useQuery({
+    agentType: agentFilter === "all" ? undefined : (agentFilter as "architect" | "merchant" | "social"),
+    limit: PAGE_SIZE + 1,
     offset: page * PAGE_SIZE,
   }, { refetchInterval: 30_000 });
+  const hasNextPage = (rawTasks?.length ?? 0) > PAGE_SIZE;
+  const tasks = rawTasks?.slice(0, PAGE_SIZE);
   const { data: pendingApprovals, isLoading: approvalsLoading } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 30_000 });
   const { data: allApprovals } = trpc.approvals.all.useQuery({ limit: 50 });
   const utils = trpc.useUtils();
@@ -85,7 +89,7 @@ export default function ActivityPage() {
       <div className="ghost-watermark" aria-hidden="true">ACTIVITY</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3 page-header">
@@ -236,7 +240,7 @@ export default function ActivityPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={tasks.length < PAGE_SIZE}
+                disabled={!hasNextPage}
                 onClick={() => setPage(p => p + 1)}
               >
                 Next

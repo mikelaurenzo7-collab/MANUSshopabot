@@ -244,7 +244,7 @@ function SocialContent({
       <div className="ghost-watermark" aria-hidden="true">SOCIAL</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Store selector + tabs */}
       <div className="px-3 md:px-6 pt-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">

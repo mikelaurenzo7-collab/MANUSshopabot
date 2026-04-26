@@ -62,7 +62,7 @@ export default function Profile() {
       <div className="ghost-watermark" aria-hidden="true">PROFILE</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6 p-6 max-w-4xl mx-auto page-enter">
       {/* Profile Header */}
       <div className="flex items-start gap-6">
