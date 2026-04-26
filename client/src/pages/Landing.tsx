@@ -366,9 +366,10 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
         {/* Background effects */}
-        <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
+        <div className="aurora-mesh" />
+        <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
         <div className="light-leak-blue absolute -top-32 left-1/3 opacity-80" />
         <div className="light-leak-cyan absolute top-1/3 right-0 opacity-50" />
@@ -378,8 +379,8 @@ export default function Landing() {
           <div className="text-center lg:text-left">
             {/* Announcement pill */}
             <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
-              <span className="micro-label">NEW</span>
-              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
+              <span className="eyebrow">New</span>
+              <span className="text-white/65 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
               <ArrowRight className="w-3.5 h-3.5 text-white/35" />
             </div>
 
@@ -387,7 +388,7 @@ export default function Landing() {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.88]">
               <span className="text-white">Your store</span>
               <br />
-              <span className="hero-line-gradient">runs itself.</span>
+              <span className="hero-title-shine">runs itself.</span>
             </h1>
 
             {/* Subtext */}
@@ -531,15 +532,19 @@ export default function Landing() {
       </section>
 
       {/* ── Metrics Strip ──────────────────────────────────────────────────── */}
-      <section className="py-12 px-4 border-y border-white/[0.06]">
+      <section className="py-14 px-4 border-y border-white/[0.06] relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 hairline opacity-60" />
+        <div className="absolute inset-x-0 bottom-0 hairline opacity-60" />
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card p-6 text-center group"
+              className="bento-card spotlight-card lift-on-hover p-7 text-center group"
             >
-              <metric.icon className={`w-5 h-5 ${metric.color} mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`} />
-              <div className="text-2xl font-black font-heading text-white mb-1 metric-number">{metric.value}</div>
+              <div className="w-10 h-10 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 transition-colors">
+                <metric.icon className={`w-5 h-5 ${metric.color} group-hover:scale-110 transition-transform duration-300`} />
+              </div>
+              <div className="lux-numeral text-3xl text-white mb-1.5 metric-number">{metric.value}</div>
               <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
             </div>
           ))}
@@ -550,8 +555,8 @@ export default function Landing() {
       <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">The Platform</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
+            <span className="eyebrow mb-4">The Platform</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">The Builder ships your store. The Merchant runs it. The Social Bot grows it. Each bot wakes up at the right moment.</p>
           </div>
 
@@ -570,7 +575,7 @@ export default function Landing() {
               return (
                 <div
                   key={bot.name}
-                  className="bento-card p-8 group relative overflow-hidden hover-lift"
+                  className="bento-card spotlight-card p-8 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
@@ -608,14 +613,14 @@ export default function Landing() {
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">Social Proof</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
+            <span className="eyebrow mb-4">Social Proof</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using Shop_a_Bot.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bento-card p-7 flex flex-col gap-4">
+              <div key={t.name} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
                 <Quote className="w-6 h-6 text-sky-500/40 shrink-0" />
                 <p className="text-white/60 text-sm leading-relaxed flex-1">"{t.text}"</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
@@ -642,8 +647,8 @@ export default function Landing() {
       <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">Pricing</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
+            <span className="eyebrow mb-4">Pricing</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
@@ -651,10 +656,10 @@ export default function Landing() {
             {PRICING.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl p-6 transition-all duration-300 ${
+                className={`relative rounded-xl p-6 transition-all duration-500 lift-on-hover ${
                   tier.featured
-                    ? "bg-sky-500/5 border border-sky-500/40 shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 hover:border-sky-500/60"
-                    : "bento-card"
+                    ? "tier-popular bg-gradient-to-b from-sky-500/[0.08] via-sky-500/[0.03] to-transparent shadow-[0_0_40px_rgba(14,165,233,0.15)]"
+                    : "bento-card spotlight-card"
                 }`}
               >
                 {tier.badge && (
@@ -708,8 +713,8 @@ export default function Landing() {
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">FAQ</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
+            <span className="eyebrow mb-4">FAQ</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
           </div>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
@@ -722,10 +727,11 @@ export default function Landing() {
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center reveal reveal-visible">
-          <div className="bento-card-featured rounded-2xl p-12 relative overflow-hidden">
+          <div className="bento-card-featured gradient-ring rounded-2xl p-12 relative overflow-hidden">
+            <div className="aurora-mesh opacity-50" />
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
             <div className="relative">
-              <p className="micro-label mb-4">Ready to automate?</p>
+              <p className="eyebrow mb-4">Ready to automate?</p>
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-4">
                 Launch your first autonomous store
               </h2>
