@@ -55,20 +55,22 @@ export default function InboxPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-6 pt-6 pb-2 flex items-center gap-3">
+      <div className="px-6 pt-6 flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
           <InboxIcon className="h-5 w-5 text-sky-400" />
         </div>
         <div>
-          <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Inbox</h1>
-          <p className="text-sm text-muted-foreground">Everything that needs your attention — bot activity, approvals, and alerts</p>
+          <h1 className="text-2xl font-heading font-bold tracking-tight text-white">Inbox</h1>
+          <p className="text-sm text-white/35">Everything that needs your attention</p>
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-6 pt-2">
-        <TabsList className="bg-secondary/50">
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="approvals" className="relative">
+      <div className="px-6 mb-4" />
+
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-6">
+        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
+          <TabsTrigger value="activity" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Activity</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">
             Approvals
             {pendingCount > 0 && (
               <Badge className="ml-1.5 h-5 min-w-5 px-1 text-[10px] bg-amber-500 text-white border-0">

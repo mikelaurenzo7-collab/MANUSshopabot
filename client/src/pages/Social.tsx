@@ -288,49 +288,49 @@ function SocialContent({
 
           {/* Ad Copy Tab */}
           <TabsContent value="ads" className="space-y-4">
-            <Card className="bento-card">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">AI Ad Copy Generator</h3>
+            {/* Ad Copy Generator Card */}
+            <div className="border border-white/[0.08] bg-black/40 p-4 md:p-5 relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-amber-400/50" />
+              <div className="flex items-center gap-2 mb-4 pl-2">
+                <Zap className="h-4 w-4 text-amber-400" />
+                <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-white/60">AI Ad Copy Generator</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pl-2">
+                <div className="md:col-span-2">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-white/30 block mb-1.5">Product / Topic</span>
+                  <Input
+                    placeholder="e.g., Bamboo desk organizer set"
+                    value={adPrompt}
+                    onChange={(e) => setAdPrompt(e.target.value)}
+                    className="bg-[#050505] border-white/[0.08] text-white font-mono text-xs h-8 focus:border-amber-400 focus:ring-amber-400/20"
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2">
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Product / Topic</Label>
-                    <Input
-                      placeholder="e.g., Bamboo desk organizer set"
-                      value={adPrompt}
-                      onChange={(e) => setAdPrompt(e.target.value)}
-                      className="bg-input/50"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1.5 block">Platform</Label>
-                    <Select value={adPlatform} onValueChange={setAdPlatform}>
-                      <SelectTrigger className="bg-input/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tiktok">TikTok</SelectItem>
-                        <SelectItem value="meta">Meta / Facebook</SelectItem>
-                        <SelectItem value="google">Google Ads</SelectItem>
-                        <SelectItem value="instagram">Instagram</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      className="w-full"
-                      onClick={() => generateAd.mutate({ storeId: storeId!, productName: adPrompt, platform: adPlatform as any })}
-                      disabled={!adPrompt.trim() || generateAd.isPending}
-                    >
-                      {generateAd.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
-                      Generate
-                    </Button>
-                  </div>
+                <div>
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-white/30 block mb-1.5">Platform</span>
+                  <Select value={adPlatform} onValueChange={setAdPlatform}>
+                    <SelectTrigger className="bg-[#050505] border-white/[0.08] text-white font-mono text-xs h-8 focus:ring-amber-400/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+                      <SelectItem value="tiktok" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">TikTok</SelectItem>
+                      <SelectItem value="meta" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">Meta / Facebook</SelectItem>
+                      <SelectItem value="google" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">Google Ads</SelectItem>
+                      <SelectItem value="instagram" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">Instagram</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-end">
+                  <Button
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs h-8"
+                    onClick={() => generateAd.mutate({ storeId: storeId!, productName: adPrompt, platform: adPlatform as any })}
+                    disabled={!adPrompt.trim() || generateAd.isPending}
+                  >
+                    {generateAd.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+                    GENERATE
+                  </Button>
+                </div>
+              </div>
+            </div>
 
             {campaigns && campaigns.length > 0 ? (
               <div className="space-y-3">

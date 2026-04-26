@@ -254,9 +254,12 @@ export default function MerchantPage() {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
            {!selectedEntity ? (
-             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
-                <Target className="w-6 h-6 text-muted-foreground mb-4" />
-                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Select an entity stream to view telemetry</p>
+             <div className="flex flex-col items-center justify-center text-center min-h-[300px]">
+                <div className="h-14 w-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                  <Target className="w-7 h-7 text-cyan-400/60" />
+                </div>
+                <p className="font-mono text-xs uppercase tracking-widest text-white/50 font-bold">No Entity Selected</p>
+                <p className="font-mono text-[9px] text-white/30 mt-2 max-w-[200px]">Select a product or order from the data stream to view telemetry.</p>
              </div>
            ) : entityType === "product" ? (
              <div className="space-y-6">
@@ -326,7 +329,7 @@ export default function MerchantPage() {
 
 function Badge({ count }: { count: number }) {
   return (
-    <div className="bg-[#1e293b] text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded-none">
+    <div className="bg-white/[0.06] border border-white/[0.08] text-white/70 font-mono text-[9px] font-bold px-2 py-0.5 rounded-md">
       {count}
     </div>
   );

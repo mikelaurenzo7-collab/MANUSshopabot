@@ -205,9 +205,12 @@ export default function Architect() {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
            {!selectedReport ? (
-             <div className="flex flex-col items-center justify-center text-center h-40 opacity-50">
-                <Target className="w-6 h-6 text-muted-foreground mb-4" />
-                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Select a ledger row to view telemetry</p>
+             <div className="flex flex-col items-center justify-center text-center min-h-[300px]">
+                <div className="h-14 w-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(14,165,233,0.1)]">
+                  <Target className="w-7 h-7 text-sky-400/60" />
+                </div>
+                <p className="font-mono text-xs uppercase tracking-widest text-white/50 font-bold">No Report Selected</p>
+                <p className="font-mono text-[9px] text-white/30 mt-2 max-w-[200px]">Select a niche report from the ledger to view full telemetry.</p>
              </div>
            ) : !selectedReport.report ? (
              <div className="flex flex-col items-center justify-center h-40">
