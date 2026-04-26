@@ -292,12 +292,13 @@ export default function Home() {
   }
 
   return (
-    <div className="page-enter flex flex-col h-full w-full bg-[#050505] overflow-hidden">
+    <div className="page-enter flex flex-col h-full w-full bg-[#050505]/70 overflow-hidden relative">
       {/* stagger-list anchor for animation tests */}
       <div className="stagger-list hidden" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
 
       {/* ── Top Status Bar ── */}
-      <div className="shrink-0 h-11 border-b border-white/[0.05] bg-[#040406]/80 backdrop-blur-sm flex items-center px-4 gap-6 z-20">
+      <div className="shrink-0 h-11 border-b border-white/[0.06] bg-[#040406]/70 backdrop-blur-xl flex items-center px-4 gap-6 z-20 shadow-[0_1px_0_rgba(14,165,233,0.08)]">
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">System Online</span>
@@ -338,7 +339,7 @@ export default function Home() {
             fitViewOptions={{ padding: 0.15 }}
             minZoom={0.4}
             maxZoom={2}
-            className="bg-[#050505]"
+            className="bg-transparent"
           >
             <Background color="rgba(255,255,255,0.03)" gap={28} size={1} />
             <Controls
@@ -356,7 +357,7 @@ export default function Home() {
         </div>
 
         {/* ── Inspector Panel ── */}
-        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.05] bg-[#040406] flex flex-col z-20">
+        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/82 backdrop-blur-2xl flex flex-col z-20 shadow-[-24px_0_80px_rgba(0,0,0,0.35)]">
           {/* Inspector Header */}
           <div className="h-11 flex items-center px-4 border-b border-white/[0.05] justify-between">
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
