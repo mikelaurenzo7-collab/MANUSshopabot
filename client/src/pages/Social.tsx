@@ -41,6 +41,57 @@ export default function SocialPage() {
   const isMobile = useIsMobile();
   const [selectedStore, setSelectedStore] = useState<string>("");
   const storeId = selectedStore ? Number(selectedStore) : undefined;
+
+  const { data: status } = trpc.dashboard.agentStatus.useQuery();
+  const socialStatus: any = status?.find?.((s: any) => s.agentType === 'social') || { status: 'idle' };
+
+  return (
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col md:flex-row">
+      {/* Main Workspace */}
+      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08]">
+        {/* Header Bar */}
+        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="relative shrink-0">
+              <Megaphone className="text-amber-400 w-4 md:w-5 h-4 md:h-5" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-heading text-xs md:text-sm font-bold text-white truncate tracking-tight">Social Bot</h1>
+              <p className="font-mono text-[8px] md:text-[9px] text-muted-foreground hidden sm:block">Ads · posts · campaigns · email flows</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+            <span className={`font-mono text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5 ${socialStatus.status === 'running' ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${socialStatus.status === 'running' ? 'bg-amber-400 animate-pulse' : 'bg-amber-400'}`} />
+              {socialStatus.status === 'running' ? 'RUNNING' : 'READY'}
+            </span>
+          </div>
+        </div>
+        <div className="h-px bg-gradient-to-r from-amber-500/50 via-amber-500/10 to-transparent shrink-0" />
+
+        <SocialContent
+          isMobile={isMobile}
+          storeId={storeId}
+          selectedStore={selectedStore}
+          setSelectedStore={setSelectedStore}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SocialContent({
+  isMobile,
+  storeId,
+  selectedStore,
+  setSelectedStore,
+}: {
+  isMobile: boolean;
+  storeId: number | undefined;
+  selectedStore: string;
+  setSelectedStore: (v: string) => void;
+}) {
   const [adPrompt, setAdPrompt] = useState("");
   const [adPlatform, setAdPlatform] = useState("tiktok");
   const [imagePrompt, setImagePrompt] = useState("");
