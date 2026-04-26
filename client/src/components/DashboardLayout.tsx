@@ -86,6 +86,9 @@ function brandDotClass(brand: NavItem["brand"]): string | null {
   }
 }
 
+const ACTIVE_UNDERLINE_CLASS =
+  "pointer-events-none absolute inset-x-3 bottom-0 h-px rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-400 opacity-90";
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -218,14 +221,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <Link
         href={item.path}
-        className={`relative inline-flex items-center h-9 px-3 rounded-lg text-sm transition-all duration-200 group whitespace-nowrap ${
+        className={`relative inline-flex items-center h-9 px-3 rounded-lg text-sm transition-[background-color,color,box-shadow,transform] duration-150 group whitespace-nowrap ${
           isActive
             ? "text-sky-200 bg-sky-500/10 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22)]"
             : "text-white/55 hover:text-white/90 hover:bg-white/[0.04]"
         }`}
       >
         <item.icon
-          className={`w-4 h-4 mr-2 transition-all duration-200 ${
+          className={`w-4 h-4 mr-2 transition-all duration-150 ${
             isActive ? "text-sky-300" : "opacity-55 group-hover:opacity-90"
           }`}
         />
@@ -240,12 +243,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           />
         )}
         {item.badge && item.badge > 0 ? (
-          <span className="ml-2 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+          <span className="ml-2 min-w-[18px] h-[18px] px-1 rounded-full bg-sky-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-[0_0_0_1px_rgba(125,211,252,0.18)]">
             {item.badge > 99 ? "99+" : item.badge}
           </span>
         ) : null}
         {isActive && (
-          <span className="pointer-events-none absolute left-2 right-2 -bottom-[7px] h-0.5 rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-400 opacity-90" />
+          <span className={ACTIVE_UNDERLINE_CLASS} />
         )}
       </Link>
     );
@@ -257,7 +260,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={`relative inline-flex items-center h-9 px-3 rounded-lg text-sm transition-all duration-200 whitespace-nowrap ${
+          aria-label="Open bots menu"
+          className={`relative inline-flex items-center h-9 px-3 rounded-lg text-sm transition-[background-color,color,box-shadow,transform] duration-150 whitespace-nowrap ${
             botsActive
               ? "text-sky-200 bg-sky-500/10 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22)]"
               : "text-white/55 hover:text-white/90 hover:bg-white/[0.04]"
@@ -265,12 +269,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           data-testid="bots-menu-trigger"
         >
           <Bot
-            className={`w-4 h-4 mr-2 ${botsActive ? "text-sky-300" : "opacity-55"}`}
+            className={`w-4 h-4 mr-2 transition-all duration-150 ${botsActive ? "text-sky-300" : "opacity-55"}`}
           />
           <span className={botsActive ? "font-semibold" : "font-medium"}>Bots</span>
           <ChevronDown className="ml-1.5 w-3 h-3 opacity-60" />
           {botsActive && (
-            <span className="pointer-events-none absolute left-2 right-2 -bottom-[7px] h-0.5 rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-sky-400 opacity-90" />
+            <span className={ACTIVE_UNDERLINE_CLASS} />
           )}
         </button>
       </DropdownMenuTrigger>
@@ -413,7 +417,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       data-testid="command-palette-trigger"
     >
       <Search className="w-3.5 h-3.5 text-white/40 shrink-0" />
-      <span className="text-xs text-white/40 truncate flex-1">Search & run…</span>
+            <span className="text-xs text-white/40 truncate flex-1">Search & run…</span>
       <kbd className="text-[9px] text-white/30 font-mono px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">
         ⌘K
       </kbd>
@@ -451,7 +455,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             />
           )}
           {item.badge && item.badge > 0 ? (
-            <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+            <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sky-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-[0_0_0_1px_rgba(125,211,252,0.18)]">
               {item.badge > 99 ? "99+" : item.badge}
             </span>
           ) : null}
@@ -596,7 +600,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
           {/* Primary nav */}
           <nav
-            className="flex-1 min-w-0 hidden md:flex items-center gap-0.5 overflow-x-auto no-scrollbar pl-2"
+            className="flex-1 min-w-0 hidden md:flex items-center gap-0.5 overflow-x-auto no-scrollbar pl-2 pr-2 scroll-px-4"
             aria-label="Primary"
           >
             <TopNavPill item={primaryNav[0]} />
