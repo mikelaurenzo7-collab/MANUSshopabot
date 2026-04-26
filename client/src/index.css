@@ -687,6 +687,28 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     box-shadow: 0 1px 0 rgba(14, 165, 233, 0.03);
   }
 
+  /* Horizontal top nav: subtle accent hairline below the bar */
+  .topbar-nav::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.35), rgba(6, 182, 212, 0.25), transparent);
+    opacity: 0.55;
+  }
+
+  /* Hide scrollbar utility (used by horizontal nav overflow) */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   /* ── Button interactions ───────────────────────────────────────────────── */
   button:active:not(:disabled) {
     transform: scale(0.97);
