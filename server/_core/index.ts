@@ -9,6 +9,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerShopifyOAuthRoutes } from "../shopifyOAuth";
 import { registerSocialOAuthRoutes } from "../socialOAuth";
 import { registerEcommerceOAuthRoutes } from "../ecommerceOAuth";
+import { registerToolOAuthRoutes } from "../toolOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { registerPlatformWebhookRoutes } from "../platformWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
@@ -149,6 +150,8 @@ async function startServer() {
   registerSocialOAuthRoutes(app);
   // E-commerce platform OAuth callbacks (Etsy, Amazon, eBay, TikTok Shop)
   registerEcommerceOAuthRoutes(app);
+  // Tool connector OAuth callbacks (Google Sheets, GA4)
+  registerToolOAuthRoutes(app);
   // Shopify webhook handlers (orders/create, orders/paid, products/update, inventory)
   registerShopifyWebhookRoutes(app);
   // Etsy + TikTok Shop webhook handlers (orders, products, inventory)

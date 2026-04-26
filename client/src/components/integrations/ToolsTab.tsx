@@ -1,0 +1,363 @@
+import React, { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import {
+  CheckCircle2, Loader2, KeyRound, ExternalLink, Sparkles, Bot, Wrench, Eye, EyeOff, RefreshCw, Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const BOT_LABEL: Record<string, string> = {
+  architect: "Architect",
+  merchant: "Merchant",
+  social: "Social",
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  data: "Data",
+  marketing: "Marketing",
+  messaging: "Messaging",
+  logistics: "Logistics",
+  fulfillment: "Fulfillment",
+  reviews: "Reviews",
+  support: "Support",
+  analytics: "Analytics",
+};
+
+interface ToolConnector {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  category: string;
+  bots: readonly string[];
+  description: string;
+  capabilities: readonly string[];
+  whereToFind: string;
+  connectionType: "oauth" | "api_key";
+  fields?: ReadonlyArray<{
+    key: string;
+    label: string;
+    placeholder?: string;
+    helpText?: string;
+    type?: "text" | "password";
+    required?: boolean;
+  }>;
+}
+
+interface ConnectedTool {
+  id: number;
+  platform: string;
+  status?: string;
+  createdAt: string | Date;
+  lastHealthCheck?: string | Date | null;
+}
+
+/**
+ * Tools tab for the Integrations page — renders the 8 tool connectors with
+ * an inline API-key form for keyed tools and a one-click button for OAuth tools.
+ * Mirrors the visual language of the e-commerce connect tab.
+ */
+export function ToolsTab() {
+  const { data: tools, isLoading } = trpc.tools.list.useQuery();
+  const { data: connected, refetch: refetchConnected } = trpc.tools.listConnected.useQuery();
+
+  const generateOAuth = trpc.tools.generateOAuthUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+      else toast.error(data.message || "OAuth setup required");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const disconnect = trpc.tools.disconnect.useMutation({
+    onSuccess: () => {
+      toast.success("Tool disconnected");
+      refetchConnected();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const checkHealth = trpc.tools.checkHealth.useMutation({
+    onSuccess: (data) => toast.success(data.message),
+    onError: (err) => toast.error(err.message),
+  });
+
+  const connectedSet = new Set((connected || []).map((c: ConnectedTool) => c.platform));
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-44 bg-white/4 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  // Group tools by category for elegant scanning
+  const grouped = (tools || []).reduce<Record<string, ToolConnector[]>>((acc, t) => {
+    const cat = t.category || "data";
+    (acc[cat] ??= []).push(t as ToolConnector);
+    return acc;
+  }, {});
+
+  const categoryOrder = ["data", "analytics", "marketing", "messaging", "logistics", "fulfillment", "reviews", "support"];
+
+  return (
+    <div className="space-y-8">
+      {/* Connected tools strip */}
+      {connected && connected.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+            <Wrench className="w-3.5 h-3.5 text-emerald-400" />
+            Active Tools
+            <span className="text-xs text-slate-500">({connected.length})</span>
+          </h3>
+          <div className="space-y-2">
+            {(connected as ConnectedTool[]).map((c) => {
+              const tool = (tools || []).find((t: ToolConnector) => t.id === c.platform);
+              return (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3 hover:bg-white/6 transition-colors"
+                  style={{ borderLeft: `3px solid ${tool?.color || "#64748b"}40` }}
+                >
+                  <div className="text-xl">{tool?.icon || "🔌"}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-white truncate">{tool?.name || c.platform}</div>
+                    <div className="text-xs text-slate-400 flex items-center gap-2">
+                      <span>{CATEGORY_LABEL[tool?.category || ""]}</span>
+                      <span>·</span>
+                      <span>{(tool?.bots || []).map((b) => BOT_LABEL[b]).join(", ")} bot</span>
+                    </div>
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-2.5 h-2.5" /> Connected
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-slate-400 hover:text-white"
+                    onClick={() => checkHealth.mutate({ id: c.id })}
+                    disabled={checkHealth.isPending}
+                    aria-label={`Check ${tool?.name || c.platform} health`}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${checkHealth.isPending ? "animate-spin" : ""}`} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-slate-400 hover:text-red-400"
+                    onClick={() => disconnect.mutate({ id: c.id })}
+                    aria-label={`Disconnect ${tool?.name || c.platform}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Available tools grouped by category */}
+      {categoryOrder
+        .filter((cat) => grouped[cat])
+        .map((cat) => (
+          <div key={cat}>
+            <h3 className="text-xs font-semibold tracking-wider uppercase text-slate-500 mb-3">
+              {CATEGORY_LABEL[cat]}
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {grouped[cat].map((tool) => (
+                <ToolCard
+                  key={tool.id}
+                  tool={tool}
+                  isConnected={connectedSet.has(tool.id)}
+                  onOAuth={() => generateOAuth.mutate({ tool: tool.id, origin: window.location.origin })}
+                  oauthPending={generateOAuth.isPending}
+                  onApiKeySaved={() => refetchConnected()}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function ToolCard({
+  tool,
+  isConnected,
+  onOAuth,
+  oauthPending,
+  onApiKeySaved,
+}: {
+  tool: ToolConnector;
+  isConnected: boolean;
+  onOAuth: () => void;
+  oauthPending: boolean;
+  onApiKeySaved: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div
+      className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors flex flex-col gap-3"
+      style={{ borderTop: `2px solid ${tool.color}80` }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-2xl flex-shrink-0">{tool.icon}</span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-white truncate">{tool.name}</div>
+            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <Bot className="w-2.5 h-2.5" />
+              {tool.bots.map((b) => BOT_LABEL[b]).join(" · ")}
+            </div>
+          </div>
+        </div>
+        {isConnected && <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+      </div>
+
+      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">{tool.description}</p>
+
+      <div className="flex flex-wrap gap-1">
+        {tool.capabilities.slice(0, 3).map((cap) => (
+          <span
+            key={cap}
+            className="text-[10px] bg-white/6 text-slate-400 px-1.5 py-0.5 rounded flex items-center gap-1"
+          >
+            <Sparkles className="w-2 h-2" />
+            {cap}
+          </span>
+        ))}
+      </div>
+
+      {tool.connectionType === "oauth" ? (
+        <Button
+          size="sm"
+          className="w-full text-xs text-white hover:opacity-90"
+          style={{ backgroundColor: tool.color }}
+          onClick={onOAuth}
+          disabled={oauthPending}
+        >
+          {oauthPending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+          {isConnected ? "Reconnect with Google" : "Connect with Google"}
+        </Button>
+      ) : !expanded ? (
+        <Button
+          size="sm"
+          className="w-full text-xs text-white hover:opacity-90"
+          style={{ backgroundColor: tool.color }}
+          onClick={() => setExpanded(true)}
+        >
+          <KeyRound className="w-3 h-3 mr-1" />
+          {isConnected ? "Update API Key" : "Add API Key"}
+        </Button>
+      ) : (
+        <ApiKeyForm
+          tool={tool}
+          onCancel={() => setExpanded(false)}
+          onSuccess={() => {
+            setExpanded(false);
+            onApiKeySaved();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ApiKeyForm({
+  tool,
+  onCancel,
+  onSuccess,
+}: {
+  tool: ToolConnector;
+  onCancel: () => void;
+  onSuccess: () => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+
+  const connect = trpc.tools.connectWithApiKey.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${tool.name} connected${data.accountLabel ? ` — ${data.accountLabel}` : ""}`);
+      onSuccess();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    connect.mutate({ tool: tool.id, credentials: values });
+  };
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-2 bg-black/30 border border-white/8 rounded-lg p-3">
+      <div className="text-[11px] text-slate-400 mb-1 flex items-start gap-1.5">
+        <ExternalLink className="w-3 h-3 mt-0.5 flex-shrink-0 text-sky-400" />
+        <span>{tool.whereToFind}</span>
+      </div>
+      {(tool.fields || []).map((field) => {
+        const isSecret = field.type === "password";
+        const visible = showSecrets[field.key];
+        return (
+          <div key={field.key} className="space-y-1">
+            <Label htmlFor={`${tool.id}-${field.key}`} className="text-[11px] text-slate-300">
+              {field.label}
+              {field.required && <span className="text-red-400 ml-0.5">*</span>}
+            </Label>
+            <div className="relative">
+              <Input
+                id={`${tool.id}-${field.key}`}
+                type={isSecret && !visible ? "password" : "text"}
+                placeholder={field.placeholder}
+                required={field.required}
+                value={values[field.key] || ""}
+                onChange={(e) => setValues((v) => ({ ...v, [field.key]: e.target.value }))}
+                className="text-xs h-8 bg-white/4 border-white/10 text-white pr-8"
+              />
+              {isSecret && (
+                <button
+                  type="button"
+                  onClick={() => setShowSecrets((s) => ({ ...s, [field.key]: !s[field.key] }))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  aria-label={visible ? "Hide value" : "Show value"}
+                >
+                  {visible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
+            {field.helpText && <p className="text-[10px] text-slate-500">{field.helpText}</p>}
+          </div>
+        );
+      })}
+      <div className="flex gap-2 mt-1">
+        <Button
+          type="submit"
+          size="sm"
+          className="flex-1 text-xs text-white hover:opacity-90"
+          style={{ backgroundColor: tool.color }}
+          disabled={connect.isPending}
+        >
+          {connect.isPending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+          Verify & Save
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={onCancel}
+          className="text-xs text-slate-400 hover:text-white h-8"
+          disabled={connect.isPending}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}

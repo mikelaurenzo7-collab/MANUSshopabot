@@ -1,0 +1,1 @@
+ALTER TABLE `oauth_state_tokens` MODIFY COLUMN `flowType` enum('ecommerce','social','shopify','tool') NOT NULL;

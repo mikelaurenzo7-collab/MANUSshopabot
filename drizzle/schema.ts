@@ -417,7 +417,7 @@ export type InsertSocialAccount = typeof socialAccounts.$inferInsert;
 export const oauthStateTokens = mysqlTable("oauth_state_tokens", {
   id: int("id").autoincrement().primaryKey(),
   state: varchar("state", { length: 255 }).notNull().unique(),
-  flowType: mysqlEnum("flowType", ["ecommerce", "social", "shopify"]).notNull(),
+  flowType: mysqlEnum("flowType", ["ecommerce", "social", "shopify", "tool"]).notNull(),
   userId: int("userId").notNull(),
   platform: varchar("platform", { length: 50 }).notNull(),
   storeId: int("storeId"),

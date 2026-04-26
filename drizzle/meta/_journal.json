@@ -127,6 +127,13 @@
       "when": 1777148143198,
       "tag": "0017_uneven_the_order",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1777188621662,
+      "tag": "0018_lame_killmonger",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,7 @@ import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
   ChevronRight, TrendingUp, Package, ShoppingCart, Activity, Zap,
-  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff
+  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff, Wrench
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
+const ToolsTab = lazy(() => import("@/components/integrations/ToolsTab").then(m => ({ default: m.ToolsTab })));
 
 const PLATFORM_COLORS: Record<string, string> = {
   shopify: "#96BF48", woocommerce: "#96588A", amazon: "#FF9900",
@@ -29,8 +30,8 @@ const PLATFORM_ICONS: Record<string, string> = {
 };
 
 export default function IntegrationsPage() {
-  const [mainTab, setMainTab] = useState<"stores" | "social" | "connect">("stores");
-  const [connectTab, setConnectTab] = useState<"ecommerce" | "social">("ecommerce");
+  const [mainTab, setMainTab] = useState<"stores" | "social" | "tools" | "connect">("stores");
+  const [connectTab, setConnectTab] = useState<"ecommerce" | "social" | "tools">("ecommerce");
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
@@ -39,6 +40,7 @@ export default function IntegrationsPage() {
   const { data: socialPlatforms } = trpc.connectors.socialPlatforms.useQuery();
   const { data: credentials, refetch: refetchCreds } = trpc.connectors.listCredentials.useQuery();
   const { data: socialAccounts, refetch: refetchSocial } = trpc.connectors.listSocialAccounts.useQuery();
+  const { data: connectedTools } = trpc.tools.listConnected.useQuery();
   const { data: summary } = trpc.connectors.connectionSummary.useQuery();
 
   // Handle OAuth redirects
@@ -86,6 +88,7 @@ export default function IntegrationsPage() {
   const tabs = [
     { id: "stores" as const, label: "My Stores", icon: <Store className="w-3.5 h-3.5" />, count: stores?.length || 0 },
     { id: "social" as const, label: "Social Accounts", icon: <Share2 className="w-3.5 h-3.5" />, count: socialAccounts?.length || 0 },
+    { id: "tools" as const, label: "Tools", icon: <Wrench className="w-3.5 h-3.5" />, count: connectedTools?.length || 0 },
     { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
   ];
 
@@ -309,11 +312,18 @@ export default function IntegrationsPage() {
           </div>
         )}
 
+        {/* ── TOOLS TAB ── */}
+        {mainTab === "tools" && (
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 text-sky-400 animate-spin" /></div>}>
+            <ToolsTab />
+          </Suspense>
+        )}
+
         {/* ── CONNECT NEW TAB ── */}
         {mainTab === "connect" && (
           <div className="space-y-6">
             <div className="flex gap-2">
-              {(["ecommerce", "social"] as const).map(t => (
+              {(["ecommerce", "social", "tools"] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setConnectTab(t)}
@@ -323,11 +333,16 @@ export default function IntegrationsPage() {
                       : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
                   }`}
                 >
-                  {t === "ecommerce" ? "🛍️ E-Commerce" : "📱 Social Media"}
+                  {t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools"}
                 </button>
               ))}
             </div>
 
+            {connectTab === "tools" ? (
+              <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 text-sky-400 animate-spin" /></div>}>
+                <ToolsTab />
+              </Suspense>
+            ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
                 const isConnected = connectTab === "ecommerce"
@@ -385,6 +400,7 @@ export default function IntegrationsPage() {
                 );
               })}
             </div>
+            )}
 
           </div>
         )}

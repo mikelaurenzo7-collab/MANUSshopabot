@@ -735,7 +735,7 @@ export async function createOAuthStateToken(data: InsertOAuthStateToken) {
   return { id: result[0].insertId };
 }
 
-export async function getOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify") {
+export async function getOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify" | "tool") {
   const db = await getDb();
   if (!db) return undefined;
 
@@ -748,7 +748,7 @@ export async function getOAuthStateToken(state: string, flowType?: "ecommerce" |
   return result[0] ?? undefined;
 }
 
-export async function consumeOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify") {
+export async function consumeOAuthStateToken(state: string, flowType?: "ecommerce" | "social" | "shopify" | "tool") {
   const db = await getDb();
   if (!db) return undefined;
 

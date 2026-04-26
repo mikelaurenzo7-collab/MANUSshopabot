@@ -12,6 +12,7 @@ import { socialRouter } from "./routers/social";
 import { activityRouter } from "./routers/activity";
 import { analyticsRouter } from "./routers/analytics";
 import { connectorsRouter } from "./routers/connectors";
+import { toolsRouter } from "./routers/tools";
 import { workflowRouter } from "./routers/workflows";
 import { telemetryRouter } from "./routers/telemetry";
 import { diagnosticsRouter } from "./routers/diagnostics";
@@ -49,6 +50,7 @@ export const appRouter = router({
   activity: activityRouter,
   analytics: analyticsRouter,
   connectors: connectorsRouter,
+  tools: toolsRouter,
   workflows: workflowRouter,
   telemetry: telemetryRouter,
   diagnostics: diagnosticsRouter,
