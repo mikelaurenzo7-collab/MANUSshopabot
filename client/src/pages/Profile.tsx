@@ -29,10 +29,10 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
   icon: any; label: string; value: string | number; color: string; loading?: boolean;
 }) {
   return (
-    <div className={`glass-card relative overflow-hidden p-4 rounded-xl border transition-colors hover:bg-white/[0.02] ${color}`}>
+    <div className={`glass-card relative overflow-hidden p-4 transition-colors hover:bg-white/[0.02] ${color}`}>
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
       <div className="flex items-center gap-2 mb-3">
-        <Icon className="h-4 w-4 opacity-70" />
+        <Icon className="h-4 w-4" />
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</span>
       </div>
       {loading ? (
