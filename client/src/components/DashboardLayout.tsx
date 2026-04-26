@@ -110,10 +110,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     refetchInterval: 15_000,
   });
 
-  const { data: connSummary } = trpc.connectors.connectionSummary.useQuery(undefined, {
-    enabled: !!user,
-  });
-
   const { data: stores } = trpc.stores.list.useQuery(undefined, {
     enabled: !!user,
   });
@@ -132,11 +128,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     (a: number, s: any) => a + (s?.running ?? 0),
     0,
   );
-
-  const totalConnections =
-    (connSummary?.stores ?? 0) +
-    (connSummary?.socialAccounts ?? 0) +
-    (connSummary?.credentials ?? 0);
 
   // Active workspace store (for the switcher pill)
   const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
@@ -195,7 +186,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           title: "Storefronts & Channels",
           path: "/storefronts",
           icon: Globe,
-          badge: totalConnections > 0 ? 0 : 0,
         },
         { title: "Insights", path: "/insights", icon: BarChart3 },
       ],

@@ -16,7 +16,7 @@
  * here was moved to Platform Health (operator concern).
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import ReactFlow, {
   Background,
@@ -35,10 +35,9 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
-  Bot, Package, Megaphone, Store, ShoppingCart, Globe,
+  Bot, Package, Megaphone, Store, ShoppingCart,
   Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
-  CheckCircle2, Clock, Zap, TrendingUp, ShieldCheck, Loader2,
-  GitBranch,
+  Loader2, GitBranch, TrendingUp, ShieldCheck,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -417,13 +416,13 @@ export default function Home() {
   }, [stores, agentStatus, socialAccounts, intel, user, pendingCount]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Re-sync nodes/edges when data changes
-  useMemo(() => {
+  // Re-sync nodes/edges when the underlying data changes.
+  useEffect(() => {
     setNodes(initialNodes);
-    // biome-ignore lint: edges intentionally controlled via initialEdges
-  }, [initialNodes, setNodes]);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_: any, node: Node<OperationNodeData>) => {
     setSelected(node);
@@ -707,7 +706,3 @@ function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; lab
     </Link>
   );
 }
-
-// Re-export icons used by inspector to avoid an unused-import warning when
-// the component tree is tree-shaken.
-export const _icons = { Globe, Zap, AlertTriangle, CheckCircle2, Clock };

@@ -164,7 +164,7 @@ export default function InfraTopology() {
 
   useEffect(() => {
     setNodes(buildNodes());
-  }, [metrics, agentStatus, connSummary, stores, setNodes, buildNodes]);
+  }, [buildNodes, setNodes]);
 
   const onNodeClick = useCallback((_: any, node: any) => {
     setSelectedNode(node);

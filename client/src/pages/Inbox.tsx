@@ -7,7 +7,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Inbox as InboxIcon } from "lucide-react";
@@ -26,7 +25,6 @@ function readTabFromHash(): InboxTab {
 }
 
 export default function InboxPage() {
-  const [, setLocation] = useLocation();
   const [tab, setTab] = useState<InboxTab>(() => readTabFromHash());
 
   const { data: pending } = trpc.approvals.pending.useQuery(undefined, {
@@ -51,10 +49,9 @@ export default function InboxPage() {
     }
   };
 
-  // Friendly aliases: clicking the legacy /approvals or /activity routes
-  // still works (those routes remain wired in App.tsx). This page is the
-  // sidebar entry-point.
-  void setLocation;
+  // The legacy `/approvals` and `/activity` routes are still wired in
+  // App.tsx, so existing deep links continue to resolve to their original
+  // pages. This shell is the sidebar entry-point.
 
   return (
     <div className="page-enter h-full overflow-y-auto">
