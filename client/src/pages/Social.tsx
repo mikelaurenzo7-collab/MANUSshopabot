@@ -246,48 +246,44 @@ function SocialContent({
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 page-header">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <div className="relative shrink-0">
-            <div className="h-8 md:h-10 w-8 md:w-10 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(249,115,22,0.15)]">
-              <Megaphone className="h-4 md:h-5 w-4 md:w-5 text-amber-400" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg md:text-xl font-heading font-bold tracking-tight text-foreground truncate">Social Bot</h1>
-            <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Ad copy · social media · SEO · email campaigns</p>
-          </div>
+      {/* Store selector + tabs */}
+      <div className="px-3 md:px-6 pt-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
+          <Select value={selectedStore} onValueChange={setSelectedStore}>
+            <SelectTrigger className="w-full sm:w-56 bg-[#050505] border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-amber-400/20 focus:border-amber-400">
+              <SelectValue placeholder="SELECT_TARGET_STORE" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+              {storeOptions.map((s: any) => (
+                <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
+                  {s.name} [{s.platform}]
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={selectedStore} onValueChange={setSelectedStore}>
-          <SelectTrigger className="w-full md:w-48 bg-input/50">
-            <SelectValue placeholder="Select store" />
-          </SelectTrigger>
-          <SelectContent>
-            {storeOptions.map((s: any) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {!selectedStore ? (
-        <Card className="bento-card">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Megaphone className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Select a store to start marketing</p>
-          </CardContent>
-        </Card>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="border border-white/[0.08] border-dashed rounded-xl p-12 flex flex-col items-center text-center max-w-sm">
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]">
+              <Megaphone className="h-7 w-7 text-amber-400/60" />
+            </div>
+            <p className="font-mono text-xs uppercase tracking-widest text-white/50 font-bold">No Store Selected</p>
+            <p className="font-mono text-[9px] text-white/30 mt-2">Choose a store above to launch ads, generate creatives, and run campaigns.</p>
+          </div>
+        </div>
       ) : (
         <Tabs defaultValue="ads" className="space-y-4">
-          <TabsList className="bg-secondary/50 flex-wrap h-auto">
-            <TabsTrigger value="ads" className="text-xs md:text-sm">Ad Copy</TabsTrigger>
-            <TabsTrigger value="images" className="text-xs md:text-sm">Image Gen</TabsTrigger>
-            <TabsTrigger value="seo" className="text-xs md:text-sm">SEO</TabsTrigger>
-            <TabsTrigger value="social" className="text-xs md:text-sm">Social</TabsTrigger>
-            <TabsTrigger value="email" className="text-xs md:text-sm">Email</TabsTrigger>
-            <TabsTrigger value="tools" className="text-xs md:text-sm">AI Tools</TabsTrigger>
+          <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 flex-wrap h-auto">
+            <TabsTrigger value="ads" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Ad Copy</TabsTrigger>
+            <TabsTrigger value="images" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Image Gen</TabsTrigger>
+            <TabsTrigger value="seo" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">SEO</TabsTrigger>
+            <TabsTrigger value="social" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Social</TabsTrigger>
+            <TabsTrigger value="email" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Email</TabsTrigger>
+            <TabsTrigger value="tools" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">AI Tools</TabsTrigger>
           </TabsList>
 
           {/* Ad Copy Tab */}
