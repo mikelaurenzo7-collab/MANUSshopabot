@@ -15,6 +15,7 @@ import { getDb } from "./db";
 import { stores } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { logWebhookEvent, createBotEvent, updateOrder } from "./db";
+import { addToDeadLetterQueue } from "./engine/eliteOrchestrator";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
 
@@ -151,6 +152,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
     }
   } catch (err: any) {
     console.error(`[Etsy Webhook] Error processing ${topic}:`, err.message);
+    addToDeadLetterQueue(topic, payload, "etsy", err.message);
     if (store) {
       logWebhookEvent({
         userId: store.userId,
@@ -286,6 +288,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
     }
   } catch (err: any) {
     console.error(`[TikTok Shop Webhook] Error processing ${topic}:`, err.message);
+    addToDeadLetterQueue(topic, payload, "tiktok_shop", err.message);
     if (store) {
       logWebhookEvent({
         userId: store.userId,
@@ -330,10 +333,13 @@ async function handleAmazonWebhook(req: Request, res: Response) {
 
   console.log(`[Amazon Webhook] Processing ${topic} for shop ${shopId}`);
 
+  let message: any;
+  let eventType = "unknown";
+
   try {
     // Parse SNS message
-    const message = JSON.parse(payload.Message ?? "{}");
-    const eventType = message.eventType ?? "unknown";
+    message = JSON.parse(payload.Message ?? "{}");
+    eventType = message.eventType ?? "unknown";
 
     if (store) {
       await createBotEvent({
@@ -361,6 +367,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
     }
   } catch (err: any) {
     console.error(`[Amazon Webhook] Error processing:`, err.message);
+    addToDeadLetterQueue(eventType, message ?? payload, "amazon", err.message);
     if (store) {
       logWebhookEvent({
         userId: store.userId,
@@ -439,6 +446,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
     }
   } catch (err: any) {
     console.error(`[eBay Webhook] Error processing ${eventType}:`, err.message);
+    addToDeadLetterQueue(eventType, payload, "ebay", err.message);
     if (store) {
       logWebhookEvent({
         userId: store.userId,

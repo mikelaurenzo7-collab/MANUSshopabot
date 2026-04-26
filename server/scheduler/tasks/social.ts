@@ -13,9 +13,11 @@ import { logger } from "../../_core/logger";
 import * as db from "../../db";
 import { getCrossPlatformSocialAnalytics } from "../../engine/platformBridge";
 import { getEcommerceAdapter, buildCredentials } from "../../adapters/ecommerce";
+import { getSocialAdapter, buildSocialCredentials } from "../../adapters/social";
 import { enqueueDueScheduledPosts } from "../../engine/jobQueue";
 import { processPendingBotEvents } from "../../engine/botCoordination";
 import { logAgentAction } from "../../telemetry";
+import { withCircuitBreaker } from "../../_core/retry";
 
 export async function handleAdMonitoring(): Promise<void> {
   const allStores = await db.getActiveStores();
@@ -218,13 +220,42 @@ export async function handleEmailRecovery(): Promise<void> {
 
       if (abandonedCarts.length === 0) continue;
 
+      // ── Enhanced: Actually send recovery emails via Gmail ──
+      const socialAccounts = await db.getSocialAccounts(store.userId);
+      const gmailAccount = socialAccounts.find((a: any) => a.platform === "gmail" && a.status === "active");
+
+      let emailsSent = 0;
+      let emailErrors: string[] = [];
+
+      if (gmailAccount) {
+        const adapter = getSocialAdapter("gmail");
+        const credentials = buildSocialCredentials(gmailAccount);
+
+        for (const order of abandonedCarts.slice(0, 10)) { // cap at 10 per cycle
+          if (!order.customerEmail) continue;
+          try {
+            await withCircuitBreaker(
+              `gmail-recovery-${store.id}`,
+              () => adapter.createPost(credentials, {
+                content: buildAbandonedCartEmail(store.name, order),
+                metadata: {
+                  to: order.customerEmail,
+                  subject: `You left something behind at ${store.name}`,
+                },
+              })
+            );
+            emailsSent++;
+          } catch (sendErr: any) {
+            emailErrors.push(`Order ${order.id}: ${sendErr.message}`);
+          }
+        }
+      }
+
       // ── Enhanced: Estimate recoverable revenue ──
       const recoverableRevenueCents = abandonedCarts.reduce((sum: number, o: any) => {
         return sum + (o.totalCents ?? o.totalAmountCents ?? 0);
       }, 0);
       const recoverableRevenue = recoverableRevenueCents / 100;
-
-      // Industry average recovery rate of ~15%
       const estimatedRecovery = Math.round(recoverableRevenue * 0.15 * 100) / 100;
 
       const campaigns = await db.getEmailCampaigns(store.id);
@@ -234,24 +265,26 @@ export async function handleEmailRecovery(): Promise<void> {
         agentType: "social",
         taskType: "email_recovery",
         title: `Abandoned cart scan: ${abandonedCarts.length} carts ($${recoverableRevenue.toFixed(0)} at risk)`,
-        description: `Store "${store.name}" — recovery campaign ${hasRecoveryCampaign ? "active" : "not configured"}. Estimated recoverable: $${estimatedRecovery.toFixed(0)}`,
+        description: `Store "${store.name}" — ${emailsSent} recovery emails sent. ${gmailAccount ? "" : "No Gmail account connected."}`,
         status: "completed",
         storeId: store.id,
         result: {
           abandonedCarts: abandonedCarts.length,
+          emailsSent,
+          emailErrors: emailErrors.length,
           recoveryCampaignActive: hasRecoveryCampaign,
           recoverableRevenueCents,
           estimatedRecoveryCents: Math.round(estimatedRecovery * 100),
         },
       });
 
-      if (abandonedCarts.length > 3 && !hasRecoveryCampaign) {
+      if (abandonedCarts.length > 3 && !hasRecoveryCampaign && !gmailAccount) {
         await db.createNotification({
           userId: store.userId,
           agentType: "social",
           type: "warning",
           title: `${abandonedCarts.length} abandoned carts — $${recoverableRevenue.toFixed(0)} at risk`,
-          message: `Store "${store.name}" has ${abandonedCarts.length} abandoned carts worth $${recoverableRevenue.toFixed(0)} with no active recovery campaign. Estimated recoverable: $${estimatedRecovery.toFixed(0)}.`,
+          message: `Store "${store.name}" has ${abandonedCarts.length} abandoned carts worth $${recoverableRevenue.toFixed(0)}. Connect Gmail to enable automated recovery emails. Estimated recoverable: $${estimatedRecovery.toFixed(0)}.`,
           actionUrl: "/social",
         });
       }
@@ -263,8 +296,9 @@ export async function handleEmailRecovery(): Promise<void> {
         storeId: store.id,
         triggerSource: "scheduler",
         input: { storeName: store.name, pendingOrders: pendingOrders.length },
-        output: { abandonedCarts: abandonedCarts.length, recoverableRevenueCents, hasRecoveryCampaign },
-        success: true,
+        output: { abandonedCarts: abandonedCarts.length, emailsSent, recoverableRevenueCents, hasRecoveryCampaign },
+        success: emailErrors.length === 0,
+        errorMessage: emailErrors.length > 0 ? emailErrors.join("; ") : undefined,
       }).catch((telemetryErr: any) => {
         logger.warn("scheduler_telemetry_failed", { storeId: store.id, context: "email_recovery", error: telemetryErr.message });
       });
@@ -272,6 +306,22 @@ export async function handleEmailRecovery(): Promise<void> {
       logger.error("scheduler_error", { event: "Email recovery scan failed", storeName: store.name, error: err.message });
     }
   }
+}
+
+/** Build a simple abandoned cart recovery email body */
+function buildAbandonedCartEmail(storeName: string, order: any): string {
+  const total = ((order.totalAmount ?? 0) / 100).toFixed(2);
+  return `
+    <div style="font-family:Inter,sans-serif;max-width:480px;margin:0 auto;color:#1a1a1a;">
+      <h2 style="color:#0ea5e9;">You left something behind at ${storeName}</h2>
+      <p>Hi${order.customerName ? ` ${order.customerName.split(" ")[0]}` : ""},</p>
+      <p>Your cart with a total of <strong>$${total}</strong> is waiting. Complete your purchase while supplies last.</p>
+      <div style="margin:24px 0;">
+        <a href="#" style="background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Complete Purchase</a>
+      </div>
+      <p style="color:#888;font-size:12px;">This is an automated recovery email from SHOPaBOT.</p>
+    </div>
+  `.trim();
 }
 
 export async function handleBotCoordination(): Promise<void> {

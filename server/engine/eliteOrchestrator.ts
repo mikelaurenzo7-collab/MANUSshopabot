@@ -223,7 +223,16 @@ export async function pauseAdsForOutOfStockProducts(userId: number): Promise<{
         if (!account) continue;
 
         try {
-          // Update DB status first (optimistic)
+          // 1. Call the actual platform API to pause the campaign
+          const adapter = getSocialAdapter(account.platform);
+          const credentials = buildSocialCredentials(account);
+          const campaignId = (campaign as any).platformCampaignId || String(campaign.id);
+          await withCircuitBreaker(
+            `ad-pause-${account.platform}`,
+            () => adapter.pauseAdCampaign(credentials, campaignId)
+          );
+
+          // 2. Update DB status only after platform confirms
           await db.updateAdCampaign(campaign.id, { status: "paused" });
 
           const oosProductTitle = oosProducts[0]?.title || "unknown product";
@@ -243,7 +252,7 @@ export async function pauseAdsForOutOfStockProducts(userId: number): Promise<{
             actionUrl: "/merchant",
           });
         } catch (err: any) {
-          result.errors.push(`Failed to pause campaign ${campaign.id}: ${err.message}`);
+          result.errors.push(`Failed to pause campaign ${campaign.id} on ${account.platform}: ${err.message}`);
         }
       }
     }
@@ -490,7 +499,32 @@ export async function runCreativeVelocityOptimization(userId: number): Promise<{
       const targetCTR = 0.02; // 2%
 
       if (cpa > 0 && cpa > targetCPA * 1.20) {
-        await db.updateAdCampaign(campaign.id, { status: "paused" });
+        const socialAccounts = await db.getSocialAccounts(userId);
+        const account = socialAccounts.find((a: any) =>
+          a.platform === campaign.platform ||
+          (campaign.platform === "meta" && a.platform === "instagram") ||
+          (campaign.platform === "instagram" && a.platform === "meta")
+        );
+
+        if (account) {
+          try {
+            const adapter = getSocialAdapter(account.platform);
+            const credentials = buildSocialCredentials(account);
+            const campaignId = (campaign as any).platformCampaignId || String(campaign.id);
+            await withCircuitBreaker(
+              `creative-pause-${account.platform}`,
+              () => adapter.pauseAdCampaign(credentials, campaignId)
+            );
+            await db.updateAdCampaign(campaign.id, { status: "paused" });
+          } catch (apiErr: any) {
+            (result as any).errors = (result as any).errors || [];
+            (result as any).errors.push(`Failed to pause campaign ${campaign.id} on ${account.platform}: ${apiErr.message}`);
+            continue;
+          }
+        } else {
+          await db.updateAdCampaign(campaign.id, { status: "paused" });
+        }
+
         await db.createNotification({
           userId,
           agentType: "social",
@@ -661,6 +695,7 @@ interface DeadLetterEntry {
   event: string;
   payload: unknown;
   platform: string;
+  metadata?: Record<string, unknown>;
   attempts: number;
   lastError: string;
   nextRetryAt: Date;
@@ -670,13 +705,20 @@ interface DeadLetterEntry {
 // In-memory DLQ (in production, this would be Redis or a DB table)
 const deadLetterQueue = new Map<string, DeadLetterEntry>();
 
-export function addToDeadLetterQueue(event: string, payload: unknown, platform: string, error: string): string {
+export function addToDeadLetterQueue(
+  event: string,
+  payload: unknown,
+  platform: string,
+  error: string,
+  metadata?: Record<string, unknown>
+): string {
   const id = `dlq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   deadLetterQueue.set(id, {
     id,
     event,
     payload,
     platform,
+    metadata,
     attempts: 1,
     lastError: error,
     nextRetryAt: new Date(Date.now() + 5 * 60 * 1000),

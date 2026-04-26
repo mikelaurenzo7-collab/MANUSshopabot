@@ -92,20 +92,56 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
     return this.mapProduct(result);
   }
 
-  async createProduct(_credentials: AdapterCredentials, product: CreateProductInput): Promise<PlatformProduct> {
-    // Amazon product creation requires complex feed submissions
-    // Return a structured draft that can be submitted via Seller Central
+  async createProduct(credentials: AdapterCredentials, product: CreateProductInput): Promise<PlatformProduct> {
+    // Use SP-API putListingsItem to create/update a listing
+    // This is simpler than feed submissions and works for basic listings
+    const marketplaceId = credentials.marketplaceId || "ATVPDKIKX0DER";
+    const sellerId = credentials.sellerId || "";
+    const sku = product.sku || `sb_${Date.now()}`;
+
+    const priceValue = (product.priceCents ?? 0) / 100;
+
+    await this.callApi(credentials, (client) =>
+      client.callAPI({
+        operation: "putListingsItem",
+        endpoint: "listings",
+        path: { sellerId, sku },
+        query: { marketplaceIds: [marketplaceId] },
+        body: {
+          productType: "PRODUCT",
+          requirements: "LISTING",
+          attributes: {
+            item_name: [{ value: product.title }],
+            ...(product.description ? { product_description: [{ value: product.description }] } : {}),
+            ...(priceValue > 0 ? {
+              purchasable_offer: [{
+                currency: "USD",
+                our_price: [{ schedule: [{ value_with_tax: priceValue }] }],
+              }],
+            } : {}),
+            ...(product.stockLevel !== undefined && product.stockLevel > 0 ? {
+              fulfillment_availability: [{
+                quantity: product.stockLevel,
+                fulfillment_channel_code: "DEFAULT",
+              }],
+            } : {}),
+            ...(product.imageUrl ? { main_product_image_locator: [{ media_location: product.imageUrl }] } : {}),
+          },
+        },
+      })
+    );
+
     return {
-      platformId: `draft_${Date.now()}`,
+      platformId: sku,
       title: product.title,
       description: product.description,
       priceCents: product.priceCents,
-      sku: product.sku,
+      sku,
       imageUrl: product.imageUrl,
       category: product.category,
       stockLevel: product.stockLevel || 0,
-      status: "draft",
-      metadata: { note: "Submit via Amazon Seller Central or Feeds API", ...product.metadata },
+      status: "active",
+      metadata: { marketplaceId, sellerId, ...product.metadata },
     };
   }
 

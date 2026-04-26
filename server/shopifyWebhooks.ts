@@ -18,6 +18,7 @@ import { stores, orders, products } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { createBotEvent, createOrder, updateOrder, getBotConfigs, createAgentTask, logWebhookEvent } from "./db";
 import { launchWorkflow } from "./engine/workflowEngine";
+import { addToDeadLetterQueue } from "./engine/eliteOrchestrator";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
 import { logAgentAction, logTimeToFulfill } from "./telemetry";
@@ -417,6 +418,8 @@ async function handleShopifyWebhook(req: Request, res: Response) {
     }
   } catch (err: any) {
     console.error(`[Webhook] Error processing ${topic}:`, err.message);
+    // Add to DLQ for retry
+    addToDeadLetterQueue(topic, payload, "shopify", err.message);
     // Log failed event
     if (store) {
       logWebhookEvent({
