@@ -86,8 +86,17 @@ function WorkflowCard({ workflow, onRetry, retryLoading }: {
   const canRetry = workflow.status === "failed" || workflow.status === "cancelled";
   const createdAt = new Date(workflow.createdAt).toLocaleString();
 
+  const statusGlow: Record<string, string> = {
+    running: "border-l-2 border-l-sky-500/60 shadow-[inset_2px_0_12px_rgba(14,165,233,0.08)] workflow-running-glow",
+    failed: "border-l-2 border-l-red-500/50",
+    completed: "border-l-2 border-l-emerald-500/40",
+    pending: "border-l-2 border-l-amber-500/40",
+    cancelled: "border-l-2 border-l-slate-500/30",
+    awaiting_approval: "border-l-2 border-l-amber-500/40",
+  };
+
   return (
-    <div className="card-hover rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04]">
+    <div className={`card-hover rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04] ${statusGlow[workflow.status] ?? ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">

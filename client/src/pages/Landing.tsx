@@ -395,7 +395,7 @@ export default function Landing() {
                           </div>
                         </div>
                         <div className="mt-3 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                          <div className="h-full rounded-full bot-progress" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${colors.hex}, rgba(255,255,255,0.75))` }} />
+                          <div className="h-full rounded-full bot-progress hero-progress-bar" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${colors.hex}, rgba(255,255,255,0.75))` }} />
                         </div>
                       </div>
                     );
@@ -408,7 +408,7 @@ export default function Landing() {
                     <div className="mt-2 text-4xl font-black tracking-tighter text-white">2.4x</div>
                     <div className="mt-3 flex h-24 items-end gap-1.5">
                       {HERO_GROWTH_BARS.map((height, index) => (
-                        <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90" style={{ height: `${height}%` }} />
+                        <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90 hero-growth-bar" style={{ height: `${height}%`, animationDelay: `${index * 120}ms` }} />
                       ))}
                     </div>
                   </div>

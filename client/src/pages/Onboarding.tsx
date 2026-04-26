@@ -23,6 +23,7 @@ import {
   Store,
   Share2,
   Zap,
+  Clock,
   ArrowRight,
   CheckCircle2,
   Loader2,
@@ -486,24 +487,41 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
   if (launched) {
     return (
-      <div className="text-center space-y-6 py-4">
-        <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 mx-auto">
-          <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+      <div className="text-center space-y-6 py-4 relative">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none animate-pulse" />
+
+        <div className="relative">
+          {/* Pulsing bot avatar */}
+          <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/20 to-cyan-500/10 border border-sky-500/30 mx-auto shadow-[0_0_30px_rgba(14,165,233,0.25)] animate-in zoom-in-95 duration-500">
+            <Bot className="h-12 w-12 text-sky-400" />
+          </div>
+          {/* Online badge */}
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Online</span>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">Your Bot is Live!</h2>
-          <p className="text-muted-foreground">
-            Builder Bot is researching <span className="text-primary font-medium">"{niche}"</span> right now.
-            You'll see updates in the Activity feed.
+
+        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-700">
+          <h2 className="text-2xl font-bold text-foreground">Your Bot is Awake</h2>
+          <p className="text-muted-foreground max-w-sm mx-auto">
+            Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> right now.
+            Products are being sourced. Copy is being written. Your store is coming alive.
           </p>
         </div>
-        <div className="flex flex-col gap-2 max-w-xs mx-auto">
-          <Button onClick={onComplete} size="lg" className="gap-2">
-            Go to Command Center <ArrowRight className="h-4 w-4" />
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Estimated time to market-ready store: ~30 minutes
-          </p>
+
+        {/* Live activity preview */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="flex flex-col gap-2 max-w-xs mx-auto">
+            <Button onClick={onComplete} size="lg" className="gap-2 btn-glow">
+              Enter Command Center <ArrowRight className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>Store ready in ~28 minutes</span>
+            </div>
+          </div>
         </div>
       </div>
     );

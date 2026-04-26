@@ -2,9 +2,33 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Loader2, Send, User, Sparkles } from "lucide-react";
+import { Loader2, Send, User, Sparkles, Bot, Package, Megaphone, Zap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
+
+const BOT_CONFIGS: Record<string, { icon: typeof Bot; color: string; bg: string; welcome: string; subline: string }> = {
+  architect: {
+    icon: Zap,
+    color: "text-sky-400",
+    bg: "bg-sky-500/10",
+    welcome: "What should we build today?",
+    subline: "I know every winning niche, every supplier, and every shortcut.",
+  },
+  merchant: {
+    icon: Package,
+    color: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+    welcome: "What's the inventory looking like?",
+    subline: "I watch margins, stock levels, and competitors 24/7.",
+  },
+  social: {
+    icon: Megaphone,
+    color: "text-amber-400",
+    bg: "bg-amber-500/10",
+    welcome: "Let's make something go viral.",
+    subline: "I craft ads, posts, and campaigns that convert while you sleep.",
+  },
+};
 
 /**
  * Message type matching server-side LLM Message interface
@@ -57,6 +81,11 @@ export type AIChatBoxProps = {
    * Click to send directly
    */
   suggestedPrompts?: string[];
+
+  /**
+   * Bot type for personalized empty state and typing indicator
+   */
+  botType?: "architect" | "merchant" | "social";
 };
 
 /**
@@ -119,6 +148,7 @@ export function AIChatBox({
   height = "600px",
   emptyStateMessage = "Start a conversation with AI",
   suggestedPrompts,
+  botType = "architect",
 }: AIChatBoxProps) {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -201,10 +231,21 @@ export function AIChatBox({
         {displayMessages.length === 0 ? (
           <div className="flex h-full flex-col p-4">
             <div className="flex flex-1 flex-col items-center justify-center gap-6 text-muted-foreground">
-              <div className="flex flex-col items-center gap-3">
-                <Sparkles className="size-12 opacity-20" />
-                <p className="text-sm">{emptyStateMessage}</p>
-              </div>
+              {(() => {
+                const config = BOT_CONFIGS[botType];
+                const Icon = config.icon;
+                return (
+                  <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-500">
+                    <div className={`h-16 w-16 rounded-2xl ${config.bg} border border-white/[0.08] flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.1)]`}>
+                      <Icon className={`h-8 w-8 ${config.color}`} />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-semibold text-white/80">{config.welcome}</p>
+                      <p className="text-xs text-white/35 max-w-[280px]">{config.subline}</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {suggestedPrompts && suggestedPrompts.length > 0 && (
                 <div className="flex max-w-2xl flex-wrap justify-center gap-2">
@@ -213,7 +254,8 @@ export function AIChatBox({
                       key={index}
                       onClick={() => onSendMessage(prompt)}
                       disabled={isLoading}
-                      className="rounded-lg border border-border bg-card px-4 py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/60 transition-all hover:bg-white/[0.06] hover:border-white/[0.15] hover:text-white/90 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ animationDelay: `${index * 80}ms` }}
                     >
                       {prompt}
                     </button>
@@ -247,16 +289,19 @@ export function AIChatBox({
                     }
                   >
                     {message.role === "assistant" && (
-                      <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="size-4 text-primary" />
+                      <div className={`size-8 shrink-0 mt-1 rounded-full ${BOT_CONFIGS[botType].bg} flex items-center justify-center`}>
+                        {(() => {
+                          const Icon = BOT_CONFIGS[botType].icon;
+                          return <Icon className={`size-4 ${BOT_CONFIGS[botType].color}`} />;
+                        })()}
                       </div>
                     )}
 
                     <div
                       className={cn(
-                        "max-w-[80%] rounded-lg px-4 py-2.5",
+                        "max-w-[80%] rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-bottom-1 duration-200",
                         message.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-primary text-primary-foreground ml-auto"
                           : "bg-muted text-foreground"
                       )}
                     >
@@ -289,11 +334,16 @@ export function AIChatBox({
                       : undefined
                   }
                 >
-                  <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="size-4 text-primary" />
+                  <div className={`size-8 shrink-0 mt-1 rounded-full ${BOT_CONFIGS[botType].bg} flex items-center justify-center`}>
+                    {(() => {
+                      const Icon = BOT_CONFIGS[botType].icon;
+                      return <Icon className={`size-4 ${BOT_CONFIGS[botType].color}`} />;
+                    })()}
                   </div>
-                  <div className="rounded-lg bg-muted px-4 py-2.5">
-                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  <div className="rounded-lg bg-muted px-4 py-2.5 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
               )}

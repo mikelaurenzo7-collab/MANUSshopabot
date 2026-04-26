@@ -228,6 +228,7 @@ export default function Chat() {
           className="h-full border-white/10 bg-white/[0.02]"
           height="100%"
           emptyStateMessage={`${bot.label} is ready. Ask me anything about your e-commerce business.`}
+          botType={agentType}
         />
       </div>
     </div>

@@ -1536,6 +1536,30 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Hero Animations — Growth bars & progress bars animate from 0 on load
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes bar-grow {
+  from { height: 0%; }
+}
+@keyframes progress-fill {
+  from { width: 0%; }
+}
+@keyframes status-pulse-glow {
+  0%, 100% { box-shadow: inset 2px 0 12px rgba(14,165,233,0.08); }
+  50% { box-shadow: inset 2px 0 20px rgba(14,165,233,0.18); }
+}
+
+.hero-growth-bar {
+  animation: bar-grow 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.hero-progress-bar {
+  animation: progress-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.workflow-running-glow {
+  animation: status-pulse-glow 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Reduced Motion Accessibility
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {

@@ -84,9 +84,9 @@ class ErrorBoundary extends Component<Props, State> {
               <span className="text-[10px] font-semibold text-red-400 uppercase tracking-wider">Bot Error</span>
             </div>
 
-            <h2 className="text-xl font-bold text-foreground mb-2">Something went wrong</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Bot circuit misfired</h2>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              One of the bots encountered an unexpected error. Your data is safe — this is a UI issue only.
+              One of my processors glitched while rendering this module. Your data is 100% safe — this is purely a UI hiccup. Running self-diagnostics now.
             </p>
 
             {/* Error details (collapsible) */}
