@@ -47,6 +47,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -277,6 +278,22 @@ export default function Home() {
   );
   const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 30_000 });
   const { data: intel } = trpc.dashboard.crossStoreIntelligence.useQuery(undefined, { refetchInterval: 60_000 });
+
+  // ── Builder→Merchant handoff ──────────────────────────────────────────────
+  // We pull the lifecycle for the active store. If the store is in the
+  // `transitioning` phase and the user has not yet dismissed the moment
+  // for this session, we surface the celebration modal.
+  const { data: lifecycle } = trpc.lifecycle.get.useQuery(
+    activeStoreId ? { storeId: activeStoreId } : (undefined as any),
+    { enabled: Boolean(activeStoreId), refetchInterval: 60_000 },
+  );
+  const [handoffDismissed, setHandoffDismissed] = useState<Record<number, boolean>>({});
+  const handoffStore = useMemo(() => {
+    if (!lifecycle || !activeStoreId) return null;
+    if (lifecycle.stage !== "transitioning") return null;
+    if (handoffDismissed[lifecycle.storeId]) return null;
+    return { id: lifecycle.storeId, name: lifecycle.storeName };
+  }, [lifecycle, activeStoreId, handoffDismissed]);
 
   // Derive bot status
   const botStatusFor = (t: AgentType): NonNullable<OperationNodeData["status"]> => {
@@ -547,6 +564,15 @@ export default function Home() {
 
   return (
     <div className="page-enter flex flex-col h-full w-full bg-[#050505]/70 overflow-hidden relative">
+      {/* Builder→Merchant handoff celebration */}
+      {handoffStore && (
+        <HandoffMoment
+          storeId={handoffStore.id}
+          storeName={handoffStore.name}
+          onComplete={() => setHandoffDismissed((s) => ({ ...s, [handoffStore.id]: true }))}
+          onDefer={() => setHandoffDismissed((s) => ({ ...s, [handoffStore.id]: true }))}
+        />
+      )}
       {/* stagger-list anchor for animation tests */}
       <div className="stagger-list hidden" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
@@ -599,6 +625,7 @@ export default function Home() {
           sub={botHealth.text}
         />
         <div className="ml-auto flex items-center gap-2 max-w-[420px] truncate rounded-lg border border-sky-500/20 bg-sky-500/[0.05] px-3 py-1.5">
+          {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
           <span className="text-[11px] text-white/70 truncate" title={recommendation}>{recommendation}</span>
         </div>

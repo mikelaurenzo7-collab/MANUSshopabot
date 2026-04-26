@@ -20,6 +20,7 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getToolAdapter, buildToolCredentials, SUPPORTED_TOOL_CONNECTORS } from "../adapters/tools";
 import type { BotDomain, ToolCategory } from "../adapters/tools/types";
+import { BOTS } from "@shared/bots";
 
 interface ApiKeyField {
   key: string;
@@ -185,6 +186,52 @@ export const toolsRouter = router({
   listConnected: protectedProcedure.query(async ({ ctx }) => {
     const all = await db.getPlatformCredentials(ctx.user.id);
     return (all || []).filter((c: any) => SUPPORTED_TOOL_CONNECTORS.includes(c.platform));
+  }),
+
+  /**
+   * Group tools by bot — the canonical "what does each bot have?" view.
+   * Returns one entry per bot with its connected + available tools so
+   * the UI (and any future LLM tool-selection) can answer the question
+   * with one round-trip.
+   */
+  byBot: protectedProcedure.query(async ({ ctx }) => {
+    const connectedRecords = await db.getPlatformCredentials(ctx.user.id);
+    const connectedSet = new Set(
+      (connectedRecords || [])
+        .filter((c: any) => SUPPORTED_TOOL_CONNECTORS.includes(c.platform))
+        .map((c: any) => c.platform),
+    );
+    const allTools = Object.entries(TOOL_CONNECTORS).map(([id, t]) => ({
+      id,
+      name: t.name,
+      icon: t.icon,
+      color: t.color,
+      category: t.category,
+      bots: t.bots,
+      description: t.description,
+      capabilities: t.capabilities,
+      whereToFind: t.whereToFind,
+      fields: t.fields,
+      connectionType: t.connectionType,
+      connected: connectedSet.has(id),
+    }));
+
+    return BOTS.map((bot) => {
+      const tools = allTools.filter((t) => t.bots.includes(bot.id));
+      return {
+        bot: {
+          id: bot.id,
+          name: bot.name,
+          tagline: bot.tagline,
+          description: bot.description,
+          color: bot.color,
+          iconName: bot.iconName,
+        },
+        toolCount: tools.length,
+        connectedCount: tools.filter((t) => t.connected).length,
+        tools,
+      };
+    });
   }),
 
   /** Connect an api_key tool. */

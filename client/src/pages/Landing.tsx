@@ -8,7 +8,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
-  ChevronDown, Star, Quote
+  ChevronDown, Star, Quote, KeyRound,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -22,22 +22,22 @@ const BOTS = [
   {
     icon: Bot,
     name: "Builder Bot" as const,
-    tagline: "Store live in 30 minutes",
-    description: "Researches winning niches, sources products, configures your Shopify store, and writes all product copy — fully automated.",
+    tagline: "Day 1 — store live in 30 minutes",
+    description: "Researches winning niches, sources products, configures your storefront, and writes all product copy — then hands the keys to the Merchant.",
     features: ["Niche & competitor research", "Product sourcing (Zendrop/AliExpress)", "Theme setup & legal pages", "SEO-optimized product listings"],
   },
   {
     icon: Package,
     name: "Merchant Bot" as const,
-    tagline: "Zero-touch fulfillment",
-    description: "Monitors inventory, processes every order automatically, adjusts pricing based on competitor data, and triages customer support tickets.",
+    tagline: "Day 2+ — zero-touch fulfillment",
+    description: "Takes over the moment your store launches. Processes every order, optimizes pricing, syncs inventory, and triages support — forever.",
     features: ["Automated order fulfillment", "Dynamic pricing engine", "Inventory sync & alerts", "Customer support triage"],
   },
   {
     icon: Megaphone,
     name: "Social Bot" as const,
-    tagline: "Marketing on autopilot",
-    description: "Creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO — all without you.",
+    tagline: "From launch — demand on autopilot",
+    description: "Wakes up alongside the Merchant. Creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
     features: ["TikTok & Meta ad campaigns", "Social media scheduling", "Email & SMS recovery flows", "SEO optimization"],
   },
 ];
@@ -170,7 +170,7 @@ const TESTIMONIALS = [
     name: "Priya S.",
     role: "E-commerce entrepreneur",
     stars: 5,
-    text: "The Merchant Bot processes every order automatically. I went from spending 3 hours a day on fulfillment to literally zero. My store runs while I sleep.",
+    text: "I loved the moment the Builder handed the keys to the Merchant. It actually felt like a graduation. I went from spending 3 hours a day on fulfillment to literally zero. My store runs while I sleep.",
   },
   {
     name: "Jordan K.",
@@ -184,6 +184,10 @@ const FAQ_ITEMS = [
   {
     q: "Do I need any technical skills to use Shop_a_Bot?",
     a: "None at all. Shop_a_Bot is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
+  },
+  {
+    q: "What is the Builder→Merchant handoff?",
+    a: "It's the moment your store graduates from setup to operation. The Builder spends Day 1 building your storefront. The day you go live, you click ‘hand over the keys’ and the Merchant takes the wheel — orders, pricing, inventory, support — forever. The Builder stays on call for redesigns and new collections.",
   },
   {
     q: "Which platforms does Shop_a_Bot support?",
@@ -206,6 +210,40 @@ const FAQ_ITEMS = [
     a: "Yes — every plan starts with a 7-day free trial. No credit card required to start. You can cancel anytime from your billing portal.",
   },
 ];
+
+/** A lifecycle pill in the marketing ribbon. */
+function LifecyclePill({
+  stage, title, lead, hex, Icon, highlight,
+}: {
+  stage: string;
+  title: string;
+  lead: string;
+  hex: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border p-4 flex flex-col gap-1.5 transition-all ${highlight ? "bg-white/[0.04]" : "bg-white/[0.02]"}`}
+      style={{
+        borderColor: highlight ? `${hex}66` : "rgba(255,255,255,0.06)",
+        boxShadow: highlight ? `0 0 28px ${hex}33` : undefined,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: `${hex}1a`, border: `1px solid ${hex}40`, color: hex }}
+        >
+          <Icon className="w-3.5 h-3.5" />
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: hex }}>{stage}</span>
+      </div>
+      <div className="text-sm font-bold text-white">{title}</div>
+      <div className="text-xs text-white/50 leading-relaxed">{lead}</div>
+    </div>
+  );
+}
 
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -354,8 +392,8 @@ export default function Landing() {
 
             {/* Subtext */}
             <p className="text-lg md:text-xl text-white/58 max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal">
-              Shop_a_Bot turns e-commerce into an autonomous operating system: Builder finds winners,
-              Merchant fulfills profitably, and Social manufactures demand while you sleep.
+              Shop_a_Bot turns e-commerce into an autonomous operating system. The Builder ships your store. The Merchant
+              <span className="text-cyan-300"> takes the keys</span> the day it goes live. The Social Bot manufactures demand while you sleep.
             </p>
 
             {/* CTAs */}
@@ -513,8 +551,17 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <p className="micro-label mb-3">The Platform</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">The Three Bots</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Each bot is a specialist. Together they run your entire e-commerce operation.</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
+            <p className="mt-4 text-white/40 max-w-xl mx-auto">The Builder ships your store. The Merchant runs it. The Social Bot grows it. Each bot wakes up at the right moment.</p>
+          </div>
+
+          {/* Lifecycle ribbon */}
+          <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 md:gap-2 items-stretch">
+            <LifecyclePill stage="Day 1" title="Building" lead="Builder is in the cockpit." hex="#38bdf8" Icon={Bot} />
+            <div className="hidden md:flex items-center justify-center"><KeyRound className="w-4 h-4 text-amber-300/70" /></div>
+            <LifecyclePill stage="Launch Day" title="Handoff" lead="Builder hands the keys to the Merchant." hex="#fbbf24" Icon={KeyRound} highlight />
+            <div className="hidden md:flex items-center justify-center"><ArrowRight className="w-4 h-4 text-white/30" /></div>
+            <LifecyclePill stage="Day 2+" title="Operating" lead="Merchant fulfills, Social grows." hex="#22d3ee" Icon={Package} />
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">

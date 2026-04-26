@@ -134,6 +134,13 @@
       "when": 1777188621662,
       "tag": "0018_lame_killmonger",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1777189848454,
+      "tag": "0019_hard_jackpot",
+      "breakpoints": true
     }
   ]
 }

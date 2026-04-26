@@ -27,6 +27,7 @@ import { botProfileRouter } from "./routers/botProfile";
 import { gmailBotRouter } from "./routers/gmailBot";
 import { queueHealthRouter } from "./routers/queueHealth";
 import { chatRouter } from "./routers/chat";
+import { lifecycleRouter } from "./routers/lifecycle";
 import { resumeWorkflow, cancelWorkflow } from "./engine/workflowEngine";
 import * as db from "./db";
 
@@ -65,6 +66,7 @@ export const appRouter = router({
   gmailBot: gmailBotRouter,
   queueHealth: queueHealthRouter,
   chat: chatRouter,
+  lifecycle: lifecycleRouter,
 
   // Notifications — scoped to current user
   notifications: router({

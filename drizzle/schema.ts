@@ -35,12 +35,27 @@ export const stores = mysqlTable("stores", {
   platformStoreId: varchar("platformStoreId", { length: 255 }),
   niche: varchar("niche", { length: 255 }),
   status: mysqlEnum("status", ["setup", "active", "paused", "archived"]).default("setup").notNull(),
+  /**
+   * Lifecycle stage — independent of `status` (which tracks paused/archived).
+   *  - `building`: Builder bot is the lead — store is being set up.
+   *  - `transitioning`: Builder finished; the handoff celebration has not been
+   *    acknowledged. Both Builder + Merchant are visible.
+   *  - `operating`: Merchant bot is the lead — store is fulfilling daily.
+   *
+   * The transition is driven by `markSetupComplete` (manual) or by store
+   * signals (first paid order) — see `server/routers/lifecycle.ts`.
+   */
+  lifecycleStage: mysqlEnum("lifecycleStage", ["building", "transitioning", "operating"]).default("building").notNull(),
+  setupCompletedAt: timestamp("setupCompletedAt"),
+  firstOrderAt: timestamp("firstOrderAt"),
+  handoffAcknowledgedAt: timestamp("handoffAcknowledgedAt"),
   currency: varchar("currency", { length: 10 }).default("USD"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   userIdIdx: index("stores_user_id_idx").on(table.userId),
   platformDomainIdx: index("stores_platform_domain_idx").on(table.platform, table.platformDomain),
+  lifecycleStageIdx: index("stores_lifecycle_stage_idx").on(table.lifecycleStage),
 }));
 
 export type Store = typeof stores.$inferSelect;

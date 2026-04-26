@@ -509,6 +509,13 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
             Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> right now.
             Products are being sourced. Copy is being written. Your store is coming alive.
           </p>
+          <div className="mt-4 max-w-sm mx-auto rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-left">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-300 mb-1">What happens next</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              When Builder finishes, you'll see a handoff moment on your dashboard.
+              The <span className="text-cyan-300 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
+            </p>
+          </div>
         </div>
 
         {/* Live activity preview */}

@@ -2,16 +2,23 @@ import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
-  CheckCircle2, Loader2, KeyRound, ExternalLink, Sparkles, Bot, Wrench, Eye, EyeOff, RefreshCw, Trash2,
+  CheckCircle2, Loader2, KeyRound, ExternalLink, Sparkles, Bot as BotIcon, Wrench, Eye, EyeOff, RefreshCw, Trash2,
+  Package, Megaphone, LayoutGrid, Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const BOT_LABEL: Record<string, string> = {
-  architect: "Architect",
+  architect: "Builder",
   merchant: "Merchant",
   social: "Social",
+};
+
+const BOT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  architect: BotIcon,
+  merchant: Package,
+  social: Megaphone,
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -54,14 +61,20 @@ interface ConnectedTool {
   lastHealthCheck?: string | Date | null;
 }
 
+type GroupMode = "bot" | "category";
+
 /**
- * Tools tab for the Integrations page — renders the 8 tool connectors with
- * an inline API-key form for keyed tools and a one-click button for OAuth tools.
- * Mirrors the visual language of the e-commerce connect tab.
+ * Tools tab — organized two ways:
+ *   - "By Bot" (default): shows each of the three bots and the tools that
+ *     power them, so users see operational impact at a glance.
+ *   - "By Category": groups by data/marketing/logistics/etc for users
+ *     who think in terms of capability before bot.
  */
 export function ToolsTab() {
+  const [groupMode, setGroupMode] = useState<GroupMode>("bot");
   const { data: tools, isLoading } = trpc.tools.list.useQuery();
   const { data: connected, refetch: refetchConnected } = trpc.tools.listConnected.useQuery();
+  const { data: byBot } = trpc.tools.byBot.useQuery();
 
   const generateOAuth = trpc.tools.generateOAuthUrl.useMutation({
     onSuccess: (data) => {
@@ -96,25 +109,91 @@ export function ToolsTab() {
     );
   }
 
-  // Group tools by category for elegant scanning
-  const grouped = (tools || []).reduce<Record<string, ToolConnector[]>>((acc, t) => {
-    const cat = t.category || "data";
-    (acc[cat] ??= []).push(t as ToolConnector);
-    return acc;
-  }, {});
-
-  const categoryOrder = ["data", "analytics", "marketing", "messaging", "logistics", "fulfillment", "reviews", "support"];
-
   return (
     <div className="space-y-8">
+      {/* Bot overview row — quick scan of where each bot stands */}
+      {byBot && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {byBot.map((b) => {
+            const Icon = BOT_ICONS[b.bot.id] || BotIcon;
+            const ratio = b.toolCount === 0 ? 0 : b.connectedCount / b.toolCount;
+            return (
+              <div
+                key={b.bot.id}
+                className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
+                style={{ borderTop: `2px solid ${b.bot.color}80` }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${b.bot.color}20`, color: b.bot.color }}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">{b.bot.name}</div>
+                    <div className="text-[11px] text-slate-500">{b.bot.tagline}</div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-3">{b.bot.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-300">
+                    <span className="font-semibold text-white">{b.connectedCount}</span>
+                    <span className="text-slate-500"> / {b.toolCount} tools</span>
+                  </span>
+                  <div className="w-20 h-1 bg-white/8 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${ratio * 100}%`, backgroundColor: b.bot.color }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Group toggle */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+          <Wrench className="w-3.5 h-3.5 text-sky-400" /> Tool Library
+          <span className="text-xs text-slate-500">({(tools || []).length} available)</span>
+        </h3>
+        <div
+          className="inline-flex items-center bg-white/4 border border-white/8 rounded-lg p-0.5"
+          role="tablist"
+          aria-label="Group tools by"
+        >
+          <button
+            role="tab"
+            aria-selected={groupMode === "bot"}
+            onClick={() => setGroupMode("bot")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+              groupMode === "bot" ? "bg-sky-500/15 text-sky-400" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <BotIcon className="w-3 h-3" /> By Bot
+          </button>
+          <button
+            role="tab"
+            aria-selected={groupMode === "category"}
+            onClick={() => setGroupMode("category")}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+              groupMode === "category" ? "bg-sky-500/15 text-sky-400" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <LayoutGrid className="w-3 h-3" /> By Category
+          </button>
+        </div>
+      </div>
+
       {/* Connected tools strip */}
       {connected && connected.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-            <Wrench className="w-3.5 h-3.5 text-emerald-400" />
-            Active Tools
-            <span className="text-xs text-slate-500">({connected.length})</span>
-          </h3>
+          <h4 className="text-xs font-semibold tracking-wider uppercase text-emerald-400/80 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-3 h-3" /> Active ({connected.length})
+          </h4>
           <div className="space-y-2">
             {(connected as ConnectedTool[]).map((c) => {
               const tool = (tools || []).find((t: ToolConnector) => t.id === c.platform);
@@ -130,7 +209,7 @@ export function ToolsTab() {
                     <div className="text-xs text-slate-400 flex items-center gap-2">
                       <span>{CATEGORY_LABEL[tool?.category || ""]}</span>
                       <span>·</span>
-                      <span>{(tool?.bots || []).map((b) => BOT_LABEL[b]).join(", ")} bot</span>
+                      <span>Powers {(tool?.bots || []).map((b) => BOT_LABEL[b]).join(", ")}</span>
                     </div>
                   </div>
                   <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
@@ -162,30 +241,65 @@ export function ToolsTab() {
         </div>
       )}
 
-      {/* Available tools grouped by category */}
-      {categoryOrder
-        .filter((cat) => grouped[cat])
-        .map((cat) => (
-          <div key={cat}>
-            <h3 className="text-xs font-semibold tracking-wider uppercase text-slate-500 mb-3">
-              {CATEGORY_LABEL[cat]}
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {grouped[cat].map((tool) => (
-                <ToolCard
-                  key={tool.id}
-                  tool={tool}
-                  isConnected={connectedSet.has(tool.id)}
-                  onOAuth={() => generateOAuth.mutate({ tool: tool.id, origin: window.location.origin })}
-                  oauthPending={generateOAuth.isPending}
-                  onApiKeySaved={() => refetchConnected()}
-                />
-              ))}
+      {/* Available tools — grouped */}
+      {groupMode === "bot" && byBot
+        ? byBot.map((group) => {
+            const Icon = BOT_ICONS[group.bot.id] || BotIcon;
+            return (
+              <div key={group.bot.id}>
+                <h4 className="text-xs font-semibold tracking-wider uppercase mb-3 flex items-center gap-2" style={{ color: group.bot.color }}>
+                  <Icon className="w-3 h-3" /> {group.bot.name}
+                  <span className="text-slate-500 font-normal normal-case tracking-normal">
+                    · {group.tools.length} tool{group.tools.length === 1 ? "" : "s"}
+                  </span>
+                </h4>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.tools.map((tool) => (
+                    <ToolCard
+                      key={`${group.bot.id}-${tool.id}`}
+                      tool={tool as ToolConnector}
+                      isConnected={connectedSet.has(tool.id)}
+                      onOAuth={() => generateOAuth.mutate({ tool: tool.id, origin: window.location.origin })}
+                      oauthPending={generateOAuth.isPending}
+                      onApiKeySaved={() => refetchConnected()}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        : groupByCategory(tools || []).map(({ category, items }) => (
+            <div key={category}>
+              <h4 className="text-xs font-semibold tracking-wider uppercase text-slate-500 mb-3">
+                {CATEGORY_LABEL[category] || category}
+              </h4>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map((tool) => (
+                  <ToolCard
+                    key={tool.id}
+                    tool={tool}
+                    isConnected={connectedSet.has(tool.id)}
+                    onOAuth={() => generateOAuth.mutate({ tool: tool.id, origin: window.location.origin })}
+                    oauthPending={generateOAuth.isPending}
+                    onApiKeySaved={() => refetchConnected()}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
     </div>
   );
+}
+
+function groupByCategory(tools: ToolConnector[]): Array<{ category: string; items: ToolConnector[] }> {
+  const order = ["data", "analytics", "marketing", "messaging", "logistics", "fulfillment", "reviews", "support"];
+  const map = new Map<string, ToolConnector[]>();
+  for (const t of tools) {
+    const cat = t.category || "data";
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat)!.push(t);
+  }
+  return order.filter((c) => map.has(c)).map((c) => ({ category: c, items: map.get(c)! }));
 }
 
 function ToolCard({
@@ -214,7 +328,7 @@ function ToolCard({
           <div className="min-w-0">
             <div className="text-sm font-semibold text-white truncate">{tool.name}</div>
             <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-              <Bot className="w-2.5 h-2.5" />
+              <Boxes className="w-2.5 h-2.5" />
               {tool.bots.map((b) => BOT_LABEL[b]).join(" · ")}
             </div>
           </div>
