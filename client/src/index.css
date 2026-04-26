@@ -1535,22 +1535,21 @@
   .pricing-featured::before {
     content: "";
     position: absolute;
-    inset: -1px;
-    border-radius: inherit;
+    inset: -50%;
+    border-radius: 50%;
     padding: 1px;
-    background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 40%, #06B6D4 70%, rgba(14,165,233,0.3) 100%);
+    background: conic-gradient(from 0deg, #0EA5E9, #38BDF8, #06B6D4, rgba(14,165,233,0.25), #0EA5E9);
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
+    -webkit-mask-composite: destination-out;
     mask-composite: exclude;
     pointer-events: none;
-    animation: border-spin 6s linear infinite;
+    animation: border-rotate 8s linear infinite;
   }
-  @keyframes border-spin {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  @keyframes border-rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
   .pricing-featured::after {
     content: "";

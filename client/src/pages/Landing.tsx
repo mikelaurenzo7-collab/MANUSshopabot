@@ -644,13 +644,15 @@ export default function Landing() {
               <p className="text-white/48 mb-10 text-lg leading-relaxed max-w-sm mx-auto">
                 No coding. No daily management. Just bots running 24/7 to build and grow your business.
               </p>
-              <Button
-                onClick={() => handlePricingClick("growth")}
-                size="lg"
-                className="btn-glow text-white px-12 h-14 text-base font-bold mx-auto"
-              >
-                Start Free Trial <ArrowRight className="w-4.5 h-4.5 ml-2" />
-              </Button>
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => handlePricingClick("growth")}
+                  size="lg"
+                  className="btn-glow text-white px-12 h-14 text-base font-bold"
+                >
+                  Start Free Trial <ArrowRight className="w-4.5 h-4.5 ml-2" />
+                </Button>
+              </div>
               <p className="text-white/22 text-xs mt-5 tracking-wide">7-day free trial · No credit card required · Cancel anytime</p>
             </div>
           </div>
