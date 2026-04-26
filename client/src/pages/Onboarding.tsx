@@ -644,8 +644,11 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="relative overflow-hidden min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="ghost-watermark" aria-hidden="true">ONBOARDING</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-purple" style={{ top: '60%', right: '5%' }} aria-hidden="true" />
+      <div className="w-full max-w-2xl relative">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2">

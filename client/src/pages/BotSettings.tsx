@@ -73,7 +73,12 @@ export default function BotSettings() {
   const BotIcon = bot.icon;
 
   return (
-    <div className="page-enter p-6 space-y-6 max-w-4xl">
+    <div className="relative overflow-hidden page-enter">
+      <div className="ghost-watermark" aria-hidden="true">SETTINGS</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-purple" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
+      <div className="p-6 space-y-6 max-w-4xl">
       {/* Header */}
       <div className="page-header">
         <p className="micro-label mb-1">Configuration</p>
@@ -334,6 +339,7 @@ export default function BotSettings() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

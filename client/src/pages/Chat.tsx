@@ -133,12 +133,17 @@ export default function Chat() {
   }
 
   return (
-    <div className="page-enter p-6 flex flex-col h-full space-y-4" style={{ minHeight: "calc(100vh - 64px)" }}>
+    <div className="relative overflow-hidden page-enter" style={{ minHeight: "calc(100vh - 64px)" }}>
+      <div className="ghost-watermark" aria-hidden="true">CHAT</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
+      <div className="p-6 flex flex-col h-full space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between shrink-0 page-header">
         <div>
           <p className="micro-label mb-1">AI Operations</p>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-heading font-bold text-white flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-sky-400" />
             Bot Chat
           </h1>
@@ -220,6 +225,7 @@ export default function Chat() {
           height="100%"
           emptyStateMessage={`${bot.label} is ready. Ask me anything about your e-commerce business.`}
         />
+      </div>
       </div>
     </div>
   );

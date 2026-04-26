@@ -293,6 +293,9 @@ export default function Home() {
 
   return (
     <div className="page-enter flex flex-col h-full w-full bg-[#050505]/70 overflow-hidden relative">
+      <div className="ghost-watermark" aria-hidden="true">COMMAND CENTER</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-purple" style={{ top: '60%', right: '5%' }} aria-hidden="true" />
       {/* stagger-list anchor for animation tests */}
       <div className="stagger-list hidden" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
