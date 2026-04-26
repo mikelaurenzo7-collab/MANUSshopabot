@@ -188,21 +188,21 @@ export default function SocialPage() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">SOCIAL</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-orange" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 page-header">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <div className="relative shrink-0">
-            <div className="h-8 md:h-10 w-8 md:w-10 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(249,115,22,0.15)]">
+            <div className="h-8 md:h-10 w-8 md:w-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center shadow-[0_0_14px_rgba(249,115,22,0.2)]">
               <Megaphone className="h-4 md:h-5 w-4 md:w-5 text-amber-400" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(249,115,22,0.9)] border border-background" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg md:text-xl font-heading font-bold tracking-tight text-foreground truncate">Social Bot</h1>
@@ -222,21 +222,27 @@ export default function SocialPage() {
       </div>
 
       {!selectedStore ? (
-        <Card className="bento-card">
+        <Card className="glass-card">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Megaphone className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Select a store to start marketing</p>
+            <div className="relative mb-4">
+              <div className="absolute inset-0 bg-amber-500/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative h-16 w-16 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center">
+                <Megaphone className="h-8 w-8 text-amber-400/60" />
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-foreground">Select a store to start marketing</p>
+            <p className="text-xs text-muted-foreground mt-1.5">Connect your store to unlock AI-powered ad copy, SEO, and social campaigns</p>
           </CardContent>
         </Card>
       ) : (
         <Tabs defaultValue="ads" className="space-y-4">
-          <TabsList className="bg-secondary/50 flex-wrap h-auto">
-            <TabsTrigger value="ads" className="text-xs md:text-sm">Ad Copy</TabsTrigger>
-            <TabsTrigger value="images" className="text-xs md:text-sm">Image Gen</TabsTrigger>
-            <TabsTrigger value="seo" className="text-xs md:text-sm">SEO</TabsTrigger>
-            <TabsTrigger value="social" className="text-xs md:text-sm">Social</TabsTrigger>
-            <TabsTrigger value="email" className="text-xs md:text-sm">Email</TabsTrigger>
-            <TabsTrigger value="tools" className="text-xs md:text-sm">AI Tools</TabsTrigger>
+          <TabsList className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 h-auto gap-1 flex-wrap">
+            <TabsTrigger value="ads" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Ad Copy</TabsTrigger>
+            <TabsTrigger value="images" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Image Gen</TabsTrigger>
+            <TabsTrigger value="seo" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">SEO</TabsTrigger>
+            <TabsTrigger value="social" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Social</TabsTrigger>
+            <TabsTrigger value="email" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Email</TabsTrigger>
+            <TabsTrigger value="tools" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">AI Tools</TabsTrigger>
           </TabsList>
 
           {/* Ad Copy Tab */}
