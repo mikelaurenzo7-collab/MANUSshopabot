@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -124,6 +124,17 @@ const TRUST_ITEMS = [
   { icon: Shield,   label: "No code required",   sub: "Fully managed bots"     },
   { icon: BarChart3,label: "Real-time analytics", sub: "Track every metric"    },
 ];
+
+const BOT_PREVIEW_PROGRESS = [82, 67, 91];
+const HERO_GROWTH_BARS = [32, 48, 38, 70, 58, 84, 96];
+const HERO_ACTION_FEED = [
+  "Imported 18 margin-safe SKUs",
+  "Synced inventory across 6 channels",
+  "Generated 12 TikTok creatives",
+];
+
+type BotAccentStyle = CSSProperties & { "--accent": string };
+type HoverGlowStyle = CSSProperties & { "--hover-glow": string };
 
 const TESTIMONIALS = [
   {
@@ -295,7 +306,7 @@ export default function Landing() {
             {/* Announcement pill */}
             <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
               <span className="micro-label">NEW</span>
-              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one cockpit</span>
+              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
               <ArrowRight className="w-3.5 h-3.5 text-white/35" />
             </div>
 
@@ -366,9 +377,9 @@ export default function Landing() {
                 <div className="space-y-4">
                   {BOTS.map((bot, index) => {
                     const colors = BOT_COLORS[bot.name];
-                    const progress = [82, 67, 91][index];
+                    const progress = BOT_PREVIEW_PROGRESS[index];
                     return (
-                      <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as React.CSSProperties}>
+                      <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentStyle}>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
                             <bot.icon className={`w-5 h-5 ${colors.icon}`} />
@@ -394,18 +405,14 @@ export default function Landing() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Projected lift</p>
                     <div className="mt-2 text-4xl font-black tracking-tighter text-white">2.4x</div>
                     <div className="mt-3 flex h-24 items-end gap-1.5">
-                      {[32, 48, 38, 70, 58, 84, 96].map((height, index) => (
+                      {HERO_GROWTH_BARS.map((height, index) => (
                         <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90" style={{ height: `${height}%` }} />
                       ))}
                     </div>
                   </div>
 
                   <div className="action-feed-card">
-                    {[
-                      "Imported 18 margin-safe SKUs",
-                      "Synced inventory across 6 channels",
-                      "Generated 12 TikTok creatives",
-                    ].map((item) => (
+                    {HERO_ACTION_FEED.map((item) => (
                       <div key={item} className="flex items-center gap-2 text-[11px] text-white/58">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                         <span>{item}</span>
@@ -451,7 +458,7 @@ export default function Landing() {
                 <div
                   key={bot.name}
                   className="bento-card p-8 group relative overflow-hidden hover-lift"
-                  style={{ "--hover-glow": colors.glow } as React.CSSProperties}
+                  style={{ "--hover-glow": colors.glow } as HoverGlowStyle}
                 >
                   {/* Top gradient accent */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}60, ${colors.hex}10)` }} />

@@ -1464,10 +1464,11 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 42%);
+    background: radial-gradient(circle at 0% 0%, var(--accent), transparent 42%);
+    opacity: 0.16;
   }
   .bot-progress {
-    box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.22);
   }
   .revenue-card,
   .action-feed-card {
