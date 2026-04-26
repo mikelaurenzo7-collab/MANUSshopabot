@@ -29,6 +29,7 @@ import {
   Zap,
   Search,
   Store,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -188,6 +189,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           icon: Globe,
         },
         { title: "Insights", path: "/insights", icon: BarChart3 },
+        { title: "Gmail Bot", path: "/gmail-bot", icon: Mail },
       ],
     },
     {

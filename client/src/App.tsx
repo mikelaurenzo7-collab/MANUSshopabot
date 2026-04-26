@@ -40,6 +40,7 @@ const InboxPage = lazy(() => import("./pages/Inbox"));
 const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
+const GmailBotPage = lazy(() => import("./pages/GmailBot"));
 
 function PageLoader() {
   return (
@@ -99,7 +100,7 @@ function Router() {
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/profile" component={ProfilePage} />
-                    <Route path="/gmail-bot">{() => { window.location.replace("/social"); return null; }}</Route>
+                    <Route path="/gmail-bot">{() => <ErrorBoundary inline label="Gmail Bot"><GmailBotPage /></ErrorBoundary>}</Route>
                     <Route path="/bot-settings">{() => <ErrorBoundary inline label="Bot Settings"><BotSettingsPage /></ErrorBoundary>}</Route>
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>

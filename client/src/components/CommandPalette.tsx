@@ -28,6 +28,13 @@ import {
   GitBranch,
   Globe,
   Bot,
+  CheckCircle,
+  Mail,
+  RotateCcw,
+  Play,
+  Plus,
+  TrendingUp,
+  Store,
 } from "lucide-react";
 
 interface CommandItem {
@@ -36,7 +43,7 @@ interface CommandItem {
   description?: string;
   icon: React.ElementType;
   action: () => void;
-  group: "navigation" | "workflows" | "search";
+  group: "navigation" | "workflows" | "actions" | "search";
 }
 
 interface CommandPaletteContextValue {
@@ -67,12 +74,19 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
   const storesQuery = trpc.stores.list.useQuery();
   const firstStore = storesQuery.data?.[0];
   const productsQuery = trpc.stores.products.useQuery(
     firstStore ? { storeId: firstStore.id, limit: 50, search } : { storeId: 0, limit: 0 },
     { enabled: Boolean(firstStore) && search.length > 2 },
   );
+  const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.unreadCount.invalidate();
+      utils.notifications.list.invalidate();
+    },
+  });
 
   // Register ⌘K globally
   useEffect(() => {
@@ -119,6 +133,16 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     { id: "niche-research",       label: "Launch Niche Research", description: "Find profitable niches",  icon: Sparkles, action: () => go("/architect"), group: "workflows" },
     { id: "product-sourcing",     label: "Source Products",       description: "Find winning products",   icon: Zap,      action: () => go("/architect"), group: "workflows" },
     { id: "pricing-optimization", label: "Optimize Pricing",      description: "Set smart pricing rules", icon: Layers,   action: () => go("/merchant"),  group: "workflows" },
+    { id: "ad-campaign",          label: "Launch Ad Campaign",    description: "Create ads with AI copy", icon: Megaphone, action: () => go("/social"),    group: "workflows" },
+    { id: "email-flow",           label: "Create Email Flow",     description: "Abandoned cart & welcome", icon: Mail,    action: () => go("/social"),    group: "workflows" },
+    { id: "inventory-audit",      label: "Run Inventory Audit",   description: "Cross-store stock check", icon: Store,    action: () => go("/merchant"),  group: "workflows" },
+  ];
+
+  const actionItems: CommandItem[] = [
+    { id: "mark-all-read",   label: "Mark all notifications read", description: "Clear unread badges",       icon: CheckCircle, action: () => { markAllRead.mutate(); setOpen(false); }, group: "actions" },
+    { id: "refresh-metrics", label: "Refresh dashboard metrics",   description: "Pull latest store data",    icon: RotateCcw, action: () => { utils.dashboard.metrics.invalidate(); utils.dashboard.agentStatus.invalidate(); setOpen(false); }, group: "actions" },
+    { id: "goto-chat",       label: "Chat with Builder Bot",       description: "Open bot chat",             icon: MessageSquare, action: () => go("/chat?bot=architect"), group: "actions" },
+    { id: "goto-insights",   label: "View top store insights",     description: "Revenue & performance",     icon: TrendingUp, action: () => go("/insights"), group: "actions" },
   ];
 
   const searchItems: CommandItem[] = (productsQuery.data ?? [])
@@ -134,16 +158,17 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
       group: "search" as const,
     }));
 
-  const allItems = [...navigationItems, ...workflowItems, ...searchItems];
+  const allItems = [...navigationItems, ...workflowItems, ...actionItems, ...searchItems];
   const filtered = search
     ? allItems.filter((item) =>
         `${item.label} ${item.description}`.toLowerCase().includes(search.toLowerCase()),
       )
-    : navigationItems;
+    : [...navigationItems, ...actionItems];
 
   const grouped = {
     navigation: filtered.filter((i) => i.group === "navigation"),
     workflows: filtered.filter((i) => i.group === "workflows"),
+    actions: filtered.filter((i) => i.group === "actions"),
     search: filtered.filter((i) => i.group === "search"),
   };
 
@@ -156,7 +181,7 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
             <div className="flex items-center border-b border-border px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <Command.Input
-                placeholder="Search pages, workflows, products... ⌘K"
+                placeholder="Search pages, workflows, actions, products... ⌘K"
                 value={search}
                 onValueChange={setSearch}
                 className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
@@ -198,6 +223,32 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
               {grouped.workflows.length > 0 && (
                 <Command.Group heading="Workflows">
                   {grouped.workflows.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Command.Item
+                        key={item.id}
+                        value={item.id}
+                        onSelect={item.action}
+                        className="cursor-pointer"
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        <div className="flex flex-1 flex-col">
+                          <span className="text-sm font-medium">{item.label}</span>
+                          {item.description && (
+                            <span className="text-xs text-muted-foreground">
+                              {item.description}
+                            </span>
+                          )}
+                        </div>
+                      </Command.Item>
+                    );
+                  })}
+                </Command.Group>
+              )}
+
+              {grouped.actions.length > 0 && (
+                <Command.Group heading="Actions">
+                  {grouped.actions.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Command.Item

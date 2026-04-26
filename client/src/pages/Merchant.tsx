@@ -6,6 +6,13 @@ import {
   Package, Loader2, AlertTriangle, DollarSign, TrendingUp, ShoppingCart, 
   Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers, Target
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -83,22 +90,30 @@ export default function MerchantPage() {
               <div className="flex items-center gap-4 w-full pl-2">
                 <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground shrink-0">Active Source:</span>
                 <div className="flex-1 max-w-[300px] relative">
-                  <select
+                  <Select
                     value={selectedStore}
-                    onChange={(e) => {
-                      setSelectedStore(e.target.value);
+                    onValueChange={(val) => {
+                      setSelectedStore(val);
                       setSelectedEntity(null);
                       setEntityType(null);
                     }}
                     disabled={storesLoading}
-                    className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] uppercase px-3 py-1.5 focus:outline-none focus:border-cyan-400 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">{storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"}</option>
-                    {stores?.map((s: any) => (
-                      <option key={s.id} value={s.id}>{s.name} [{s.platform}]</option>
-                    ))}
-                  </select>
-                  {storesLoading && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 animate-spin text-cyan-400" />}
+                    <SelectTrigger className="w-full bg-[#050505] border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-cyan-400/20 focus:border-cyan-400">
+                      <SelectValue placeholder={storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+                      {stores?.map((s: any) => (
+                        <SelectItem
+                          key={s.id}
+                          value={String(s.id)}
+                          className="text-white font-mono text-[10px] uppercase focus:bg-cyan-500/10 focus:text-cyan-300"
+                        >
+                          {s.name} [{s.platform}]
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {lowStock && lowStock.length > 0 && (

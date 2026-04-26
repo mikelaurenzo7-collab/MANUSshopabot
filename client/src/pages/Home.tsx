@@ -38,7 +38,15 @@ import {
   Bot, Package, Megaphone, Store, ShoppingCart,
   Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
   Loader2, GitBranch, TrendingUp, ShieldCheck,
+  RotateCcw, Zap, ExternalLink,
 } from "lucide-react";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,7 +101,13 @@ const STATUS_DOT: Record<NonNullable<OperationNodeData["status"]>, string> = {
 function OperationNode({ data, isConnectable }: { data: OperationNodeData; isConnectable?: boolean }) {
   const theme = KIND_THEME[data.kind];
   const isUser = data.kind === "user";
-  return (
+  const isGhost = data.kind.startsWith("ghost");
+  const isBot = data.kind === "bot";
+  const isStore = data.kind === "store";
+  const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
+
+  const NodeContent = (
     <div
       className={`
         relative px-3.5 py-2.5 rounded-xl border backdrop-blur-sm transition-all duration-300 cursor-pointer
@@ -125,6 +139,93 @@ function OperationNode({ data, isConnectable }: { data: OperationNodeData; isCon
       <Handle type="source" position={Position.Right} isConnectable={isConnectable}
         style={{ background: "transparent", border: "none", width: 8, height: 8 }} />
     </div>
+  );
+
+  if (isUser) return NodeContent;
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        {NodeContent}
+      </ContextMenuTrigger>
+      <ContextMenuContent className="bg-[#0a0a0f] border-white/[0.08] min-w-[180px]">
+        {isGhost && data.href && (
+          <>
+            <ContextMenuItem
+              onClick={() => setLocation(data.href!)}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 mr-2" />
+              Connect now
+            </ContextMenuItem>
+          </>
+        )}
+        {isBot && (
+          <>
+            <ContextMenuItem
+              onClick={() => setLocation(data.href ?? "/")}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5 mr-2" />
+              Open {data.label}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => setLocation(`/chat?bot=${data.entityId}`)}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <MessageSquare className="w-3.5 h-3.5 mr-2" />
+              Chat with bot
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => setLocation("/workflows")}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 mr-2" />
+              Launch workflow
+            </ContextMenuItem>
+          </>
+        )}
+        {isStore && (
+          <>
+            <ContextMenuItem
+              onClick={() => setLocation(data.href ?? "/storefronts")}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5 mr-2" />
+              Open store
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => setLocation("/insights")}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <TrendingUp className="w-3.5 h-3.5 mr-2" />
+              View analytics
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                utils.dashboard.metrics.invalidate();
+                utils.stores.list.invalidate();
+              }}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-2" />
+              Refresh data
+            </ContextMenuItem>
+          </>
+        )}
+        {data.kind === "channel" && (
+          <>
+            <ContextMenuItem
+              onClick={() => setLocation("/social")}
+              className="text-white/80 text-xs focus:bg-sky-500/10 focus:text-sky-300 cursor-pointer"
+            >
+              <Megaphone className="w-3.5 h-3.5 mr-2" />
+              Open Social Bot
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
