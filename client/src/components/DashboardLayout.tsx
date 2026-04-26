@@ -268,7 +268,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
         {dotCls && (
           <span
-            className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0 ${brandCls ? "ml-0" : "ml-0"}`}
+            className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0`}
             aria-label={`status ${item.dot}`}
           />
         )}

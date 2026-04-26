@@ -49,10 +49,12 @@ export default function BotPageShell({ agentType, workspaceLabel = "Workspace", 
     }
   };
 
-  // When opening the Chat tab via hash, the underlying Chat page reads
-  // `?bot=` from window.location.search. We patch the search string for
-  // the Chat suspense boundary so the agent prefills correctly without
-  // affecting the URL the user sees in the address bar.
+  // The Chat page reads `?bot=` from window.location.search at mount to
+  // pre-select the agent. We can't put the prefill in the wouter <Route>
+  // because the bot pages are mounted on `/architect`, `/merchant`, and
+  // `/social` — not `/chat` — and we want the URL bar to keep showing the
+  // bot's own path. Instead, ChatWithPrefill rewrites location.search just
+  // long enough for Chat to read it, then restores the original on unmount.
   const chatSearch = `?bot=${agentType}`;
 
   return (
