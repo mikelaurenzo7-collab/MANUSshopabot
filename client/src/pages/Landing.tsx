@@ -42,10 +42,10 @@ const BOTS = [
 ];
 
 const METRICS = [
-  { icon: Clock,        value: "< 30 min", label: "Store goes live",        color: "text-sky-400"    },
-  { icon: ShoppingCart, value: "0 clicks", label: "To fulfill an order",    color: "text-cyan-400"   },
-  { icon: TrendingUp,   value: "24 / 7",   label: "Bots running for you",   color: "text-emerald-400"},
-  { icon: Globe,        value: "15+",      label: "Platform integrations",  color: "text-orange-400" },
+  { icon: Clock,        value: "< 30 min", label: "Store goes live",        color: "text-sky-400",     hex: "#38bdf8", glow: "rgba(56,189,248,0.14)"     },
+  { icon: ShoppingCart, value: "0 clicks", label: "To fulfill an order",    color: "text-cyan-400",    hex: "#22d3ee", glow: "rgba(34,211,238,0.14)"     },
+  { icon: TrendingUp,   value: "24 / 7",   label: "Bots running for you",   color: "text-emerald-400", hex: "#34d399", glow: "rgba(52,211,153,0.14)"     },
+  { icon: Globe,        value: "15+",      label: "Platform integrations",  color: "text-orange-400",  hex: "#fb923c", glow: "rgba(251,146,60,0.14)"     },
 ];
 
 const PRICING = [
@@ -137,6 +137,8 @@ const HERO_ACTION_FEED = [
 type BotAccentCSSVars = CSSProperties & { "--accent": string };
 /** CSS variables for reusable hover glow effects. */
 type HoverGlowCSSVars = CSSProperties & { "--hover-glow": string };
+/** CSS variables for metric bento cards. */
+type MetricCSSVars = CSSProperties & { "--metric-color": string; "--metric-glow": string };
 
 const TESTIMONIALS = [
   {
@@ -190,20 +192,22 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div
-      className="border border-white/[0.07] rounded-xl overflow-hidden transition-colors hover:border-white/[0.12]"
+      className="border border-white/[0.07] rounded-2xl overflow-hidden transition-all duration-300 hover:border-white/[0.14] hover:bg-white/[0.015]"
       onClick={() => setOpen(!open)}
     >
-      <button className="w-full flex items-center justify-between px-6 py-4 text-left gap-4">
-        <span className="text-sm font-semibold text-white/80">{q}</span>
+      <button className="w-full flex items-center justify-between px-7 py-5 text-left gap-4">
+        <span className="text-sm font-semibold text-white/85 leading-snug">{q}</span>
         <ChevronDown
-          className={`w-4 h-4 text-white/30 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-sky-400/60 shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && (
-        <div className="px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4">
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-out ${open ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <div className="px-7 pb-6 text-sm text-white/50 leading-relaxed border-t border-white/[0.05] pt-4">
           {a}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -259,7 +263,7 @@ export default function Landing() {
 
       {/* ── Navigation ─────────────────────────────────────────────────────── */}
       <nav className={`fixed left-0 right-0 z-50 topbar-glass ${subscriptionSuccess ? "top-12" : "top-0"}`}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <BrandName size="sm" />
           <div className="flex items-center gap-3">
             {user ? (
@@ -284,9 +288,9 @@ export default function Landing() {
                 <Button
                   onClick={() => handlePricingClick("growth")}
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition-all"
+                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/25 transition-all font-semibold"
                 >
-                  Get Started
+                  Get Started →
                 </Button>
               </>
             )}
@@ -295,44 +299,45 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-32 px-6 overflow-hidden aurora-stage ${subscriptionSuccess ? "pt-56" : "pt-40"}`}>
         {/* Background effects */}
-        <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
-        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
-        <div className="light-leak-blue absolute -top-32 left-1/3 opacity-80" />
-        <div className="light-leak-cyan absolute top-1/3 right-0 opacity-50" />
-        <div className="light-leak-orange absolute bottom-0 left-0 opacity-40" />
+        <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-sky-500/12 to-transparent pointer-events-none" />
+        <div className="light-leak-blue absolute -top-32 left-1/3 opacity-90" />
+        <div className="light-leak-cyan absolute top-1/3 right-0 opacity-60" />
+        <div className="light-leak-orange absolute bottom-0 left-0 opacity-50" />
 
-        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
+        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.1fr] gap-16 items-center">
           <div className="text-center lg:text-left">
             {/* Announcement pill */}
-            <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
-              <span className="micro-label">NEW</span>
-              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
-              <ArrowRight className="w-3.5 h-3.5 text-white/35" />
+            <div className="mb-10 inline-flex items-center gap-2.5 announcement-banner">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="micro-label">LIVE</span>
+              <span className="text-white/55 text-sm">Amazon FBA · TikTok Shop · Shopify — all in one system</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white/30 shrink-0" />
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.88]">
+            <h1 className="text-6xl md:text-8xl lg:text-[90px] font-black tracking-[-0.04em] mb-7 leading-[0.86]">
               <span className="text-white">Your store</span>
               <br />
               <span className="hero-line-gradient">runs itself.</span>
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg md:text-xl text-white/58 max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal">
+            <p className="text-lg md:text-xl text-white/62 max-w-xl mx-auto lg:mx-0 mb-12 leading-[1.65] font-normal">
               SHOPaBOT turns e-commerce into an autonomous operating system: Builder finds winners,
               Merchant fulfills profitably, and Social manufactures demand while you sleep.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row gap-3.5 justify-center lg:justify-start mb-16">
               <Button
                 onClick={() => handlePricingClick("growth")}
                 size="lg"
-                className="btn-glow text-white px-8 h-12 text-base font-semibold"
+                className="btn-glow text-white px-9 h-13 text-base font-bold"
               >
-                Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                Launch my bot empire <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <Button
                 onClick={() => {
@@ -340,22 +345,22 @@ export default function Landing() {
                 }}
                 variant="outline"
                 size="lg"
-                className="btn-glow-outline h-12 text-base font-semibold px-8"
+                className="btn-glow-outline h-13 text-base font-semibold px-9 border-white/12"
               >
                 See the system
               </Button>
             </div>
 
             {/* Trust strip */}
-            <div className="mt-12 grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-3 gap-3.5">
               {TRUST_ITEMS.map((item) => (
                 <div key={item.label} className="luxury-stat-card text-left">
-                  <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
-                    <item.icon className="w-4 h-4 text-sky-400" />
+                  <div className="w-9 h-9 rounded-xl bg-sky-500/12 border border-sky-500/22 flex items-center justify-center shrink-0">
+                    <item.icon className="w-4.5 h-4.5 text-sky-400" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white/85">{item.label}</div>
-                    <div className="text-xs text-white/38">{item.sub}</div>
+                    <div className="text-sm font-bold text-white/90 mb-0.5">{item.label}</div>
+                    <div className="text-[11px] text-white/38">{item.sub}</div>
                   </div>
                 </div>
               ))}
@@ -365,18 +370,19 @@ export default function Landing() {
           <div className="relative mx-auto w-full max-w-2xl">
             <div className="commerce-orb" />
             <div className="command-preview">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-6 py-5">
                 <div>
-                  <p className="micro-label mb-1">Live Autonomous Store</p>
+                  <p className="micro-label mb-1.5">Live Autonomous Store</p>
                   <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
                 </div>
-                <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+                <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   24/7 Active
                 </div>
               </div>
 
               <div className="grid md:grid-cols-[1fr_0.8fr] gap-4 p-5">
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   {BOTS.map((bot, index) => {
                     const colors = BOT_COLORS[bot.name];
                     const progress = BOT_PREVIEW_PROGRESS_PERCENTAGES[index];
@@ -389,34 +395,34 @@ export default function Landing() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-bold text-white truncate">{bot.name}</p>
-                              <span className="text-[10px] font-mono text-white/35">{progress}%</span>
+                              <span className="text-[10px] font-mono text-white/38">{progress}%</span>
                             </div>
-                            <p className="text-[11px] text-white/40 truncate">{bot.tagline}</p>
+                            <p className="text-[11px] text-white/42 truncate">{bot.tagline}</p>
                           </div>
                         </div>
-                        <div className="mt-3 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                          <div className="h-full rounded-full bot-progress" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${colors.hex}, rgba(255,255,255,0.75))` }} />
+                        <div className="mt-3.5 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <div className="h-full rounded-full bot-progress" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${colors.hex}, rgba(255,255,255,0.8))` }} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   <div className="revenue-card">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Projected lift</p>
-                    <div className="mt-2 text-4xl font-black tracking-tighter text-white">2.4x</div>
-                    <div className="mt-3 flex h-24 items-end gap-1.5">
+                    <div className="mt-2.5 text-4xl font-black tracking-tighter text-white">2.4x</div>
+                    <div className="mt-4 flex h-24 items-end gap-1.5">
                       {HERO_GROWTH_BARS.map((height, index) => (
-                        <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90" style={{ height: `${height}%` }} />
+                        <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/30 to-cyan-300/95" style={{ height: `${height}%` }} />
                       ))}
                     </div>
                   </div>
 
                   <div className="action-feed-card">
                     {HERO_ACTION_FEED.map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-[11px] text-white/58">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <div key={item} className="flex items-center gap-2 text-[11px] text-white/60">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                         <span>{item}</span>
                       </div>
                     ))}
@@ -429,58 +435,64 @@ export default function Landing() {
       </section>
 
       {/* ── Metrics Strip ──────────────────────────────────────────────────── */}
-      <section className="py-12 px-4 border-y border-white/[0.06]">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="py-16 px-6 border-y border-white/[0.05]">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-5">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card p-6 text-center group"
+              className="metric-bento p-7 text-center group"
+              style={{ "--metric-color": metric.hex, "--metric-glow": metric.glow } as MetricCSSVars}
             >
-              <metric.icon className={`w-5 h-5 ${metric.color} mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`} />
-              <div className="text-2xl font-black font-heading text-white mb-1 metric-number">{metric.value}</div>
-              <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 group-hover:scale-110`}
+                style={{ background: metric.glow.replace("0.14", "0.12"), border: `1px solid ${metric.hex}33` }}>
+                <metric.icon className={`w-5 h-5 ${metric.color}`} />
+              </div>
+              <div className="text-3xl font-black font-heading text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">{metric.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── The Three Bots ─────────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      <section className="py-32 px-6 section-tinted">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="micro-label mb-3">The Platform</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">The Three Bots</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Each bot is a specialist. Together they run your entire e-commerce operation.</p>
+          <div className="text-center mb-20">
+            <p className="micro-label mb-4">The Platform</p>
+            <h2 className="text-4xl md:text-6xl font-black tracking-[-0.03em] text-white mb-5">Three bots. One empire.</h2>
+            <p className="text-white/42 max-w-lg mx-auto text-lg leading-relaxed">Each bot is a specialist. Together they run your entire e-commerce operation — without you.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-7">
             {BOTS.map((bot) => {
               const colors = BOT_COLORS[bot.name];
               return (
                 <div
                   key={bot.name}
-                  className="bento-card p-8 group relative overflow-hidden hover-lift"
+                  className="bento-card p-10 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
-                  <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}60, ${colors.hex}10)` }} />
+                  <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl" style={{ background: `linear-gradient(90deg, ${colors.hex}80, ${colors.hex}18)` }} />
+                  {/* Ambient corner glow */}
+                  <div className="absolute -top-12 -left-12 w-40 h-40 rounded-full opacity-20 pointer-events-none" style={{ background: `radial-gradient(circle, ${colors.hex}, transparent 70%)` }} />
 
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
-                    style={{ background: colors.bg, border: `1px solid ${colors.border}`, boxShadow: `0 0 12px ${colors.glow}` }}
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-7 transition-all duration-300 group-hover:scale-110"
+                    style={{ background: colors.bg, border: `1px solid ${colors.border}`, boxShadow: `0 0 24px ${colors.glow}` }}
                   >
-                    <bot.icon className={`w-6 h-6 ${colors.icon}`} />
+                    <bot.icon className={`w-7 h-7 ${colors.icon}`} />
                   </div>
 
-                  <p className="micro-label mb-2" style={{ color: colors.hex }}>
+                  <p className="micro-label mb-2.5" style={{ color: colors.hex }}>
                     {bot.tagline}
                   </p>
-                  <h3 className="text-xl font-heading font-bold text-white mb-3">{bot.name}</h3>
-                  <p className="text-white/45 text-sm leading-relaxed mb-6">{bot.description}</p>
+                  <h3 className="text-2xl font-heading font-bold text-white mb-4">{bot.name}</h3>
+                  <p className="text-white/45 text-sm leading-relaxed mb-8">{bot.description}</p>
 
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-3">
                     {bot.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2.5 text-white/55 text-sm">
+                      <li key={feature} className="flex items-start gap-3 text-white/60 text-sm">
                         <CheckCircle2 className={`w-4 h-4 ${colors.icon} shrink-0 mt-0.5`} />
                         <span>{feature}</span>
                       </li>
@@ -494,99 +506,108 @@ export default function Landing() {
       </section>
 
       {/* ── Social Proof / Testimonials ────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-32 px-6 border-t border-white/[0.05] section-orange-tint">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="micro-label mb-3">Social Proof</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using SHOPaBOT.</p>
+          <div className="text-center mb-20">
+            <p className="micro-label mb-4">Social Proof</p>
+            <h2 className="text-4xl md:text-6xl font-black tracking-[-0.03em] text-white mb-5">What founders say</h2>
+            <p className="text-white/42 max-w-md mx-auto text-lg">Real results from real store owners already automating with SHOPaBOT.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bento-card p-7 flex flex-col gap-4">
-                <Quote className="w-6 h-6 text-sky-500/40 shrink-0" />
-                <p className="text-white/60 text-sm leading-relaxed flex-1">"{t.text}"</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
-                  <div className="w-9 h-9 rounded-full bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-sky-300">{t.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white/80">{t.name}</div>
-                    <div className="text-xs text-white/35">{t.role}</div>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {Array.from({ length: t.stars }).map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    ))}
+          <div className="grid md:grid-cols-3 gap-7">
+            {TESTIMONIALS.map((t, idx) => {
+              const avatarColors = [
+                "from-sky-500 to-cyan-500",
+                "from-cyan-500 to-emerald-500",
+                "from-orange-500 to-amber-500",
+              ];
+              return (
+                <div key={t.name} className="testimonial-deep p-8 flex flex-col gap-5">
+                  <Quote className="w-8 h-8 text-sky-500/50 shrink-0" />
+                  <p className="text-white/65 text-base leading-[1.7] flex-1">"{t.text}"</p>
+                  <div className="flex items-center gap-3.5 pt-4 border-t border-white/[0.06]">
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarColors[idx]} flex items-center justify-center shrink-0 shadow-[0_0_16px_rgba(14,165,233,0.25)]`}>
+                      <span className="text-sm font-bold text-white">{t.name.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-white/90 truncate">{t.name}</div>
+                      <div className="text-xs text-white/38 truncate">{t.role}</div>
+                    </div>
+                    <div className="flex gap-0.5 shrink-0">
+                      {Array.from({ length: t.stars }).map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ── Pricing ────────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
+      <section id="pricing" className="py-32 px-6 border-t border-white/[0.05]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="micro-label mb-3">Pricing</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
+          <div className="text-center mb-20">
+            <p className="micro-label mb-4">Pricing</p>
+            <h2 className="text-4xl md:text-6xl font-black tracking-[-0.03em] text-white mb-5">Simple, honest pricing</h2>
+            <p className="text-white/42 max-w-md mx-auto text-lg">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {PRICING.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl p-6 transition-all duration-300 ${
+                className={`relative transition-all duration-300 ${
                   tier.featured
-                    ? "bg-sky-500/5 border border-sky-500/40 shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 hover:border-sky-500/60"
-                    : "bento-card"
+                    ? "pricing-featured"
+                    : "bento-card rounded-xl"
                 }`}
               >
                 {tier.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3.5 py-1.5 rounded-full ${
                       tier.featured
-                        ? "bg-sky-500 text-white shadow-sm shadow-sky-500/40"
-                        : "bg-white/5 border border-white/10 text-white/60"
+                        ? "bg-sky-500 text-white shadow-md shadow-sky-500/40"
+                        : "bg-white/5 border border-white/10 text-white/55"
                     }`}>
                       {tier.badge}
                     </span>
                   </div>
                 )}
 
-                <h3 className="text-base font-bold text-white mb-1">{tier.name}</h3>
-                <div className="flex items-baseline gap-0.5 mb-3">
-                  <span className="text-3xl font-black text-white">{tier.price}</span>
-                  <span className="text-white/35 text-sm">{tier.period}</span>
+                <div className="relative z-10 p-7">
+                  <h3 className="text-base font-bold text-white mb-1.5">{tier.name}</h3>
+                  <div className="flex items-baseline gap-0.5 mb-3">
+                    <span className="text-3xl font-black text-white">{tier.price}</span>
+                    <span className="text-white/35 text-sm">{tier.period}</span>
+                  </div>
+                  <p className="text-white/40 text-sm mb-5 leading-relaxed">{tier.description}</p>
+
+                  <div className="h-px bg-white/[0.06] mb-5" />
+
+                  <ul className="space-y-2.5 mb-7">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2.5 text-white/58 text-sm">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => handlePricingClick(tier.planId)}
+                    disabled={checkoutMutation.isPending}
+                    className={`w-full h-10 text-sm font-semibold transition-all ${
+                      tier.featured
+                        ? "bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/25"
+                        : "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/80 hover:text-white"
+                    }`}
+                  >
+                    {checkoutMutation.isPending ? "Processing..." : "Start Free Trial"}
+                  </Button>
                 </div>
-                <p className="text-white/40 text-sm mb-4 leading-relaxed">{tier.description}</p>
-
-                <div className="h-px bg-white/[0.06] mb-4" />
-
-                <ul className="space-y-2 mb-6">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-white/55 text-sm">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => handlePricingClick(tier.planId)}
-                  disabled={checkoutMutation.isPending}
-                  className={`w-full h-9 text-sm font-semibold transition-all ${
-                    tier.featured
-                      ? "bg-sky-500 hover:bg-sky-600 text-white shadow-md shadow-sky-500/20"
-                      : "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/80 hover:text-white"
-                  }`}
-                >
-                  {checkoutMutation.isPending ? "Processing..." : "Start Free Trial"}
-                </Button>
               </div>
             ))}
           </div>
@@ -594,13 +615,14 @@ export default function Landing() {
       </section>
 
       {/* ── FAQ ────────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-32 px-6 border-t border-white/[0.05] section-tinted">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="micro-label mb-3">FAQ</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
+          <div className="text-center mb-20">
+            <p className="micro-label mb-4">FAQ</p>
+            <h2 className="text-4xl md:text-6xl font-black tracking-[-0.03em] text-white mb-5">Common questions</h2>
+            <p className="text-white/42 max-w-sm mx-auto text-lg">Everything you need to know before going autonomous.</p>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {FAQ_ITEMS.map((item) => (
               <FAQItem key={item.q} q={item.q} a={item.a} />
             ))}
@@ -609,52 +631,82 @@ export default function Landing() {
       </section>
 
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-32 px-6 border-t border-white/[0.05]">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="bento-card-featured rounded-2xl p-12 relative overflow-hidden">
-            <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
+          <div className="cta-aurora p-16 relative overflow-hidden">
+            <div className="light-leak-blue absolute -top-24 left-1/2 -translate-x-1/2 opacity-60 pointer-events-none" />
+            <div className="light-leak-cyan absolute bottom-0 right-0 opacity-30 pointer-events-none" />
             <div className="relative">
-              <p className="micro-label mb-4">Ready to automate?</p>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-4">
-                Launch your first autonomous store
+              <p className="micro-label mb-5">Ready to automate?</p>
+              <h2 className="text-4xl md:text-5xl font-black tracking-[-0.03em] text-white mb-6 leading-[1.08]">
+                Launch your first<br />autonomous store
               </h2>
-              <p className="text-white/40 mb-8 leading-relaxed">
-                No coding. No daily management. Just bots working 24/7 to build and grow your business.
+              <p className="text-white/48 mb-10 text-lg leading-relaxed max-w-sm mx-auto">
+                No coding. No daily management. Just bots running 24/7 to build and grow your business.
               </p>
               <Button
                 onClick={() => handlePricingClick("growth")}
                 size="lg"
-                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto"
+                className="btn-glow text-white px-12 h-14 text-base font-bold mx-auto"
               >
-                Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                Start Free Trial <ArrowRight className="w-4.5 h-4.5 ml-2" />
               </Button>
-              <p className="text-white/25 text-xs mt-4">7-day free trial · No credit card required · Cancel anytime</p>
+              <p className="text-white/22 text-xs mt-5 tracking-wide">7-day free trial · No credit card required · Cancel anytime</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] bg-[#030305] py-10 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div>
+      <footer className="border-t border-white/[0.05] bg-[#020204] py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
+            <div className="max-w-xs">
               <BrandName size="sm" />
-              <p className="text-white/30 text-sm mt-2 max-w-xs">
-                Autonomous e-commerce orchestration. Three bots. Zero management.
+              <p className="text-white/32 text-sm mt-3 leading-relaxed">
+                Autonomous e-commerce orchestration. Three specialized bots. Zero daily management.
               </p>
+              <div className="flex items-center gap-1.5 mt-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] text-emerald-400/70 font-medium tracking-wide">All systems operational</span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-x-8 gap-y-3">
-              {["Terms", "Privacy", "Contact", "Docs", "Status"].map((link) => (
-                <a key={link} href="#" className="text-white/35 text-sm hover:text-sky-400 transition-colors">
-                  {link}
-                </a>
-              ))}
+            <div className="flex flex-wrap gap-x-16 gap-y-8">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 mb-4">Product</p>
+                <div className="space-y-3">
+                  {["Features", "Pricing", "Changelog", "Roadmap"].map((link) => (
+                    <a key={link} href="#" className="block text-white/38 text-sm hover:text-sky-400 transition-colors">
+                      {link}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 mb-4">Company</p>
+                <div className="space-y-3">
+                  {["About", "Blog", "Contact", "Status"].map((link) => (
+                    <a key={link} href="#" className="block text-white/38 text-sm hover:text-sky-400 transition-colors">
+                      {link}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/25 mb-4">Legal</p>
+                <div className="space-y-3">
+                  {["Terms", "Privacy", "Cookies"].map((link) => (
+                    <a key={link} href="#" className="block text-white/38 text-sm hover:text-sky-400 transition-colors">
+                      {link}
+                    </a>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span className="text-white/20 text-xs">© 2026 {BRAND_NAME}. All rights reserved.</span>
-            <span className="text-white/20 text-xs">Built with AI. Powered by bots.</span>
+          <div className="pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-3">
+            <span className="text-white/18 text-xs">© 2026 {BRAND_NAME}. All rights reserved.</span>
+            <span className="text-white/18 text-xs">Built with AI. Powered by autonomous bots.</span>
           </div>
         </div>
       </footer>

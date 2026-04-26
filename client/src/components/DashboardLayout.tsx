@@ -87,14 +87,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const NavContent = () => (
-    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3">
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-5 px-3">
       {navGroups.map((group, i) => (
-        <div key={i} className="mb-6">
-          <div className="px-2 mb-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/20">
+        <div key={i} className="mb-7">
+          <div className="px-2 mb-3">
+            <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white/18">
               {group.label}
             </span>
-            <div className="h-px mt-1.5 bg-gradient-to-r from-white/8 to-transparent" />
+            <div className="h-px mt-2 bg-gradient-to-r from-white/8 via-white/4 to-transparent" />
           </div>
           <div className="space-y-0.5">
             {group.items.map((item) => {
@@ -107,8 +107,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   onClick={() => isMobile && setMobileMenuOpen(false)}
                   className={`flex items-center h-9 px-3 rounded-lg transition-all duration-200 group relative ${
                     isActive
-                      ? "bg-sky-500/10 text-sky-300 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
-                      : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+                      ? "bg-sky-500/12 text-sky-300 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22),0_0_16px_rgba(14,165,233,0.06)]"
+                      : "text-white/38 hover:text-white/82 hover:bg-white/[0.05]"
                   }`}
                 >
                   {isActive && (
@@ -136,26 +136,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   const SidebarFooter = () => (
-    <div className="border-t border-white/[0.05] p-3">
+    <div className="border-t border-white/[0.05] p-3.5">
       <Link href="/profile" onClick={() => isMobile && setMobileMenuOpen(false)}>
-        <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/20 transition-all cursor-pointer group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:shadow-[0_0_14px_rgba(14,165,233,0.5)] transition-shadow">
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] hover:border-sky-500/22 transition-all cursor-pointer group">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(14,165,233,0.35)] group-hover:shadow-[0_0_18px_rgba(14,165,233,0.55)] transition-shadow">
             <span className="text-xs font-bold text-white">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </span>
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-semibold text-white/75 truncate">{user?.name}</span>
-            <span className="text-[10px] text-white/28 truncate">{user?.email}</span>
+            <span className="text-xs font-semibold text-white/78 truncate">{user?.name}</span>
+            <span className="text-[10px] text-white/30 truncate">{user?.email}</span>
           </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 opacity-70 shrink-0" />
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 opacity-80 shrink-0 animate-pulse" />
         </div>
       </Link>
       <Button
         onClick={handleLogout}
         variant="ghost"
         size="sm"
-        className="w-full justify-start text-xs font-medium h-8 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
+        className="w-full justify-start text-xs font-medium h-8 text-white/28 hover:text-red-400 hover:bg-red-500/8 transition-all"
       >
         <LogOut className="w-3.5 h-3.5 mr-2" />
         Sign Out
@@ -204,10 +204,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white app-chrome">
       {/* Desktop Sidebar */}
-      <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
+      <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#030305]/95 backdrop-blur-2xl relative z-20 sidebar-luxe">
         {/* Header */}
-        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.35)]">
+        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-3">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(14,165,233,0.4)]">
             <Zap className="w-3.5 h-3.5 text-white" />
           </div>
           <BrandName size="sm" className="flex-1" />
@@ -221,8 +221,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505]/80 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(14,165,233,0.07),transparent_35%),radial-gradient(circle_at_85%_18%,rgba(6,182,212,0.05),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(249,115,22,0.04),transparent_28%)]" />
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050507] overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(14,165,233,0.09),transparent_32%),radial-gradient(circle_at_88%_15%,rgba(6,182,212,0.06),transparent_26%),radial-gradient(circle_at_50%_100%,rgba(249,115,22,0.05),transparent_25%)]" />
+        <div className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.016) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.016) 1px, transparent 1px)",
+            backgroundSize: "72px 72px",
+            maskImage: "radial-gradient(ellipse 60% 40% at 20% 0%, black, transparent 80%)",
+            WebkitMaskImage: "radial-gradient(ellipse 60% 40% at 20% 0%, black, transparent 80%)"
+          }}
+        />
         {children}
       </main>
     </div>
