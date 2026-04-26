@@ -88,18 +88,23 @@ export default function IntegrationsPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#050505] text-slate-200 overflow-hidden">
+    <div className="relative overflow-hidden flex flex-col h-full bg-[#050505] text-slate-200">
+      <div className="ghost-watermark" aria-hidden="true">INTEGRATIONS</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
       {/* Header */}
-      <div className="px-6 py-5 border-b border-white/8 flex items-center justify-between">
+      <div className="px-6 py-5 border-b border-white/[0.08] flex items-center justify-between page-header">
         <div>
-          <h1 className="text-xl font-semibold text-white">Integration Hub</h1>
+          <p className="micro-label mb-1">Connections</p>
+          <h1 className="text-xl font-heading font-semibold text-white">Integration Hub</h1>
           <p className="text-sm text-slate-400 mt-0.5">
             {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
           </p>
         </div>
         <div className="flex items-center gap-2">
           {summary && (
-            <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2">
               <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400" /> {summary.credentials} platforms</span>
               {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400" /> {summary.stores} stores</span>}
               {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> {summary.socialAccounts} social</span>}
@@ -109,15 +114,15 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-4 py-2 border-b border-white/8 bg-white/2">
+      <div className="flex gap-1 px-4 py-2 border-b border-white/[0.08] bg-white/[0.02]">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setMainTab(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               mainTab === t.id
                 ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
-                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
             }`}
           >
             {t.icon}

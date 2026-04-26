@@ -61,14 +61,22 @@ export default function Architect() {
 
   return (
     <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col md:flex-row">
+      {/* Ambient background */}
+      <div className="ghost-watermark" aria-hidden="true">BUILDER</div>
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/[0.04] rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-cyan-500/[0.03] rounded-full blur-3xl" />
+      </div>
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08]">
+      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08] relative z-10">
         {/* Header Bar */}
-        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
+        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/60 backdrop-blur-sm shrink-0 gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <div className="relative shrink-0">
-              <Bot className="text-sky-400 w-4 md:w-5 h-4 md:h-5" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(14,165,233,0.8)]" />
+              <div className="h-8 w-8 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.2)]">
+                <Bot className="text-sky-400 w-4 h-4" />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(14,165,233,0.9)] border border-[#050505]" />
             </div>
             <div className="min-w-0">
               <h1 className="font-heading text-xs md:text-sm font-bold text-white truncate tracking-tight">Builder Bot</h1>
@@ -76,14 +84,14 @@ export default function Architect() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-            <span className={`font-mono text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5 ${architectStatus.status === 'running' ? 'text-amber-400' : 'text-emerald-400'}`}>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-mono font-bold uppercase tracking-widest ${architectStatus.status === 'running' ? 'text-amber-400 bg-amber-500/10 border-amber-500/25' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25'}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${architectStatus.status === 'running' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
               {architectStatus.status === 'running' ? 'RUNNING' : 'READY'}
-            </span>
+            </div>
           </div>
         </div>
         {/* Accent gradient line under header */}
-        <div className="h-px bg-gradient-to-r from-sky-500/50 via-sky-500/10 to-transparent shrink-0" />
+        <div className="h-px bg-gradient-to-r from-sky-500/60 via-sky-400/20 to-transparent shrink-0" />
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
@@ -193,14 +201,18 @@ export default function Architect() {
       </div>
 
       {/* Metadata Inspector (Right Panel) */}
-      <aside className="w-[380px] shrink-0 bg-black/40 flex flex-col z-20 box-border border-l border-white/[0.08]">
-        <div className="h-14 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
-          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
-            Architect Inspector
-          </span>
-          <span className="flex items-center gap-2">
-             <Cpu className="w-3.5 h-3.5 text-sky-400" />
-          </span>
+      <aside className="w-[380px] shrink-0 bg-black/60 backdrop-blur-sm flex flex-col z-20 box-border border-l border-white/[0.08] relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-sky-500/40 via-sky-400/20 to-transparent" />
+        <div className="h-14 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center">
+              <Cpu className="w-3 h-3 text-sky-400" />
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-white/60">
+              Architect Inspector
+            </span>
+          </div>
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_6px_rgba(14,165,233,0.8)]" />
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5">

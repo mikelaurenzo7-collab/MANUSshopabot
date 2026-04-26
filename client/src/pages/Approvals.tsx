@@ -280,12 +280,17 @@ export default function Approvals() {
   const reviewed = all.filter((a: any) => a.status !== "pending");
 
   return (
-    <div className="page-enter p-6 space-y-6">
+    <div className="relative overflow-hidden page-enter">
+      <div className="ghost-watermark" aria-hidden="true">APPROVALS</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-orange" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
+      <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between page-header">
         <div>
           <p className="micro-label mb-1">Operations</p>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-heading font-bold text-white flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-amber-400" />
             Approval Queue
           </h1>
@@ -305,8 +310,8 @@ export default function Approvals() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="pending" className="data-[state=active]:bg-white/10">
+        <TabsList className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 h-auto gap-1">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             Pending
             {pending.length > 0 && (
               <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
@@ -314,7 +319,7 @@ export default function Approvals() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-white/10">
+          <TabsTrigger value="history" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             History
           </TabsTrigger>
         </TabsList>
@@ -387,6 +392,7 @@ export default function Approvals() {
           isPending={reviewMutation.isPending}
         />
       )}
+      </div>
     </div>
   );
 }

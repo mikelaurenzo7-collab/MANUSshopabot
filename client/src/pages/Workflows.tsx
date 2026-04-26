@@ -275,7 +275,12 @@ export default function Workflows() {
   );
 
   return (
-    <div className="page-enter p-6 space-y-6">
+    <div className="relative overflow-hidden page-enter">
+      <div className="ghost-watermark" aria-hidden="true">WORKFLOWS</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-purple" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
+      <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between page-header">
         <div>
@@ -295,12 +300,13 @@ export default function Workflows() {
       {/* Stats Row */}
       <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total", value: counts?.total ?? 0, color: "text-white", bg: "" },
-          { label: "Running", value: counts?.running ?? 0, color: "text-sky-400", bg: "bg-sky-500/5 border-sky-500/15" },
-          { label: "Completed", value: counts?.completed ?? 0, color: "text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/15" },
-          { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400", bg: "bg-red-500/5 border-red-500/15" },
+          { label: "Total", value: counts?.total ?? 0, color: "text-white", accent: "via-white/20" },
+          { label: "Running", value: counts?.running ?? 0, color: "text-sky-400", accent: "via-sky-400/40" },
+          { label: "Completed", value: counts?.completed ?? 0, color: "text-emerald-400", accent: "via-emerald-400/40" },
+          { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400", accent: "via-red-400/40" },
         ].map((stat) => (
-          <div key={stat.label} className={`bento-card p-4 ${stat.bg}`}>
+          <div key={stat.label} className="bento-card relative overflow-hidden p-4">
+            <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent ${stat.accent} to-transparent`} />
             <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">{stat.label}</p>
             <p className={`text-2xl font-black metric-number ${stat.color}`}>{stat.value}</p>
           </div>
@@ -309,16 +315,16 @@ export default function Workflows() {
 
       {/* Tabs */}
       <Tabs defaultValue="active">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="active" className="data-[state=active]:bg-white/10">
+        <TabsList className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 h-auto gap-1">
+          <TabsTrigger value="active" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             Active
             {(activeWorkflows?.length ?? 0) > 0 && (
-              <Badge className="ml-1.5 bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0">
+              <Badge className="ml-1.5 bg-sky-500/20 text-sky-400 text-[10px] px-1.5 py-0">
                 {activeWorkflows?.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-white/10">
+          <TabsTrigger value="history" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             History
           </TabsTrigger>
         </TabsList>
@@ -379,6 +385,7 @@ export default function Workflows() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

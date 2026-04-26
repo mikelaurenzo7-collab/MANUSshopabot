@@ -80,7 +80,7 @@ export default function ActivityPage() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">ACTIVITY</div>
       {/* Light leaks */}
@@ -99,9 +99,9 @@ export default function ActivityPage() {
       </div>
 
       <Tabs defaultValue="activity" className="space-y-4">
-        <TabsList className="bg-secondary/50">
-          <TabsTrigger value="activity">Activity Log</TabsTrigger>
-          <TabsTrigger value="approvals" className="relative">
+        <TabsList className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 h-auto gap-1">
+          <TabsTrigger value="activity" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Activity Log</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             Approval Queue
             {pendingApprovals && pendingApprovals.length > 0 && (
               <Badge className="ml-1.5 h-5 min-w-5 px-1 text-[10px] bg-amber-500 text-white border-0">
@@ -109,7 +109,7 @@ export default function ActivityPage() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history">Decision History</TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Decision History</TabsTrigger>
         </TabsList>
 
         {/* Activity Log Tab */}
@@ -172,7 +172,8 @@ export default function ActivityPage() {
               {tasks.map((task: any) => {
                 const AgentIcon = agentIcons[task.agentType] || Activity;
                 return (
-                  <Card key={task.id} className="bg-card border-white/[0.08] hover:border-primary/10 transition-all">
+                  <Card key={task.id} className="glass-card relative overflow-hidden hover:border-primary/10 transition-all">
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5">{statusIcons[task.status] || statusIcons.pending}</div>
@@ -214,9 +215,14 @@ export default function ActivityPage() {
             </div>
           ) : (
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No bot activity recorded yet</p>
+              <CardContent className="p-8">
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Activity className="h-5 w-5 text-white/25" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No bot activity recorded yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Bot tasks will appear here once they run</p>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -262,7 +268,8 @@ export default function ActivityPage() {
           ) : pendingApprovals && pendingApprovals.length > 0 ? (
             <div className="space-y-3">
               {pendingApprovals.map((item: any) => (
-                <Card key={item.id} className="bg-card border-amber-400/20 hover:border-amber-400/30 transition-all">
+                <Card key={item.id} className="glass-card relative overflow-hidden border-amber-400/20 hover:border-amber-400/30 transition-all">
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -328,10 +335,14 @@ export default function ActivityPage() {
             </div>
           ) : (
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CheckCircle2 className="h-10 w-10 text-emerald-400/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No pending approvals</p>
-                <p className="text-xs text-white/30 mt-1">All bot decisions are up to date</p>
+              <CardContent className="p-8">
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-400/60" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No pending approvals</p>
+                  <p className="text-xs text-muted-foreground mt-1">All bot decisions are up to date</p>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -342,7 +353,8 @@ export default function ActivityPage() {
           {allApprovals && allApprovals.length > 0 ? (
             <div className="space-y-2">
               {allApprovals.map((item: any) => (
-                <Card key={item.id} className="bento-card">
+                <Card key={item.id} className="bento-card relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -374,9 +386,14 @@ export default function ActivityPage() {
             </div>
           ) : (
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No decisions recorded yet</p>
+              <CardContent className="p-8">
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Activity className="h-5 w-5 text-white/25" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No decisions recorded yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Reviewed approvals will appear here</p>
+                </div>
               </CardContent>
             </Card>
           )}

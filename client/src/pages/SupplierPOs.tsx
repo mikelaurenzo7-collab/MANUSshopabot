@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,107 +65,116 @@ export default function SupplierPOs() {
   const totalValue = pos.data?.reduce((sum: number, p: any) => sum + (p.totalCents || 0), 0) || 0;
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="w-6 h-6 text-orange-500" />
-            Supplier Purchase Orders
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your Merchant Bot auto-drafts POs when inventory runs low. Review, approve, and submit.
-          </p>
+    <div className="relative overflow-hidden page-enter">
+      <div className="ghost-watermark" aria-hidden="true">PURCHASE ORDERS</div>
+      <div className="light-leak-blue" style={{ top: '5%', left: '10%' }} aria-hidden="true" />
+      <div className="light-leak-orange" style={{ top: '55%', right: '5%' }} aria-hidden="true" />
+
+      <div className="space-y-6 p-6">
+        <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="micro-label mb-1">Merchant Bot</p>
+            <h1 className="text-xl font-heading font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Package className="w-5 h-5 text-cyan-400" />
+              Supplier Purchase Orders
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your Merchant Bot auto-drafts POs when inventory runs low. Review, approve, and submit.
+            </p>
+          </div>
+          {storeList.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Store className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={selectedStoreId || String(storeId || "")}
+                onValueChange={(v) => setSelectedStoreId(v)}
+              >
+                <SelectTrigger className="w-[220px] h-9 text-sm bg-white/[0.04] border-white/[0.08]">
+                  <SelectValue placeholder="Select store" />
+                </SelectTrigger>
+                <SelectContent>
+                  {storeList.map((s: any) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      <div className="flex items-center gap-2">
+                        <span>{s.name}</span>
+                        <Badge variant="outline" className="text-[9px] ml-1">{s.platform}</Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
-        {storeList.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Store className="h-4 w-4 text-muted-foreground" />
-            <Select
-              value={selectedStoreId || String(storeId || "")}
-              onValueChange={(v) => setSelectedStoreId(v)}
-            >
-              <SelectTrigger className="w-[220px] h-9 text-sm">
-                <SelectValue placeholder="Select store" />
-              </SelectTrigger>
-              <SelectContent>
-                {storeList.map((s: any) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    <div className="flex items-center gap-2">
-                      <span>{s.name}</span>
-                      <Badge variant="outline" className="text-[9px] ml-1">{s.platform}</Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+        {/* Summary Stats */}
+        {storeId && pos.data && pos.data.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bento-card relative overflow-hidden p-3">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <div className="flex items-center gap-2 mb-1">
+                <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total POs</span>
+              </div>
+              <p className="text-lg font-bold text-foreground metric-number">{totalPOs}</p>
+            </div>
+            <div className="bento-card relative overflow-hidden p-3">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="h-3.5 w-3.5 text-amber-400" />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Pending Review</span>
+              </div>
+              <p className="text-lg font-bold text-amber-400 metric-number">{draftCount}</p>
+            </div>
+            <div className="bento-card relative overflow-hidden p-3">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+              <div className="flex items-center gap-2 mb-1">
+                <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total Value</span>
+              </div>
+              <p className="text-lg font-bold text-emerald-400 metric-number">${(totalValue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Summary Stats */}
-      {storeId && pos.data && pos.data.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-border/25">
-            <div className="flex items-center gap-2 mb-1">
-              <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total POs</span>
+        {!storeId ? (
+          <div className="glass-card p-8 text-center">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6 text-amber-400/60" />
             </div>
-            <p className="text-lg font-bold text-foreground">{totalPOs}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-amber-500/8 border border-amber-500/15">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Pending Review</span>
-            </div>
-            <p className="text-lg font-bold text-amber-400">{draftCount}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total Value</span>
-            </div>
-            <p className="text-lg font-bold text-emerald-400">${(totalValue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
-          </div>
-        </div>
-      )}
-
-      {!storeId ? (
-        <Card className="bento-card">
-          <CardContent className="p-8 text-center">
-            <AlertTriangle className="w-10 h-10 mx-auto text-yellow-500 mb-3" />
-            <p className="font-medium mb-1">No Store Connected</p>
+            <p className="font-medium text-white mb-1">No Store Connected</p>
             <p className="text-sm text-muted-foreground">
               Connect a store in the Builder Bot to start managing purchase orders.
             </p>
-          </CardContent>
-        </Card>
-      ) : !pos.data?.length ? (
-        <Card className="bento-card">
-          <CardContent className="p-8 text-center">
-            <Package className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-            <p className="font-medium mb-1">No Purchase Orders Yet</p>
-            <p className="text-sm text-muted-foreground">
+          </div>
+        ) : !pos.data?.length ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <Package className="w-5 h-5 text-cyan-400/50" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">No Purchase Orders Yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
               When the Merchant Bot detects low inventory, it will automatically draft purchase orders here.
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {pos.data.map((po: any) => {
-            const StatusIcon = statusIcon[po.status] || Clock;
-            return (
-              <Card key={po.id} className="bg-card border-white/[0.08] hover:border-border transition-all">
-                <CardContent className="p-4">
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pos.data.map((po: any) => {
+              const StatusIcon = statusIcon[po.status] || Clock;
+              return (
+                <div key={po.id} className="glass-card relative overflow-hidden p-4 hover:border-cyan-400/20 transition-all">
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-white/[0.03] flex items-center justify-center">
-                        <StatusIcon className="w-5 h-5 text-muted-foreground" />
+                      <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                        <StatusIcon className="w-5 h-5 text-cyan-400" />
                       </div>
                       <div>
                         <p className="font-medium text-sm text-foreground">{po.poNumber}</p>
                         <p className="text-xs text-muted-foreground">
                           {po.supplierId ? `Supplier: ${po.supplierId}` : "No supplier assigned"}
                           {" · "}
-                          <span className="text-foreground font-medium">${(po.totalCents / 100).toFixed(2)}</span>
+                          <span className="text-foreground font-medium metric-number">${(po.totalCents / 100).toFixed(2)}</span>
                         </p>
                         {po.notes && (
                           <p className="text-xs text-white/40 italic mt-1">{po.notes}</p>
@@ -180,6 +188,7 @@ export default function SupplierPOs() {
                           size="sm"
                           onClick={() => approveMutation.mutate({ poId: po.id })}
                           disabled={approveMutation.isPending}
+                          className="btn-glow h-7 text-xs"
                         >
                           <FileCheck className="w-3 h-3 mr-1" /> Approve
                         </Button>
@@ -189,6 +198,7 @@ export default function SupplierPOs() {
                           size="sm"
                           onClick={() => submitMutation.mutate({ poId: po.id })}
                           disabled={submitMutation.isPending}
+                          className="h-7 text-xs"
                         >
                           <Truck className="w-3 h-3 mr-1" /> Submit to Supplier
                         </Button>
@@ -199,18 +209,19 @@ export default function SupplierPOs() {
                           variant="outline"
                           onClick={() => fulfillMutation.mutate({ poId: po.id })}
                           disabled={fulfillMutation.isPending}
+                          className="h-7 text-xs border-white/10 text-white/60 hover:border-emerald-400/30 hover:text-emerald-400"
                         >
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Mark Received
                         </Button>
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

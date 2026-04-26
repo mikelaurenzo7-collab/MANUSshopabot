@@ -266,14 +266,14 @@ export default function Intelligence() {
       )}
 
       <Tabs defaultValue="anomalies" className="space-y-4">
-        <TabsList className="bg-secondary/40 border border-border/40">
-          <TabsTrigger value="anomalies" className="data-[state=active]:bg-sky-600">
+        <TabsList className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-1 h-auto gap-1 flex-wrap">
+          <TabsTrigger value="anomalies" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">
             Anomalies {allAnomalies.length > 0 && <Badge className="ml-1.5 bg-red-500/30 text-red-300 text-[10px]">{allAnomalies.length}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="platforms" className="data-[state=active]:bg-sky-600">Platform Breakdown</TabsTrigger>
-          <TabsTrigger value="buybox" className="data-[state=active]:bg-sky-600">Buy Box Monitor</TabsTrigger>
-          <TabsTrigger value="controls" className="data-[state=active]:bg-sky-600">Automation Controls</TabsTrigger>
-          <TabsTrigger value="dlq" className="data-[state=active]:bg-sky-600">Dead-Letter Queue</TabsTrigger>
+          <TabsTrigger value="platforms" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Platform Breakdown</TabsTrigger>
+          <TabsTrigger value="buybox" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Buy Box Monitor</TabsTrigger>
+          <TabsTrigger value="controls" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Automation Controls</TabsTrigger>
+          <TabsTrigger value="dlq" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 rounded-lg text-xs px-3 py-1.5">Dead-Letter Queue</TabsTrigger>
         </TabsList>
 
         {/* Anomalies Tab */}

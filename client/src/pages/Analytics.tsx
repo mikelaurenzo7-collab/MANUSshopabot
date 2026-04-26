@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
   const showStoreSelectionHint = selectedStoreId === undefined;
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">ANALYTICS</div>
       {/* Light leaks */}
@@ -254,47 +254,59 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bento-card">
+          <Card className="bento-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Revenue</span>
-                <DollarSign className="h-4 w-4 text-emerald-400" />
+                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold metric-number text-foreground">
                 ${((analytics?.totalRevenue || 0) / 100).toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
             </CardContent>
           </Card>
-          <Card className="bento-card">
+          <Card className="bento-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
-                <ShoppingCart className="h-4 w-4 text-cyan-400" />
+                <div className="h-7 w-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                  <ShoppingCart className="h-3.5 w-3.5 text-cyan-400" />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{analytics?.totalOrders || 0}</p>
+              <p className="text-2xl font-bold metric-number text-foreground">{analytics?.totalOrders || 0}</p>
               <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
             </CardContent>
           </Card>
-          <Card className="bento-card">
+          <Card className="bento-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Avg Order</span>
-                <TrendingUp className="h-4 w-4 text-sky-400" />
+                <div className="h-7 w-7 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
+                  <TrendingUp className="h-3.5 w-3.5 text-sky-400" />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold metric-number text-foreground">
                 ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
             </CardContent>
           </Card>
-          <Card className="bento-card">
+          <Card className="bento-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Conversion</span>
-                <Users className="h-4 w-4 text-amber-400" />
+                <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                  <Users className="h-3.5 w-3.5 text-amber-400" />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold metric-number text-foreground">
                 {analytics?.totalOrders ? ((analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10).toFixed(1) : "0.0"}%
               </p>
               <p className="text-xs text-muted-foreground mt-1">Heuristic based on recorded orders and active products</p>
@@ -306,7 +318,8 @@ export default function AnalyticsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Revenue Trend */}
-        <Card className="bg-card border-white/[0.08] lg:col-span-2">
+        <Card className="glass-card relative overflow-hidden lg:col-span-2">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground">Revenue Trend (30 Days)</CardTitle>
           </CardHeader>
@@ -348,7 +361,8 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Traffic Sources */}
-        <Card className="bento-card">
+        <Card className="bento-card relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground">Traffic Sources</CardTitle>
           </CardHeader>
@@ -408,7 +422,8 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top Products */}
-      <Card className="bento-card">
+      <Card className="bento-card relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-foreground">Top Products by Revenue</CardTitle>
         </CardHeader>

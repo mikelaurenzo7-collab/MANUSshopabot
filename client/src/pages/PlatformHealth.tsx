@@ -99,7 +99,8 @@ function WebhookEventLog() {
   );
 
   return (
-    <Card className="border-zinc-800">
+    <Card className="bento-card relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -176,7 +177,8 @@ function QueueFailuresLog() {
     (failures?.webhooks.length ?? 0) + (failures?.externalApis.length ?? 0);
 
   return (
-    <Card className="border-zinc-800">
+    <Card className="bento-card relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -304,24 +306,26 @@ export default function PlatformHealth() {
   const totalConnected = (summary?.credentials ?? 0) + (summary?.socialAccounts ?? 0);
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">HEALTH</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between page-header">
-        <div>
-          <p className="micro-label mb-1">System Status</p>
-          <h1 className="text-2xl font-heading font-bold tracking-tight flex items-center gap-2">
-            <Activity className="w-6 h-6 text-sky-400" />
-            Platform Health
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Live connectivity check for all {totalConnected} connected platforms
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.12)]">
+            <Activity className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <p className="micro-label mb-0.5">System Status</p>
+            <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Platform Health</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Live connectivity check for all {totalConnected} connected platforms
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           {lastChecked && (
@@ -333,7 +337,7 @@ export default function PlatformHealth() {
           <Button
             onClick={() => checkMutation.mutate()}
             disabled={checkMutation.isPending}
-            className="gap-2"
+            className="btn-glow gap-2"
           >
             {checkMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -347,39 +351,42 @@ export default function PlatformHealth() {
 
       {/* Summary Cards */}
       {healthData && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <Card className={`border ${healthData.summary.overallHealthy ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-list">
+          <Card className={`relative overflow-hidden border ${healthData.summary.overallHealthy ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
+            <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent ${healthData.summary.overallHealthy ? "via-emerald-400/40" : "via-amber-400/40"} to-transparent`} />
             <CardContent className="py-4 flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${healthData.summary.overallHealthy ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${healthData.summary.overallHealthy ? "bg-emerald-500/20 shadow-[0_0_16px_rgba(16,185,129,0.2)]" : "bg-amber-500/20 shadow-[0_0_16px_rgba(245,158,11,0.2)]"}`}>
                 {healthData.summary.overallHealthy ? <Wifi className="w-6 h-6 text-emerald-400" /> : <WifiOff className="w-6 h-6 text-amber-400" />}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Overall Status</p>
-                <p className={`text-lg font-bold ${healthData.summary.overallHealthy ? "text-emerald-400" : "text-amber-400"}`}>
+                <p className={`text-lg font-bold metric-number ${healthData.summary.overallHealthy ? "text-emerald-400" : "text-amber-400"}`}>
                   {healthData.summary.total === 0 ? "No Platforms" : healthData.summary.overallHealthy ? "All Systems Go" : "Issues Detected"}
                 </p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <Card className="relative overflow-hidden border-emerald-500/20 bg-emerald-500/5">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
             <CardContent className="py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center shadow-[0_0_16px_rgba(16,185,129,0.15)]">
                 <CheckCircle2 className="w-6 h-6 text-emerald-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Healthy</p>
-                <p className="text-2xl font-bold text-emerald-400">{healthData.summary.healthy}</p>
+                <p className="text-2xl font-bold metric-number text-emerald-400">{healthData.summary.healthy}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-red-500/20 bg-red-500/5">
+          <Card className="relative overflow-hidden border-red-500/20 bg-red-500/5">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-400/40 to-transparent" />
             <CardContent className="py-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center shadow-[0_0_16px_rgba(239,68,68,0.15)]">
                 <AlertTriangle className="w-6 h-6 text-red-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Unhealthy</p>
-                <p className="text-2xl font-bold text-red-400">{healthData.summary.unhealthy}</p>
+                <p className="text-2xl font-bold metric-number text-red-400">{healthData.summary.unhealthy}</p>
               </div>
             </CardContent>
           </Card>
@@ -387,32 +394,36 @@ export default function PlatformHealth() {
       )}
 
       {backgroundSystems && (
-        <Card className="border-zinc-800">
+        <Card className="bento-card relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Activity className="w-4 h-4" />
+              <Activity className="w-4 h-4 text-sky-400" />
               Background Systems
             </CardTitle>
             <CardDescription className="text-xs">Durable automation layers running behind Manus and the command center</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl border border-sky-500/20 bg-sky-500/5">
+            <div className="p-4 rounded-xl border border-sky-500/20 bg-sky-500/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Job Queue</p>
-              <p className="text-lg font-bold text-sky-400 mt-1">{backgroundSystems.jobQueue.pending} pending</p>
+              <p className="text-lg font-bold metric-number text-sky-400 mt-1">{backgroundSystems.jobQueue.pending} pending</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {backgroundSystems.jobQueue.running} running · {backgroundSystems.jobQueue.failed} failed · {backgroundSystems.jobQueue.completed24h} completed / 24h
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+            <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Bot Coordination</p>
-              <p className="text-lg font-bold text-cyan-400 mt-1">{backgroundSystems.botCoordination.pending} pending</p>
+              <p className="text-lg font-bold metric-number text-cyan-400 mt-1">{backgroundSystems.botCoordination.pending} pending</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {backgroundSystems.botCoordination.failed} failed · {backgroundSystems.botCoordination.processed24h} processed / 24h
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
+            <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent" />
               <p className="text-xs text-muted-foreground uppercase tracking-wider">OAuth State</p>
-              <p className="text-lg font-bold text-emerald-400 mt-1">{backgroundSystems.oauthState.active} active</p>
+              <p className="text-lg font-bold metric-number text-emerald-400 mt-1">{backgroundSystems.oauthState.active} active</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {backgroundSystems.oauthState.expired} expired tokens awaiting cleanup
               </p>
@@ -423,11 +434,16 @@ export default function PlatformHealth() {
 
       {/* No Platforms State */}
       {!healthData && totalConnected === 0 && (
-        <Card className="border-dashed">
+        <Card className="bento-card">
           <CardContent className="py-16 text-center">
-            <Zap className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground font-medium">No platforms connected</p>
-            <p className="text-xs text-white/30 mt-2 max-w-sm mx-auto">
+            <div className="relative w-16 h-16 mx-auto mb-5">
+              <div className="absolute inset-0 bg-muted-foreground/10 rounded-2xl blur-xl" />
+              <div className="relative h-16 w-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                <Zap className="w-8 h-8 text-muted-foreground/40" />
+              </div>
+            </div>
+            <p className="text-foreground font-semibold">No platforms connected</p>
+            <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto">
               Connect your stores and social accounts in the Integrations page, then run a health check to verify connectivity.
             </p>
           </CardContent>
@@ -436,14 +452,20 @@ export default function PlatformHealth() {
 
       {/* Pre-check state */}
       {!healthData && totalConnected > 0 && (
-        <Card className="border-primary/20 bg-sky-500/[0.06]">
+        <Card className="bento-card relative overflow-hidden border-sky-500/20 bg-sky-500/[0.06]">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
           <CardContent className="py-12 text-center">
-            <Activity className="w-12 h-12 text-primary/50 mx-auto mb-4" />
-            <p className="text-foreground font-medium">Ready to check {totalConnected} connected platform{totalConnected > 1 ? "s" : ""}</p>
+            <div className="relative w-16 h-16 mx-auto mb-5">
+              <div className="absolute inset-0 bg-sky-500/20 rounded-full blur-xl animate-pulse" />
+              <div className="relative h-16 w-16 rounded-2xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center">
+                <Activity className="w-8 h-8 text-sky-400" />
+              </div>
+            </div>
+            <p className="text-foreground font-semibold">Ready to check {totalConnected} connected platform{totalConnected > 1 ? "s" : ""}</p>
             <p className="text-xs text-muted-foreground mt-2 mb-6">
               Click "Run Health Check" to verify all API connections are live and responding.
             </p>
-            <Button onClick={() => checkMutation.mutate()} disabled={checkMutation.isPending} className="gap-2">
+            <Button onClick={() => checkMutation.mutate()} disabled={checkMutation.isPending} className="btn-glow gap-2">
               {checkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               {checkMutation.isPending ? "Running checks..." : "Run Health Check"}
             </Button>
@@ -453,13 +475,14 @@ export default function PlatformHealth() {
 
       {/* Results */}
       {healthData && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="space-y-6 stagger-list">
           {/* E-Commerce Platforms */}
           {healthData.ecommerce.length > 0 && (
-            <Card className="border-zinc-800">
+            <Card className="bento-card relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4" />
+                  <ShoppingBag className="w-4 h-4 text-sky-400" />
                   E-Commerce Platforms ({healthData.ecommerce.length})
                 </CardTitle>
               </CardHeader>
@@ -473,10 +496,11 @@ export default function PlatformHealth() {
 
           {/* Social Platforms */}
           {healthData.social.length > 0 && (
-            <Card className="border-zinc-800">
+            <Card className="bento-card relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-4 h-4 text-amber-400" />
                   Social & Ads Platforms ({healthData.social.length})
                 </CardTitle>
               </CardHeader>
@@ -489,10 +513,11 @@ export default function PlatformHealth() {
           )}
 
           {/* Webhook Status */}
-          <Card className="border-zinc-800">
+          <Card className="bento-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Zap className="w-4 h-4" />
+                <Zap className="w-4 h-4 text-emerald-400" />
                 Webhook Listeners
               </CardTitle>
               <CardDescription className="text-xs">Real-time event listeners for automated bot triggers</CardDescription>

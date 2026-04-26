@@ -280,24 +280,25 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative overflow-hidden page-enter">
       {/* Ghost watermark */}
       <div className="ghost-watermark" aria-hidden="true">CONFIG</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between page-header">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
+            <Settings className="h-5 w-5 text-sky-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Configuration</h1>
+            <p className="micro-label mb-0.5">Administration</p>
+            <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Bot Configuration</h1>
             <p className="text-sm text-muted-foreground">Automation rules, autonomy levels, and bot controls</p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={upsertConfig.isPending}>
+        <Button onClick={handleSave} disabled={upsertConfig.isPending} className="btn-glow">
           {upsertConfig.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin mr-1" />
           ) : (
@@ -308,8 +309,9 @@ export default function ConfigPage() {
       </div>
 
       {/* Info banner: settings are global */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-sky-500/[0.06] border border-primary/20">
-        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-sky-500/[0.06] border border-sky-500/20 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+        <Info className="h-4 w-4 text-sky-400 mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground">
           These settings apply globally to all connected stores. Bots default to{" "}
           <span className="font-semibold text-emerald-400">Fully Autonomous</span> mode for Zero-Touch commerce.
@@ -338,20 +340,23 @@ export default function ConfigPage() {
             const autonomy = getAutonomyState(agent.key);
 
             return (
-              <Card key={agent.key} className="bento-card">
+              <Card key={agent.key} className="bento-card relative overflow-hidden">
+                <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent ${
+                  agent.key === 'architect' ? 'via-sky-400/40' : agent.key === 'merchant' ? 'via-cyan-400/40' : 'via-amber-400/40'
+                } to-transparent`} />
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-lg ${agent.bgColor} flex items-center justify-center`}>
+                      <div className={`h-10 w-10 rounded-xl ${agent.bgColor} border border-white/[0.08] flex items-center justify-center shadow-[0_0_12px_rgba(0,0,0,0.2)]`}>
                         <Icon className={`h-5 w-5 ${agent.color}`} />
                       </div>
                       <div>
-                        <CardTitle className="text-base font-semibold">{agent.name}</CardTitle>
+                        <CardTitle className="text-base font-heading font-semibold">{agent.name}</CardTitle>
                         <CardDescription>{agent.description}</CardDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={enabled.value ? "default" : "secondary"} className="text-xs">
+                      <Badge variant={enabled.value ? "default" : "secondary"} className={`text-xs rounded-full ${enabled.value ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : ""}`}>
                         {enabled.value ? "Active" : "Disabled"}
                       </Badge>
                       <Switch checked={enabled.value} onCheckedChange={enabled.set} />
