@@ -1,3 +1,11 @@
+/**
+ * DashboardLayout — primary chrome around the authenticated app.
+ *
+ * The sidebar is intentionally compact (≈7 destinations) with everything
+ * else folded into tabbed shell pages (Inbox, Storefronts & Channels,
+ * Insights, Settings). Live status comes from `dashboard.agentStatus`,
+ * `approvals.pending`, `connectors.connectionSummary`, and `stores.list`.
+ */
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -6,36 +14,90 @@ import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard,
-  BarChart3,
-  Workflow,
-  Zap,
-  Activity,
+  Inbox as InboxIcon,
   Bot,
   Package,
   Megaphone,
+  GitBranch,
+  Globe,
+  BarChart3,
+  Settings as SettingsIcon,
+  ChevronDown,
+  ChevronRight,
   LogOut,
   Menu,
-  X,
-  Globe,
-  Sliders,
-  HeartPulse,
-  GitBranch,
-  Brain,
+  Zap,
+  Search,
   Store,
-  Truck,
-  MessageSquare,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
+import { useCommandPalette } from "@/components/CommandPalette";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+
+type AgentType = "architect" | "merchant" | "social";
+
+interface NavItem {
+  title: string;
+  path: string;
+  icon: any;
+  badge?: number;
+  /** Live colored dot rendered to the right of the label (e.g. bot status). */
+  dot?: "ok" | "running" | "error" | null;
+  /** Bot brand dot (purely visual). */
+  brand?: "sky" | "cyan" | "amber";
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+}
+
+function statusDotClass(status: NavItem["dot"]): string | null {
+  switch (status) {
+    case "running":
+      return "bg-amber-400 animate-pulse";
+    case "ok":
+      return "bg-emerald-400";
+    case "error":
+      return "bg-red-400 animate-pulse";
+    default:
+      return null;
+  }
+}
+
+function brandDotClass(brand: NavItem["brand"]): string | null {
+  switch (brand) {
+    case "sky":
+      return "bg-sky-400";
+    case "cyan":
+      return "bg-cyan-400";
+    case "amber":
+      return "bg-amber-400";
+    default:
+      return null;
+  }
+}
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [location, setLocation] = useLocation();
-  const navigateTo = (path: string) => setLocation(path);
+  const [location] = useLocation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [botsOpen, setBotsOpen] = useState(true);
+  const { setOpen: setPaletteOpen } = useCommandPalette();
+  const { activeStoreId, setActiveStoreId } = useWorkspace();
 
   const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, {
     enabled: !!user,
@@ -43,42 +105,104 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   });
   const pendingCount = pendingApprovals?.length ?? 0;
 
-  const navGroups = [
+  const { data: agentStatus } = trpc.dashboard.agentStatus.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 15_000,
+  });
+
+  const { data: connSummary } = trpc.connectors.connectionSummary.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  const { data: stores } = trpc.stores.list.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  // Map agent status rows into per-bot dot status.
+  const statusByAgent: Partial<Record<AgentType, NavItem["dot"]>> = {};
+  for (const row of (agentStatus as any[] | undefined) ?? []) {
+    const t = row?.agentType as AgentType | undefined;
+    if (!t) continue;
+    if ((row.failed ?? 0) > 0) statusByAgent[t] = "error";
+    else if ((row.running ?? 0) > 0) statusByAgent[t] = "running";
+    else statusByAgent[t] = "ok";
+  }
+
+  const totalRunning = ((agentStatus as any[]) ?? []).reduce(
+    (a: number, s: any) => a + (s?.running ?? 0),
+    0,
+  );
+
+  const totalConnections =
+    (connSummary?.stores ?? 0) +
+    (connSummary?.socialAccounts ?? 0) +
+    (connSummary?.credentials ?? 0);
+
+  // Active workspace store (for the switcher pill)
+  const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
+
+  const navGroups: NavGroup[] = [
     {
-      label: "Dashboard",
+      label: "Workspace",
       items: [
-        { title: "Command Center", path: "/", icon: LayoutDashboard, badge: 0 },
-        { title: "Activity", path: "/activity", icon: Activity, badge: 0 },
-        { title: "Intelligence", path: "/intelligence", icon: Globe, badge: 0 },
+        { title: "Command Center", path: "/", icon: LayoutDashboard },
+        {
+          title: "Inbox",
+          path: "/inbox",
+          icon: InboxIcon,
+          badge: pendingCount,
+        },
       ],
     },
     {
       label: "Bots",
+      collapsible: true,
+      defaultOpen: true,
       items: [
-        { title: "Builder Bot", path: "/architect", icon: Bot, badge: 0 },
-        { title: "Merchant Bot", path: "/merchant", icon: Package, badge: 0 },
-        { title: "Social Bot", path: "/social", icon: Megaphone, badge: 0 },
-        { title: "Bot Chat", path: "/chat", icon: MessageSquare, badge: 0 },
+        {
+          title: "Builder",
+          path: "/architect",
+          icon: Bot,
+          brand: "sky",
+          dot: statusByAgent.architect ?? "ok",
+        },
+        {
+          title: "Merchant",
+          path: "/merchant",
+          icon: Package,
+          brand: "cyan",
+          dot: statusByAgent.merchant ?? "ok",
+        },
+        {
+          title: "Social",
+          path: "/social",
+          icon: Megaphone,
+          brand: "amber",
+          dot: statusByAgent.social ?? "ok",
+        },
       ],
     },
     {
-      label: "Operations",
+      label: "Operate",
       items: [
-        { title: "Workflows", path: "/workflows", icon: GitBranch, badge: 0 },
-        { title: "Approvals", path: "/approvals", icon: ShieldCheck, badge: pendingCount },
-        { title: "Integrations", path: "/integrations", icon: Zap, badge: 0 },
-        { title: "Analytics", path: "/analytics", icon: BarChart3, badge: 0 },
-        { title: "Platform Health", path: "/health", icon: HeartPulse, badge: 0 },
-        { title: "Bot Settings", path: "/bot-settings", icon: Sliders, badge: 0 },
+        {
+          title: "Workflows",
+          path: "/workflows",
+          icon: GitBranch,
+          badge: totalRunning,
+        },
+        {
+          title: "Storefronts & Channels",
+          path: "/storefronts",
+          icon: Globe,
+          badge: totalConnections > 0 ? 0 : 0,
+        },
+        { title: "Insights", path: "/insights", icon: BarChart3 },
       ],
     },
     {
-      label: "Tools",
-      items: [
-        { title: "Plugin Store", path: "/plugins", icon: Store, badge: 0 },
-        { title: "Prompt Lab", path: "/prompt-lab", icon: Brain, badge: 0 },
-        { title: "Supplier POs", path: "/supplier", icon: Truck, badge: 0 },
-      ],
+      label: "Account",
+      items: [{ title: "Settings", path: "/settings", icon: SettingsIcon }],
     },
   ];
 
@@ -86,58 +210,182 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     window.location.href = getLoginUrl() + "?action=logout";
   };
 
+  // Determine which top-level path is "active" so legacy deep links also
+  // highlight the consolidated entry point (e.g. /activity → Inbox).
+  const activePathFor = (path: string): boolean => {
+    if (path === "/") return location === "/";
+    if (path === "/inbox") {
+      return (
+        location.startsWith("/inbox") ||
+        location.startsWith("/activity") ||
+        location.startsWith("/approvals")
+      );
+    }
+    if (path === "/storefronts") {
+      return (
+        location.startsWith("/storefronts") ||
+        location.startsWith("/integrations") ||
+        location.startsWith("/plugins") ||
+        location.startsWith("/supplier")
+      );
+    }
+    if (path === "/insights") {
+      return (
+        location.startsWith("/insights") ||
+        location.startsWith("/analytics") ||
+        location.startsWith("/intelligence")
+      );
+    }
+    if (path === "/settings") {
+      return (
+        location.startsWith("/settings") ||
+        location.startsWith("/profile") ||
+        location.startsWith("/bot-settings") ||
+        location.startsWith("/health")
+      );
+    }
+    return location === path || location.startsWith(path + "/");
+  };
+
+  const renderNavItem = (item: NavItem) => {
+    const isActive = activePathFor(item.path);
+    const dotCls = statusDotClass(item.dot);
+    const brandCls = brandDotClass(item.brand);
+    return (
+      <Link
+        key={item.title}
+        href={item.path}
+        onClick={() => isMobile && setMobileMenuOpen(false)}
+        className={`flex items-center h-9 px-3 rounded-lg transition-all duration-200 group relative ${
+          isActive
+            ? "bg-sky-500/10 text-sky-300 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
+            : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+        }`}
+      >
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gradient-to-b from-sky-400 to-cyan-500 rounded-full" />
+        )}
+        <item.icon
+          className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
+            isActive ? "text-sky-400" : "opacity-40 group-hover:opacity-70"
+          }`}
+        />
+        <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
+          {item.title}
+        </span>
+        {brandCls && (
+          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} />
+        )}
+        {dotCls && (
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0 ${brandCls ? "ml-0" : "ml-0"}`}
+            aria-label={`status ${item.dot}`}
+          />
+        )}
+        {item.badge && item.badge > 0 ? (
+          <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+            {item.badge > 99 ? "99+" : item.badge}
+          </span>
+        ) : null}
+      </Link>
+    );
+  };
+
   const NavContent = () => (
-    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3">
-      {navGroups.map((group, i) => (
-        <div key={i} className="mb-6">
-          <div className="px-2 mb-2.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/20">
-              {group.label}
-            </span>
-            <div className="h-px mt-1.5 bg-gradient-to-r from-white/8 to-transparent" />
-          </div>
-          <div className="space-y-0.5">
-            {group.items.map((item) => {
-              const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
-              const botDot = item.path === "/architect" ? "bg-sky-400" : item.path === "/merchant" ? "bg-cyan-400" : item.path === "/social" ? "bg-amber-400" : null;
-              return (
-                <Link
-                  key={item.title}
-                  href={item.path}
-                  onClick={() => isMobile && setMobileMenuOpen(false)}
-                  className={`flex items-center h-9 px-3 rounded-lg transition-all duration-200 group relative ${
-                    isActive
-                      ? "bg-sky-500/10 text-sky-300 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
-                      : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
-                  }`}
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3">
+      {/* Workspace switcher */}
+      {stores && stores.length > 0 && (
+        <div className="mb-3 px-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.1] transition-all"
+                data-testid="workspace-switcher"
+              >
+                <Store className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span className="text-xs font-semibold text-white/85 truncate flex-1 text-left">
+                  {activeStore?.name ?? "All stores"}
+                </span>
+                <ChevronDown className="w-3 h-3 text-white/30 shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 bg-[#0a0a0f] border-white/10">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">
+                Workspace
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                onSelect={() => setActiveStoreId(null)}
+                className={!activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
+              >
+                <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {stores.map((s: any) => (
+                <DropdownMenuItem
+                  key={s.id}
+                  onSelect={() => setActiveStoreId(s.id)}
+                  className={s.id === activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
                 >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gradient-to-b from-sky-400 to-cyan-500 rounded-full" />
-                  )}
-                  <item.icon className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
-                    isActive ? "text-sky-400" : "opacity-40 group-hover:opacity-70"
-                  }`} />
-                  <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>{item.title}</span>
-                  {botDot && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${botDot} opacity-70 shrink-0 mr-1`} />
-                  )}
-                  {item.badge > 0 && (
-                    <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+                  <Store className="w-3.5 h-3.5 mr-2 opacity-70" />
+                  <span className="truncate">{s.name}</span>
+                  <span className="ml-auto text-[10px] text-white/30 uppercase">{s.platform}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      ))}
+      )}
+
+      {/* Command palette trigger */}
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        className="w-full mb-4 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.1] transition-all text-left"
+        data-testid="command-palette-trigger"
+      >
+        <Search className="w-3.5 h-3.5 text-white/40 shrink-0" />
+        <span className="text-xs text-white/40 truncate flex-1">Search & run…</span>
+        <kbd className="text-[9px] text-white/30 font-mono px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">
+          ⌘K
+        </kbd>
+      </button>
+
+      {navGroups.map((group, i) => {
+        const open = group.collapsible ? botsOpen : true;
+        return (
+          <div key={i} className="mb-5">
+            <div className="px-2 mb-2">
+              {group.collapsible ? (
+                <button
+                  type="button"
+                  onClick={() => setBotsOpen((o) => !o)}
+                  className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-white/20 hover:text-white/45 transition-colors"
+                >
+                  <span>{group.label}</span>
+                  {open ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" />
+                  )}
+                </button>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/20">
+                  {group.label}
+                </span>
+              )}
+              <div className="h-px mt-1.5 bg-gradient-to-r from-white/8 to-transparent" />
+            </div>
+            {open && <div className="space-y-0.5">{group.items.map(renderNavItem)}</div>}
+          </div>
+        );
+      })}
     </nav>
   );
 
   const SidebarFooter = () => (
     <div className="border-t border-white/[0.05] p-3">
-      <Link href="/profile" onClick={() => isMobile && setMobileMenuOpen(false)}>
+      <Link href="/settings" onClick={() => isMobile && setMobileMenuOpen(false)}>
         <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/20 transition-all cursor-pointer group">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:shadow-[0_0_14px_rgba(14,165,233,0.5)] transition-shadow">
             <span className="text-xs font-bold text-white">
@@ -206,7 +454,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
         {/* Header */}
-        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5">
+        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5" aria-label={BRAND_NAME}>
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.35)]">
             <Zap className="w-3.5 h-3.5 text-white" />
           </div>
