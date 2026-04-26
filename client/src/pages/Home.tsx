@@ -1,295 +1,449 @@
 /**
- * Command Center — Live system topology canvas with inspector panel
- * ReactFlow-based visualization of the SHOPaBOT infrastructure
+ * Home.tsx — Personalized Command Center.
+ *
+ * This is the user's actual operation, not the product's plumbing:
+ *   • A KPI strip at the top with live numbers from THEIR stores.
+ *   • A radial graph centered on the user, with rings for storefronts,
+ *     bots, and channels — all generated from real data
+ *     (`stores.list`, `connectors.connectionSummary`,
+ *     `connectors.listSocialAccounts`, `dashboard.agentStatus`).
+ *   • An empty-state "build your operation" canvas with ghost nodes
+ *     when nothing is connected yet.
+ *   • Click a node to inspect it; click "Chat with this bot" or
+ *     "Open store dashboard" to drill in.
+ *
+ * The TiDB / BullMQ / Sharp / tRPC infra topology that used to live
+ * here was moved to Platform Health (operator concern).
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useLocation } from "wouter";
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   Edge,
+  Handle,
+  MiniMap,
   Node,
-  useNodesState,
-  useEdgesState,
   Position,
   ConnectionLineType,
-  Handle,
+  useEdgesState,
+  useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
-  Loader2, Database, Zap, Bot, Activity, Box,
-  ShoppingCart, Globe, Workflow, Package, Megaphone,
-  Server, TrendingUp, Layers, Cpu, CheckCircle2, AlertCircle, RefreshCw
+  Bot, Package, Megaphone, Store, ShoppingCart, Globe,
+  Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
+  CheckCircle2, Clock, Zap, TrendingUp, ShieldCheck, Loader2,
+  GitBranch,
 } from "lucide-react";
 
-// ─── Node Types ────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
-const NODE_COLORS: Record<string, { border: string; glow: string; dot: string; text: string }> = {
-  ok:      { border: "border-emerald-500/40", glow: "shadow-[0_0_12px_rgba(16,185,129,0.15)]", dot: "bg-emerald-400", text: "text-emerald-400" },
-  active:  { border: "border-amber-500/40",   glow: "shadow-[0_0_12px_rgba(245,158,11,0.15)]",  dot: "bg-amber-400",  text: "text-amber-400" },
-  error:   { border: "border-red-500/40",     glow: "shadow-[0_0_12px_rgba(239,68,68,0.15)]",   dot: "bg-red-400",    text: "text-red-400" },
-  idle:    { border: "border-white/10",       glow: "",                                           dot: "bg-white/20",   text: "text-white/40" },
+type AgentType = "architect" | "merchant" | "social";
+
+type NodeKind =
+  | "user"
+  | "store"
+  | "bot"
+  | "channel"
+  | "ghost-store"
+  | "ghost-bot"
+  | "ghost-channel";
+
+interface OperationNodeData {
+  kind: NodeKind;
+  label: string;
+  sublabel?: string;
+  status?: "ok" | "running" | "error" | "idle";
+  icon: React.ReactNode;
+  /** Action target when the user clicks the inspector primary button. */
+  href?: string;
+  /** Refers to the `id` of the underlying entity (storeId, agentType, etc). */
+  entityId?: string | number;
+  /** Optional extra payload shown in the inspector. */
+  details?: Record<string, string | number>;
+  selected?: boolean;
+}
+
+// ─── Node renderer ─────────────────────────────────────────────────────────────
+
+const KIND_THEME: Record<
+  NodeKind,
+  { border: string; bg: string; text: string; iconBg: string }
+> = {
+  user:           { border: "border-sky-400/50",     bg: "bg-sky-500/10",         text: "text-sky-300",     iconBg: "bg-sky-500/20 border-sky-500/40" },
+  store:          { border: "border-emerald-500/40", bg: "bg-emerald-500/[0.06]", text: "text-emerald-300", iconBg: "bg-emerald-500/15 border-emerald-500/30" },
+  bot:            { border: "border-violet-500/40",  bg: "bg-violet-500/[0.05]",  text: "text-violet-300",  iconBg: "bg-violet-500/15 border-violet-500/30" },
+  channel:        { border: "border-pink-500/40",    bg: "bg-pink-500/[0.05]",    text: "text-pink-300",    iconBg: "bg-pink-500/15 border-pink-500/30" },
+  "ghost-store":  { border: "border-white/15 border-dashed", bg: "bg-white/[0.02]", text: "text-white/45",   iconBg: "bg-white/[0.04] border-white/[0.1]" },
+  "ghost-bot":    { border: "border-white/15 border-dashed", bg: "bg-white/[0.02]", text: "text-white/45",   iconBg: "bg-white/[0.04] border-white/[0.1]" },
+  "ghost-channel":{ border: "border-white/15 border-dashed", bg: "bg-white/[0.02]", text: "text-white/45",   iconBg: "bg-white/[0.04] border-white/[0.1]" },
 };
 
-const CustomNode = ({ data, isConnectable }: any) => {
-  const colors = NODE_COLORS[data.status] ?? NODE_COLORS.idle;
+const STATUS_DOT: Record<NonNullable<OperationNodeData["status"]>, string> = {
+  ok:      "bg-emerald-400",
+  running: "bg-amber-400 animate-pulse",
+  error:   "bg-red-400 animate-pulse",
+  idle:    "bg-white/30",
+};
+
+function OperationNode({ data, isConnectable }: { data: OperationNodeData; isConnectable?: boolean }) {
+  const theme = KIND_THEME[data.kind];
+  const isUser = data.kind === "user";
   return (
-    <div className={`
-      relative px-4 py-3 rounded-xl border bg-[#0a0b0f]/90 backdrop-blur-sm
-      min-w-[200px] flex items-center gap-3
-      transition-all duration-300 cursor-pointer
-      ${data.selected ? "border-sky-400/60 shadow-[0_0_20px_rgba(14,165,233,0.25)]" : `${colors.border} ${colors.glow}`}
-    `}>
+    <div
+      className={`
+        relative px-3.5 py-2.5 rounded-xl border backdrop-blur-sm transition-all duration-300 cursor-pointer
+        ${isUser ? "min-w-[220px]" : "min-w-[200px]"}
+        ${data.selected ? "border-sky-400/80 bg-sky-500/15 shadow-[0_0_24px_rgba(14,165,233,0.3)]" : `${theme.border} ${theme.bg}`}
+      `}
+    >
       <Handle type="target" position={Position.Left} isConnectable={isConnectable}
         style={{ background: "transparent", border: "none", width: 8, height: 8 }} />
-
-      {/* Icon */}
-      <div className={`
-        w-9 h-9 rounded-lg flex items-center justify-center shrink-0
-        ${data.selected ? "bg-sky-500/15 border border-sky-500/30" : "bg-white/[0.04] border border-white/[0.08]"}
-      `}>
-        {data.icon}
+      <div className="flex items-center gap-3">
+        <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${theme.iconBg}`}>
+          {data.icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${theme.text} mb-0.5 truncate`}>
+            {data.label}
+          </p>
+          {data.sublabel && (
+            <p className="text-[10px] font-mono text-white/55 truncate">{data.sublabel}</p>
+          )}
+        </div>
+        {data.status && (
+          <span
+            className={`shrink-0 w-1.5 h-1.5 rounded-full ${STATUS_DOT[data.status]}`}
+            aria-label={`status ${data.status}`}
+          />
+        )}
       </div>
-
-      {/* Content */}
-      <div className="flex flex-col min-w-0 flex-1">
-        <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/30 mb-0.5">
-          {data.label}
-        </span>
-        <span className={`text-xs font-semibold font-mono truncate ${data.selected ? "text-sky-300" : colors.text}`}>
-          {data.value || "STANDBY"}
-        </span>
-      </div>
-
-      {/* Status dot */}
-      <div className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full ${colors.dot} ${data.status === "active" || data.status === "ok" ? "animate-pulse" : ""}`} />
-
       <Handle type="source" position={Position.Right} isConnectable={isConnectable}
         style={{ background: "transparent", border: "none", width: 8, height: 8 }} />
     </div>
   );
+}
+
+const nodeTypes = { op: OperationNode };
+
+// ─── Geometry ─────────────────────────────────────────────────────────────────
+
+function radialPosition(index: number, count: number, radius: number, originX = 600, originY = 320, startAngleDeg = -90) {
+  const angle = ((startAngleDeg + (index * 360) / Math.max(count, 1)) * Math.PI) / 180;
+  return { x: originX + radius * Math.cos(angle), y: originY + radius * Math.sin(angle) };
+}
+
+const PLATFORM_LABEL: Record<string, string> = {
+  shopify: "Shopify", woocommerce: "WooCommerce", amazon: "Amazon", etsy: "Etsy",
+  ebay: "eBay", tiktok_shop: "TikTok Shop", walmart: "Walmart",
+  meta: "Meta", instagram: "Instagram", tiktok: "TikTok", twitter: "X",
+  pinterest: "Pinterest", google_ads: "Google Ads", gmail: "Gmail",
 };
 
-const nodeTypes = { custom: CustomNode };
-
-// ─── Edge Styles ───────────────────────────────────────────────────────────────
-
-const EDGE_STYLES = {
-  active:  { stroke: "#f59e0b", strokeWidth: 1.5, strokeDasharray: "6 3" },
-  ok:      { stroke: "#10b981", strokeWidth: 1.5 },
-  cyan:    { stroke: "#0ea5e9", strokeWidth: 1.5, strokeDasharray: "6 3" },
-  muted:   { stroke: "rgba(255,255,255,0.08)", strokeWidth: 1.5 },
+const BOT_META: Record<AgentType, { label: string; href: string; icon: React.ReactNode; description: string }> = {
+  architect: { label: "Builder Bot",  href: "/architect", icon: <Bot className="w-4 h-4 text-sky-300" />,    description: "Niche research & store scaffolding" },
+  merchant:  { label: "Merchant Bot", href: "/merchant",  icon: <Package className="w-4 h-4 text-violet-300" />, description: "Inventory, pricing & fulfilment" },
+  social:    { label: "Social Bot",   href: "/social",    icon: <Megaphone className="w-4 h-4 text-amber-300" />, description: "Ads, posts & campaigns" },
 };
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const { user } = useAuth();
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const { activeStoreId } = useWorkspace();
+  const [, setLocation] = useLocation();
+  const [selected, setSelected] = useState<Node<OperationNodeData> | null>(null);
 
-  const {
-    data: metrics,
-    isLoading: metricsLoading,
-    error: metricsError,
-    refetch: refetchMetrics,
-  } = trpc.dashboard.metrics.useQuery({}, { refetchInterval: 30000 });
+  // Live data
+  const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
   const {
     data: agentStatus,
     error: agentError,
     refetch: refetchAgentStatus,
-  } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15000 });
-  const { data: recentActivity } = trpc.dashboard.recentActivity.useQuery({ limit: 10 }, { refetchInterval: 20000 });
-  const { data: connSummary } = trpc.connectors.connectionSummary.useQuery();
-  const { data: intel } = trpc.dashboard.crossStoreIntelligence.useQuery();
-  const { data: stores } = trpc.stores.list.useQuery();
+  } = trpc.dashboard.agentStatus.useQuery(undefined, { refetchInterval: 15_000 });
+  const { data: socialAccounts } = trpc.connectors.listSocialAccounts.useQuery();
+  const {
+    data: metrics,
+    error: metricsError,
+    refetch: refetchMetrics,
+  } = trpc.dashboard.metrics.useQuery(
+    activeStoreId ? { storeId: activeStoreId } : {},
+    { refetchInterval: 30_000 },
+  );
+  const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, { refetchInterval: 30_000 });
+  const { data: intel } = trpc.dashboard.crossStoreIntelligence.useQuery(undefined, { refetchInterval: 60_000 });
 
-  const totalRunning = (agentStatus as any[])?.reduce((a: number, s: any) => a + (s.running || 0), 0) || 0;
-  const totalCompleted = (agentStatus as any[])?.reduce((a: number, s: any) => a + (s.completed || 0), 0) || 0;
-  const totalConnected = (connSummary?.stores || 0) + (connSummary?.socialAccounts || 0);
-  const revenue = ((metrics?.totalRevenue ?? 0) / 100).toFixed(2);
+  // Derive bot status
+  const botStatusFor = (t: AgentType): NonNullable<OperationNodeData["status"]> => {
+    const row = ((agentStatus as any[]) ?? []).find((r) => r?.agentType === t);
+    if (!row) return "idle";
+    if ((row.failed ?? 0) > 0) return "error";
+    if ((row.running ?? 0) > 0) return "running";
+    return "ok";
+  };
 
-  const buildNodes = useCallback((): Node[] => [
-    {
-      id: "db",
-      type: "custom",
-      position: { x: 40, y: 320 },
-      data: {
-        label: "TiDB / Drizzle",
-        value: "ONLINE",
-        icon: <Database className="w-4 h-4 text-emerald-400" />,
-        status: "ok",
-        details: { Region: "AWS us-east-1", Pool: "Active", "Schema Version": "v14" }
-      }
-    },
-    {
-      id: "workflows",
-      type: "custom",
-      position: { x: 360, y: 120 },
-      data: {
-        label: "Workflow Engine",
-        value: totalRunning > 0 ? `${totalRunning} RUNNING` : "IDLE",
-        icon: <Workflow className="w-4 h-4 text-amber-400" />,
-        status: totalRunning > 0 ? "active" : "ok",
-        details: { "Active Tasks": totalRunning, "Completed": totalCompleted, "Engine": "State Machine v2" }
-      }
-    },
-    {
-      id: "queue",
-      type: "custom",
-      position: { x: 720, y: 120 },
-      data: {
-        label: "BullMQ Queue",
-        value: "PROCESSING",
-        icon: <Layers className="w-4 h-4 text-violet-400" />,
-        status: "active",
-        details: { "Retry Logic": "Exponential Backoff", "Max Attempts": 5, "Dead Letter": "Enabled" }
-      }
-    },
-    {
-      id: "connectors",
-      type: "custom",
-      position: { x: 360, y: 320 },
-      data: {
-        label: "Integrations",
-        value: `${totalConnected} LINKED`,
-        icon: <Globe className="w-4 h-4 text-sky-400" />,
-        status: totalConnected > 0 ? "ok" : "idle",
-        details: { "Stores": connSummary?.stores || 0, "Social Accounts": connSummary?.socialAccounts || 0, "Adapters": 13 }
-      }
-    },
-    {
-      id: "revenue",
-      type: "custom",
-      position: { x: 360, y: 520 },
-      data: {
-        label: "Revenue Stream",
-        value: `$${revenue}`,
-        icon: <TrendingUp className="w-4 h-4 text-emerald-400" />,
-        status: "ok",
-        details: { "Total Orders": metrics?.totalOrders || 0, "Active Products": metrics?.activeProducts || 0, "Stores": stores?.length || 0 }
-      }
-    },
-    {
-      id: "builder",
-      type: "custom",
-      position: { x: 720, y: 320 },
-      data: {
-        label: "Builder Bot",
-        value: "AUTONOMOUS",
-        icon: <Bot className="w-4 h-4 text-cyan-400" />,
-        status: "active",
-        details: { Role: "Architect", Workflows: "Niche Research, Product Sourcing, Store Setup", Status: "Listening" }
-      }
-    },
-    {
-      id: "merchant",
-      type: "custom",
-      position: { x: 720, y: 440 },
-      data: {
-        label: "Merchant Bot",
-        value: "AUTONOMOUS",
-        icon: <Package className="w-4 h-4 text-violet-400" />,
-        status: "active",
-        details: { Role: "Merchant", Workflows: "Fulfillment, Inventory Sync, Pricing", Status: "Listening" }
-      }
-    },
-    {
-      id: "social",
-      type: "custom",
-      position: { x: 720, y: 560 },
-      data: {
-        label: "Social Bot",
-        value: "AUTONOMOUS",
-        icon: <Megaphone className="w-4 h-4 text-pink-400" />,
-        status: "active",
-        details: { Role: "Social", Workflows: "Ad Campaigns, Social Posts, Email Recovery", Status: "Listening" }
-      }
-    },
-    {
-      id: "sharp",
-      type: "custom",
-      position: { x: 1060, y: 120 },
-      data: {
-        label: "Image Pipeline",
-        value: "SHARP ACTIVE",
-        icon: <Zap className="w-4 h-4 text-yellow-400" />,
-        status: "ok",
-        details: { Format: "WebP / AVIF", Quality: 80, Transforms: "Resize, Crop, Optimize" }
-      }
-    },
-    {
-      id: "server",
-      type: "custom",
-      position: { x: 1060, y: 320 },
-      data: {
-        label: "tRPC Server",
-        value: "SERVING",
-        icon: <Server className="w-4 h-4 text-white/50" />,
-        status: "ok",
-        details: { Framework: "Express 4 + tRPC 11", Auth: "Manus OAuth", "Rate Limit": "120 req/min" }
-      }
-    },
-  ], [totalRunning, totalCompleted, totalConnected, connSummary, revenue, metrics, stores]);
+  const totalRunning = ((agentStatus as any[]) ?? []).reduce(
+    (a: number, s: any) => a + (s?.running ?? 0), 0,
+  );
+  const pendingCount = pendingApprovals?.length ?? 0;
+  const enabledBots: AgentType[] = ["architect", "merchant", "social"];
 
-  const buildEdges = (): Edge[] => [
-    { id: "e-db-wf",   source: "db",        target: "workflows", animated: true,  style: EDGE_STYLES.active },
-    { id: "e-db-conn", source: "db",        target: "connectors", type: "step",   style: EDGE_STYLES.muted },
-    { id: "e-db-rev",  source: "db",        target: "revenue",   type: "step",    style: EDGE_STYLES.muted },
-    { id: "e-wf-q",    source: "workflows", target: "queue",     animated: true,  style: EDGE_STYLES.cyan },
-    { id: "e-q-sharp", source: "queue",     target: "sharp",     animated: true,  style: EDGE_STYLES.ok },
-    { id: "e-conn-b",  source: "connectors",target: "builder",   animated: true,  style: EDGE_STYLES.cyan },
-    { id: "e-conn-m",  source: "connectors",target: "merchant",  type: "step",    style: EDGE_STYLES.muted },
-    { id: "e-conn-s",  source: "connectors",target: "social",    type: "step",    style: EDGE_STYLES.muted },
-    { id: "e-b-srv",   source: "builder",   target: "server",    type: "step",    style: EDGE_STYLES.muted },
-    { id: "e-q-srv",   source: "queue",     target: "server",    type: "step",    style: EDGE_STYLES.muted },
-  ];
+  // Bot health summary string
+  const botHealth = (() => {
+    const errors = enabledBots.filter((b) => botStatusFor(b) === "error").length;
+    if (errors > 0) return { tone: "warn" as const, text: `${errors} bot${errors > 1 ? "s" : ""} need attention` };
+    const running = enabledBots.filter((b) => botStatusFor(b) === "running").length;
+    if (running > 0) return { tone: "active" as const, text: `${running} running, all healthy` };
+    return { tone: "ok" as const, text: `${enabledBots.length} bots green` };
+  })();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(buildNodes());
-  const [edges, , onEdgesChange] = useEdgesState(buildEdges());
+  // Build nodes/edges from data
+  const { initialNodes, initialEdges } = useMemo(() => {
+    const ns: Node<OperationNodeData>[] = [];
+    const es: Edge[] = [];
 
-  useEffect(() => {
-    setNodes(buildNodes());
-  }, [metrics, agentStatus, connSummary, stores]);
+    const center = { x: 600, y: 320 };
 
-  const onNodeClick = useCallback((_: any, node: any) => {
-    setSelectedNode(node);
-    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, selected: n.id === node.id } })));
+    // Center: user / workspace
+    ns.push({
+      id: "user",
+      type: "op",
+      position: { x: center.x - 110, y: center.y - 26 },
+      draggable: false,
+      data: {
+        kind: "user",
+        label: "You",
+        sublabel: user?.name ?? "Your workspace",
+        icon: <Sparkles className="w-4 h-4 text-sky-300" />,
+        details: {
+          "Active stores": (stores ?? []).filter((s: any) => s.status === "active").length,
+          "Pending approvals": pendingCount,
+        },
+      },
+    });
+
+    // Ring 1: storefronts (radius ~260, top half)
+    const storeList = (stores ?? []).filter((s: any) => s);
+    const hasStores = storeList.length > 0;
+    if (!hasStores) {
+      const pos = radialPosition(0, 1, 280, center.x, center.y, -90);
+      ns.push({
+        id: "ghost-store",
+        type: "op",
+        position: { x: pos.x - 100, y: pos.y - 26 },
+        draggable: false,
+        data: {
+          kind: "ghost-store",
+          label: "Connect a store",
+          sublabel: "Shopify, Etsy, Amazon…",
+          icon: <Plus className="w-4 h-4 text-white/45" />,
+          href: "/storefronts",
+        },
+      });
+      es.push({
+        id: "e-user-ghoststore",
+        source: "user",
+        target: "ghost-store",
+        style: { stroke: "rgba(255,255,255,0.18)", strokeDasharray: "4 4", strokeWidth: 1.2 },
+      });
+    } else {
+      // place stores in upper arc (-150 .. -30 deg)
+      storeList.forEach((s: any, i: number) => {
+        const arcStart = -150;
+        const arcEnd = -30;
+        const t = storeList.length === 1 ? 0.5 : i / (storeList.length - 1);
+        const angle = arcStart + (arcEnd - arcStart) * t;
+        const rad = (angle * Math.PI) / 180;
+        const r = 280;
+        const x = center.x + r * Math.cos(rad);
+        const y = center.y + r * Math.sin(rad);
+        const id = `store-${s.id}`;
+        const isActive = s.status === "active";
+        const storeMetrics = (intel as any)?.storeMetrics?.find?.((m: any) => m.storeId === s.id);
+        ns.push({
+          id,
+          type: "op",
+          position: { x: x - 100, y: y - 26 },
+          draggable: false,
+          data: {
+            kind: "store",
+            label: s.name,
+            sublabel: `${PLATFORM_LABEL[s.platform] ?? s.platform}${storeMetrics ? ` · $${((storeMetrics.revenue ?? 0) / 100).toFixed(0)}` : ""}`,
+            status: isActive ? "ok" : "idle",
+            icon: <Store className="w-4 h-4 text-emerald-300" />,
+            href: `/stores/${s.id}`,
+            entityId: s.id,
+            details: {
+              Platform: PLATFORM_LABEL[s.platform] ?? s.platform,
+              Status: s.status,
+              Revenue: storeMetrics ? `$${((storeMetrics.revenue ?? 0) / 100).toFixed(2)}` : "—",
+              Orders: storeMetrics?.orders ?? 0,
+              "Low stock": storeMetrics?.lowStockCount ?? 0,
+            },
+          },
+        });
+        es.push({
+          id: `e-user-${id}`,
+          source: "user",
+          target: id,
+          animated: isActive,
+          style: { stroke: isActive ? "rgba(16,185,129,0.45)" : "rgba(255,255,255,0.12)", strokeWidth: 1.4 },
+        });
+      });
+    }
+
+    // Ring 2: bots (right side, vertical column at radius ~260)
+    enabledBots.forEach((bot, i) => {
+      const meta = BOT_META[bot];
+      const status = botStatusFor(bot);
+      const x = center.x + 320;
+      const y = center.y - 110 + i * 110;
+      const id = `bot-${bot}`;
+      ns.push({
+        id,
+        type: "op",
+        position: { x: x - 100, y: y - 26 },
+        draggable: false,
+        data: {
+          kind: "bot",
+          label: meta.label,
+          sublabel: meta.description,
+          status,
+          icon: meta.icon,
+          href: meta.href,
+          entityId: bot,
+          details: {
+            Status: status,
+            "Running tasks": ((agentStatus as any[]) ?? []).find((r) => r?.agentType === bot)?.running ?? 0,
+            Completed: ((agentStatus as any[]) ?? []).find((r) => r?.agentType === bot)?.completed ?? 0,
+          },
+        },
+      });
+      // Connect bot to user, and (if active stores exist) to each store as
+      // dotted edges to indicate "this bot acts on these stores".
+      es.push({
+        id: `e-user-${id}`,
+        source: "user",
+        target: id,
+        animated: status === "running",
+        style: { stroke: status === "running" ? "rgba(245,158,11,0.55)" : "rgba(168,85,247,0.35)", strokeWidth: 1.4 },
+      });
+      storeList.forEach((s: any) => {
+        if (s.status !== "active") return;
+        es.push({
+          id: `e-${id}-store-${s.id}`,
+          source: id,
+          target: `store-${s.id}`,
+          animated: status === "running",
+          style: {
+            stroke: status === "running" ? "rgba(245,158,11,0.35)" : "rgba(168,85,247,0.18)",
+            strokeWidth: 1,
+            strokeDasharray: "4 3",
+          },
+        });
+      });
+    });
+
+    // Ring 3: channels (social accounts) — bottom arc
+    const channels = (socialAccounts ?? []).filter((a: any) => a?.status === "active");
+    if (channels.length === 0) {
+      const pos = radialPosition(0, 1, 280, center.x, center.y, 90);
+      ns.push({
+        id: "ghost-channel",
+        type: "op",
+        position: { x: pos.x - 100, y: pos.y - 26 },
+        draggable: false,
+        data: {
+          kind: "ghost-channel",
+          label: "Add a channel",
+          sublabel: "TikTok, Meta, Pinterest…",
+          icon: <Plus className="w-4 h-4 text-white/45" />,
+          href: "/storefronts",
+        },
+      });
+      es.push({
+        id: "e-user-ghostchannel",
+        source: "user",
+        target: "ghost-channel",
+        style: { stroke: "rgba(255,255,255,0.18)", strokeDasharray: "4 4", strokeWidth: 1.2 },
+      });
+    } else {
+      channels.forEach((c: any, i: number) => {
+        const arcStart = 30;
+        const arcEnd = 150;
+        const t = channels.length === 1 ? 0.5 : i / (channels.length - 1);
+        const angle = arcStart + (arcEnd - arcStart) * t;
+        const rad = (angle * Math.PI) / 180;
+        const r = 280;
+        const x = center.x + r * Math.cos(rad);
+        const y = center.y + r * Math.sin(rad);
+        const id = `channel-${c.id}`;
+        ns.push({
+          id,
+          type: "op",
+          position: { x: x - 100, y: y - 26 },
+          draggable: false,
+          data: {
+            kind: "channel",
+            label: c.accountName ?? PLATFORM_LABEL[c.platform] ?? c.platform,
+            sublabel: PLATFORM_LABEL[c.platform] ?? c.platform,
+            status: "ok",
+            icon: <Megaphone className="w-4 h-4 text-pink-300" />,
+            href: "/social",
+            entityId: c.id,
+            details: {
+              Platform: PLATFORM_LABEL[c.platform] ?? c.platform,
+              Status: c.status,
+            },
+          },
+        });
+        // Channel sits "downstream" of Social bot
+        es.push({
+          id: `e-bot-social-${id}`,
+          source: "bot-social",
+          target: id,
+          animated: false,
+          style: { stroke: "rgba(236,72,153,0.35)", strokeWidth: 1, strokeDasharray: "4 3" },
+        });
+      });
+    }
+
+    return { initialNodes: ns, initialEdges: es };
+  }, [stores, agentStatus, socialAccounts, intel, user, pendingCount]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+
+  // Re-sync nodes/edges when data changes
+  useMemo(() => {
+    setNodes(initialNodes);
+    // biome-ignore lint: edges intentionally controlled via initialEdges
+  }, [initialNodes, setNodes]);
+
+  const onNodeClick = useCallback((_: any, node: Node<OperationNodeData>) => {
+    setSelected(node);
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, data: { ...n.data, selected: n.id === node.id } })),
+    );
   }, [setNodes]);
 
   const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
+    setSelected(null);
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, selected: false } })));
   }, [setNodes]);
 
-  if (metricsError || agentError) {
-    return (
-      <div className="page-enter flex h-full w-full items-center justify-center bg-[#050505]">
-        <div className="text-center rounded-2xl border border-red-500/20 bg-red-500/[0.03] px-8 py-7 shadow-[0_0_40px_rgba(239,68,68,0.08)]">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/25 bg-red-500/10">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-red-400 mb-2">Dashboard Error</p>
-          <p className="mx-auto max-w-sm text-[11px] leading-relaxed text-white/35">
-            {(metricsError || agentError)?.message || "Failed to load dashboard data"}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              void refetchMetrics();
-              void refetchAgentStatus();
-            }}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/60 transition-all hover:border-sky-500/30 hover:bg-sky-500/10 hover:text-sky-300"
-          >
-            <RefreshCw className="h-3 w-3" />
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
+  const todayOrders = (metrics?.totalOrders ?? 0) as number;
+  const recommendation = (intel as any)?.totalLowStock > 0
+    ? `${(intel as any).totalLowStock} SKU${(intel as any).totalLowStock > 1 ? "s" : ""} low on inventory across your stores — review`
+    : (intel as any)?.topStore
+      ? `${(intel as any).topStore.name} is your top store this period — $${(((intel as any).topStore.revenue ?? 0) / 100).toFixed(0)}`
+      : "No recommendations yet — connect a store to see insights";
 
   return (
     <div className="page-enter flex flex-col h-full w-full bg-[#050505]/70 overflow-hidden relative">
@@ -297,34 +451,67 @@ export default function Home() {
       <div className="stagger-list hidden" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
 
-      {/* ── Top Status Bar ── */}
-      <div className="shrink-0 h-11 border-b border-white/[0.06] bg-[#040406]/70 backdrop-blur-xl flex items-center px-4 gap-6 z-20 shadow-[0_1px_0_rgba(14,165,233,0.08)]">
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">System Online</span>
+      {(metricsError || agentError) && (
+        <div className="shrink-0 mx-4 md:mx-6 mt-4 rounded-xl border border-red-500/25 bg-red-500/[0.05] px-4 py-3 flex items-center gap-3">
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-red-400">Dashboard Error</p>
+            <p className="text-[11px] text-white/60 truncate">
+              {(metricsError || agentError)?.message ?? "Failed to load live metrics"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { void refetchMetrics(); void refetchAgentStatus(); }}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:border-sky-500/30 hover:text-sky-300 transition-all"
+          >
+            Retry
+          </button>
         </div>
-        <div className="h-3 w-px bg-white/10" />
-        {metricsLoading ? (
-          <Loader2 className="w-3 h-3 animate-spin text-white/20" />
-        ) : (
-          <>
-            <StatusPill label="Revenue" value={`$${revenue}`} color="text-emerald-400" />
-            <StatusPill label="Orders" value={String(metrics?.totalOrders ?? 0)} color="text-sky-400" />
-            <StatusPill label="Products" value={String(metrics?.activeProducts ?? 0)} color="text-violet-400" />
-            <StatusPill label="Workflows" value={totalRunning > 0 ? `${totalRunning} active` : "idle"} color={totalRunning > 0 ? "text-amber-400" : "text-white/30"} />
-            <StatusPill label="Integrations" value={`${totalConnected} linked`} color={totalConnected > 0 ? "text-cyan-400" : "text-white/30"} />
-          </>
-        )}
-        <div className="ml-auto flex items-center gap-2">
-          <Cpu className="w-3 h-3 text-white/20" />
-          <span className="text-[10px] text-white/20 font-mono">{user?.name || "OPERATOR"}</span>
+      )}
+
+      {/* ── KPI Strip ── */}
+      <div className="shrink-0 border-b border-white/[0.06] bg-[#040406]/70 backdrop-blur-xl px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 md:gap-5 z-20">
+        <Kpi
+          icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
+          label="Today's revenue"
+          value={`$${todayRevenue}`}
+          sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`}
+        />
+        <Kpi
+          icon={<ShieldCheck className="w-3.5 h-3.5 text-amber-400" />}
+          label="Pending approvals"
+          value={String(pendingCount)}
+          sub={pendingCount > 0 ? "needs review" : "all clear"}
+          href="/inbox#approvals"
+        />
+        <Kpi
+          icon={<GitBranch className="w-3.5 h-3.5 text-sky-400" />}
+          label="Active workflows"
+          value={String(totalRunning)}
+          sub={totalRunning > 0 ? "running" : "idle"}
+          href="/workflows"
+        />
+        <Kpi
+          icon={<Bot className={`w-3.5 h-3.5 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
+          label="Bots"
+          value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"}
+          sub={botHealth.text}
+        />
+        <div className="ml-auto flex items-center gap-2 max-w-[420px] truncate rounded-lg border border-sky-500/20 bg-sky-500/[0.05] px-3 py-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
+          <span className="text-[11px] text-white/70 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
       {/* ── Canvas + Inspector ── */}
       <div className="flex flex-1 min-h-0">
-        {/* Canvas */}
         <div className="flex-1 h-full relative">
+          {storesLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+              <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+            </div>
+          )}
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -333,12 +520,12 @@ export default function Home() {
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
-            connectionLineType={ConnectionLineType.Step}
+            connectionLineType={ConnectionLineType.SmoothStep}
             proOptions={{ hideAttribution: true }}
             fitView
-            fitViewOptions={{ padding: 0.15 }}
+            fitViewOptions={{ padding: 0.2 }}
             minZoom={0.4}
-            maxZoom={2}
+            maxZoom={1.5}
             className="bg-transparent"
           >
             <Background color="rgba(255,255,255,0.03)" gap={28} size={1} />
@@ -356,116 +543,25 @@ export default function Home() {
           </ReactFlow>
         </div>
 
-        {/* ── Inspector Panel ── */}
-        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/82 backdrop-blur-2xl flex flex-col z-20 shadow-[-24px_0_80px_rgba(0,0,0,0.35)]">
-          {/* Inspector Header */}
+        {/* Inspector */}
+        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/82 backdrop-blur-2xl flex flex-col z-20">
           <div className="h-11 flex items-center px-4 border-b border-white/[0.05] justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
-              Inspector
-            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Inspector</span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
-              <span className="text-[9px] font-mono text-emerald-400/70">UPLINK_OK</span>
+              <span className="text-[9px] font-mono text-emerald-400/70">LIVE</span>
             </span>
           </div>
-          {/* Gradient line under inspector header */}
           <div className="h-px bg-gradient-to-r from-sky-500/30 via-transparent to-transparent shrink-0" />
-
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
-            {selectedNode ? (
-              <>
-                {/* Node Identity */}
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                    {selectedNode.data.icon}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">{selectedNode.data.label}</p>
-                    <p className={`text-[10px] font-mono mt-0.5 ${NODE_COLORS[selectedNode.data.status]?.text ?? "text-white/40"}`}>
-                      {selectedNode.data.value}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Node Properties */}
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/20 mb-2 pb-1.5 border-b border-white/[0.05]">
-                    Node Properties
-                  </p>
-                  <div className="space-y-1.5">
-                    {[
-                      ["ID", selectedNode.id],
-                      ["Type", selectedNode.type],
-                      ["X", selectedNode.position.x.toFixed(0)],
-                      ["Y", selectedNode.position.y.toFixed(0)],
-                    ].map(([k, v]) => (
-                      <div key={k} className="flex justify-between items-center">
-                        <span className="text-[10px] text-white/25 font-mono">{k}</span>
-                        <span className="text-[10px] text-white/60 font-mono">{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Live Telemetry */}
-                {selectedNode.data.details && (
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/20 mb-2 pb-1.5 border-b border-white/[0.05]">
-                      Live Telemetry
-                    </p>
-                    <div className="space-y-2">
-                      {Object.entries(selectedNode.data.details).map(([key, val]) => (
-                        <div key={key} className="flex justify-between items-start gap-2">
-                          <span className="text-[10px] text-white/30 font-mono uppercase shrink-0">{key}</span>
-                          <span className="text-[10px] text-emerald-400 font-mono text-right break-all">{String(val)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+            {selected ? (
+              <NodeInspector
+                node={selected}
+                onAction={(href) => setLocation(href)}
+              />
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center px-4 py-12">
-                <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
-                  <Box className="w-5 h-5 text-white/15" />
-                </div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/20">No Node Selected</p>
-                <p className="text-[9px] text-white/15 mt-2 leading-relaxed max-w-[180px]">
-                  Click any canvas entity to inspect its telemetry and live data
-                </p>
-              </div>
+              <EmptyInspector hasStores={(stores?.length ?? 0) > 0} />
             )}
-          </div>
-
-          {/* System Log Footer */}
-          {recentActivity && recentActivity.length > 0 && (
-            <div className="border-t border-white/[0.05] p-4">
-              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/20 mb-3">System Log</p>
-              <div className="space-y-2">
-                {recentActivity.slice(0, 4).map((act: any) => (
-                  <div key={act.id} className="flex items-center gap-2">
-                    {act.status === "completed" ? (
-                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                    ) : act.status === "failed" ? (
-                      <AlertCircle className="w-2.5 h-2.5 text-red-400 shrink-0" />
-                    ) : (
-                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400/60 shrink-0" />
-                    )}
-                    <span className="text-[9px] text-white/40 font-mono truncate">{act.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Node Count Footer */}
-          <div className="border-t border-white/[0.05] px-4 py-2.5 flex items-center justify-between">
-            <span className="text-[9px] font-mono text-white/20">
-              {nodes.length} nodes · {edges.length} edges
-            </span>
-            <span className="text-[9px] font-mono text-white/20">
-              {stores?.length || 0} stores
-            </span>
           </div>
         </aside>
       </div>
@@ -473,13 +569,145 @@ export default function Home() {
   );
 }
 
-// ─── Status Pill ──────────────────────────────────────────────────────────────
+// ─── KPI helper ───────────────────────────────────────────────────────────────
 
-function StatusPill({ label, value, color }: { label: string; value: string; color: string }) {
+function Kpi({ icon, label, value, sub, href }: { icon: React.ReactNode; label: string; value: string; sub?: string; href?: string }) {
+  const body = (
+    <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 transition-all hover:border-sky-500/30 hover:bg-sky-500/[0.06]">
+      <div className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[9px] font-bold uppercase tracking-widest text-white/35">{label}</p>
+        <p className="text-sm font-semibold text-white leading-tight">{value}</p>
+        {sub && <p className="text-[10px] text-white/40 leading-tight truncate">{sub}</p>}
+      </div>
+    </div>
+  );
+  return href ? <Link href={href}>{body}</Link> : body;
+}
+
+// ─── Inspector views ──────────────────────────────────────────────────────────
+
+function NodeInspector({
+  node,
+  onAction,
+}: {
+  node: Node<OperationNodeData>;
+  onAction: (href: string) => void;
+}) {
+  const { data } = node;
+  const theme = KIND_THEME[data.kind];
+
+  const isGhost = data.kind.startsWith("ghost");
+  const isBot = data.kind === "bot";
+  const isStore = data.kind === "store";
+  const primary = isGhost
+    ? { label: "Connect now", icon: <Plus className="w-3.5 h-3.5" />, href: data.href ?? "/storefronts" }
+    : isBot
+      ? { label: `Open ${data.label}`, icon: <ArrowRight className="w-3.5 h-3.5" />, href: data.href ?? "/" }
+      : isStore
+        ? { label: "Open store", icon: <ArrowRight className="w-3.5 h-3.5" />, href: data.href ?? "/storefronts" }
+        : { label: "Open", icon: <ArrowRight className="w-3.5 h-3.5" />, href: data.href ?? "/" };
+
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">{label}</span>
-      <span className={`text-[10px] font-mono font-semibold ${color}`}>{value}</span>
+    <>
+      <div className="flex items-start gap-3">
+        <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${theme.iconBg}`}>
+          {data.icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-white truncate">{data.label}</p>
+          {data.sublabel && (
+            <p className={`text-[10px] font-mono mt-0.5 ${theme.text} truncate`}>{data.sublabel}</p>
+          )}
+        </div>
+      </div>
+
+      {data.details && Object.keys(data.details).length > 0 && (
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/20 mb-2 pb-1.5 border-b border-white/[0.05]">
+            Live data
+          </p>
+          <div className="space-y-1.5">
+            {Object.entries(data.details).map(([k, v]) => (
+              <div key={k} className="flex justify-between items-start gap-2">
+                <span className="text-[10px] text-white/35 font-mono uppercase shrink-0">{k}</span>
+                <span className="text-[10px] text-emerald-400 font-mono text-right break-all">{String(v)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => onAction(primary.href)}
+          className="w-full flex items-center justify-center gap-2 rounded-lg border border-sky-500/30 bg-sky-500/15 px-3 py-2 text-[11px] font-semibold text-sky-200 hover:bg-sky-500/25 hover:border-sky-400/40 transition-all"
+        >
+          {primary.icon}
+          {primary.label}
+        </button>
+        {isBot && (
+          <button
+            type="button"
+            onClick={() => onAction(`/chat?bot=${data.entityId}`)}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-white/70 hover:bg-white/[0.06] hover:text-white/90 transition-all"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Chat with this bot
+          </button>
+        )}
+        {isStore && (
+          <button
+            type="button"
+            onClick={() => onAction("/insights")}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-white/70 hover:bg-white/[0.06] hover:text-white/90 transition-all"
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            View store analytics
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
+
+function EmptyInspector({ hasStores }: { hasStores: boolean }) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-center px-2 py-10">
+      <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
+        <Sparkles className="w-5 h-5 text-white/20" />
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Your operation</p>
+      <p className="text-[10px] text-white/35 mt-2 leading-relaxed max-w-[210px]">
+        {hasStores
+          ? "Click any node to inspect live data and drill into actions."
+          : "Click a ghost node to start connecting your stores, bots, and channels."}
+      </p>
+      <div className="mt-5 grid grid-cols-1 gap-1.5 w-full">
+        <QuickLink to="/storefronts" icon={<ShoppingCart className="w-3.5 h-3.5 text-emerald-300" />} label="Connect a store" />
+        <QuickLink to="/architect" icon={<Bot className="w-3.5 h-3.5 text-sky-300" />} label="Run the Builder bot" />
+        <QuickLink to="/social" icon={<Megaphone className="w-3.5 h-3.5 text-pink-300" />} label="Add a social channel" />
+      </div>
     </div>
   );
 }
+
+function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={to}
+      className="flex items-center gap-2 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white/70 hover:border-sky-500/30 hover:bg-sky-500/[0.06] hover:text-white transition-all"
+    >
+      {icon}
+      <span className="truncate flex-1 text-left">{label}</span>
+      <ArrowRight className="w-3 h-3 text-white/30" />
+    </Link>
+  );
+}
+
+// Re-export icons used by inspector to avoid an unused-import warning when
+// the component tree is tree-shaken.
+export const _icons = { Globe, Zap, AlertTriangle, CheckCircle2, Clock };

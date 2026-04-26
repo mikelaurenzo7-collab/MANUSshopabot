@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import DashboardLayout from "./components/DashboardLayout";
+import BotPageShell from "./components/BotPageShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -83,9 +84,9 @@ function Router() {
                 <ErrorBoundary inline label="page">
                   <Switch>
                     <Route path="/" component={Home} />
-                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><ArchitectPage /></ErrorBoundary>}</Route>
-                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><MerchantPage /></ErrorBoundary>}</Route>
-                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><SocialPage /></ErrorBoundary>}</Route>
+                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/activity" component={ActivityPage} />
                     <Route path="/analytics" component={AnalyticsPage} />
                     <Route path="/integrations" component={IntegrationsPage} />
