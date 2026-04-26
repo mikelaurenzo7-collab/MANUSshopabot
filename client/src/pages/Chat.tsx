@@ -1,7 +1,7 @@
 /**
  * Chat.tsx — Conversational Bot Interface
  *
- * Talk to any of your three SHOPaBOT operators in natural language.
+ * Talk to any of your three Shop_a_Bot operators in natural language.
  * The selected bot has full context of your stores, metrics, and history.
  */
 

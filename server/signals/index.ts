@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT / ShopBOTS — Proactive Event Loop Root
+ * Shop_a_Bot — Proactive Event Loop Root
  * Registers all specialized Bot Signals to the global Signal Registry.
  */
 

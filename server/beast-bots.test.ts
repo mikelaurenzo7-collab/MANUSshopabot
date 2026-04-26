@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Comprehensive Test Suite
+ * Shop_a_Bot — Comprehensive Test Suite
  * Covers: auth, authorization, store ownership, notifications, approvals, bot config, OAuth
  */
 import { describe, expect, it, vi, beforeEach } from "vitest";

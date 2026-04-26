@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT / ShopBOTS — Proactive Signal Registry
+ * Shop_a_Bot — Proactive Signal Registry
  * 
  * This is the core "Proactiveness Engine" that transitions our bots 
  * from reactive tools (waiting for a click) to autonomous operators.

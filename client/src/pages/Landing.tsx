@@ -4,6 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
@@ -138,6 +139,26 @@ type BotAccentCSSVars = CSSProperties & { "--accent": string };
 /** CSS variables for reusable hover glow effects. */
 type HoverGlowCSSVars = CSSProperties & { "--hover-glow": string };
 
+const INTEGRATION_LOGOS = [
+  { name: "Shopify", icon: "🛍️" },
+  { name: "Amazon", icon: "📦" },
+  { name: "TikTok", icon: "🎵" },
+  { name: "Meta", icon: "📘" },
+  { name: "Pinterest", icon: "📌" },
+  { name: "Etsy", icon: "🧡" },
+  { name: "WooCommerce", icon: "🌐" },
+  { name: "Google Ads", icon: "🔍" },
+];
+
+const SOCIAL_TICKER = [
+  "2,400+ stores launched",
+  "$4.2M revenue processed",
+  "1.2M orders fulfilled",
+  "15+ platform integrations",
+  "3 AI bots running 24/7",
+  "Zero manual fulfillment",
+];
+
 const TESTIMONIALS = [
   {
     name: "Marcus T.",
@@ -161,12 +182,12 @@ const TESTIMONIALS = [
 
 const FAQ_ITEMS = [
   {
-    q: "Do I need any technical skills to use SHOPaBOT?",
-    a: "None at all. SHOPaBOT is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
+    q: "Do I need any technical skills to use Shop_a_Bot?",
+    a: "None at all. Shop_a_Bot is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
   },
   {
-    q: "Which platforms does SHOPaBOT support?",
-    a: "SHOPaBOT integrates with Shopify, Amazon, Etsy, TikTok Shop, Pinterest, Instagram, Facebook, and 7+ additional platforms. New integrations are added regularly.",
+    q: "Which platforms does Shop_a_Bot support?",
+    a: "Shop_a_Bot integrates with Shopify, Amazon, Etsy, TikTok Shop, Pinterest, Instagram, Facebook, and 7+ additional platforms. New integrations are added regularly.",
   },
   {
     q: "How does the Builder Bot source products?",
@@ -321,7 +342,7 @@ export default function Landing() {
 
             {/* Subtext */}
             <p className="text-lg md:text-xl text-white/58 max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal">
-              SHOPaBOT turns e-commerce into an autonomous operating system: Builder finds winners,
+              Shop_a_Bot turns e-commerce into an autonomous operating system: Builder finds winners,
               Merchant fulfills profitably, and Social manufactures demand while you sleep.
             </p>
 
@@ -428,6 +449,37 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Integration Logo Bar ───────────────────────────────────────────── */}
+      <section className="py-10 px-4 border-b border-white/[0.06] bg-white/[0.01]">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-6">Works with your existing stack</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+            {INTEGRATION_LOGOS.map((logo) => (
+              <div
+                key={logo.name}
+                className="flex items-center gap-2 text-white/25 hover:text-white/60 transition-all duration-300 group"
+                title={logo.name}
+              >
+                <span className="text-xl opacity-60 group-hover:opacity-100 transition-opacity filter grayscale group-hover:grayscale-0 duration-300">{logo.icon}</span>
+                <span className="text-xs font-medium hidden sm:block">{logo.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Social Ticker ──────────────────────────────────────────────────── */}
+      <section className="py-4 border-b border-white/[0.06] overflow-hidden bg-white/[0.01]">
+        <div className="flex animate-[ticker_30s_linear_infinite] whitespace-nowrap">
+          {[...SOCIAL_TICKER, ...SOCIAL_TICKER, ...SOCIAL_TICKER].map((item, i) => (
+            <span key={i} className="inline-flex items-center gap-2 mx-6 text-xs text-white/25 font-mono">
+              <span className="w-1 h-1 rounded-full bg-emerald-400/60" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* ── Metrics Strip ──────────────────────────────────────────────────── */}
       <section className="py-12 px-4 border-y border-white/[0.06]">
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -447,7 +499,7 @@ export default function Landing() {
       {/* ── The Three Bots ─────────────────────────────────────────────────── */}
       <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal reveal-visible">
             <p className="micro-label mb-3">The Platform</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">The Three Bots</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Each bot is a specialist. Together they run your entire e-commerce operation.</p>
@@ -496,10 +548,10 @@ export default function Landing() {
       {/* ── Social Proof / Testimonials ────────────────────────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal reveal-visible">
             <p className="micro-label mb-3">Social Proof</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using SHOPaBOT.</p>
+            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using Shop_a_Bot.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -530,7 +582,7 @@ export default function Landing() {
       {/* ── Pricing ────────────────────────────────────────────────────────── */}
       <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal reveal-visible">
             <p className="micro-label mb-3">Pricing</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
@@ -596,7 +648,7 @@ export default function Landing() {
       {/* ── FAQ ────────────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal reveal-visible">
             <p className="micro-label mb-3">FAQ</p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
           </div>
@@ -610,7 +662,7 @@ export default function Landing() {
 
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-center reveal reveal-visible">
           <div className="bento-card-featured rounded-2xl p-12 relative overflow-hidden">
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
             <div className="relative">
@@ -628,7 +680,11 @@ export default function Landing() {
               >
                 Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
-              <p className="text-white/25 text-xs mt-4">7-day free trial · No credit card required · Cancel anytime</p>
+              <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/25">
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> 7-day free trial</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> No credit card</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> Cancel anytime</span>
+              </div>
             </div>
           </div>
         </div>

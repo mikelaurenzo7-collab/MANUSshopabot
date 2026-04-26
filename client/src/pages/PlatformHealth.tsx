@@ -127,7 +127,7 @@ function WebhookEventLog() {
           <div className="text-center py-10">
             <Radio className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No webhook events yet</p>
-            <p className="text-xs text-white/25 mt-1">Events will appear here as your stores send webhooks to SHOPaBOT.</p>
+            <p className="text-xs text-white/25 mt-1">Events will appear here as your stores send webhooks to Shop_a_Bot.</p>
           </div>
         ) : (
           <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">

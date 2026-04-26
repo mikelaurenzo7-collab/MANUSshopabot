@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Platform Bridge
+ * Shop_a_Bot — Platform Bridge
  *
  * The critical integration layer that connects the workflow engine
  * and agent routers to the platform-specific adapters.

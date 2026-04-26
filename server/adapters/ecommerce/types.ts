@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Unified E-Commerce Platform Adapter Interface
+ * Shop_a_Bot — Unified E-Commerce Platform Adapter Interface
  *
  * Every e-commerce platform adapter implements this interface so that
  * The Architect, Merchant, and Social Bot agents can operate across

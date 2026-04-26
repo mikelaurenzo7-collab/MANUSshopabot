@@ -113,7 +113,7 @@ describe("ENV wiring — all platform secrets registered", () => {
     expect(ENV).toHaveProperty("shopifyPartnerClientSecret");
   });
 
-  // SHOPaBOT Page ID (env key stays BEASTBOTS_PAGE_ID for backward compat)
+  // Shop_a_Bot Page ID (env key stays BEASTBOTS_PAGE_ID for backward compat)
   it("should have beastbotsPageId registered in ENV", () => {
     expect(ENV).toHaveProperty("beastbotsPageId");
   });

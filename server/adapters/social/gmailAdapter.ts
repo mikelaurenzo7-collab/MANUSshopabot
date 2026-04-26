@@ -80,7 +80,7 @@ export class GmailAdapter implements SocialPlatformAdapter {
    */
   async createPost(credentials: SocialCredentials, post: CreatePostInput): Promise<SocialPost> {
     const to = post.metadata?.to || post.metadata?.recipient;
-    const subject = post.metadata?.subject || "Message from SHOPaBOT";
+    const subject = post.metadata?.subject || "Message from Shop_a_Bot";
     const htmlBody = post.content;
 
     if (!to) {
@@ -117,7 +117,7 @@ export class GmailAdapter implements SocialPlatformAdapter {
   async schedulePost(_credentials: SocialCredentials, _post: CreatePostInput, _scheduledAt: Date): Promise<SocialPost> {
     // Gmail doesn't natively support scheduled sends via API (only Gmail UI does)
     // We handle scheduling at the application level via the job queue
-    throw new Error("Gmail scheduled sends are handled by the SHOPaBOT job queue, not the Gmail API directly.");
+    throw new Error("Gmail scheduled sends are handled by the Shop_a_Bot job queue, not the Gmail API directly.");
   }
 
   async deletePost(credentials: SocialCredentials, postId: string): Promise<void> {

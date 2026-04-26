@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — System Scheduler Tasks
+ * Shop_a_Bot — System Scheduler Tasks
  *
  * Handles: job queue processing, OAuth cleanup, elite orchestrator tasks
  * (anomaly detection, DLQ, dynamic pricing, creative velocity, ad pausing)

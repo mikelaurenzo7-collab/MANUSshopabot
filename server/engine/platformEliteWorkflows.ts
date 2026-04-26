@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Platform-Specific Elite Workflows
+ * Shop_a_Bot — Platform-Specific Elite Workflows
  *
  * Advanced platform-specific automation workflows implementing the
  * strategies from the 13-platform research playbook.

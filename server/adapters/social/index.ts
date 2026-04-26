@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Social Media Platform Adapter Registry
+ * Shop_a_Bot — Social Media Platform Adapter Registry
  *
  * The central factory for all social media adapters.
  * The Social Bot uses this registry to post content,

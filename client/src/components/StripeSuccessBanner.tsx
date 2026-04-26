@@ -56,7 +56,7 @@ export function StripeSuccessBanner() {
               ✨ Subscription Activated
             </p>
             <p className="text-xs text-green-200/70">
-              Your plan is now active. Enjoy unlimited access to SHOPaBOT!
+              Your plan is now active. Enjoy unlimited access to Shop_a_Bot!
             </p>
           </div>
         </div>

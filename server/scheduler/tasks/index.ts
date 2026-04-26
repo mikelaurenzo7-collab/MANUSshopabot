@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Scheduler Task Module Index
+ * Shop_a_Bot — Scheduler Task Module Index
  *
  * Re-exports all task handlers organized by agent type.
  */

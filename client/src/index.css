@@ -1560,6 +1560,30 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Scroll Reveal Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.33%); }
+}
+
+.reveal {
+  opacity: 0;
+}
+.reveal-visible {
+  animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.3s; }
+.reveal-delay-4 { animation-delay: 0.4s; }
+.reveal-delay-5 { animation-delay: 0.5s; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Reduced Motion Accessibility
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Platform Rate Limiter
+ * Shop_a_Bot — Platform Rate Limiter
  *
  * Dual implementation:
  * - TokenBucket: original hand-rolled class with full API (tryConsume, available,

@@ -6,10 +6,12 @@ import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
   ChevronRight, TrendingUp, Package, ShoppingCart, Activity, Zap,
-  DollarSign, BarChart3, Globe, Store
+  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
 
@@ -383,6 +385,7 @@ export default function IntegrationsPage() {
                 );
               })}
             </div>
+
           </div>
         )}
       </div>

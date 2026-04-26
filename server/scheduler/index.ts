@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Bot Task Scheduler
+ * Shop_a_Bot — Bot Task Scheduler
  *
  * Uses node-cron to run recurring agent tasks with real platform adapter calls:
  * - Merchant: inventory checks, order fulfillment, pricing optimization

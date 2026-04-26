@@ -1,5 +1,5 @@
 /**
- * Sprint 16 Tests — Token Bucket Rate Limiter + Scheduler Refactor + SHOPaBOT Brand
+ * Sprint 16 Tests — Token Bucket Rate Limiter + Scheduler Refactor + Shop_a_Bot Brand
  */
 import { describe, it, expect, vi } from "vitest";
 
@@ -303,19 +303,19 @@ describe("Platform Bridge + Token Bucket Integration", () => {
   });
 });
 
-// ─── SHOPaBOT Brand Consistency Tests ────────────────────────────────────────
+// ─── Shop_a_Bot Brand Consistency Tests ────────────────────────────────────────
 
-describe("SHOPaBOT Brand Consistency", () => {
-  it("index.html uses SHOPaBOT in title and meta tags", async () => {
+describe("Shop_a_Bot Brand Consistency", () => {
+  it("index.html uses Shop_a_Bot in title and meta tags", async () => {
     const fs = await import("fs");
     const html = fs.readFileSync("client/index.html", "utf-8");
-    expect(html).toContain("SHOPaBOT");
+    expect(html).toContain("Shop_a_Bot");
     expect(html).not.toContain("BeastBots");
     expect(html).not.toContain("ShopBOTS");
     expect(html).not.toContain("ShopBots");
   });
 
-  it("Landing.tsx uses SHOPaBOT brand via BrandName component", async () => {
+  it("Landing.tsx uses Shop_a_Bot brand via BrandName component", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("client/src/pages/Landing.tsx", "utf-8");
     expect(src).toContain("BrandName");
@@ -323,7 +323,7 @@ describe("SHOPaBOT Brand Consistency", () => {
     expect(src).not.toContain("BeastBots");
   });
 
-  it("DashboardLayout.tsx uses SHOPaBOT brand via BrandName component", async () => {
+  it("DashboardLayout.tsx uses Shop_a_Bot brand via BrandName component", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("client/src/components/DashboardLayout.tsx", "utf-8");
     expect(src).toContain("BrandName");
@@ -331,18 +331,18 @@ describe("SHOPaBOT Brand Consistency", () => {
     expect(src).not.toContain('"BeastBots"');
   });
 
-  it("scheduler/index.ts header uses SHOPaBOT", async () => {
+  it("scheduler/index.ts header uses Shop_a_Bot", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("server/scheduler/index.ts", "utf-8");
-    expect(src).toContain("SHOPaBOT");
+    expect(src).toContain("Shop_a_Bot");
     expect(src).not.toContain("BeastBots");
   });
 
   it("BrandName component exports correct brand constants", async () => {
     const fs = await import("fs");
     const src = fs.readFileSync("client/src/components/BrandName.tsx", "utf-8");
-    expect(src).toContain('BRAND_NAME = "SHOPaBOT"');
-    expect(src).toContain('BRAND_SLUG = "shopabots"');
+    expect(src).toContain('BRAND_NAME = "Shop_a_Bot"');
+    expect(src).toContain('BRAND_SLUG = "shop_a_bot"');
     // Verify the AI is styled distinctly
     expect(src).toContain("font-black");
     expect(src).toContain("bg-gradient-to-r");

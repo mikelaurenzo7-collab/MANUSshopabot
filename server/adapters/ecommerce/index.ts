@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — E-Commerce Platform Adapter Registry
+ * Shop_a_Bot — E-Commerce Platform Adapter Registry
  *
  * The central factory that returns the correct adapter for any platform.
  * All three agents (Architect, Merchant, Social Bot) use this registry

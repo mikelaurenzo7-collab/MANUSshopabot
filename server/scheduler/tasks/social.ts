@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Social Bot Scheduler Tasks
+ * Shop_a_Bot — Social Bot Scheduler Tasks
  *
  * Handles: ad monitoring, scheduled posts, SEO audit, email recovery, bot coordination
  *
@@ -319,7 +319,7 @@ function buildAbandonedCartEmail(storeName: string, order: any): string {
       <div style="margin:24px 0;">
         <a href="#" style="background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Complete Purchase</a>
       </div>
-      <p style="color:#888;font-size:12px;">This is an automated recovery email from SHOPaBOT.</p>
+      <p style="color:#888;font-size:12px;">This is an automated recovery email from Shop_a_Bot.</p>
     </div>
   `.trim();
 }

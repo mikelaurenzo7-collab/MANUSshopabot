@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Stripe Webhook Handler
+ * Shop_a_Bot — Stripe Webhook Handler
  * Handles subscription lifecycle events and updates user plan status in DB.
  */
 import type { Express, Request, Response } from "express";

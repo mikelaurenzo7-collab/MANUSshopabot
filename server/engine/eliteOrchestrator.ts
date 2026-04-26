@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Elite Orchestration Engine
+ * Shop_a_Bot — Elite Orchestration Engine
  *
  * Cross-platform intelligence layer implementing:
  * 1. Anomaly Detection — detect inventory crashes, fulfillment delays, ROAS drops

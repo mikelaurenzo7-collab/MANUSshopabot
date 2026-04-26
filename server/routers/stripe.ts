@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Stripe tRPC Router
+ * Shop_a_Bot — Stripe tRPC Router
  * Handles checkout session creation and subscription status queries.
  */
 import { z } from "zod";
@@ -73,7 +73,7 @@ export const stripeRouter = router({
               currency: "usd",
               recurring: { interval: "month" },
               product_data: {
-                name: `SHOPaBOT ${plan.name}`,
+                name: `Shop_a_Bot ${plan.name}`,
                 description: plan.description,
               },
               unit_amount: plan.priceCents,

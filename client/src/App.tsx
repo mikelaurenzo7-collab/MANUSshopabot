@@ -60,7 +60,7 @@ function OnboardingGuard() {
     if (location === "/onboarding") return; // Already on onboarding
     // Check if user has completed onboarding
     // Support old keys for backward compatibility
-    const hasOnboarded = localStorage.getItem("shopabots_onboarded") || localStorage.getItem("beastbots_onboarded") || localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
+    const hasOnboarded = localStorage.getItem("shop_a_bot_onboarded") || localStorage.getItem("shopabots_onboarded") || localStorage.getItem("beastbots_onboarded") || localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
     if (!hasOnboarded) {
       setLocation("/onboarding");
     }

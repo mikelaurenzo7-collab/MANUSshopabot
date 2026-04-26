@@ -1,6 +1,6 @@
 /**
- * SHOPaBOT — Brand Name Component
- * "SHOP" in white, "a" in cyan gradient, "BOT" in white
+ * Shop_a_Bot — Brand Name Component
+ * "Shop" in white, "_a_" in cyan gradient, "Bot" in white
  */
 
 interface BrandNameProps {
@@ -22,21 +22,21 @@ export function BrandName({ className = "", size = "md" }: BrandNameProps) {
   return (
     <span
       className={`inline-flex items-baseline font-black tracking-tight ${sizeClass} ${className}`}
-      aria-label="SHOPaBOT"
+      aria-label="Shop_a_Bot"
     >
-      <span className="text-white">SHOP</span>
+      <span className="text-white">Shop</span>
       <span className="bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
-        a
+        _a_
       </span>
-      <span className="text-white">BOT</span>
+      <span className="text-white">Bot</span>
     </span>
   );
 }
 
 /** Plain text version for non-JSX contexts (tooltips, aria-labels, etc.) */
-export const BRAND_NAME = "SHOPaBOT";
+export const BRAND_NAME = "Shop_a_Bot";
 
 /** Technical/package name (no special chars) */
-export const BRAND_SLUG = "shopabots";
+export const BRAND_SLUG = "shop_a_bot";
 
 export default BrandName;

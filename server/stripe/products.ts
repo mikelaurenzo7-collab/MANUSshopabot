@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Stripe Subscription Plans
+ * Shop_a_Bot — Stripe Subscription Plans
  * Centralized plan definitions. Price IDs are created on first checkout
  * using Stripe's inline price creation (no pre-seeding required).
  */

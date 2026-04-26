@@ -8,7 +8,7 @@
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 
-const STORAGE_KEY = "shopabots_active_store_id";
+const STORAGE_KEY = "shop_a_bot_active_store_id";
 
 interface WorkspaceContextValue {
   activeStoreId: number | null;

@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Architect Bot Scheduler Tasks
+ * Shop_a_Bot — Architect Bot Scheduler Tasks
  *
  * Handles: store health checks, token refresh, competitor scan
  *

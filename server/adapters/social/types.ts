@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Unified Social Media Platform Adapter Interface
+ * Shop_a_Bot — Unified Social Media Platform Adapter Interface
  *
  * Every social media platform adapter implements this interface so that
  * The Social Bot Bot can post content, manage ads, and pull analytics

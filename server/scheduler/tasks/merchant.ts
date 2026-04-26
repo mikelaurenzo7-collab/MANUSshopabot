@@ -1,5 +1,5 @@
 /**
- * SHOPaBOT — Merchant Bot Scheduler Tasks
+ * Shop_a_Bot — Merchant Bot Scheduler Tasks
  *
  * Handles: inventory checks, order fulfillment, product sync
  *
