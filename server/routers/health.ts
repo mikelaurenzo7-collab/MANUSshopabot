@@ -112,13 +112,22 @@ export const healthRouter = router({
             checkedAt: Date.now(),
           };
         } catch (err: any) {
+          // Don't surface raw third-party error text to the client —
+          // adapter exceptions can include API-key fragments, internal
+          // version strings, and stack-trace artifacts. Log the real
+          // error and return a clean message.
+          console.warn("[health.checkAll] ecommerce probe failed", {
+            credId: cred.id,
+            platform: cred.platform,
+            error: err?.message,
+          });
           return {
             id: cred.id,
             platform: cred.platform,
             type: "ecommerce" as const,
             storeName: cred.platform,
             healthy: false,
-            message: err.message || "Health check failed",
+            message: "Health check failed",
             latencyMs: Date.now() - start,
             checkedAt: Date.now(),
           };
@@ -144,13 +153,19 @@ export const healthRouter = router({
             checkedAt: Date.now(),
           };
         } catch (err: any) {
+          // Same redaction as ecommerce — log internally, return clean.
+          console.warn("[health.checkAll] social probe failed", {
+            acctId: acct.id,
+            platform: acct.platform,
+            error: err?.message,
+          });
           return {
             id: acct.id,
             platform: acct.platform,
             type: "social" as const,
             accountName: acct.accountName ?? acct.platform,
             healthy: false,
-            message: err.message || "Health check failed",
+            message: "Health check failed",
             latencyMs: Date.now() - start,
             checkedAt: Date.now(),
           };

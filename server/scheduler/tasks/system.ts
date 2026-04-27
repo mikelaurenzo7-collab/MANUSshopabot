@@ -13,6 +13,23 @@
  */
 import { logger } from "../../_core/logger";
 import * as db from "../../db";
+
+/**
+ * Reduce active stores to a deduped list of {orgId, userId} pairs so
+ * org-scoped engine functions iterate over org boundaries rather than
+ * raw user accounts. Each org gets one representative userId (first
+ * store's creator) for notification/audit purposes.
+ *
+ * Returns an array of `{ userId, orgId }` so existing iteration loops
+ * stay one-line readable.
+ */
+function dedupeOrgsFromStores(stores: Array<{ userId: number; orgId: number }>): Array<{ userId: number; orgId: number }> {
+  const map = new Map<number, number>();
+  for (const s of stores) {
+    if (!map.has(s.orgId)) map.set(s.orgId, s.userId);
+  }
+  return Array.from(map.entries()).map(([orgId, userId]) => ({ userId, orgId }));
+}
 import { processRunnableJobs } from "../../engine/jobQueue";
 import {
   pauseAdsForOutOfStockProducts,
@@ -50,20 +67,20 @@ export async function handleOAuthStateCleanup(): Promise<void> {
 
 export async function handleInventoryAwareAdPause(): Promise<void> {
   const allStores = await db.getActiveStores();
-  const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+  const targets = dedupeOrgsFromStores(allStores);
   let totalPaused = 0;
   let totalErrors = 0;
 
-  for (const userId of userIds) {
+  for (const { userId, orgId } of targets) {
     try {
-      const result = await pauseAdsForOutOfStockProducts(userId);
+      const result = await pauseAdsForOutOfStockProducts(userId, orgId);
       totalPaused += result.paused;
       totalErrors += result.errors.length;
       if (result.paused > 0) {
-        logger.info("scheduler_ad_pause", { userId, paused: result.paused });
+        logger.info("scheduler_ad_pause", { userId, orgId, paused: result.paused });
       }
     } catch (err: any) {
-      logger.error("scheduler_error", { event: "Inventory-aware ad pause failed", userId, error: err.message });
+      logger.error("scheduler_error", { event: "Inventory-aware ad pause failed", userId, orgId, error: err.message });
     }
   }
 
@@ -73,7 +90,7 @@ export async function handleInventoryAwareAdPause(): Promise<void> {
       agentType: "merchant",
       actionType: "system_inventory_ad_pause",
       triggerSource: "scheduler",
-      input: { userCount: userIds.length },
+      input: { orgCount: targets.length },
       output: { totalPaused, totalErrors },
       success: totalErrors === 0,
     }).catch((telemetryErr: any) => {
@@ -84,22 +101,22 @@ export async function handleInventoryAwareAdPause(): Promise<void> {
 
 export async function handleDynamicPricing(): Promise<void> {
   const allStores = await db.getActiveStores();
-  const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+  const targets = dedupeOrgsFromStores(allStores);
   let totalAutoApplied = 0;
   let totalQueued = 0;
 
-  for (const userId of userIds) {
+  for (const { userId, orgId } of targets) {
     try {
-      const results = await runDynamicPricingEngine(userId);
+      const results = await runDynamicPricingEngine(userId, orgId);
       const autoApplied = results.filter(r => r.approved).length;
       const queued = results.filter(r => r.requiresApproval).length;
       totalAutoApplied += autoApplied;
       totalQueued += queued;
       if (results.length > 0) {
-        logger.info("scheduler_dynamic_pricing", { userId, autoApplied, queued });
+        logger.info("scheduler_dynamic_pricing", { userId, orgId, autoApplied, queued });
       }
     } catch (err: any) {
-      logger.error("scheduler_error", { event: "Dynamic pricing failed", userId, error: err.message });
+      logger.error("scheduler_error", { event: "Dynamic pricing failed", userId, orgId, error: err.message });
     }
   }
 
@@ -109,7 +126,7 @@ export async function handleDynamicPricing(): Promise<void> {
       agentType: "merchant",
       actionType: "system_dynamic_pricing_cycle",
       triggerSource: "scheduler",
-      input: { userCount: userIds.length },
+      input: { orgCount: targets.length },
       output: { totalAutoApplied, totalQueued },
       success: true,
     }).catch((telemetryErr: any) => {
@@ -120,20 +137,20 @@ export async function handleDynamicPricing(): Promise<void> {
 
 export async function handleCreativeVelocity(): Promise<void> {
   const allStores = await db.getActiveStores();
-  const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+  const targets = dedupeOrgsFromStores(allStores);
   let totalPaused = 0;
   let totalScaled = 0;
 
-  for (const userId of userIds) {
+  for (const { userId, orgId } of targets) {
     try {
-      const result = await runCreativeVelocityOptimization(userId);
+      const result = await runCreativeVelocityOptimization(userId, orgId);
       totalPaused += result.paused;
       totalScaled += result.scaled;
       if (result.paused + result.scaled > 0) {
-        logger.info("scheduler_creative_velocity", { userId, paused: result.paused, scaled: result.scaled });
+        logger.info("scheduler_creative_velocity", { userId, orgId, paused: result.paused, scaled: result.scaled });
       }
     } catch (err: any) {
-      logger.error("scheduler_error", { event: "Creative velocity failed", userId, error: err.message });
+      logger.error("scheduler_error", { event: "Creative velocity failed", userId, orgId, error: err.message });
     }
   }
 
@@ -143,7 +160,7 @@ export async function handleCreativeVelocity(): Promise<void> {
       agentType: "social",
       actionType: "system_creative_velocity_cycle",
       triggerSource: "scheduler",
-      input: { userCount: userIds.length },
+      input: { orgCount: targets.length },
       output: { totalPaused, totalScaled },
       success: true,
     }).catch((telemetryErr: any) => {
@@ -154,13 +171,13 @@ export async function handleCreativeVelocity(): Promise<void> {
 
 export async function handleAnomalyDetection(): Promise<void> {
   const allStores = await db.getActiveStores();
-  const userIds = Array.from(new Set(allStores.map((s: any) => s.userId)));
+  const targets = dedupeOrgsFromStores(allStores);
   let totalAnomalies = 0;
   let totalCritical = 0;
 
-  for (const userId of userIds) {
+  for (const { userId, orgId } of targets) {
     try {
-      const anomalies = await detectAnomalies(userId);
+      const anomalies = await detectAnomalies(userId, orgId);
       totalAnomalies += anomalies.length;
 
       const critical = anomalies.filter(a => a.severity === "critical");
@@ -209,7 +226,7 @@ export async function handleAnomalyDetection(): Promise<void> {
         }
       }
     } catch (err: any) {
-      logger.error("scheduler_error", { event: "Anomaly detection failed", userId, error: err.message });
+      logger.error("scheduler_error", { event: "Anomaly detection failed", userId, orgId, error: err.message });
     }
   }
 
@@ -219,7 +236,7 @@ export async function handleAnomalyDetection(): Promise<void> {
       agentType: "merchant",
       actionType: "system_anomaly_detection_cycle",
       triggerSource: "scheduler",
-      input: { userCount: userIds.length },
+      input: { orgCount: targets.length },
       output: { totalAnomalies, totalCritical },
       success: true,
     }).catch((telemetryErr: any) => {

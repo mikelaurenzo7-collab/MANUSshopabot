@@ -58,6 +58,7 @@ vi.mock("./engine/eliteOrchestrator", () => ({
 function makeCtx(overrides: Record<string, unknown> = {}) {
   return {
     user: { id: "user-1", name: "Test User", role: "user" as const, openId: "open-1" },
+    activeOrg: { id: 1, role: "owner" as const },
     ...overrides,
   };
 }

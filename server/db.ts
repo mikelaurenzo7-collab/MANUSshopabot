@@ -455,6 +455,65 @@ export async function getOrdersByStore(storeId: number, limit = 50) {
   return db.select().from(orders).where(eq(orders.storeId, storeId)).orderBy(desc(orders.createdAt)).limit(limit);
 }
 
+/**
+ * Time-window order fetch — used by velocity-based analyses.
+ * Returns orders whose createdAt falls inside the lookback window.
+ * Hard-capped at 5000 rows to bound memory + LLM input size.
+ */
+export async function getOrdersByStoreSince(storeId: number, sinceDate: Date, hardCap = 5000) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(orders)
+    .where(and(eq(orders.storeId, storeId), gte(orders.createdAt, sinceDate)))
+    .orderBy(desc(orders.createdAt))
+    .limit(hardCap);
+}
+
+/**
+ * Aggregate `open` event counts grouped by day-of-week (0–6, Sunday=0)
+ * and hour (0–23). Used by the Send-Time Optimizer workflow. Returns
+ * a flat array `{ dow, hour, count }` so callers can fold into a 2D
+ * heatmap.
+ *
+ * Filtered by org via the campaignId → storeId.orgId join — only
+ * events whose originating campaign belongs to an org-scoped store
+ * surface here. Capped at the SQL level: GROUP BY produces ≤ 168
+ * rows (7 × 24), so no LIMIT needed.
+ */
+export async function getOpenHeatmapByOrg(orgId: number, sinceDate: Date) {
+  const db = await getDb();
+  if (!db) return [] as Array<{ dow: number; hour: number; count: number }>;
+  // MySQL DAYOFWEEK returns 1–7 (Sunday=1); we shift to 0–6 so the
+  // result aligns with JS Date.getDay() conventions.
+  const dowExpr = sql<number>`DAYOFWEEK(${emailDeliveryEvents.occurredAt}) - 1`;
+  const hourExpr = sql<number>`HOUR(${emailDeliveryEvents.occurredAt})`;
+  const rows = await db
+    .select({
+      dow: dowExpr,
+      hour: hourExpr,
+      count: count(),
+    })
+    .from(emailDeliveryEvents)
+    .innerJoin(emailCampaigns, eq(emailCampaigns.id, emailDeliveryEvents.campaignId))
+    .innerJoin(stores, eq(stores.id, emailCampaigns.storeId))
+    .where(
+      and(
+        eq(emailDeliveryEvents.eventType, "open"),
+        gte(emailDeliveryEvents.occurredAt, sinceDate),
+        eq(stores.orgId, orgId),
+      ),
+    )
+    .groupBy(dowExpr, hourExpr);
+
+  return rows.map((r) => ({
+    dow: Number(r.dow),
+    hour: Number(r.hour),
+    count: Number(r.count),
+  }));
+}
+
 export async function getRecentOrders(limit = 20) {
   const db = await getDb();
   if (!db) return [];
@@ -662,6 +721,20 @@ export async function getAdCampaignsByUser(userId: number) {
       from ${stores}
       where ${stores.id} = ${adCampaigns.storeId}
         and ${stores.userId} = ${userId}
+    )`)
+    .orderBy(desc(adCampaigns.createdAt));
+}
+
+/** Org-scoped variant — preferred for any caller in a tenant context. */
+export async function getAdCampaignsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(adCampaigns)
+    .where(sql`exists (
+      select 1
+      from ${stores}
+      where ${stores.id} = ${adCampaigns.storeId}
+        and ${stores.orgId} = ${orgId}
     )`)
     .orderBy(desc(adCampaigns.createdAt));
 }
@@ -911,6 +984,14 @@ export async function getSocialAccounts(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const results = await db.select().from(socialAccounts).where(eq(socialAccounts.userId, userId)).orderBy(desc(socialAccounts.createdAt));
+  return results.map(account => decryptCredentialTokens(account)!);
+}
+
+/** Org-scoped variant — preferred for any caller in a tenant context. */
+export async function getSocialAccountsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const results = await db.select().from(socialAccounts).where(eq(socialAccounts.orgId, orgId)).orderBy(desc(socialAccounts.createdAt));
   return results.map(account => decryptCredentialTokens(account)!);
 }
 

@@ -18,6 +18,7 @@ import {
   createAgentTask, createNotification, createApprovalItem,
   getStoresByUser, getStoresByOrg, getStoreById, getBotConfigs, withTransaction,
   getBotProfile, getBotMemory,
+  getProductsByStore, getOrdersByStoreSince, getOpenHeatmapByOrg,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
@@ -716,8 +717,17 @@ async function executeNotificationStep(context: StepContext): Promise<any> {
 }
 
 async function executeDataTransformStep(context: StepContext): Promise<any> {
-  const { input, previousOutputs } = context;
-  // Simple data transformation — extract/reshape data from previous outputs
+  const { input, previousOutputs, storeId } = context;
+
+  // Named operations (preferred) — workflows declare `input.operation`
+  // and the executor dispatches to a real implementation. If we don't
+  // recognize the op name, fall through to the legacy field-extract /
+  // template path below so existing workflows keep working.
+  if (input.operation) {
+    return runNamedDataTransform(input.operation, context);
+  }
+
+  // Legacy generic transforms — extract/reshape from previous output
   const sourceIndex = input.sourceStepIndex ?? previousOutputs.length - 1;
   const source = previousOutputs[sourceIndex] ?? {};
 
@@ -726,7 +736,6 @@ async function executeDataTransformStep(context: StepContext): Promise<any> {
   }
 
   if (input.template) {
-    // Simple template substitution
     let result = input.template;
     for (const [key, value] of Object.entries(source)) {
       result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), String(value));
@@ -734,7 +743,175 @@ async function executeDataTransformStep(context: StepContext): Promise<any> {
     return { transformed: result };
   }
 
+  // Unknown / no-op transform — return source unchanged
   return source;
+
+  async function runNamedDataTransform(op: string, ctx: StepContext): Promise<any> {
+    void storeId; // referenced via ctx below
+    switch (op) {
+      // ─── competitor_pricing_scan ─────────────────────────────────
+      case "merge_pricing_report": {
+        // Previous step is a parallel_group → its output is
+        // { outputs: [competitor_data, pricing_strategy] }.
+        const last = ctx.previousOutputs[ctx.previousOutputs.length - 1] ?? {};
+        const groupOutputs: any[] = Array.isArray(last?.outputs) ? last.outputs : [];
+        const competitor = groupOutputs[0] ?? null;
+        const positioning = groupOutputs[1] ?? null;
+        return {
+          generatedAt: new Date().toISOString(),
+          competitorScan: competitor,
+          positioning,
+        };
+      }
+
+      // ─── margin_guard_audit ──────────────────────────────────────
+      case "load_margin_audit_dataset": {
+        if (!ctx.storeId) {
+          return { products: [], note: "No store selected — margin audit skipped." };
+        }
+        const minMarginPct = (ctx.input.minMarginPct as number | undefined) ?? 15;
+        const includePaused = (ctx.input.includePaused as boolean | undefined) ?? false;
+        const products = await getProductsByStore(ctx.storeId);
+        const filtered = products
+          .filter((p: any) => includePaused || p.status === "active")
+          .filter((p: any) => p.price != null && p.costPrice != null);
+        // Cap to 200 products per audit so the LLM input stays bounded.
+        const sample = filtered.slice(0, 200).map((p: any) => {
+          const priceUsd = (p.price ?? 0) / 100;
+          const costUsd = (p.costPrice ?? 0) / 100;
+          const marginPct = priceUsd > 0 ? ((priceUsd - costUsd) / priceUsd) * 100 : 0;
+          return {
+            productId: p.id,
+            title: p.title,
+            currentPriceUsd: Number(priceUsd.toFixed(2)),
+            costPriceUsd: Number(costUsd.toFixed(2)),
+            currentMarginPct: Number(marginPct.toFixed(1)),
+            stockLevel: p.stockLevel ?? p.stockQuantity ?? 0,
+            status: p.status ?? "active",
+          };
+        });
+        return {
+          minMarginPct,
+          productsAudited: sample.length,
+          totalProducts: products.length,
+          truncated: filtered.length > sample.length,
+          dataset: sample,
+        };
+      }
+
+      // ─── velocity_restock_predictor ──────────────────────────────
+      case "compute_sales_velocity": {
+        if (!ctx.storeId) {
+          return { skus: [], note: "No store selected — velocity scan skipped." };
+        }
+        const lookbackDays = (ctx.input.lookbackDays as number | undefined) ?? 30;
+        const since = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000);
+
+        const [products, recentOrders] = await Promise.all([
+          getProductsByStore(ctx.storeId),
+          getOrdersByStoreSince(ctx.storeId, since),
+        ]);
+
+        // Sum quantity sold per product across all orders in window.
+        // Order items are stored as JSON; gracefully handle the
+        // common shapes (Shopify line_items + our internal shape).
+        const unitsByProductId = new Map<number, number>();
+        const unitsBySku = new Map<string, number>();
+        for (const order of recentOrders) {
+          const itemsRaw = (order as any).items ?? (order as any).lineItems ?? null;
+          if (!itemsRaw) continue;
+          let items: any[];
+          try {
+            items = typeof itemsRaw === "string" ? JSON.parse(itemsRaw) : itemsRaw;
+          } catch {
+            continue;
+          }
+          if (!Array.isArray(items)) continue;
+          for (const item of items) {
+            const qty = Number(item?.quantity ?? 1);
+            if (!Number.isFinite(qty) || qty <= 0) continue;
+            const pid = Number(item?.productId ?? item?.product_id);
+            const sku = item?.sku as string | undefined;
+            if (Number.isFinite(pid) && pid > 0) {
+              unitsByProductId.set(pid, (unitsByProductId.get(pid) ?? 0) + qty);
+            } else if (sku) {
+              unitsBySku.set(sku, (unitsBySku.get(sku) ?? 0) + qty);
+            }
+          }
+        }
+
+        const rows = products
+          .map((p: any) => {
+            const matchById = unitsByProductId.get(p.id) ?? 0;
+            const matchBySku = p.sku ? unitsBySku.get(p.sku) ?? 0 : 0;
+            const unitsSold = matchById + matchBySku;
+            const dailyVelocity = unitsSold / Math.max(lookbackDays, 1);
+            const stockLevel = p.stockLevel ?? p.stockQuantity ?? 0;
+            const daysOfCover = dailyVelocity > 0 ? stockLevel / dailyVelocity : null;
+            return {
+              productId: p.id,
+              title: p.title,
+              sku: p.sku ?? null,
+              stockLevel,
+              unitsSold,
+              dailyVelocity: Number(dailyVelocity.toFixed(3)),
+              daysOfCoverRemaining: daysOfCover === null ? null : Number(daysOfCover.toFixed(1)),
+              priceUsd: ((p.price ?? 0) / 100),
+            };
+          })
+          // Bias toward at-risk SKUs in the LLM input so the response
+          // stays sharp even with hundreds of products.
+          .sort((a, b) => {
+            const aRisk = a.daysOfCoverRemaining ?? Infinity;
+            const bRisk = b.daysOfCoverRemaining ?? Infinity;
+            return aRisk - bRisk;
+          })
+          .slice(0, 100);
+
+        return {
+          lookbackDays,
+          ordersAnalyzed: recentOrders.length,
+          skusAnalyzed: products.length,
+          velocity: rows,
+        };
+      }
+
+      // ─── send_time_optimizer ─────────────────────────────────────
+      case "aggregate_open_heatmap": {
+        const lookbackDays = (ctx.input.lookbackDays as number | undefined) ?? 90;
+        const since = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000);
+
+        // Org context comes from the workflow row; fall back to a noop
+        // result when we can't resolve it (workflow run with no org —
+        // shouldn't happen post-Phase-3, but defensive anyway).
+        const wf = await getWorkflowById(ctx.workflowId);
+        const orgId = wf?.orgId ?? null;
+        if (!orgId) {
+          return {
+            heatmap: [],
+            isColdStart: true,
+            note: "No org context — falling back to industry defaults.",
+          };
+        }
+
+        const rows = await getOpenHeatmapByOrg(orgId, since);
+        const totalEvents = rows.reduce((acc, r) => acc + r.count, 0);
+
+        return {
+          lookbackDays,
+          totalOpenEvents: totalEvents,
+          isColdStart: totalEvents < 20, // 20 events ≈ minimum for any signal
+          heatmap: rows,
+        };
+      }
+
+      default:
+        // Unknown operation — return previousOutputs so the next step
+        // can still attempt to do something useful, and log.
+        console.warn(`[WorkflowEngine.DataTransform] Unknown operation: ${op}`);
+        return { unknownOperation: op, previousOutputs: ctx.previousOutputs };
+    }
+  }
 }
 
 async function executeStoreActionStep(context: StepContext): Promise<any> {

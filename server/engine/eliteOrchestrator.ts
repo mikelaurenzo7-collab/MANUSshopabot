@@ -91,11 +91,11 @@ export interface DynamicPricingResult {
  * Detect anomalies across all stores and ad accounts for a user.
  * Compares current metrics against baseline thresholds.
  */
-export async function detectAnomalies(userId: number): Promise<AnomalyAlert[]> {
+export async function detectAnomalies(userId: number, orgId: number): Promise<AnomalyAlert[]> {
   const alerts: AnomalyAlert[] = [];
 
   try {
-    const stores = await db.getStoresByUser(userId);
+    const stores = await db.getStoresByOrg(orgId);
     const activeStores = stores.filter((s: any) => s.status === "active");
 
     for (const store of activeStores) {
@@ -146,7 +146,7 @@ export async function detectAnomalies(userId: number): Promise<AnomalyAlert[]> {
     }
 
     // Check ad campaign performance
-    const campaigns = await db.getAdCampaignsByUser(userId);
+    const campaigns = await db.getAdCampaignsByOrg(orgId);
     for (const campaign of campaigns) {
       if (campaign.status !== "active") continue;
 
@@ -184,7 +184,7 @@ export async function detectAnomalies(userId: number): Promise<AnomalyAlert[]> {
  * When a product goes out of stock, pause all active ad campaigns
  * that are promoting that product across ALL connected social platforms.
  */
-export async function pauseAdsForOutOfStockProducts(userId: number): Promise<{
+export async function pauseAdsForOutOfStockProducts(userId: number, orgId: number): Promise<{
   paused: number;
   errors: string[];
   details: { platform: string; campaignId: string; productTitle: string }[];
@@ -192,8 +192,8 @@ export async function pauseAdsForOutOfStockProducts(userId: number): Promise<{
   const result = { paused: 0, errors: [] as string[], details: [] as any[] };
 
   try {
-    const stores = await db.getStoresByUser(userId);
-    const socialAccounts = await db.getSocialAccounts(userId);
+    const stores = await db.getStoresByOrg(orgId);
+    const socialAccounts = await db.getSocialAccountsByOrg(orgId);
 
     for (const store of stores) {
       if (store.status !== "active") continue;
@@ -269,11 +269,11 @@ export async function pauseAdsForOutOfStockProducts(userId: number): Promise<{
  * Monitor Buy Box status across Amazon, eBay, and Walmart.
  * Generate repricing recommendations within margin limits.
  */
-export async function monitorBuyBox(userId: number): Promise<BuyBoxStatus[]> {
+export async function monitorBuyBox(userId: number, orgId: number): Promise<BuyBoxStatus[]> {
   const results: BuyBoxStatus[] = [];
 
   try {
-    const stores = await db.getStoresByUser(userId);
+    const stores = await db.getStoresByOrg(orgId);
     const buyBoxPlatforms = ["amazon", "ebay", "walmart"];
 
     for (const store of stores) {
@@ -332,11 +332,11 @@ export async function monitorBuyBox(userId: number): Promise<BuyBoxStatus[]> {
  * Pricing rules store config in the `config` JSON field.
  * Changes > 15% require approval gate.
  */
-export async function runDynamicPricingEngine(userId: number): Promise<DynamicPricingResult[]> {
+export async function runDynamicPricingEngine(userId: number, orgId: number): Promise<DynamicPricingResult[]> {
   const results: DynamicPricingResult[] = [];
 
   try {
-    const stores = await db.getStoresByUser(userId);
+    const stores = await db.getStoresByOrg(orgId);
     const botConfigs = await db.getBotConfigs(userId);
     const merchantConfig = botConfigs.find((c: any) => c.agentType === "merchant");
     const autonomyLevel = merchantConfig?.autonomyLevel || "supervised";
@@ -471,7 +471,7 @@ export async function runDynamicPricingEngine(userId: number): Promise<DynamicPr
  * Uses conversions/clicks/spend from the adCampaigns table.
  * Rule: CPA > 20% above target → pause. ROAS > 150% of target → scale.
  */
-export async function runCreativeVelocityOptimization(userId: number): Promise<{
+export async function runCreativeVelocityOptimization(userId: number, orgId: number): Promise<{
   paused: number;
   scaled: number;
   details: { campaignId: number; action: "paused" | "scaled"; reason: string }[];
@@ -479,7 +479,7 @@ export async function runCreativeVelocityOptimization(userId: number): Promise<{
   const result = { paused: 0, scaled: 0, details: [] as any[] };
 
   try {
-    const campaigns = await db.getAdCampaignsByUser(userId);
+    const campaigns = await db.getAdCampaignsByOrg(orgId);
 
     for (const campaign of campaigns) {
       if (campaign.status !== "active") continue;
@@ -500,7 +500,7 @@ export async function runCreativeVelocityOptimization(userId: number): Promise<{
       const targetCTR = 0.02; // 2%
 
       if (cpa > 0 && cpa > targetCPA * 1.20) {
-        const socialAccounts = await db.getSocialAccounts(userId);
+        const socialAccounts = await db.getSocialAccountsByOrg(orgId);
         const account = socialAccounts.find((a: any) =>
           a.platform === campaign.platform ||
           (campaign.platform === "meta" && a.platform === "instagram") ||
@@ -592,8 +592,8 @@ export async function runCreativeVelocityOptimization(userId: number): Promise<{
 /**
  * Aggregate cross-platform metrics into a single unified view.
  */
-export async function getUnifiedMetrics(userId: number, period: "24h" | "7d" | "30d" = "30d"): Promise<UnifiedMetrics> {
-  const stores = await db.getStoresByUser(userId);
+export async function getUnifiedMetrics(userId: number, orgId: number, period: "24h" | "7d" | "30d" = "30d"): Promise<UnifiedMetrics> {
+  const stores = await db.getStoresByOrg(orgId);
   const activeStores = stores.filter((s: any) => s.status === "active");
 
   let totalRevenue = 0;
@@ -633,7 +633,7 @@ export async function getUnifiedMetrics(userId: number, period: "24h" | "7d" | "
   let totalConversions = 0;
   const platformAds: Record<string, { spend: number; conversions: number }> = {};
 
-  const allCampaigns = await db.getAdCampaignsByUser(userId);
+  const allCampaigns = await db.getAdCampaignsByOrg(orgId);
   for (const campaign of allCampaigns) {
     if (campaign.status !== "active") continue;
     const spend = (campaign.spentCents ?? 0) / 100;
@@ -663,7 +663,7 @@ export async function getUnifiedMetrics(userId: number, period: "24h" | "7d" | "
     .sort((a, b) => b.roas - a.roas);
 
   const topAdPlatform = platformBreakdownAds[0]?.platform || "none";
-  const anomalies = await detectAnomalies(userId);
+  const anomalies = await detectAnomalies(userId, orgId);
 
   return {
     userId,
