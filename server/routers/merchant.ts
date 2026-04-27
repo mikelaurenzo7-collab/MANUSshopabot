@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -13,28 +13,28 @@ import {
 import { getRenderedStoreContext } from "../utils/userContext";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
 import {
-  assertStoreOwnership,
-  assertProductOwnership,
-  assertOrderOwnership,
+  requireStoreInOrg,
+  requireProductInOrg,
+  requireOrderInOrg,
 } from "../utils/authz";
 
 export const merchantRouter = router({
   // ─── Inventory ────────────────────────────────────────────────────────
-  products: protectedProcedure
+  products: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .query(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getProductsByStore(input.storeId);
     }),
 
-  product: protectedProcedure
+  product: orgProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      await assertProductOwnership(input.id, ctx.user.id);
+      await requireProductInOrg(input.id, ctx.org.id);
       return db.getProductById(input.id);
     }),
 
-  updateProduct: protectedProcedure
+  updateProduct: orgProcedure
     .input(z.object({
       id: z.number(),
       title: z.string().optional(),
@@ -45,28 +45,28 @@ export const merchantRouter = router({
       status: z.enum(["draft", "active", "out_of_stock", "archived"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertProductOwnership(input.id, ctx.user.id);
+      await requireProductInOrg(input.id, ctx.org.id);
       const { id, ...data } = input;
       await db.updateProduct(id, data);
       return { success: true };
     }),
 
-  lowStockAlerts: protectedProcedure
+  lowStockAlerts: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .query(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getLowStockProducts(input.storeId);
     }),
 
   // ─── Orders & Fulfillment ─────────────────────────────────────────────
-  orders: protectedProcedure
+  orders: orgProcedure
     .input(z.object({ storeId: z.number(), limit: z.number().default(50) }))
     .query(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getOrdersByStore(input.storeId, input.limit);
     }),
 
-  updateOrder: protectedProcedure
+  updateOrder: orgProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["pending", "processing", "fulfilled", "shipped", "delivered", "cancelled", "refunded"]).optional(),
@@ -75,7 +75,7 @@ export const merchantRouter = router({
       trackingUrl: z.string().url().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertOrderOwnership(input.id, ctx.user.id);
+      await requireOrderInOrg(input.id, ctx.org.id);
       const { id, ...data } = input;
       await db.updateOrder(id, data);
 
@@ -92,7 +92,7 @@ export const merchantRouter = router({
       return { success: true };
     }),
 
-  autoFulfill: protectedProcedure
+  autoFulfill: orgProcedure
     .input(z.object({
       orderId: z.number(),
       storeId: z.number(),
@@ -100,8 +100,8 @@ export const merchantRouter = router({
       trackingUrl: z.string().url().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
-      await assertOrderOwnership(input.orderId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
+      await requireOrderInOrg(input.orderId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "merchant",
         taskType: "auto_fulfillment",
@@ -140,34 +140,45 @@ export const merchantRouter = router({
     }),
 
   // ─── Platform Bridge: Product Sync & Inventory ────────────────────
-  syncProducts: protectedProcedure
+  /**
+   * Sync products from the connected storefront. Pre-migration this
+   * had NO authorization check at all — `syncProducts` accepted any
+   * storeId and silently fired the engine. Now gated through
+   * requireStoreInOrg so only the active org's stores can be synced.
+   */
+  syncProducts: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return syncProductsFromStore(input.storeId, ctx.user.id);
     }),
 
-  pushProduct: protectedProcedure
+  pushProduct: orgProcedure
     .input(z.object({ storeId: z.number(), productId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
-      await assertProductOwnership(input.productId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
+      await requireProductInOrg(input.productId, ctx.org.id);
       return pushProductToStore(input.storeId, input.productId);
     }),
 
-  crossStoreInventory: protectedProcedure
+  crossStoreInventory: orgProcedure
     .query(async ({ ctx }) => {
+      // checkInventoryAcrossStores still walks by userId — the engine
+      // call site is internal and the user's stores in the active org
+      // are the same set we want here. Keep the userId arg for now;
+      // engine-level org migration is a follow-up.
       return checkInventoryAcrossStores(ctx.user.id);
     }),
 
   // ─── Pricing Rules ────────────────────────────────────────────────────
-  pricingRules: protectedProcedure
+  pricingRules: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .query(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getPricingRules(input.storeId);
     }),
 
-  createPricingRule: protectedProcedure
+  createPricingRule: orgProcedure
     .input(z.object({
       storeId: z.number(),
       name: z.string().min(1).max(200),
@@ -176,7 +187,7 @@ export const merchantRouter = router({
       enabled: z.boolean().default(true),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const result = await db.createPricingRule({ ...input, name: sanitizeName(input.name, 200) });
 
       await db.createAgentTask({
@@ -191,7 +202,7 @@ export const merchantRouter = router({
       return result;
     }),
 
-  updatePricingRule: protectedProcedure
+  updatePricingRule: orgProcedure
     .input(z.object({
       id: z.number(),
       name: z.string().max(200).optional(),
@@ -206,21 +217,21 @@ export const merchantRouter = router({
           message: "Pricing rule not found",
         });
       }
-      await assertStoreOwnership(rule.storeId, ctx.user.id);
+      await requireStoreInOrg(rule.storeId, ctx.org.id);
       const { id, ...data } = input;
       await db.updatePricingRule(id, data);
       return { success: true };
     }),
 
   // ─── AI Pricing Strategy ──────────────────────────────────────────────
-  suggestPricing: protectedProcedure
+  suggestPricing: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productId: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const store = await assertStoreOwnership(input.storeId, ctx.user.id);
-      const product = await assertProductOwnership(input.productId, ctx.user.id);
+      const store = await requireStoreInOrg(input.storeId, ctx.org.id);
+      const product = await requireProductInOrg(input.productId, ctx.org.id);
       if (product.storeId !== input.storeId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -311,13 +322,13 @@ export const merchantRouter = router({
     }),
 
   // ─── Demand Forecasting ────────────────────────────────────────────────
-  demandForecasting: protectedProcedure
+  demandForecasting: orgProcedure
     .input(z.object({
       storeId: z.number(),
       forecastPeriod: z.enum(["7_days", "30_days", "90_days"]).default("30_days"),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "merchant",
         taskType: "demand_forecast",
@@ -379,10 +390,10 @@ export const merchantRouter = router({
     }),
 
   // ─── Margin Analyzer ───────────────────────────────────────────────────
-  marginAnalyzer: protectedProcedure
+  marginAnalyzer: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "merchant",
         taskType: "margin_analysis",
@@ -447,10 +458,10 @@ export const merchantRouter = router({
     }),
 
   // ─── Return & Refund Analysis ───────────────────────────────────────────
-  returnAnalysis: protectedProcedure
+  returnAnalysis: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "merchant",
         taskType: "return_analysis",

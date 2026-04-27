@@ -32,7 +32,13 @@ type CookieCall = { name: string; options: Record<string, unknown> };
 
 function makeCtx(
   user: NonNullable<TrpcContext["user"]> | null = null,
-  activeOrg: TrpcContext["activeOrg"] = user ? { id: 1, role: "owner" } : null,
+  activeOrg: TrpcContext["activeOrg"] = user
+    // Match the user's platform role to a sensible org role: platform-
+    // admin → org owner; regular user → org member. This means the
+    // legacy "regular user can't access admin endpoints" tests still
+    // hold under the new orgAdminProcedure semantics.
+    ? { id: 1, role: user.role === "admin" ? "owner" : "member" }
+    : null,
 ): {
   ctx: TrpcContext;
   clearedCookies: CookieCall[];

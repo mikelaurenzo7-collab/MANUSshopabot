@@ -13,7 +13,11 @@ const makeCtx = (role?: "user" | "admin") => ({
   user: role
     ? ({ id: 1, role, openId: "test-open-id", name: "Test User" } as any)
     : null,
-  activeOrg: role ? { id: 1, role: "owner" as const } : null,
+  // Map platform admin → org owner; regular user → org member. This
+  // mirrors the new orgAdminProcedure semantics (Phase 4 ship-prep).
+  activeOrg: role
+    ? { id: 1, role: (role === "admin" ? "owner" : "member") as "owner" | "member" }
+    : null,
   req: {} as any,
   res: {} as any,
 });

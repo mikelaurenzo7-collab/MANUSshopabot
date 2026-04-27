@@ -514,10 +514,29 @@ export async function getPendingApprovals() {
   return db.select().from(approvalQueue).where(eq(approvalQueue.status, "pending")).orderBy(desc(approvalQueue.createdAt));
 }
 
+/** Org-scoped — preferred. Returns only approvals visible to the active org. */
+export async function getPendingApprovalsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(approvalQueue)
+    .where(and(eq(approvalQueue.status, "pending"), eq(approvalQueue.orgId, orgId)))
+    .orderBy(desc(approvalQueue.createdAt));
+}
+
 export async function getAllApprovals(limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(approvalQueue).orderBy(desc(approvalQueue.createdAt)).limit(limit);
+}
+
+/** Org-scoped — preferred. */
+export async function getAllApprovalsByOrg(orgId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(approvalQueue)
+    .where(eq(approvalQueue.orgId, orgId))
+    .orderBy(desc(approvalQueue.createdAt))
+    .limit(limit);
 }
 
 export async function updateApproval(id: number, data: { status: "approved" | "rejected"; reviewNote?: string }) {
@@ -532,6 +551,13 @@ export async function getBotConfigs(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(botConfig).where(eq(botConfig.userId, userId));
+}
+
+/** Org-scoped — preferred. Returns the org's bot configs across all members. */
+export async function getBotConfigsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(botConfig).where(eq(botConfig.orgId, orgId));
 }
 
 export async function upsertBotConfig(data: InsertBotConfig) {

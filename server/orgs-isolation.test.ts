@@ -150,4 +150,66 @@ describe("Multi-tenancy: cross-org isolation canary", () => {
     expect(authz.requireProductInOrg).toBeDefined();
     expect(authz.requireOrderInOrg).toBeDefined();
   });
+
+  it("merchant router uses orgProcedure (no legacy assertStoreOwnership)", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "routers/merchant.ts"),
+      "utf-8",
+    );
+    // Pre-fix the merchant router used `protectedProcedure` +
+    // `assertStoreOwnership(storeId, ctx.user.id)` which bypassed the
+    // org boundary entirely. After the ship-prep fix these patterns
+    // must not appear.
+    expect(src).not.toMatch(/protectedProcedure/);
+    expect(src).not.toMatch(/assertStoreOwnership\(/);
+    expect(src).not.toMatch(/assertProductOwnership\(/);
+    expect(src).not.toMatch(/assertOrderOwnership\(/);
+    expect(src).toContain("orgProcedure");
+    expect(src).toContain("requireStoreInOrg");
+  });
+
+  it("approvals router filters by org (orgProcedure + getPendingApprovalsByOrg)", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "routers.ts"),
+      "utf-8",
+    );
+    // Pending approvals must be org-scoped — pre-fix they were a
+    // workspace-wide list that surfaced approvals from every tenant.
+    expect(src).toContain("getPendingApprovalsByOrg(ctx.org.id)");
+    expect(src).toContain("getAllApprovalsByOrg(ctx.org.id");
+  });
+
+  it("botConfig.list uses ctx.org.id, not ctx.user.id", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "routers.ts"),
+      "utf-8",
+    );
+    expect(src).toContain("getBotConfigsByOrg(ctx.org.id)");
+    expect(src).not.toMatch(/db\.getBotConfigs\(ctx\.user\.id\)/);
+  });
+
+  it("merchant.syncProducts has an authorization gate (regression guard)", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "routers/merchant.ts"),
+      "utf-8",
+    );
+    // Specific regression test: pre-fix syncProducts had ZERO
+    // authorization — any user could sync any store. Verify the gate
+    // is present in the mutation handler.
+    const syncStart = src.indexOf("syncProducts:");
+    expect(syncStart, "syncProducts mutation should be defined").toBeGreaterThan(-1);
+    // Look at the next 400 characters after the procedure name — that's
+    // the input + mutation body.
+    const syncBody = src.slice(syncStart, syncStart + 400);
+    expect(syncBody).toContain("orgProcedure");
+    expect(syncBody).toContain("requireStoreInOrg(input.storeId, ctx.org.id)");
+  });
 });
