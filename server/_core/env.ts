@@ -120,17 +120,12 @@ export function validateRequiredEnv(): void {
   // the boot on length; warn if it's < 32 so the operator knows to set
   // a stronger one when self-hosting outside Manus.
   const jwt = process.env.JWT_SECRET ?? "";
-<<<<<<< Updated upstream
   if (jwt && jwt.length < 32) {
     logger.warn("env_jwt_secret_short", {
       length: jwt.length,
       message:
         "JWT_SECRET is shorter than the 32-char recommendation. Manus's auto-injected secret is fine for hosted deploys; for self-hosting generate a stronger one with `openssl rand -base64 48`.",
     });
-=======
-  if (jwt && jwt.length < 32 && process.env.NODE_ENV === "production") {
-    missing.push("JWT_SECRET (must be ≥ 32 chars; generate with `openssl rand -base64 48`)");
->>>>>>> Stashed changes
   }
 
   // Production CORS hardening — never fall back to localhost in prod.
