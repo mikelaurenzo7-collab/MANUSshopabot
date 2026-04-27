@@ -292,7 +292,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           )}
           {item.badge && item.badge > 0 ? (
             <span
-              className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-1 rounded-full bg-amber-500 text-black text-[9px] font-bold flex items-center justify-center"
+              className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center"
               aria-label={`${item.badge} pending`}
             >
               {item.badge > 9 ? "9+" : item.badge}
@@ -331,7 +331,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
         {item.badge && item.badge > 0 ? (
           <span
-            className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-black text-[9px] font-bold flex items-center justify-center shrink-0"
+            className="ml-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0"
             aria-label={`${item.badge} pending`}
           >
             {item.badge > 99 ? "99+" : item.badge}
@@ -461,6 +461,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
           <button
             type="button"
+            onClick={() => setHelpOpen(true)}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="w-7 h-7 rounded-md text-white/30 hover:text-sky-300 hover:bg-white/[0.06] transition-all flex items-center justify-center text-[11px] font-bold font-mono"
+          >
+            ?
+          </button>
+          <button
+            type="button"
             onClick={handleLogout}
             title="Sign out"
             aria-label="Sign out"
@@ -488,15 +497,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="live-pip" aria-label="online" />
           </div>
         </Link>
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-[11px] font-medium h-7 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
-        >
-          <LogOut className="w-3 h-3 mr-1.5" />
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            onClick={handleLogout}
+            variant="ghost"
+            size="sm"
+            className="flex-1 justify-start text-[11px] font-medium h-7 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
+          >
+            <LogOut className="w-3 h-3 mr-1.5" />
+            Sign Out
+          </Button>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="shrink-0 w-7 h-7 rounded-md text-white/30 hover:text-sky-300 hover:bg-white/[0.06] transition-all flex items-center justify-center text-[11px] font-bold font-mono"
+          >
+            ?
+          </button>
+        </div>
       </div>
     );
   };

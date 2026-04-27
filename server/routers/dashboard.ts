@@ -1,30 +1,36 @@
 import { z } from "zod";
-import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 import { checkInventoryAcrossStores, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
 import { agentScheduler } from "../scheduler";
 
+/**
+ * Dashboard router — every procedure here surfaces tenant data
+ * (revenue, orders, agent activity) and must be org-scoped. The
+ * legacy `protectedProcedure` versions read globals (`getRecentOrders`,
+ * `getAgentStatusSummary`) and were a cross-tenant leak.
+ */
 export const dashboardRouter = router({
-  metrics: protectedProcedure
+  metrics: orgProcedure
     .input(z.object({ storeId: z.number().optional() }).optional())
-    .query(async ({ input }) => {
-      return db.getDashboardMetrics(input?.storeId);
+    .query(async ({ ctx, input }) => {
+      return db.getDashboardMetricsForOrg(ctx.org.id, input?.storeId);
     }),
 
-  agentStatus: protectedProcedure.query(async () => {
-    return db.getAgentStatusSummary();
+  agentStatus: orgProcedure.query(async ({ ctx }) => {
+    return db.getAgentStatusSummaryByOrg(ctx.org.id);
   }),
 
-  recentOrders: protectedProcedure
+  recentOrders: orgProcedure
     .input(z.object({ limit: z.number().min(1).max(50).default(10) }).optional())
-    .query(async ({ input }) => {
-      return db.getRecentOrders(input?.limit ?? 10);
+    .query(async ({ ctx, input }) => {
+      return db.getRecentOrdersByOrg(ctx.org.id, input?.limit ?? 10);
     }),
 
-  recentActivity: protectedProcedure
+  recentActivity: orgProcedure
     .input(z.object({ limit: z.number().min(1).max(50).default(10) }).optional())
-    .query(async ({ input }) => {
-      return db.getAgentTasks({ limit: input?.limit ?? 10 });
+    .query(async ({ ctx, input }) => {
+      return db.getAgentTasksByOrg(ctx.org.id, { limit: input?.limit ?? 10 });
     }),
 
   // ─── Cross-Store Intelligence ───────────────────────────────────

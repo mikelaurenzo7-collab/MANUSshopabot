@@ -556,6 +556,23 @@ export default function Home() {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, selected: false } })));
   }, [setNodes]);
 
+  // Esc closes the Inspector slide-over. Skipped while typing into a form
+  // field so we don't fight Radix dialogs / textareas elsewhere on the
+  // page. The DashboardLayout-level `?` overlay handler already preempts
+  // when its own state is open, so they don't collide.
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      onPaneClick();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected, onPaneClick]);
+
   const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
   const todayOrders = (metrics?.totalOrders ?? 0) as number;
   const intelData = intel as { totalLowStock?: number; topStore?: { name?: string; revenue?: number } } | undefined;

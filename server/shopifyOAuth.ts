@@ -222,10 +222,15 @@ export function registerShopifyOAuthRoutes(app: Express) {
         storeName = shopInfo.shop.name || storeName;
       }
 
-      // Check if this store is already connected
-      const existingStores = await db.getStoresByUser(nonceData.userId);
-      const existingStore = existingStores.find(
-        (s: any) => s.platformDomain === shop && s.platform === "shopify"
+      // Check if this store is already connected, but only inside the
+      // org we're going to land the connection in. Pre-fix this used
+      // `getStoresByUser`, which spans every org the user belongs to —
+      // so re-installing the same shop while signed in to a different
+      // org would mutate the original org's row (cross-tenant leak).
+      const personalOrg = await db.ensurePersonalOrg(nonceData.userId);
+      const orgStores = await db.getStoresByOrg(personalOrg.id);
+      const existingStore = orgStores.find(
+        (s: any) => s.platformDomain === shop && s.platform === "shopify",
       );
 
       await db.withTransaction(async (tx) => {
@@ -264,12 +269,10 @@ export function registerShopifyOAuthRoutes(app: Express) {
           return;
         }
 
-        // Stores connected via OAuth go into the user's personal org.
-        // Future: surface an org-picker on the install page so an
-        // admin/agency operator can decide which org to land the
-        // connection in. For now: personal org keeps OAuth flow simple
-        // and matches single-user behavior.
-        const personalOrg = await db.ensurePersonalOrg(nonceData.userId);
+        // Stores connected via OAuth land in the user's personal org
+        // (resolved above). Future: surface an org-picker on the
+        // install page so an admin/agency operator can pick the
+        // destination explicitly.
         const createdStore = await db.createStore({
           orgId: personalOrg.id,
           userId: nonceData.userId,

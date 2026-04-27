@@ -194,6 +194,54 @@ describe("Multi-tenancy: cross-org isolation canary", () => {
     expect(src).not.toMatch(/db\.getBotConfigs\(ctx\.user\.id\)/);
   });
 
+  it("dashboard + analytics routers are org-scoped (regression guard)", async () => {
+    // Pre-fix every dashboard/analytics procedure used `protectedProcedure`
+    // with global helpers (`getDashboardMetrics`, `getRecentOrders`,
+    // `getAgentStatusSummary`) — calling them from any signed-in user
+    // returned aggregates spanning every tenant on the platform.
+    const fs = await import("fs");
+    const path = await import("path");
+    const dashSrc = fs.readFileSync(
+      path.resolve(__dirname, "routers/dashboard.ts"),
+      "utf-8",
+    );
+    const anaSrc = fs.readFileSync(
+      path.resolve(__dirname, "routers/analytics.ts"),
+      "utf-8",
+    );
+    // Dashboard: every public procedure should now use orgProcedure +
+    // its corresponding org-scoped helper. Match the actual usage
+    // pattern (`.input`, `.query`, `.mutation` chained off the
+    // procedure) rather than the bare word, which still appears in
+    // historical-context comments.
+    expect(dashSrc).not.toMatch(/:\s*protectedProcedure\b/);
+    expect(dashSrc).toContain("getDashboardMetricsForOrg(ctx.org.id");
+    expect(dashSrc).toContain("getAgentStatusSummaryByOrg(ctx.org.id");
+    expect(dashSrc).toContain("getRecentOrdersByOrg(ctx.org.id");
+    expect(dashSrc).toContain("getAgentTasksByOrg(ctx.org.id");
+    // Analytics: same.
+    expect(anaSrc).not.toMatch(/:\s*protectedProcedure\b/);
+    expect(anaSrc).toContain("getAnalyticsSnapshotsForOrg(ctx.org.id");
+    expect(anaSrc).toContain("getDashboardMetricsForOrg(ctx.org.id");
+    expect(anaSrc).toContain("getAgentStatusSummaryByOrg(ctx.org.id");
+  });
+
+  it("shopifyOAuth dupe-check is scoped to the user's personal org, not all stores", async () => {
+    // Pre-fix the OAuth callback called `getStoresByUser(userId)` to
+    // de-dupe an existing connection — but `getStoresByUser` spans
+    // every org the user belongs to. Re-installing the same shop while
+    // signed in to a different org would mutate the original org's
+    // store row (cross-tenant leak).
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "shopifyOAuth.ts"),
+      "utf-8",
+    );
+    expect(src).not.toMatch(/getStoresByUser\(/);
+    expect(src).toContain("getStoresByOrg(personalOrg.id)");
+  });
+
   it("merchant.syncProducts has an authorization gate (regression guard)", async () => {
     const fs = await import("fs");
     const path = await import("path");

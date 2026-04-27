@@ -520,6 +520,24 @@ export async function getRecentOrders(limit = 20) {
   return db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
 }
 
+/**
+ * Org-scoped recent orders. Joins orders → stores so we only return
+ * rows belonging to the active org's stores. Replaces the legacy
+ * `getRecentOrders(limit)` global query in tenant-facing routes.
+ */
+export async function getRecentOrdersByOrg(orgId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ orders })
+    .from(orders)
+    .innerJoin(stores, eq(stores.id, orders.storeId))
+    .where(eq(stores.orgId, orgId))
+    .orderBy(desc(orders.createdAt))
+    .limit(limit);
+  return rows.map((r) => r.orders);
+}
+
 export async function updateOrder(id: number, data: Partial<InsertOrder>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -543,6 +561,32 @@ export async function getAgentTasks(filters?: { agentType?: string; storeId?: nu
   if (filters?.storeId) conditions.push(eq(agentTasks.storeId, filters.storeId));
   if (conditions.length > 0) query = query.where(and(...conditions)) as any;
   return (query as any).orderBy(desc(agentTasks.createdAt)).limit(filters?.limit ?? 20).offset(filters?.offset ?? 0);
+}
+
+/**
+ * Org-scoped agent tasks. Inner-joins through stores.orgId so only
+ * the active org's tasks come back. System-wide tasks (storeId=null)
+ * are intentionally excluded — they belong to the operator scheduler,
+ * not any tenant.
+ */
+export async function getAgentTasksByOrg(
+  orgId: number,
+  filters?: { agentType?: string; storeId?: number; limit?: number; offset?: number },
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(stores.orgId, orgId)];
+  if (filters?.agentType) conditions.push(eq(agentTasks.agentType, filters.agentType as any));
+  if (filters?.storeId) conditions.push(eq(agentTasks.storeId, filters.storeId));
+  const rows = await db
+    .select({ agentTasks })
+    .from(agentTasks)
+    .innerJoin(stores, eq(stores.id, agentTasks.storeId))
+    .where(and(...conditions))
+    .orderBy(desc(agentTasks.createdAt))
+    .limit(filters?.limit ?? 20)
+    .offset(filters?.offset ?? 0);
+  return rows.map((r) => r.agentTasks);
 }
 
 export async function updateAgentTask(id: number, data: Partial<InsertAgentTask>) {
@@ -861,7 +905,75 @@ export async function getAnalyticsSnapshots(storeId: number, days = 30) {
     .orderBy(analyticsSnapshots.date);
 }
 
+/**
+ * Org-scoped analytics snapshots. Resolves the storeId, verifies it
+ * belongs to the org, and returns an empty list if not — preventing
+ * cross-tenant snapshot reads via guessed store IDs.
+ */
+export async function getAnalyticsSnapshotsForOrg(orgId: number, storeId: number, days = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  const [owned] = await db
+    .select({ id: stores.id })
+    .from(stores)
+    .where(and(eq(stores.id, storeId), eq(stores.orgId, orgId)))
+    .limit(1);
+  if (!owned) return [];
+  return getAnalyticsSnapshots(storeId, days);
+}
+
 // ─── Dashboard aggregate helpers ────────────────────────────────────────────
+
+/**
+ * Org-scoped dashboard metrics. When `storeId` is provided we still
+ * verify it belongs to the org before aggregating; when omitted we
+ * sum across all of the org's stores. Replaces `getDashboardMetrics`
+ * for tenant-facing routes — the legacy global helper survives only
+ * for operator-facing use (admin dashboards aggregating platform-wide).
+ */
+export async function getDashboardMetricsForOrg(orgId: number, storeId?: number) {
+  const db = await getDb();
+  if (!db) return { totalRevenue: 0, storeRevenue: 0, totalOrders: 0, activeProducts: 0, pendingApprovals: 0 };
+
+  // Resolve the store ids that belong to this org (and optionally
+  // narrow to a specific store the caller asked about).
+  const orgStores = await db
+    .select({ id: stores.id })
+    .from(stores)
+    .where(
+      storeId
+        ? and(eq(stores.orgId, orgId), eq(stores.id, storeId))
+        : eq(stores.orgId, orgId),
+    );
+  const storeIds = orgStores.map((s) => s.id);
+  if (storeIds.length === 0) {
+    return { totalRevenue: 0, storeRevenue: 0, totalOrders: 0, activeProducts: 0, pendingApprovals: 0 };
+  }
+
+  const [revenueResult] = await db
+    .select({ total: sum(orders.totalAmount), count: count() })
+    .from(orders)
+    .where(inArray(orders.storeId, storeIds));
+
+  const [productResult] = await db
+    .select({ count: count() })
+    .from(products)
+    .where(and(inArray(products.storeId, storeIds), eq(products.status, "active")));
+
+  const [approvalResult] = await db
+    .select({ count: count() })
+    .from(approvalQueue)
+    .where(and(eq(approvalQueue.orgId, orgId), eq(approvalQueue.status, "pending")));
+
+  const storeRevenue = Number(revenueResult?.total ?? 0);
+  return {
+    totalRevenue: storeRevenue,
+    storeRevenue,
+    totalOrders: revenueResult?.count ?? 0,
+    activeProducts: productResult?.count ?? 0,
+    pendingApprovals: approvalResult?.count ?? 0,
+  };
+}
 
 export async function getDashboardMetrics(storeId?: number) {
   const db = await getDb();
@@ -920,6 +1032,28 @@ export async function getAgentStatusSummary() {
     failed: sql<number>`SUM(CASE WHEN ${agentTasks.status} = 'failed' THEN 1 ELSE 0 END)`,
   }).from(agentTasks).groupBy(agentTasks.agentType);
   return result;
+}
+
+/**
+ * Org-scoped agent status summary. Inner-joins through stores.orgId so
+ * the per-bot running/completed/failed counts reflect only the active
+ * org's work. Used by the Command Center bot-health KPI.
+ */
+export async function getAgentStatusSummaryByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      agentType: agentTasks.agentType,
+      total: count(),
+      running: sql<number>`SUM(CASE WHEN ${agentTasks.status} = 'running' THEN 1 ELSE 0 END)`,
+      completed: sql<number>`SUM(CASE WHEN ${agentTasks.status} = 'completed' THEN 1 ELSE 0 END)`,
+      failed: sql<number>`SUM(CASE WHEN ${agentTasks.status} = 'failed' THEN 1 ELSE 0 END)`,
+    })
+    .from(agentTasks)
+    .innerJoin(stores, eq(stores.id, agentTasks.storeId))
+    .where(eq(stores.orgId, orgId))
+    .groupBy(agentTasks.agentType);
 }
 
 // ─── Platform Credential helpers ───────────────────────────────────────────

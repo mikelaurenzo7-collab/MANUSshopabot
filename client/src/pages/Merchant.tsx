@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -53,6 +53,21 @@ export default function MerchantPage() {
     setEntityType(type);
     setSelectedEntity(entity);
   };
+
+  // Esc closes the inspector slide-over (skipped while typing into a form).
+  useEffect(() => {
+    if (!selectedEntity) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      setSelectedEntity(null);
+      setEntityType(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedEntity]);
 
   return (
     <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">

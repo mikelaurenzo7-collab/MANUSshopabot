@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -47,6 +47,20 @@ export default function Architect() {
     if (!selectedReportId || !reports) return null;
     return reports.find((r: any) => r.id === selectedReportId);
   }, [selectedReportId, reports]);
+
+  // Esc closes the inspector slide-over (skipped while typing into a form).
+  useEffect(() => {
+    if (!selectedReportId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      setSelectedReportId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedReportId]);
 
   const handleAnalyze = () => {
     if (!keyword.trim()) return;

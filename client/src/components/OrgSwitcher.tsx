@@ -135,12 +135,12 @@ export function OrgSwitcher() {
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span
-                      className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${ROLE_COLOR[org.role]}`}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${ROLE_COLOR[org.role]}`}
                     >
                       {ROLE_LABEL[org.role]}
                     </span>
                     {org.kind === "personal" && (
-                      <span className="text-[9px] text-white/30">Personal</span>
+                      <span className="text-[10px] text-white/35">Personal</span>
                     )}
                   </div>
                 </div>
