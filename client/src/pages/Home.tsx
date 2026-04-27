@@ -48,6 +48,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
+import { ActivationCoach } from "@/components/ActivationCoach";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -634,6 +635,11 @@ export default function Home() {
           <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
           <span className="text-[11px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
         </div>
+      </div>
+
+      {/* ── Activation Coach ── (auto-dismisses once fully activated) */}
+      <div className="shrink-0 px-4 md:px-6 pt-3 z-20">
+        <ActivationCoach />
       </div>
 
       {/* ── Canvas + Inspector ── */}

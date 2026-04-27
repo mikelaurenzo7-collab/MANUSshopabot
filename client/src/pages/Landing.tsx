@@ -793,12 +793,11 @@ export default function Landing() {
                 { label: "Privacy", href: "/privacy" },
                 { label: "Contact", href: "mailto:hello@shop-a-bot.app" },
                 { label: "Docs", href: "/docs" },
-                { label: "Status", href: "https://status.shop-a-bot.app", external: true },
+                { label: "Status", href: "/status" },
               ].map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   className="text-white/35 text-sm hover:text-sky-400 transition-colors"
                 >
                   {link.label}

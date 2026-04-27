@@ -151,6 +151,69 @@ export function renderOrgInviteEmail(input: OrgInviteTemplateInput): {
   return { subject, html, text };
 }
 
+interface WelcomeTemplateInput {
+  recipientEmail: string;
+  firstName: string;
+  /** Marketing-site or app origin used to build action URLs. */
+  origin: string;
+}
+
+export function renderWelcomeEmail(input: WelcomeTemplateInput): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const { firstName, origin } = input;
+  const safeOrigin = origin.replace(/\/$/, "");
+  const subject = `Welcome to Shop_a_Bot, ${firstName} — your bots are ready`;
+
+  const inner = `
+    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:800;color:${TEXT_COLOR};letter-spacing:-0.01em;">Welcome, ${escapeHtml(firstName)} 👋</h1>
+    <p style="margin:0 0 16px;color:${TEXT_COLOR};">
+      Your three bots — <strong>Builder</strong>, <strong>Merchant</strong>, and <strong>Social</strong> —
+      are wired up and waiting. Here's the fastest path to seeing them in action:
+    </p>
+    <ol style="margin:0 0 20px;padding-left:20px;color:${TEXT_COLOR};line-height:1.7;">
+      <li><strong>Connect a store</strong> — Shopify takes one click. Other platforms work via API key.</li>
+      <li><strong>Wake the Builder</strong> — pick a niche, the bot researches your category and drafts a launch plan.</li>
+      <li><strong>Watch the handoff</strong> — once your store goes live, the Merchant takes the keys and runs fulfillment.</li>
+    </ol>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+      <tr>
+        <td style="border-radius:8px;background:${BRAND_COLOR};">
+          <a href="${escapeHtml(safeOrigin)}/" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#fff;text-decoration:none;border-radius:8px;">
+            Open my Command Center
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 8px;font-size:13px;color:${MUTED_COLOR};">
+      Anything that doesn't make sense, just reply to this email — it goes to a real human.
+    </p>
+    <p style="margin:0;font-size:13px;color:${MUTED_COLOR};">
+      — The Shop_a_Bot team
+    </p>
+  `;
+
+  const html = renderEmailShell(inner, {
+    preheader: `Your three bots are ready. Here's the fastest path to your first store.`,
+    footnote: `7-day free trial — cancel anytime from your billing portal. No support tickets needed; reply to this email.`,
+  });
+
+  const text = renderEmailShellText(
+    `Welcome, ${firstName}!\n\n` +
+      `Your three bots — Builder, Merchant, and Social — are ready.\n\n` +
+      `Fastest path:\n` +
+      `1. Connect a store (Shopify is one click)\n` +
+      `2. Wake the Builder Bot — pick a niche, watch it research\n` +
+      `3. Watch the handoff to the Merchant once you go live\n\n` +
+      `Open your Command Center:\n${safeOrigin}/\n\n` +
+      `Reply to this email if you need anything.`,
+  );
+
+  return { subject, html, text };
+}
+
 interface TrialEndingTemplateInput {
   recipientEmail: string;
   firstName: string;

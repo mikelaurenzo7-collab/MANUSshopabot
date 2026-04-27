@@ -271,6 +271,7 @@ class SDKServer {
     let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically
+    let isFirstSignup = false;
     if (!user) {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
@@ -282,10 +283,21 @@ class SDKServer {
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
+        isFirstSignup = !!user;
       } catch (error) {
         console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
       }
+    }
+
+    // Fire a one-time welcome email on first signup. Fire-and-forget —
+    // never block auth on SendGrid availability or template errors. The
+    // delivery layer is env-gated so this is a no-op when SendGrid
+    // isn't configured (no error logged at WARN+).
+    if (isFirstSignup && user?.email) {
+      void this.sendWelcomeEmail(user).catch((err) => {
+        console.warn("[Auth] welcome email skipped:", err?.message ?? err);
+      });
     }
 
     if (!user) {
@@ -298,6 +310,39 @@ class SDKServer {
     });
 
     return user;
+  }
+
+  /**
+   * Best-effort welcome email. Called once when a brand-new user lands
+   * via OAuth. Lazy-imports the delivery layer so the auth path stays
+   * lean for cached signins, and silently no-ops when SendGrid isn't
+   * configured (the env-gated check happens inside delivery.sendEmail).
+   */
+  private async sendWelcomeEmail(user: { id: number; email: string | null; name: string | null }): Promise<void> {
+    if (!user.email) return;
+    const { sendEmail } = await import("../delivery");
+    const { renderWelcomeEmail } = await import("../delivery/templates");
+    const firstName = user.name?.trim().split(/\s+/)[0] || "there";
+    const origin = process.env.PUBLIC_APP_ORIGIN
+      || (process.env.ALLOWED_ORIGINS?.split(",")[0]?.trim())
+      || "https://shop-a-bot.app";
+
+    const { subject, html, text } = renderWelcomeEmail({
+      recipientEmail: user.email,
+      firstName,
+      origin,
+    });
+
+    await sendEmail(
+      {
+        to: { email: user.email, name: user.name ?? undefined },
+        subject,
+        html,
+        text,
+        categories: ["welcome", "transactional"],
+      },
+      { provider: "sendgrid", userId: user.id },
+    );
   }
 }
 

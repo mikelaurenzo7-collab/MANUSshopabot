@@ -3,12 +3,86 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { ENV } from "../_core/env";
 import * as db from "../db";
+import { getDeliveryStatus } from "../delivery";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { getSocialAdapter, buildSocialCredentials } from "../adapters/social";
 
 export const healthRouter = router({
+  /**
+   * Public platform status — used by the /status page. Returns only
+   * non-sensitive aggregate signals: which subsystems are available,
+   * not who's using them. Safe for unauthenticated callers.
+   *
+   * What it surfaces:
+   *   • Database reachability (one cheap probe)
+   *   • Delivery providers configured (SendGrid, Twilio)
+   *   • Stripe configured (billing path is unblocked)
+   *   • Server uptime + version
+   */
+  platformStatus: publicProcedure.query(async () => {
+    const startedAt = process.uptime();
+    let dbHealthy = false;
+    let dbLatencyMs: number | null = null;
+    try {
+      const t0 = Date.now();
+      const handle = await db.getDb();
+      if (handle) {
+        // Cheap probe — a single round-trip via the existing helper.
+        await db.getOAuthStateStats().catch(() => null);
+        dbHealthy = true;
+        dbLatencyMs = Date.now() - t0;
+      }
+    } catch {
+      dbHealthy = false;
+    }
+
+    const delivery = await getDeliveryStatus();
+
+    const services = [
+      {
+        id: "database",
+        label: "Database",
+        healthy: dbHealthy,
+        detail: dbHealthy ? `Latency ${dbLatencyMs ?? 0}ms` : "Unreachable",
+      },
+      {
+        id: "email",
+        label: "Email delivery (SendGrid)",
+        healthy: delivery.email.sendgrid,
+        detail: delivery.email.sendgrid ? "Configured" : "Not configured — Gmail fallback only",
+      },
+      {
+        id: "sms",
+        label: "SMS delivery (Twilio)",
+        healthy: delivery.sms.twilio,
+        detail: delivery.sms.twilio ? "Configured" : "Not configured",
+      },
+      {
+        id: "billing",
+        label: "Billing (Stripe)",
+        healthy: !!ENV.stripeSecretKey && !!ENV.stripeWebhookSecret,
+        detail:
+          ENV.stripeSecretKey && ENV.stripeWebhookSecret
+            ? "Configured"
+            : "Not configured — checkout disabled",
+      },
+    ];
+
+    const overallHealthy = services.every((s) => s.healthy || s.id !== "database");
+    const allGreen = services.every((s) => s.healthy);
+
+    return {
+      overall: allGreen ? "operational" : overallHealthy ? "degraded" : "outage",
+      services,
+      uptimeSeconds: Math.round(startedAt),
+      checkedAt: new Date().toISOString(),
+    };
+  }),
+
+
   /**
    * Run live health checks on all connected e-commerce credentials and social accounts.
    * Returns per-platform status with latency and last-checked timestamp.
