@@ -74,14 +74,7 @@ export default function BotSettings() {
   const BotIcon = bot.icon;
 
   return (
-    <div className="page-enter p-6 space-y-6 max-w-4xl">
-      {/* Header */}
-      <div className="page-header">
-        <p className="micro-label mb-1">Configuration</p>
-        <h1 className="text-2xl font-heading font-bold text-white">Bot Settings</h1>
-        <p className="text-sm text-white/40 mt-0.5">Configure individual bot behavior, memory, and safety rules</p>
-      </div>
-
+    <div className="page-enter p-3 space-y-3 max-w-4xl">
       {/* Bot Selector */}
       <div className="flex gap-2 flex-wrap">
         {(Object.entries(BOT_CONFIG) as [AgentType, typeof BOT_CONFIG[AgentType]][]).map(([id, cfg]) => {

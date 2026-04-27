@@ -48,9 +48,9 @@ export function OrgSwitcher() {
 
   if (loading && !activeOrg) {
     return (
-      <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02]">
-        <Loader2 className="w-3.5 h-3.5 text-white/40 shrink-0 animate-spin" />
-        <span className="text-xs text-white/40">Loading orgs…</span>
+      <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-white/[0.06] bg-white/[0.02]">
+        <Loader2 className="w-3 h-3 text-white/40 shrink-0 animate-spin" />
+        <span className="text-[11px] text-white/40">Loading orgs…</span>
       </div>
     );
   }
@@ -89,21 +89,16 @@ export function OrgSwitcher() {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-gradient-to-r from-white/[0.04] to-white/[0.015] hover:from-white/[0.07] hover:to-white/[0.025] hover:border-sky-400/25 transition-all group"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md border border-white/[0.06] bg-gradient-to-r from-white/[0.04] to-white/[0.015] hover:from-white/[0.07] hover:to-white/[0.025] hover:border-sky-400/25 transition-all group"
             data-testid="org-switcher"
             aria-label="Switch organization"
           >
-            <span className="w-6 h-6 rounded-md bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
-              <Building2 className="w-3 h-3 text-sky-300" aria-hidden="true" />
+            <span className="w-5 h-5 rounded bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
+              <Building2 className="w-2.5 h-2.5 text-sky-300" aria-hidden="true" />
             </span>
-            <div className="min-w-0 flex-1 flex flex-col items-start">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/30 leading-none">
-                Organization
-              </span>
-              <span className="text-xs font-semibold text-white/90 truncate w-full text-left">
-                {activeOrg.name}
-              </span>
-            </div>
+            <span className="min-w-0 flex-1 text-[12px] font-semibold text-white/90 truncate text-left">
+              {activeOrg.name}
+            </span>
             <ChevronDown
               className="w-3 h-3 text-white/35 shrink-0 group-hover:text-sky-300 transition-colors"
               aria-hidden="true"

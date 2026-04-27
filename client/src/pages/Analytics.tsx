@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3,
   TrendingUp,
   DollarSign,
   ShoppingCart,
@@ -204,17 +203,8 @@ export default function AnalyticsPage() {
           </Card>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between page-header">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.12)]">
-              <BarChart3 className="h-5 w-5 text-sky-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Analytics Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Sales, traffic, and performance insights</p>
-            </div>
-          </div>
+        {/* Date range selector — header is owned by parent Insights shell */}
+        <div className="flex items-center justify-end page-header">
           <div className="flex items-center gap-3">
             <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-28 bg-input/50">

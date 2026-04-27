@@ -57,19 +57,19 @@ export default function InsightsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-6 pt-6 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.12)]">
-          <BarChart3 className="h-5 w-5 text-emerald-400" />
+      <div className="px-5 pt-4 flex items-center gap-2.5">
+        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+          <BarChart3 className="h-4 w-4 text-emerald-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-heading font-bold tracking-tight text-white">Insights</h1>
-          <p className="text-sm text-white/35">Per-store analytics and cross-store / market intelligence</p>
+          <h1 className="text-lg font-heading font-bold tracking-tight text-white leading-tight">Insights</h1>
+          <p className="text-xs text-white/35">Per-store analytics and cross-store / market intelligence</p>
         </div>
       </div>
 
-      <div className="px-6 mb-4" />
+      <div className="px-5 mb-2" />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-6">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-5">
         <TabsList
           className="bg-white/[0.03] border border-white/[0.06] p-1"
           role="tablist"
@@ -105,7 +105,7 @@ export default function InsightsPage() {
           value="stores"
           role="tabpanel"
           aria-labelledby="stores-tab"
-          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+          className={`mt-3 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
         >
           <AnalyticsPage />
         </TabsContent>
@@ -113,7 +113,7 @@ export default function InsightsPage() {
           value="campaigns"
           role="tabpanel"
           aria-labelledby="campaigns-tab"
-          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+          className={`mt-3 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
         >
           <CampaignFunnel />
         </TabsContent>
@@ -121,7 +121,7 @@ export default function InsightsPage() {
           value="intelligence"
           role="tabpanel"
           aria-labelledby="intelligence-tab"
-          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+          className={`mt-3 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
         >
           <IntelligencePage />
         </TabsContent>

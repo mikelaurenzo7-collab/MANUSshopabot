@@ -93,15 +93,12 @@ export default function IntegrationsPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#050505] text-slate-200 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-5 border-b border-white/8 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Integration Hub</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
-          </p>
-        </div>
+    <div className="flex flex-col h-full bg-transparent text-slate-200 overflow-hidden">
+      {/* Compact summary bar — parent Storefronts shell owns the page header */}
+      <div className="px-3 py-2 border-b border-white/8 flex items-center justify-between flex-wrap gap-2">
+        <p className="text-[11px] text-slate-400">
+          {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
+        </p>
         <div className="flex items-center gap-2">
           {summary && (
             <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-3 py-2">

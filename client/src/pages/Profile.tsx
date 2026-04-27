@@ -63,18 +63,18 @@ export default function Profile() {
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6 p-6 max-w-4xl mx-auto page-enter">
+    <div className="space-y-4 p-3 max-w-4xl mx-auto page-enter">
       {/* Profile Header */}
-      <div className="flex items-start gap-6">
-        <Avatar className="h-20 w-20 border-2 border-primary/30 shadow-[0_0_20px_rgba(157,78,221,0.2)]">
-          <AvatarFallback className="text-2xl font-bold bg-primary/15 text-primary">
+      <div className="flex items-start gap-4">
+        <Avatar className="h-14 w-14 border-2 border-primary/30 shadow-[0_0_20px_rgba(157,78,221,0.2)]">
+          <AvatarFallback className="text-lg font-bold bg-primary/15 text-primary">
             {user?.name?.charAt(0).toUpperCase() || "?"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h1 className="text-2xl font-black tracking-tighter font-heading text-foreground">
+          <h2 className="text-base font-black tracking-tight font-heading text-foreground leading-tight">
             {user?.name || "User"}
-          </h1>
+          </h2>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge
               variant="outline"

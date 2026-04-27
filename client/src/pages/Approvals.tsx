@@ -29,7 +29,6 @@ import {
   Package,
   Megaphone,
   AlertTriangle,
-  ShieldCheck,
 } from "lucide-react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -280,19 +279,9 @@ export default function Approvals() {
   const reviewed = all.filter((a: any) => a.status !== "pending");
 
   return (
-    <div className="page-enter p-6 space-y-6">
-      {/* Header */}
+    <div className="page-enter p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="micro-label mb-1">Operations</p>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-amber-400" />
-            Approval Queue
-          </h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            Review and approve automated bot decisions that require human sign-off
-          </p>
-        </div>
+        <div />
         {pending.length > 0 && (
           <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
             <AlertTriangle className="h-4 w-4 text-amber-400" />

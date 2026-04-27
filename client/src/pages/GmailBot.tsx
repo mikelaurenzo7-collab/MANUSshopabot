@@ -1,6 +1,11 @@
 /**
- * Gmail Bot Page
- * Email inbox management, auto-reply configuration, and email template management
+ * Gmail Bot — Email channel management.
+ *
+ * Rendered as the "Email Channel" tab inside Storefronts & Channels.
+ * Legacy `/gmail-bot` deep links redirect to `/storefronts#email`.
+ *
+ * No top-level page header here — the parent Storefronts shell owns
+ * the page chrome. This component renders only the inner tabs.
  */
 
 import { useState, useEffect } from "react";
@@ -11,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Send, MailPlus, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Send, MailPlus, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -74,19 +79,8 @@ export default function GmailBot() {
   }, [autoReplyQuery.data, selectedTab]);
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Mail className="w-8 h-8 text-blue-500" />
-            Gmail Bot
-          </h1>
-          <p className="text-gray-400 mt-1">Manage emails, auto-replies, and templates</p>
-        </div>
-      </div>
-
-      {/* Tabs */}
+    <div className="space-y-3">
+      {/* Inner tabs — parent shell renders the page header */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="inbox">Inbox</TabsTrigger>

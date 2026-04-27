@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Store,
   Plug,
   ToggleLeft,
   ToggleRight,
@@ -42,22 +41,7 @@ export default function PluginStore() {
   }
 
   return (
-    <div className="space-y-6 p-6 relative">
-      {/* Ghost watermark */}
-      <div className="ghost-watermark" aria-hidden="true">PLUGINS</div>
-      {/* Light leaks */}
-      <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Store className="w-6 h-6 text-blue-500" />
-          Bot App Store
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Extend your Shop_a_Bot with first-party micro-bots. One click to install.
-        </p>
-      </div>
-
+    <div className="space-y-3 p-3 relative">
       {/* Available Plugins */}
       <div>
         <h2 className="text-lg font-semibold mb-3">Available Plugins</h2>

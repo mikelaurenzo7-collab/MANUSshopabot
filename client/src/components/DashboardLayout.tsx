@@ -1,9 +1,12 @@
 /**
  * DashboardLayout — primary chrome around the authenticated app.
  *
- * The sidebar is intentionally compact (≈7 destinations) with everything
- * else folded into tabbed shell pages (Inbox, Storefronts & Channels,
- * Insights, Settings). Live status comes from `dashboard.agentStatus`,
+ * The sidebar is intentionally compact (7 destinations, no group headers)
+ * with everything else folded into tabbed shell pages: Inbox handles
+ * Activity + Approvals; Storefronts & Channels handles Connections +
+ * Plugins + Supplier POs + Email; Insights handles per-store + cross-store
+ * + campaign analytics; Settings handles Profile + Members + Bot Settings
+ * + Platform Health (admin). Live status comes from `dashboard.agentStatus`,
  * `approvals.pending`, `connectors.connectionSummary`, and `stores.list`.
  */
 import { ReactNode, useState } from "react";
@@ -23,13 +26,11 @@ import {
   BarChart3,
   Settings as SettingsIcon,
   ChevronDown,
-  ChevronRight,
   LogOut,
   Menu,
   Zap,
   Search,
   Store,
-  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -57,13 +58,6 @@ interface NavItem {
   dot?: "ok" | "running" | "error" | null;
   /** Bot brand dot (purely visual). */
   brand?: "sky" | "cyan" | "amber";
-}
-
-interface NavGroup {
-  label: string;
-  items: NavItem[];
-  collapsible?: boolean;
-  defaultOpen?: boolean;
 }
 
 function statusDotClass(status: NavItem["dot"]): string | null {
@@ -97,7 +91,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [botsOpen, setBotsOpen] = useState(true);
   const { setOpen: setPaletteOpen } = useCommandPalette();
   const { activeStoreId, setActiveStoreId } = useWorkspace();
 
@@ -134,70 +127,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Active workspace store (for the switcher pill)
   const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
 
-  const navGroups: NavGroup[] = [
-    {
-      label: "Workspace",
-      items: [
-        { title: "Command Center", path: "/", icon: LayoutDashboard },
-        {
-          title: "Inbox",
-          path: "/inbox",
-          icon: InboxIcon,
-          badge: pendingCount,
-        },
-      ],
-    },
-    {
-      label: "Bots",
-      collapsible: true,
-      defaultOpen: true,
-      items: [
-        {
-          title: "Builder",
-          path: "/architect",
-          icon: Bot,
-          brand: "sky",
-          dot: statusByAgent.architect ?? "ok",
-        },
-        {
-          title: "Merchant",
-          path: "/merchant",
-          icon: Package,
-          brand: "cyan",
-          dot: statusByAgent.merchant ?? "ok",
-        },
-        {
-          title: "Social",
-          path: "/social",
-          icon: Megaphone,
-          brand: "amber",
-          dot: statusByAgent.social ?? "ok",
-        },
-      ],
-    },
-    {
-      label: "Operate",
-      items: [
-        {
-          title: "Workflows",
-          path: "/workflows",
-          icon: GitBranch,
-          badge: totalRunning,
-        },
-        {
-          title: "Storefronts & Channels",
-          path: "/storefronts",
-          icon: Globe,
-        },
-        { title: "Insights", path: "/insights", icon: BarChart3 },
-        { title: "Gmail Bot", path: "/gmail-bot", icon: Mail },
-      ],
-    },
-    {
-      label: "Account",
-      items: [{ title: "Settings", path: "/settings", icon: SettingsIcon }],
-    },
+  // Flat nav — 8 destinations, no group headers. The earlier grouping
+  // (Workspace/Bots/Operate/Account) added vertical noise without aiding
+  // discovery. A single thin separator before the bot triad keeps the
+  // visual rhythm without consuming a row per label.
+  const navItems: NavItem[] = [
+    { title: "Command Center", path: "/", icon: LayoutDashboard },
+    { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
+    // ── divider before bots ──
+    { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
+    { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
+    { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
+    // ── divider before operate ──
+    { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
+    { title: "Storefronts", path: "/storefronts", icon: Globe },
+    { title: "Insights", path: "/insights", icon: BarChart3 },
+    { title: "Settings", path: "/settings", icon: SettingsIcon },
   ];
+
+  // Index in navItems where a thin divider sits ABOVE the row.
+  const dividerIndices = new Set<number>([2, 5]);
 
   const handleLogout = () => {
     window.location.href = getLoginUrl() + "?action=logout";
@@ -219,7 +168,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         location.startsWith("/storefronts") ||
         location.startsWith("/integrations") ||
         location.startsWith("/plugins") ||
-        location.startsWith("/supplier")
+        location.startsWith("/supplier") ||
+        location.startsWith("/gmail-bot")
       );
     }
     if (path === "/insights") {
@@ -242,14 +192,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const renderNavItem = (item: NavItem) => {
     const isActive = activePathFor(item.path);
-    const dotCls = statusDotClass(item.dot);
-    const brandCls = brandDotClass(item.brand);
+    // For bots we collapse brand-dot + status-dot into a single dot. When
+    // the bot is healthy we paint with brand color; when it changes state
+    // (running/error) we let status take over so the user notices.
+    const dotCls = statusDotClass(item.dot) ?? brandDotClass(item.brand);
     return (
       <Link
         key={item.title}
         href={item.path}
         onClick={() => isMobile && setMobileMenuOpen(false)}
-        className={`flex items-center h-9 pl-3.5 pr-3 rounded-lg transition-all duration-300 group relative ${
+        className={`flex items-center h-7 pl-3 pr-2.5 rounded-md transition-all duration-200 group relative ${
           isActive
             ? "bg-gradient-to-r from-sky-500/[0.14] via-sky-500/[0.06] to-transparent text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
             : "text-white/40 hover:text-white/85 hover:bg-white/[0.035]"
@@ -258,26 +210,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {isActive && <span className="nav-active-bar" aria-hidden="true" />}
         <item.icon
           aria-hidden="true"
-          className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
+          className={`w-3.5 h-3.5 mr-2 transition-all duration-200 ${
             isActive ? "text-sky-400" : "opacity-40 group-hover:opacity-70"
           }`}
         />
-        <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
+        <span className={`text-[13px] truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
           {item.title}
         </span>
-        {brandCls && (
-          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} aria-hidden="true" />
-        )}
         {dotCls && (
           <span
             className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0`}
             role="status"
-            aria-label={`${item.title} status: ${item.dot}`}
+            aria-label={item.dot ? `${item.title} status: ${item.dot}` : undefined}
           />
         )}
         {item.badge && item.badge > 0 ? (
           <span
-            className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0"
+            className="ml-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-500 text-black text-[9px] font-bold flex items-center justify-center shrink-0"
             aria-label={`${item.badge} pending`}
           >
             {item.badge > 99 ? "99+" : item.badge}
@@ -288,30 +237,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const NavContent = () => (
-    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3">
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-2.5">
       {/* Organization switcher (always visible) */}
-      <div className="mb-2 px-1">
+      <div className="mb-1.5 px-0.5">
         <OrgSwitcher />
       </div>
       {/* Workspace (store) switcher */}
       {stores && stores.length > 0 && (
-        <div className="mb-3 px-1">
+        <div className="mb-2 px-0.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-gradient-to-r from-white/[0.025] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] hover:border-sky-400/25 transition-all group"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md border border-white/[0.06] bg-gradient-to-r from-white/[0.025] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] hover:border-sky-400/25 transition-all group"
                 data-testid="workspace-switcher"
               >
-                <span className="w-6 h-6 rounded-md bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
-                  <Store className="w-3 h-3 text-sky-300" />
+                <span className="w-5 h-5 rounded bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
+                  <Store className="w-2.5 h-2.5 text-sky-300" />
                 </span>
-                <div className="min-w-0 flex-1 flex flex-col items-start">
-                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/30 leading-none">Workspace</span>
-                  <span className="text-xs font-semibold text-white/85 truncate w-full text-left">
-                    {activeStore?.name ?? "All stores"}
-                  </span>
-                </div>
+                <span className="min-w-0 flex-1 text-[12px] font-semibold text-white/85 truncate text-left">
+                  {activeStore?.name ?? "All stores"}
+                </span>
                 <ChevronDown className="w-3 h-3 text-white/35 shrink-0 group-hover:text-sky-300 transition-colors" />
               </button>
             </DropdownMenuTrigger>
@@ -346,59 +292,40 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        className="w-full mb-4 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all text-left group"
+        className="w-full mb-3 flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all text-left group"
         data-testid="command-palette-trigger"
       >
-        <Search className="w-3.5 h-3.5 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
-        <span className="text-xs text-white/40 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
+        <Search className="w-3 h-3 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
+        <span className="text-[11px] text-white/40 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
         <kbd className="kbd-lux">⌘K</kbd>
       </button>
 
-      {navGroups.map((group, i) => {
-        const open = group.collapsible ? botsOpen : true;
-        return (
-          <div key={i} className="mb-5">
-            <div className="px-2 mb-2">
-              {group.collapsible ? (
-                <button
-                  type="button"
-                  onClick={() => setBotsOpen((o) => !o)}
-                  className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-white/20 hover:text-white/45 transition-colors"
-                >
-                  <span>{group.label}</span>
-                  {open ? (
-                    <ChevronDown className="w-3 h-3" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3" />
-                  )}
-                </button>
-              ) : (
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/20">
-                  {group.label}
-                </span>
-              )}
-              <div className="nav-group-rule" />
-            </div>
-            {open && <div className="space-y-0.5">{group.items.map(renderNavItem)}</div>}
+      <div className="space-y-px">
+        {navItems.map((item, i) => (
+          <div key={item.title}>
+            {dividerIndices.has(i) && (
+              <div className="my-1.5 mx-2 nav-group-rule" aria-hidden="true" />
+            )}
+            {renderNavItem(item)}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </nav>
   );
 
   const SidebarFooter = () => (
-    <div className="border-t border-white/[0.05] p-3 relative">
-      <div className="absolute top-0 left-3 right-3 hairline opacity-40" />
+    <div className="border-t border-white/[0.05] p-2 relative">
+      <div className="absolute top-0 left-2 right-2 hairline opacity-40" />
       <Link href="/settings" onClick={() => isMobile && setMobileMenuOpen(false)}>
-        <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/25 transition-all cursor-pointer group">
-          <div className="brand-mark shrink-0" style={{ width: "2rem", height: "2rem" }}>
-            <span className="text-[11px] font-bold text-white">
+        <div className="flex items-center gap-2 px-2 py-1.5 mb-1.5 rounded-md bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/25 transition-all cursor-pointer group">
+          <div className="brand-mark shrink-0" style={{ width: "1.6rem", height: "1.6rem" }}>
+            <span className="text-[10px] font-bold text-white">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </span>
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-semibold text-white/85 truncate">{user?.name}</span>
-            <span className="text-[10px] text-white/35 truncate font-mono">{user?.email}</span>
+            <span className="text-[12px] font-semibold text-white/85 truncate leading-tight">{user?.name}</span>
+            <span className="text-[10px] text-white/35 truncate font-mono leading-tight">{user?.email}</span>
           </div>
           <div className="live-pip" aria-label="online" />
         </div>
@@ -407,9 +334,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         onClick={handleLogout}
         variant="ghost"
         size="sm"
-        className="w-full justify-start text-xs font-medium h-8 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
+        className="w-full justify-start text-[11px] font-medium h-7 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
       >
-        <LogOut className="w-3.5 h-3.5 mr-2" />
+        <LogOut className="w-3 h-3 mr-1.5" />
         Sign Out
       </Button>
     </div>
@@ -419,10 +346,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between h-14 px-4 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
+          <div className="flex items-center gap-2">
             <div className="brand-mark">
-              <Zap className="w-3.5 h-3.5 text-white" />
+              <Zap className="w-3 h-3 text-white" />
             </div>
             <BrandName size="sm" />
           </div>
@@ -432,11 +359,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Menu className="w-4 h-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
+            <SheetContent side="left" className="w-60 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
               <div className="flex h-full flex-col">
-                <div className="h-14 flex items-center px-4 border-b border-white/[0.05] gap-2.5">
+                <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2">
                   <div className="brand-mark">
-                    <Zap className="w-3.5 h-3.5 text-white" />
+                    <Zap className="w-3 h-3 text-white" />
                   </div>
                   <BrandName size="sm" />
                 </div>
@@ -456,11 +383,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white app-chrome">
       {/* Desktop Sidebar */}
-      <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
+      <aside className="w-56 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
         {/* Header */}
-        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5 relative" aria-label={BRAND_NAME}>
+        <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2 relative" aria-label={BRAND_NAME}>
           <div className="brand-mark shrink-0">
-            <Zap className="w-3.5 h-3.5 text-white" />
+            <Zap className="w-3 h-3 text-white" />
           </div>
           <BrandName size="sm" className="flex-1" />
           <div className="absolute bottom-0 left-4 right-4 hairline opacity-50" />

@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch, useLocation } from "wouter";
+import { Redirect, Route, Switch, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -44,7 +44,6 @@ const InboxPage = lazy(() => import("./pages/Inbox"));
 const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
-const GmailBotPage = lazy(() => import("./pages/GmailBot"));
 
 function PageLoader() {
   return (
@@ -127,7 +126,9 @@ function Router() {
                     <Route path="/supplier" component={SupplierPOsPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/profile" component={ProfilePage} />
-                    <Route path="/gmail-bot">{() => <ErrorBoundary inline label="Gmail Bot"><GmailBotPage /></ErrorBoundary>}</Route>
+                    {/* /gmail-bot is now folded into Storefronts as the "Email Channel" tab.
+                        Legacy bookmarks land on the right tab via this redirect. */}
+                    <Route path="/gmail-bot">{() => <Redirect to="/storefronts#email" />}</Route>
                     <Route path="/bot-settings">{() => <ErrorBoundary inline label="Bot Settings"><BotSettingsPage /></ErrorBoundary>}</Route>
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>

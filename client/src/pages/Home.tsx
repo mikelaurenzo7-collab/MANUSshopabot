@@ -35,7 +35,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
-  Bot, Package, Megaphone, Store, ShoppingCart,
+  Bot, Package, Megaphone, Store,
   Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
   Loader2, GitBranch, TrendingUp, ShieldCheck,
   RotateCcw, Zap, ExternalLink,
@@ -603,51 +603,51 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/85 via-[#050507]/75 to-[#040406]/85 backdrop-blur-xl px-4 md:px-6 py-3.5 flex flex-wrap items-center gap-3 md:gap-3.5 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/85 via-[#050507]/75 to-[#040406]/85 backdrop-blur-xl px-4 md:px-5 py-2.5 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
         <Kpi
-          icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
+          icon={<TrendingUp className="w-3 h-3 text-emerald-400" />}
           label="Today's revenue"
           value={`$${todayRevenue}`}
           sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`}
         />
         <Kpi
-          icon={<ShieldCheck className="w-3.5 h-3.5 text-amber-400" />}
+          icon={<ShieldCheck className="w-3 h-3 text-amber-400" />}
           label="Pending approvals"
           value={String(pendingCount)}
           sub={pendingCount > 0 ? "needs review" : "all clear"}
           href="/inbox#approvals"
         />
         <Kpi
-          icon={<GitBranch className="w-3.5 h-3.5 text-sky-400" />}
+          icon={<GitBranch className="w-3 h-3 text-sky-400" />}
           label="Active workflows"
           value={String(totalRunning)}
           sub={totalRunning > 0 ? "running" : "idle"}
           href="/workflows"
         />
         <Kpi
-          icon={<Bot className={`w-3.5 h-3.5 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
+          icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
           label="Bots"
           value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"}
           sub={botHealth.text}
         />
-        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-3 py-1.5 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
+        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-2.5 py-1 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
-          <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
-          <span className="text-[11px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
+          <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
+          <span className="text-[10.5px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
       {/* ── Activation Coach ── (auto-dismisses once fully activated) */}
-      <div className="shrink-0 px-4 md:px-6 pt-3 z-20">
+      <div className="shrink-0 px-4 md:px-5 pt-2 z-20">
         <ActivationCoach />
       </div>
 
       {/* ── First-run dashboard tour (item 12) ── */}
       <FirstRunTour />
 
-      {/* ── Canvas + Inspector ── */}
-      <div className="flex flex-1 min-h-0">
+      {/* ── Canvas (full width) + slide-over Inspector ── */}
+      <div className="flex flex-1 min-h-0 relative">
         <div className="flex-1 h-full relative">
           {storesLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
@@ -685,24 +685,31 @@ export default function Home() {
           </ReactFlow>
         </div>
 
-        {/* Inspector */}
-        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/85 backdrop-blur-2xl flex flex-col z-20 relative">
-          <div className="h-12 flex items-center px-4 border-b border-white/[0.05] justify-between relative">
+        {/* Inspector — slide-over, opens on node click. Click pane to dismiss. */}
+        <aside
+          className={`absolute top-0 right-0 h-full w-[280px] border-l border-white/[0.06] bg-[#040406]/95 backdrop-blur-2xl flex flex-col z-30 transition-transform duration-300 ease-out ${
+            selected ? "translate-x-0 shadow-[-12px_0_36px_rgba(0,0,0,0.55)]" : "translate-x-full pointer-events-none"
+          }`}
+          aria-hidden={!selected}
+        >
+          <div className="h-9 flex items-center px-3 border-b border-white/[0.05] justify-between relative">
             <span className="eyebrow">Inspector</span>
-            <span className="flex items-center gap-2">
-              <span className="live-pip" />
-              <span className="text-[9px] font-mono font-bold text-emerald-400/85 tracking-[0.2em]">LIVE</span>
-            </span>
+            <button
+              type="button"
+              onClick={() => onPaneClick()}
+              className="w-6 h-6 rounded-md text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+              aria-label="Close inspector"
+            >
+              <span aria-hidden="true" className="text-base leading-none">×</span>
+            </button>
           </div>
           <div className="hairline shrink-0" />
-          <div className="flex-1 overflow-y-auto p-4 space-y-5">
-            {selected ? (
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {selected && (
               <NodeInspector
                 node={selected}
                 onAction={(href) => setLocation(href)}
               />
-            ) : (
-              <EmptyInspector hasStores={(stores?.length ?? 0) > 0} />
             )}
           </div>
         </aside>
@@ -814,36 +821,3 @@ function NodeInspector({
   );
 }
 
-function EmptyInspector({ hasStores }: { hasStores: boolean }) {
-  return (
-    <div className="h-full flex flex-col items-center justify-center text-center px-2 py-10">
-      <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
-        <Sparkles className="w-5 h-5 text-white/20" />
-      </div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Your operation</p>
-      <p className="text-[10px] text-white/35 mt-2 leading-relaxed max-w-[210px]">
-        {hasStores
-          ? "Click any node to inspect live data and drill into actions."
-          : "Click a ghost node to start connecting your stores, bots, and channels."}
-      </p>
-      <div className="mt-5 grid grid-cols-1 gap-1.5 w-full">
-        <QuickLink to="/storefronts" icon={<ShoppingCart className="w-3.5 h-3.5 text-emerald-300" />} label="Connect a store" />
-        <QuickLink to="/architect" icon={<Bot className="w-3.5 h-3.5 text-sky-300" />} label="Run the Builder bot" />
-        <QuickLink to="/social" icon={<Megaphone className="w-3.5 h-3.5 text-pink-300" />} label="Add a social channel" />
-      </div>
-    </div>
-  );
-}
-
-function QuickLink({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link
-      href={to}
-      className="flex items-center gap-2 rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white/70 hover:border-sky-500/30 hover:bg-sky-500/[0.06] hover:text-white transition-all"
-    >
-      {icon}
-      <span className="truncate flex-1 text-left">{label}</span>
-      <ArrowRight className="w-3 h-3 text-white/30" />
-    </Link>
-  );
-}

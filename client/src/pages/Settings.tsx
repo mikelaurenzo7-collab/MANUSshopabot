@@ -61,20 +61,20 @@ export default function SettingsPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.04),transparent_30%),radial-gradient(circle_at_10%_50%,rgba(168,85,247,0.03),transparent_25%)]" />
 
       {/* Header */}
-      <div className="relative px-6 pt-6 pb-2 flex items-center gap-3">
+      <div className="relative px-5 pt-4 pb-1.5 flex items-center gap-2.5">
         <div className="relative">
-          <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_12px_rgba(14,165,233,0.08)]">
-            <SettingsIcon className="h-5 w-5 text-sky-400" />
+          <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.06)]">
+            <SettingsIcon className="h-4 w-4 text-sky-400" />
           </div>
-          <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border-2 border-[#050505]" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 border-2 border-[#050505]" />
         </div>
         <div>
-          <h1 className="text-xl font-heading font-bold tracking-tight text-white">Settings</h1>
-          <p className="text-sm text-white/35">Profile, bot configuration{isAdmin ? ", and platform health" : ""}</p>
+          <h1 className="text-lg font-heading font-bold tracking-tight text-white leading-tight">Settings</h1>
+          <p className="text-xs text-white/35">Profile, bot configuration{isAdmin ? ", and platform health" : ""}</p>
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-6 pt-2 relative">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5 relative">
         <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
           <TabsTrigger value="profile" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Profile</TabsTrigger>
           <TabsTrigger value="members" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Members</TabsTrigger>
@@ -82,17 +82,17 @@ export default function SettingsPage() {
           {isAdmin && <TabsTrigger value="platform" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Platform Health</TabsTrigger>}
         </TabsList>
 
-        <TabsContent value="profile" className="mt-4">
+        <TabsContent value="profile" className="mt-3">
           <ProfilePage />
         </TabsContent>
-        <TabsContent value="members" className="mt-4">
+        <TabsContent value="members" className="mt-3">
           <MembersPage />
         </TabsContent>
-        <TabsContent value="bots" className="mt-4">
+        <TabsContent value="bots" className="mt-3">
           <BotSettingsPage />
         </TabsContent>
         {isAdmin && (
-          <TabsContent value="platform" className="mt-4">
+          <TabsContent value="platform" className="mt-3">
             <PlatformHealthPage />
           </TabsContent>
         )}

@@ -149,17 +149,8 @@ export default function Intelligence() {
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Activity className="h-6 w-6 text-sky-400" />
-            Intelligence Center
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Cross-platform metrics, anomaly detection, and elite automation controls
-          </p>
-        </div>
+      {/* Period selector — header is owned by parent Insights shell */}
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           {/* Period selector */}
           <div

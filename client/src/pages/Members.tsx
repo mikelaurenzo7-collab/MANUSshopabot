@@ -110,14 +110,14 @@ export default function Members() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Active org header */}
-      <div className="bento-card spotlight-card p-5">
-        <span className="eyebrow mb-2">Active Organization</span>
-        <h2 className="mt-2 text-xl font-heading font-bold tracking-tight text-white">
+      <div className="bento-card spotlight-card p-3">
+        <span className="eyebrow">Active Organization</span>
+        <h2 className="mt-1 text-base font-heading font-bold tracking-tight text-white leading-tight">
           {activeOrg.name}
         </h2>
-        <p className="text-xs text-white/45 mt-1">
+        <p className="text-[11px] text-white/45 mt-0.5">
           You're operating as{" "}
           <span className="text-sky-300 font-semibold">{activeOrg.role}</span>.{" "}
           {activeOrg.kind === "personal"

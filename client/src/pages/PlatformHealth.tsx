@@ -312,19 +312,12 @@ export default function PlatformHealth() {
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between page-header">
-        <div>
-          <p className="micro-label mb-1">System Status</p>
-          <h1 className="text-2xl font-heading font-bold tracking-tight flex items-center gap-2">
-            <Activity className="w-6 h-6 text-sky-400" />
-            Platform Health
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Live connectivity check for all {totalConnected} connected platforms
-          </p>
-        </div>
+    <div className="space-y-3 animate-in fade-in duration-300 p-3">
+      {/* Compact toolbar — parent Settings shell owns the page header */}
+      <div className="flex items-center justify-between flex-wrap gap-2 page-header">
+        <p className="text-[11px] text-muted-foreground">
+          Live connectivity for all {totalConnected} connected platforms
+        </p>
         <div className="flex items-center gap-3">
           {lastChecked && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">

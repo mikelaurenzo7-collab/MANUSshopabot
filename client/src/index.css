@@ -799,11 +799,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     position: absolute;
     font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
     font-weight: 900;
-    font-size: clamp(80px, 15vw, 200px);
+    font-size: clamp(60px, 11vw, 160px);
     letter-spacing: -0.05em;
     text-transform: uppercase;
     color: transparent;
-    -webkit-text-stroke: 1px rgba(14, 165, 233, 0.04);
+    -webkit-text-stroke: 1px rgba(14, 165, 233, 0.025);
     pointer-events: none;
     user-select: none;
     white-space: nowrap;
@@ -813,7 +813,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   /* ── Bento Grid — Godly Edition ───────────────────────────────────────── */
   .bento-grid {
     display: grid;
-    gap: 1.25rem;
+    gap: 0.875rem;
     grid-template-columns: repeat(12, 1fr);
   }
   .bento-card {
@@ -868,13 +868,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
       0 0 80px rgba(14, 165, 233, 0.12);
   }
 
-  /* ── Intel Light Leaks ─────────────────────────────────────────────────── */
+  /* ── Intel Light Leaks — toned down 50% to be ambient, not foreground ── */
   .light-leak-blue {
     position: absolute;
-    width: 600px;
-    height: 600px;
+    width: 420px;
+    height: 420px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
@@ -882,40 +882,40 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   /* Keep old class name for backward compat */
   .light-leak-violet {
     position: absolute;
-    width: 600px;
-    height: 600px;
+    width: 420px;
+    height: 420px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
   }
   .light-leak-fuchsia {
     position: absolute;
-    width: 500px;
-    height: 500px;
+    width: 360px;
+    height: 360px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
     filter: blur(100px);
     pointer-events: none;
     z-index: 0;
   }
   .light-leak-cyan {
     position: absolute;
-    width: 400px;
-    height: 400px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
   }
   .light-leak-orange {
     position: absolute;
-    width: 400px;
-    height: 400px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(249, 115, 22, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.03) 0%, transparent 70%);
     filter: blur(80px);
     pointer-events: none;
     z-index: 0;
@@ -1660,9 +1660,9 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    padding: 0.55rem 0.85rem;
-    border-radius: 0.7rem;
+    gap: 0.55rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 0.55rem;
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
     transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -1691,17 +1691,17 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.9rem;
-    height: 1.9rem;
-    border-radius: 0.475rem;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 0.4rem;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.07);
     flex-shrink: 0;
   }
   .kpi-lux .kpi-label {
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.45);
     line-height: 1;
@@ -1709,16 +1709,16 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .kpi-lux .kpi-value {
     font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: #fff;
     letter-spacing: -0.01em;
-    line-height: 1.15;
+    line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
   .kpi-lux .kpi-sub {
-    font-size: 10px;
+    font-size: 9.5px;
     color: rgba(255, 255, 255, 0.45);
-    line-height: 1.2;
+    line-height: 1.15;
   }
 
   /* ── Brand mark with ambient glow ──────────────────────────────────────── */

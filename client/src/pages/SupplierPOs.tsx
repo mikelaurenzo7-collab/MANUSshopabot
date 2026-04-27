@@ -66,17 +66,8 @@ export default function SupplierPOs() {
   const totalValue = pos.data?.reduce((sum: number, p: any) => sum + (p.totalCents || 0), 0) || 0;
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="w-6 h-6 text-orange-500" />
-            Supplier Purchase Orders
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your Merchant Bot auto-drafts POs when inventory runs low. Review, approve, and submit.
-          </p>
-        </div>
+    <div className="space-y-3 p-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-3">
         {storeList.length > 0 && (
           <div className="flex items-center gap-2">
             <Store className="h-4 w-4 text-muted-foreground" />

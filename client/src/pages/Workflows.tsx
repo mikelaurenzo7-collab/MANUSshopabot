@@ -287,13 +287,13 @@ export default function Workflows() {
   );
 
   return (
-    <div className="page-enter p-6 space-y-6">
+    <div className="page-enter p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between page-header">
         <div>
-          <p className="micro-label mb-1">Operations</p>
-          <h1 className="text-2xl font-heading font-bold text-white">Workflows</h1>
-          <p className="text-sm text-white/40 mt-0.5">Monitor and manage all bot workflows</p>
+          <p className="micro-label mb-0.5">Operations</p>
+          <h1 className="text-lg font-heading font-bold text-white leading-tight">Workflows</h1>
+          <p className="text-xs text-white/40 mt-0.5">Monitor and manage all bot workflows</p>
         </div>
         <SubscriptionGate feature="Workflow Automation" soft>
           <LaunchWorkflowDialog onLaunched={() => {
@@ -305,16 +305,16 @@ export default function Workflows() {
       </div>
 
       {/* Stats Row */}
-      <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {[
           { label: "Total", value: counts?.total ?? 0, color: "text-white", bg: "" },
           { label: "Running", value: counts?.running ?? 0, color: "text-sky-400", bg: "bg-sky-500/5 border-sky-500/15" },
           { label: "Completed", value: counts?.completed ?? 0, color: "text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/15" },
           { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400", bg: "bg-red-500/5 border-red-500/15" },
         ].map((stat) => (
-          <div key={stat.label} className={`bento-card p-4 ${stat.bg}`}>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-1">{stat.label}</p>
-            <p className={`text-2xl font-black metric-number ${stat.color}`}>{stat.value}</p>
+          <div key={stat.label} className={`bento-card p-3 ${stat.bg}`}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">{stat.label}</p>
+            <p className={`text-xl font-black metric-number ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>

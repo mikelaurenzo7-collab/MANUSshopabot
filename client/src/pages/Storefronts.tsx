@@ -1,8 +1,8 @@
 /**
  * Storefronts.tsx — Unified "external systems you've connected" surface.
  *
- * Merges Integrations + Plugin Store + Supplier POs as tabs.
- * Legacy /integrations, /plugins, /supplier deep-links still resolve.
+ * Merges Integrations + Plugin Store + Supplier POs + Email Channel as tabs.
+ * Legacy /integrations, /plugins, /supplier, /gmail-bot deep-links still resolve.
  */
 
 import { useEffect, useState } from "react";
@@ -11,9 +11,10 @@ import { Globe } from "lucide-react";
 import IntegrationsPage from "./Integrations";
 import PluginStorePage from "./PluginStore";
 import SupplierPOsPage from "./SupplierPOs";
+import GmailBotPage from "./GmailBot";
 
-type StorefrontsTab = "integrations" | "plugins" | "supplier";
-const TAB_VALUES: StorefrontsTab[] = ["integrations", "plugins", "supplier"];
+type StorefrontsTab = "integrations" | "plugins" | "supplier" | "email";
+const TAB_VALUES: StorefrontsTab[] = ["integrations", "plugins", "supplier", "email"];
 
 function readTabFromHash(): StorefrontsTab {
   if (typeof window === "undefined") return "integrations";
@@ -41,31 +42,35 @@ export default function StorefrontsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-6 pt-6 pb-2 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.12)]">
-          <Globe className="h-5 w-5 text-cyan-400" />
+      <div className="px-5 pt-4 pb-1.5 flex items-center gap-2.5">
+        <div className="h-8 w-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.1)]">
+          <Globe className="h-4 w-4 text-cyan-400" />
         </div>
         <div>
-          <h1 className="text-xl font-heading font-bold tracking-tight text-foreground">Storefronts &amp; Channels</h1>
-          <p className="text-sm text-muted-foreground">Stores, social accounts, plugins, and suppliers — everything connected to your operation</p>
+          <h1 className="text-lg font-heading font-bold tracking-tight text-foreground leading-tight">Storefronts &amp; Channels</h1>
+          <p className="text-xs text-muted-foreground">Stores, plugins, suppliers, and email — everything connected to your operation</p>
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-6 pt-2">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="integrations">Connections</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
           <TabsTrigger value="supplier">Supplier POs</TabsTrigger>
+          <TabsTrigger value="email">Email Channel</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="integrations" className="mt-4">
+        <TabsContent value="integrations" className="mt-3">
           <IntegrationsPage />
         </TabsContent>
-        <TabsContent value="plugins" className="mt-4">
+        <TabsContent value="plugins" className="mt-3">
           <PluginStorePage />
         </TabsContent>
-        <TabsContent value="supplier" className="mt-4">
+        <TabsContent value="supplier" className="mt-3">
           <SupplierPOsPage />
+        </TabsContent>
+        <TabsContent value="email" className="mt-3">
+          <GmailBotPage />
         </TabsContent>
       </Tabs>
     </div>

@@ -59,7 +59,7 @@ export default function BotPageShell({ agentType, workspaceLabel = "Workspace", 
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-6 pt-4 shrink-0">
+      <div className="px-5 pt-3 shrink-0">
         <Tabs value={tab} onValueChange={handleTabChange}>
           <TabsList className="bg-secondary/50">
             <TabsTrigger value="workspace">{workspaceLabel}</TabsTrigger>
