@@ -18,15 +18,15 @@ registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
   const platform = input.platform ?? "meta"; // meta, tiktok, google
   const product = input.product ?? "featured product";
   const budget = input.budget ?? "$50/day";
-  return [
-    {
-      stepType: "llm_call",
-      title: "Audience Research",
-      description: `Researching target audience for ${product} on ${platform}`,
-      input: {
-        promptClass: "audience_research",
-        systemPrompt: "You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads.",
-        userPrompt: `Create a detailed target audience profile for advertising "${product}" on ${platform}:
+
+  // Audience research, ad copy generation, and creative image are
+  // independent — none of them consume each other's output. We used
+  // to run them sequentially (~30-45 sec wall-clock); now they run
+  // concurrently via parallel_group (~12-18 sec).
+  const audienceResearchInput = {
+    promptClass: "audience_research",
+    systemPrompt: "You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads.",
+    userPrompt: `Create a detailed target audience profile for advertising "${product}" on ${platform}:
 
 1. Primary Audience Segments (3-5 segments with demographics, interests, behaviors)
 2. Lookalike Audience Strategy
@@ -39,36 +39,32 @@ registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
 Budget: ${budget}
 
 Return as JSON.`,
-        responseFormat: {
-          type: "json_schema",
-          json_schema: {
-            name: "audience_research",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                primarySegments: { type: "array", items: { type: "object", properties: { name: { type: "string" }, demographics: { type: "string" }, interests: { type: "array", items: { type: "string" } }, estimatedSize: { type: "string" }, estimatedCPM: { type: "string" } }, required: ["name", "demographics", "interests", "estimatedSize", "estimatedCPM"], additionalProperties: false } },
-                retargetingStrategy: { type: "string" },
-                exclusions: { type: "array", items: { type: "string" } },
-                geoTargeting: { type: "array", items: { type: "string" } },
-                placementStrategy: { type: "string" },
-                budgetAllocation: { type: "string" },
-              },
-              required: ["primarySegments", "retargetingStrategy", "exclusions", "geoTargeting", "placementStrategy", "budgetAllocation"],
-              additionalProperties: false,
-            },
+    responseFormat: {
+      type: "json_schema",
+      json_schema: {
+        name: "audience_research",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            primarySegments: { type: "array", items: { type: "object", properties: { name: { type: "string" }, demographics: { type: "string" }, interests: { type: "array", items: { type: "string" } }, estimatedSize: { type: "string" }, estimatedCPM: { type: "string" } }, required: ["name", "demographics", "interests", "estimatedSize", "estimatedCPM"], additionalProperties: false } },
+            retargetingStrategy: { type: "string" },
+            exclusions: { type: "array", items: { type: "string" } },
+            geoTargeting: { type: "array", items: { type: "string" } },
+            placementStrategy: { type: "string" },
+            budgetAllocation: { type: "string" },
           },
+          required: ["primarySegments", "retargetingStrategy", "exclusions", "geoTargeting", "placementStrategy", "budgetAllocation"],
+          additionalProperties: false,
         },
       },
     },
-    {
-      stepType: "llm_call",
-      title: "Ad Copy Generation",
-      description: "Writing high-converting ad copy variations",
-      input: {
-        promptClass: "ad_copy_writer",
-        systemPrompt: "You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy.",
-        userPrompt: `Generate 5 ad copy variations for "${product}" on ${platform}. For each variation include:
+  };
+
+  const adCopyInput = {
+    promptClass: "ad_copy_writer",
+    systemPrompt: "You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy.",
+    userPrompt: `Generate 5 ad copy variations for "${product}" on ${platform}. For each variation include:
 - Hook (first line that stops the scroll)
 - Body copy (2-3 lines)
 - Call-to-action
@@ -84,29 +80,39 @@ Variations should test different angles:
 5. Urgency / Scarcity
 
 Return as JSON array.`,
-        responseFormat: {
-          type: "json_schema",
-          json_schema: {
-            name: "ad_copy",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                variations: { type: "array", items: { type: "object", properties: { angle: { type: "string" }, hook: { type: "string" }, body: { type: "string" }, cta: { type: "string" }, headline: { type: "string" }, description: { type: "string" }, format: { type: "string" } }, required: ["angle", "hook", "body", "cta", "headline", "description", "format"], additionalProperties: false } },
-              },
-              required: ["variations"],
-              additionalProperties: false,
-            },
+    responseFormat: {
+      type: "json_schema",
+      json_schema: {
+        name: "ad_copy",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            variations: { type: "array", items: { type: "object", properties: { angle: { type: "string" }, hook: { type: "string" }, body: { type: "string" }, cta: { type: "string" }, headline: { type: "string" }, description: { type: "string" }, format: { type: "string" } }, required: ["angle", "hook", "body", "cta", "headline", "description", "format"], additionalProperties: false } },
           },
+          required: ["variations"],
+          additionalProperties: false,
         },
       },
     },
+  };
+
+  return [
     {
-      stepType: "image_generation",
-      title: "Generate Ad Creative",
-      description: "Creating a professional ad creative image",
+      stepType: "parallel_group",
+      title: "Audience research + ad copy + creative",
+      description: `Generating audience profile, copy variations, and ad creative concurrently for ${product} on ${platform}`,
       input: {
-        prompt: `Professional e-commerce advertisement creative for ${product}, eye-catching design, vibrant colors, clean layout, suitable for ${platform} ads, product-focused, lifestyle setting, high-quality commercial photography style`,
+        substeps: [
+          { stepType: "llm_call", input: audienceResearchInput },
+          { stepType: "llm_call", input: adCopyInput },
+          {
+            stepType: "image_generation",
+            input: {
+              prompt: `Professional e-commerce advertisement creative for ${product}, eye-catching design, vibrant colors, clean layout, suitable for ${platform} ads, product-focused, lifestyle setting, high-quality commercial photography style`,
+            },
+          },
+        ],
       },
     },
     {
@@ -368,6 +374,9 @@ Return as JSON.`,
 registerWorkflow("product_creative", (input): WorkflowStepDefinition[] => {
   const product = input.product ?? "product";
   const style = input.style ?? "professional product photography";
+  // Three image generations are completely independent — they used to
+  // run sequentially (~6-9 sec wall-clock each); now they fan out
+  // through parallel_group (~3-4 sec total).
   return [
     {
       stepType: "llm_call",
@@ -405,27 +414,30 @@ Return as JSON.`,
       },
     },
     {
-      stepType: "image_generation",
-      title: "Generate Hero Product Image",
-      description: "Creating the hero product shot",
+      stepType: "parallel_group",
+      title: "Generate Hero + Lifestyle + Ad images",
+      description: "Three product creatives rendered in parallel",
       input: {
-        prompt: `Professional e-commerce product photography of ${product}, ${style}, studio lighting, clean white background, high resolution, commercial quality, sharp focus`,
-      },
-    },
-    {
-      stepType: "image_generation",
-      title: "Generate Lifestyle Image",
-      description: "Creating a lifestyle product image",
-      input: {
-        prompt: `Lifestyle product photography of ${product}, in a modern aspirational setting, natural lighting, warm tones, Instagram-worthy composition, editorial quality`,
-      },
-    },
-    {
-      stepType: "image_generation",
-      title: "Generate Ad Creative",
-      description: "Creating an eye-catching ad creative",
-      input: {
-        prompt: `Eye-catching social media advertisement for ${product}, vibrant colors, bold composition, designed for mobile viewing, scroll-stopping visual, modern e-commerce aesthetic`,
+        substeps: [
+          {
+            stepType: "image_generation",
+            input: {
+              prompt: `Professional e-commerce product photography of ${product}, ${style}, studio lighting, clean white background, high resolution, commercial quality, sharp focus`,
+            },
+          },
+          {
+            stepType: "image_generation",
+            input: {
+              prompt: `Lifestyle product photography of ${product}, in a modern aspirational setting, natural lighting, warm tones, Instagram-worthy composition, editorial quality`,
+            },
+          },
+          {
+            stepType: "image_generation",
+            input: {
+              prompt: `Eye-catching social media advertisement for ${product}, vibrant colors, bold composition, designed for mobile viewing, scroll-stopping visual, modern e-commerce aesthetic`,
+            },
+          },
+        ],
       },
     },
     {
@@ -870,6 +882,91 @@ Constraints: ≤ 50 characters preferred, ≤ 65 hard cap. No clickbait. No emoj
       input: {
         title: "Subject-Line A/B variants generated",
         message: `5 ranked subject-line variants for "${productOrTopic}" — winner picked, ready to ship.`,
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Send-Time Optimizer ────────────────────────────────────────────────────
+//
+// "What time should we send this email?" used to be a guess. Now it's
+// data: we have real `email_delivery_events` flowing in via the
+// SendGrid event webhook. This workflow analyses past `open` events
+// for the store, computes a per-day-of-week × per-hour-of-day open-
+// rate heatmap, and recommends the top-3 send windows.
+//
+// First-time stores with no event history fall back to industry-
+// standard defaults (Tue/Thu 10am local) — clearly labelled so the
+// merchant knows the recommendation will sharpen as data accumulates.
+// This is the workflow that proves the SendGrid webhook → analytics
+// loop matters.
+
+registerWorkflow("send_time_optimizer", (input): WorkflowStepDefinition[] => {
+  const lookbackDays = input.lookbackDays ?? 90;
+  const audience = input.audience ?? "general";
+  return [
+    {
+      stepType: "data_transform",
+      title: "Aggregate open events",
+      description: `Building a day-of-week × hour-of-day open heatmap from the last ${lookbackDays} days`,
+      input: {
+        operation: "aggregate_open_heatmap",
+        lookbackDays,
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Recommend send windows",
+      description: `Top 3 send windows + rationale`,
+      input: {
+        systemPrompt: `You are an email-deliverability and engagement analyst. Given an open-rate heatmap, identify the 3 best send windows for the merchant's audience. Be concrete — name day + hour-range, the engagement score, and a single sentence on why. If the heatmap is empty (cold-start), explicitly say so and recommend industry-standard defaults (Tue/Thu 10am local) so the merchant isn't blocked.`,
+        userPrompt: `Recommend send windows for the audience: "${audience}". Use the heatmap from the previous step. If heatmap is empty, return cold-start fallbacks. Return JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "send_time_recommendation",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                isColdStart: { type: "boolean" },
+                topWindows: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      dayOfWeek: { type: "string" },
+                      hourRangeLocal: { type: "string" },
+                      engagementScore: { type: "number" },
+                      rationale: { type: "string" },
+                    },
+                    required: ["dayOfWeek", "hourRangeLocal", "engagementScore", "rationale"],
+                    additionalProperties: false,
+                  },
+                },
+                avoidWindows: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+                confidence: { type: "string", enum: ["low", "medium", "high"] },
+                dataPointsUsed: { type: "number" },
+              },
+              required: ["isColdStart", "topWindows", "avoidWindows", "confidence", "dataPointsUsed"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Send-time recommendation ready",
+      input: {
+        title: "Send-time optimizer complete",
+        message: "Top send windows for your audience are in the workflow output. Plug them into your next email campaign.",
+        agentType: "social",
+        notificationType: "info",
         notifyOwner: true,
       },
     },

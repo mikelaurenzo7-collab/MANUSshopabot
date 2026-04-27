@@ -779,3 +779,131 @@ registerWorkflow("competitor_pricing_scan", (input): WorkflowStepDefinition[] =>
     },
   ];
 });
+
+// ─── Brand Identity Kit ─────────────────────────────────────────────────────
+//
+// Every store needs a brand voice + visual identity before it ships.
+// Most merchants either skip this (looks generic) or hire someone for
+// $1-5K (slow). This workflow generates a complete brand kit in one
+// pass: name candidates, voice + tone profile, color palette, logo
+// concept prompts (for the image generator), and a tagline shortlist.
+//
+// Uses parallel_group: voice + palette + tagline are all independent
+// and fire concurrently. The logo image generation runs sequentially
+// after the brief lands, since it benefits from the voice + palette
+// context.
+
+registerWorkflow("brand_identity_kit", (input): WorkflowStepDefinition[] => {
+  const niche = input.niche ?? "e-commerce";
+  const target = input.target ?? "broad consumer audience";
+  const brandStyle = input.brandStyle ?? "modern, premium, approachable";
+  return [
+    {
+      stepType: "parallel_group",
+      title: "Brand voice + palette + tagline",
+      description: `Generating brand identity primitives for ${niche} concurrently`,
+      input: {
+        substeps: [
+          {
+            stepType: "llm_call",
+            input: {
+              systemPrompt: `You are a senior brand strategist who's built identity for direct-to-consumer brands like Allbirds, Glossier, and Warby Parker. Voice profiles you ship are crisp and actionable — never marketing-speak.`,
+              userPrompt: `Generate a brand voice + tone profile for an e-commerce store in the "${niche}" niche, targeting ${target}. Aesthetic: ${brandStyle}.\n\nReturn JSON with:\n- archetype (e.g. "Sage", "Hero", "Caregiver" — Jungian)\n- voiceTraits (3-5 short adjectives)\n- toneSpectrum (formal-vs-casual, serious-vs-playful, sentence-length, emoji policy)\n- writingDosAndDonts (4 do's, 4 don'ts — concrete examples)\n- sampleProductDescription (1 paragraph, ~80 words, in the voice)\n- sampleSocialCaption (1-2 sentences, in the voice)`,
+              responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                  name: "brand_voice",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      archetype: { type: "string" },
+                      voiceTraits: { type: "array", items: { type: "string" } },
+                      toneSpectrum: { type: "object", properties: { formality: { type: "string" }, playfulness: { type: "string" }, sentenceLength: { type: "string" }, emojiPolicy: { type: "string" } }, required: ["formality", "playfulness", "sentenceLength", "emojiPolicy"], additionalProperties: false },
+                      writingDosAndDonts: { type: "object", properties: { dos: { type: "array", items: { type: "string" } }, donts: { type: "array", items: { type: "string" } } }, required: ["dos", "donts"], additionalProperties: false },
+                      sampleProductDescription: { type: "string" },
+                      sampleSocialCaption: { type: "string" },
+                    },
+                    required: ["archetype", "voiceTraits", "toneSpectrum", "writingDosAndDonts", "sampleProductDescription", "sampleSocialCaption"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          },
+          {
+            stepType: "llm_call",
+            input: {
+              systemPrompt: `You are a designer specializing in DTC brand color systems. Output palettes that read well on web, print, and ad creative — never the trendy gradient mess that ages in 6 months.`,
+              userPrompt: `Recommend a color palette for an e-commerce brand in "${niche}", style: ${brandStyle}. Return JSON with:\n- primary (hex), secondary (hex), accent (hex), neutralDark (hex), neutralLight (hex)\n- usageNotes (one sentence per color explaining when to use it)\n- contrastNotes (WCAG AA notes for text-on-primary, text-on-accent)`,
+              responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                  name: "color_palette",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      primary: { type: "string" },
+                      secondary: { type: "string" },
+                      accent: { type: "string" },
+                      neutralDark: { type: "string" },
+                      neutralLight: { type: "string" },
+                      usageNotes: { type: "object", properties: { primary: { type: "string" }, secondary: { type: "string" }, accent: { type: "string" }, neutralDark: { type: "string" }, neutralLight: { type: "string" } }, required: ["primary", "secondary", "accent", "neutralDark", "neutralLight"], additionalProperties: false },
+                      contrastNotes: { type: "string" },
+                    },
+                    required: ["primary", "secondary", "accent", "neutralDark", "neutralLight", "usageNotes", "contrastNotes"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          },
+          {
+            stepType: "llm_call",
+            input: {
+              systemPrompt: `You are a naming + tagline copywriter. Generate brand candidates that are memorable, easy to spell, .com-likely, and defensible. Avoid generic "Co.", "& Co.", "Studio" suffixes unless they're truly the right fit.`,
+              userPrompt: `Generate a brand-name + tagline shortlist for an e-commerce store in "${niche}", target: ${target}. Return JSON with:\n- nameCandidates (5 options, each with rationale + .com availability heuristic guess)\n- taglines (5 options, max 7 words each, each with a different angle: emotional, practical, mission-led, witty, bold)\n- recommendedPair (one name + one tagline that go together best, with a 2-sentence why)`,
+              responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                  name: "name_tagline",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      nameCandidates: { type: "array", items: { type: "object", properties: { name: { type: "string" }, rationale: { type: "string" }, comAvailabilityGuess: { type: "string" } }, required: ["name", "rationale", "comAvailabilityGuess"], additionalProperties: false } },
+                      taglines: { type: "array", items: { type: "object", properties: { tagline: { type: "string" }, angle: { type: "string" } }, required: ["tagline", "angle"], additionalProperties: false } },
+                      recommendedPair: { type: "object", properties: { name: { type: "string" }, tagline: { type: "string" }, why: { type: "string" } }, required: ["name", "tagline", "why"], additionalProperties: false },
+                    },
+                    required: ["nameCandidates", "taglines", "recommendedPair"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
+      stepType: "image_generation",
+      title: "Logo concept",
+      description: "Generate a logo concept image using the brand brief",
+      input: {
+        prompt: `Minimalist e-commerce brand logo for a "${niche}" store, ${brandStyle} aesthetic, clean typography, vector-style, on white background, professional, modern, memorable, suitable for mobile + favicon`,
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Brand Identity Kit ready",
+      input: {
+        title: "Brand Identity Kit complete",
+        message: `Voice profile, color palette, name + tagline shortlist, and a logo concept for your "${niche}" brand are ready.`,
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

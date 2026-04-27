@@ -644,3 +644,103 @@ Be precise. Always include the math.`,
     },
   ];
 });
+
+// ─── Velocity Restock Predictor ─────────────────────────────────────────────
+//
+// Static low-stock thresholds are blunt — a SKU that sells 50/day at
+// stockLevel=20 is in crisis; a SKU that sells 1/week at stockLevel=20
+// has months of runway. This workflow computes per-SKU sales velocity
+// from the order stream over a rolling window, projects days-of-cover
+// remaining, and surfaces SKUs that will stock out before their lead
+// time clears.
+//
+// Output is a prioritized restock plan: which SKU, how many units to
+// reorder, when the PO should fire, and the projected stockout date
+// if no action is taken. Routes through an approval gate.
+
+registerWorkflow("velocity_restock_predictor", (input): WorkflowStepDefinition[] => {
+  const lookbackDays = input.lookbackDays ?? 30;
+  const supplierLeadTimeDays = input.supplierLeadTimeDays ?? 14;
+  const safetyStockDays = input.safetyStockDays ?? 7;
+  return [
+    {
+      stepType: "data_transform",
+      title: "Compute sales velocity per SKU",
+      description: `Calculating units-sold-per-day over the last ${lookbackDays} days`,
+      input: {
+        operation: "compute_sales_velocity",
+        lookbackDays,
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Restock plan",
+      description: `Project stockout dates and recommend reorder quantities`,
+      input: {
+        systemPrompt: `You are a supply-chain analyst. Given per-SKU sales velocity, current stock, supplier lead time, and a safety-stock buffer, produce a prioritized restock plan. Be precise — show the math for each recommendation, never guess.`,
+        userPrompt: `Build a restock plan from the velocity data in the previous step.\n\nParameters:\n- Supplier lead time: ${supplierLeadTimeDays} days\n- Safety stock buffer: ${safetyStockDays} days\n\nFor each at-risk SKU, compute:\n- daysOfCoverRemaining (currentStock / dailyVelocity)\n- projectedStockoutDate\n- recommendedReorderQty (covers velocity × (leadTime + safetyStock + lookback/2 expected variance))\n- urgency: "critical" (stockout < leadTime), "warning" (stockout < leadTime + safetyStock), "watch" (stockout < 60 days)\n- estimatedRevenueAtRiskUsd (if SKU stocks out)\n\nReturn JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "restock_plan",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                summary: {
+                  type: "object",
+                  properties: {
+                    skusAnalyzed: { type: "number" },
+                    skusAtRisk: { type: "number" },
+                    estimatedRevenueAtRiskUsd: { type: "number" },
+                  },
+                  required: ["skusAnalyzed", "skusAtRisk", "estimatedRevenueAtRiskUsd"],
+                  additionalProperties: false,
+                },
+                recommendations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      productId: { type: "number" },
+                      title: { type: "string" },
+                      currentStock: { type: "number" },
+                      dailyVelocity: { type: "number" },
+                      daysOfCoverRemaining: { type: "number" },
+                      projectedStockoutDate: { type: "string" },
+                      recommendedReorderQty: { type: "number" },
+                      urgency: { type: "string", enum: ["critical", "warning", "watch"] },
+                      estimatedRevenueAtRiskUsd: { type: "number" },
+                      reasoning: { type: "string" },
+                    },
+                    required: ["productId", "title", "currentStock", "dailyVelocity", "daysOfCoverRemaining", "projectedStockoutDate", "recommendedReorderQty", "urgency", "estimatedRevenueAtRiskUsd", "reasoning"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["summary", "recommendations"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Approve restock plan",
+      description: "Owner reviews recommended POs before they fire to suppliers",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Restock plan ready",
+      input: {
+        title: "Velocity-based restock plan ready",
+        message: "Review the recommended POs in your Approvals queue.",
+        agentType: "merchant",
+        notificationType: "info",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

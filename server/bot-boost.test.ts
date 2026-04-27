@@ -77,6 +77,75 @@ describe("Bot-boost — engine parallel_group", () => {
     const cols = schema.workflowSteps as unknown as Record<string, any>;
     expect(cols.stepType).toBeDefined();
   });
+
+  it("ad_campaign uses parallel_group for the audience+copy+creative phase", () => {
+    expect(workflowRegistry.has("ad_campaign")).toBe(true);
+    const steps = workflowRegistry.get("ad_campaign")!({ platform: "meta", product: "test product", budget: "$50/day" });
+    // First step should be the parallel group, then approval, then notification
+    expect(steps[0].stepType).toBe("parallel_group");
+    const substeps = steps[0].input?.substeps;
+    expect(Array.isArray(substeps)).toBe(true);
+    expect(substeps).toHaveLength(3);
+    // Two LLM calls + one image generation, in any order
+    const stepTypes = substeps.map((s: any) => s.stepType).sort();
+    expect(stepTypes).toEqual(["image_generation", "llm_call", "llm_call"]);
+  });
+
+  it("product_creative uses parallel_group for the three image renders", () => {
+    expect(workflowRegistry.has("product_creative")).toBe(true);
+    const steps = workflowRegistry.get("product_creative")!({ product: "test sku" });
+    // Step 1 = creative brief (LLM); step 2 = parallel_group with 3 image gens
+    const parallelStep = steps.find((s) => s.stepType === "parallel_group");
+    expect(parallelStep).toBeDefined();
+    expect(parallelStep!.input?.substeps).toHaveLength(3);
+    expect(parallelStep!.input?.substeps.every((s: any) => s.stepType === "image_generation")).toBe(true);
+  });
+});
+
+describe("Bot-boost — wave 2 workflows", () => {
+  it("Builder registers brand_identity_kit with parallel voice+palette+naming", () => {
+    expect(workflowRegistry.has("brand_identity_kit")).toBe(true);
+    const steps = workflowRegistry.get("brand_identity_kit")!({ niche: "ergonomic furniture", target: "remote workers", brandStyle: "modern minimal" });
+    expect(steps[0].stepType).toBe("parallel_group");
+    expect(steps[0].input?.substeps).toHaveLength(3);
+    // Logo image gen comes after the brief
+    const imageStep = steps.find((s) => s.stepType === "image_generation");
+    expect(imageStep).toBeDefined();
+  });
+
+  it("Merchant registers velocity_restock_predictor with approval gate", () => {
+    expect(workflowRegistry.has("velocity_restock_predictor")).toBe(true);
+    const steps = workflowRegistry.get("velocity_restock_predictor")!({ lookbackDays: 30, supplierLeadTimeDays: 14 });
+    // First step: data_transform to compute velocity; LLM step for plan; approval gate
+    expect(steps[0].stepType).toBe("data_transform");
+    expect(steps[0].input?.operation).toBe("compute_sales_velocity");
+    const approvalStep = steps.find((s) => s.stepType === "approval_gate");
+    expect(approvalStep).toBeDefined();
+    expect(approvalStep!.requiresApproval).toBe(true);
+  });
+
+  it("Social registers send_time_optimizer pulling from email_delivery_events", () => {
+    expect(workflowRegistry.has("send_time_optimizer")).toBe(true);
+    const steps = workflowRegistry.get("send_time_optimizer")!({ lookbackDays: 90, audience: "winback" });
+    // Step 1: data_transform aggregates the heatmap; Step 2: LLM recommends; Step 3: notify
+    expect(steps[0].stepType).toBe("data_transform");
+    expect(steps[0].input?.operation).toBe("aggregate_open_heatmap");
+    // Schema enforces cold-start handling
+    const llmStep = steps.find((s) => s.stepType === "llm_call");
+    const schemaProps =
+      llmStep!.input?.responseFormat?.json_schema?.schema?.properties;
+    expect(schemaProps?.isColdStart).toBeDefined();
+    expect(schemaProps?.confidence?.enum).toEqual(["low", "medium", "high"]);
+  });
+
+  it("availableTypes router exposes the wave-2 types", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(path.resolve(__dirname, "routers/workflows.ts"), "utf-8");
+    expect(src).toContain('type: "brand_identity_kit"');
+    expect(src).toContain('type: "velocity_restock_predictor"');
+    expect(src).toContain('type: "send_time_optimizer"');
+  });
 });
 
 describe("Bot-boost — rate_limit safety rule", () => {
