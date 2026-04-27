@@ -97,9 +97,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // ── Keyboard nav: press `g` then a letter to jump. Linear/GitHub style. ──
   // Only active outside text inputs; the leader key (`g`) is consumed only
   // when followed within 1.2s by a recognised target letter — otherwise the
-  // browser's normal `g` behavior is preserved.
+  // browser's normal `g` behavior is preserved. Press `?` to discover all
+  // shortcuts.
   const leaderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaderActiveRef = useRef(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   useEffect(() => {
     if (!user) return;
     const targets: Record<string, string> = {
@@ -117,6 +119,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      // `?` — open shortcut help overlay (Shift+/ on US layouts)
+      if (e.key === "?") {
+        e.preventDefault();
+        setHelpOpen((o) => !o);
+        return;
+      }
+      // Esc closes the help overlay
+      if (e.key === "Escape" && helpOpen) {
+        setHelpOpen(false);
+        return;
+      }
 
       if (leaderActiveRef.current) {
         const dest = targets[e.key.toLowerCase()];
@@ -139,7 +153,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       window.removeEventListener("keydown", onKey);
       if (leaderTimerRef.current) clearTimeout(leaderTimerRef.current);
     };
-  }, [user, setLocation]);
+  }, [user, setLocation, helpOpen]);
 
   const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, {
     enabled: !!user,
@@ -423,6 +437,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+
+        <KeyboardHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       </div>
     );
   }
@@ -452,6 +468,85 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(14,165,233,0.07),transparent_35%),radial-gradient(circle_at_85%_18%,rgba(6,182,212,0.05),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(249,115,22,0.04),transparent_28%)]" />
         {children}
       </main>
+
+      {/* Keyboard shortcut help overlay (toggled by `?`) */}
+      <KeyboardHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+    </div>
+  );
+}
+
+// ─── Keyboard help overlay ────────────────────────────────────────────────────
+function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  const groups: { label: string; rows: Array<{ keys: string; desc: string }> }[] = [
+    {
+      label: "Navigation",
+      rows: [
+        { keys: "g h", desc: "Command Center" },
+        { keys: "g i", desc: "Inbox" },
+        { keys: "g b", desc: "Builder" },
+        { keys: "g m", desc: "Merchant" },
+        { keys: "g o", desc: "Social" },
+        { keys: "g w", desc: "Workflows" },
+        { keys: "g f", desc: "Storefronts" },
+        { keys: "g n", desc: "Insights" },
+        { keys: "g s", desc: "Settings" },
+      ],
+    },
+    {
+      label: "Global",
+      rows: [
+        { keys: "⌘ K", desc: "Search & run command" },
+        { keys: "?", desc: "Toggle this help" },
+        { keys: "Esc", desc: "Dismiss panels & overlays" },
+      ],
+    },
+  ];
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Keyboard shortcuts"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      <button
+        type="button"
+        aria-label="Close keyboard shortcuts"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in motion-safe:duration-150"
+      />
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-xl border border-white/[0.08] bg-[#0a0a0f]/95 shadow-[0_24px_64px_rgba(0,0,0,0.6)] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
+        <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+          <span className="eyebrow">Keyboard shortcuts</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-6 h-6 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            aria-label="Close"
+          >
+            <span aria-hidden="true" className="text-base leading-none">×</span>
+          </button>
+        </div>
+        <div className="p-4 space-y-3">
+          {groups.map((g) => (
+            <div key={g.label}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-1.5">{g.label}</p>
+              <div className="rounded-lg border border-white/[0.05] divide-y divide-white/[0.04]">
+                {g.rows.map((r) => (
+                  <div key={r.keys} className="flex items-center justify-between px-3 py-1.5">
+                    <span className="text-[12px] text-white/75">{r.desc}</span>
+                    <span className="flex gap-1">
+                      {r.keys.split(" ").map((k, i) => (
+                        <kbd key={i} className="kbd-lux">{k}</kbd>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

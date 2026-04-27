@@ -497,16 +497,16 @@ function ConnectStoreStep({
     hasInteracted && validation.status === "invalid" && !!shopDomain.trim();
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-3 relative">
       {/* Item 7 — confetti when the store first appears (positioned
           absolutely so it sits over the hero icon). */}
       <Celebration trigger={celebrateTrigger} />
-      <div className="text-center space-y-2">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 mb-2">
-          <Store className="h-7 w-7 text-green-300" aria-hidden="true" />
+      <div className="text-center space-y-1.5">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 mb-1">
+          <Store className="h-5 w-5 text-green-300" aria-hidden="true" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Connect Your Store</h2>
-        <p className="text-muted-foreground text-sm">
+        <h2 className="text-base font-bold text-foreground leading-tight">Connect Your Store</h2>
+        <p className="text-muted-foreground text-xs">
           Builder Bot needs access to your store to build and manage it.
         </p>
       </div>
@@ -759,13 +759,13 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 mb-2">
-          <Share2 className="h-7 w-7 text-amber-300" aria-hidden="true" />
+    <div className="space-y-3">
+      <div className="text-center space-y-1.5">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 mb-1">
+          <Share2 className="h-5 w-5 text-amber-300" aria-hidden="true" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Connect Social Platforms</h2>
-        <p className="text-muted-foreground text-sm">
+        <h2 className="text-base font-bold text-foreground leading-tight">Connect Social Platforms</h2>
+        <p className="text-muted-foreground text-xs">
           Social Bot needs these to publish content and run ads automatically.
         </p>
       </div>
@@ -982,14 +982,14 @@ function LaunchStep({
 
     return (
       <div
-        className="text-center space-y-6 py-4 relative"
+        className="text-center space-y-3 py-2 relative"
         role="status"
         aria-live="polite"
       >
         {/* Item 7 — confetti behind the bot avatar on first launch. */}
         <Celebration trigger={celebrateTrigger} />
         {/* Background glow — animation suppressed for reduced-motion users (item 11) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none motion-safe:animate-pulse motion-reduce:opacity-60" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none motion-safe:animate-pulse motion-reduce:opacity-60" />
 
         <div className="relative">
           {/* Pulsing bot avatar */}
@@ -1078,13 +1078,13 @@ function LaunchStep({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-2">
-          <Zap className="h-7 w-7 text-primary" aria-hidden="true" />
+    <div className="space-y-3">
+      <div className="text-center space-y-1.5">
+        <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 mb-1">
+          <Zap className="h-5 w-5 text-primary" aria-hidden="true" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Launch Your First Bot</h2>
-        <p className="text-muted-foreground text-sm">
+        <h2 className="text-base font-bold text-foreground leading-tight">Launch Your First Bot</h2>
+        <p className="text-muted-foreground text-xs">
           {persona === "exploring"
             ? "Pick any niche to see Builder Bot run a full research workflow end-to-end."
             : persona === "existing"

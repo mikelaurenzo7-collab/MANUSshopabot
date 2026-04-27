@@ -46,11 +46,11 @@ export default function SocialPage() {
   const socialStatus: any = status?.find?.((s: any) => s.agentType === 'social') || { status: 'idle' };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col md:flex-row">
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08]">
+      <div className="flex-1 flex flex-col h-full">
         {/* Header Bar */}
-        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
+        <div className="h-10 md:h-11 flex items-center px-3 md:px-5 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <div className="relative shrink-0">
               <Megaphone className="text-amber-400 w-4 md:w-5 h-4 md:h-5" />
@@ -245,9 +245,9 @@ function SocialContent({
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Store selector + tabs */}
-      <div className="px-3 md:px-6 pt-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+      <div className="px-3 md:px-5 pt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
@@ -266,17 +266,17 @@ function SocialContent({
       </div>
 
       {!selectedStore ? (
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="border border-white/[0.08] border-dashed rounded-xl p-12 flex flex-col items-center text-center max-w-sm">
-            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]">
-              <Megaphone className="h-7 w-7 text-amber-400/60" />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="border border-white/[0.08] border-dashed rounded-xl p-8 flex flex-col items-center text-center max-w-sm">
+            <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3 shadow-[0_0_16px_rgba(249,115,22,0.1)]">
+              <Megaphone className="h-5 w-5 text-amber-400/60" />
             </div>
-            <p className="font-mono text-xs uppercase tracking-widest text-white/50 font-bold">No Store Selected</p>
-            <p className="font-mono text-[9px] text-white/30 mt-2">Choose a store above to launch ads, generate creatives, and run campaigns.</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-white/50 font-bold">No Store Selected</p>
+            <p className="font-mono text-[9px] text-white/30 mt-1.5">Choose a store above to launch ads, generate creatives, and run campaigns.</p>
           </div>
         </div>
       ) : (
-        <Tabs defaultValue="ads" className="space-y-4">
+        <Tabs defaultValue="ads" className="space-y-3 px-3 md:px-5">
           <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 flex-wrap h-auto">
             <TabsTrigger value="ads" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Ad Copy</TabsTrigger>
             <TabsTrigger value="images" className="text-xs data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-300 data-[state=active]:border-amber-500/20 border border-transparent text-white/50">Image Gen</TabsTrigger>
@@ -287,7 +287,7 @@ function SocialContent({
           </TabsList>
 
           {/* Ad Copy Tab */}
-          <TabsContent value="ads" className="space-y-4">
+          <TabsContent value="ads" className="space-y-3">
             {/* Ad Copy Generator Card */}
             <div className="border border-white/[0.08] bg-black/40 p-4 md:p-5 relative">
               <div className="absolute top-0 left-0 w-1 h-full bg-amber-400/50" />
@@ -373,7 +373,7 @@ function SocialContent({
           </TabsContent>
 
           {/* Image Generation Tab */}
-          <TabsContent value="images" className="space-y-4">
+          <TabsContent value="images" className="space-y-3">
             <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
@@ -412,7 +412,7 @@ function SocialContent({
           </TabsContent>
 
           {/* SEO Tab */}
-          <TabsContent value="seo" className="space-y-4">
+          <TabsContent value="seo" className="space-y-3">
             <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
@@ -472,7 +472,7 @@ function SocialContent({
           </TabsContent>
 
           {/* Social Tab */}
-          <TabsContent value="social" className="space-y-4">
+          <TabsContent value="social" className="space-y-3">
             <Card className="bento-card">
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-3">
@@ -545,7 +545,7 @@ function SocialContent({
           </TabsContent>
 
           {/* Email Tab */}
-          <TabsContent value="email" className="space-y-4">
+          <TabsContent value="email" className="space-y-3">
             {/* Gmail sub-navigation */}
             <div className="flex gap-1 flex-wrap">
               {(["campaigns", "inbox", "compose", "auto-reply", "templates"] as const).map((t) => (
@@ -798,7 +798,7 @@ function SocialContent({
           </TabsContent>
 
           {/* AI Tools Tab */}
-          <TabsContent value="tools" className="space-y-4">
+          <TabsContent value="tools" className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Viral Trend Detector */}
               <Card className="bg-card border-white/[0.08] hover:border-orange-500/30 transition-all">
