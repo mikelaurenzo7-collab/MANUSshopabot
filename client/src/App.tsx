@@ -13,33 +13,27 @@ import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-// Lazy-loaded pages for code splitting
+// Lazy-loaded pages for code splitting. Pages that only render inside hub
+// shell tabs (Activity, Approvals, Profile, Members, BotSettings,
+// PlatformHealth, Analytics, Intelligence, Integrations, PluginStore,
+// SupplierPOs, GmailBot) are imported directly by their parent shell —
+// not lazy-loaded here — and reach via Redirect for legacy URLs.
 const Home = lazy(() => import("./pages/Home"));
 const ArchitectPage = lazy(() => import("./pages/Architect"));
 const MerchantPage = lazy(() => import("./pages/Merchant"));
 const SocialPage = lazy(() => import("./pages/Social"));
-const ActivityPage = lazy(() => import("./pages/Activity"));
-const AnalyticsPage = lazy(() => import("./pages/Analytics"));
 const ConfigPage = lazy(() => import("./pages/Config"));
-const IntegrationsPage = lazy(() => import("./pages/Integrations"));
 
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const InviteAcceptPage = lazy(() => import("./pages/InviteAccept"));
 const StatusPage = lazy(() => import("./pages/StatusPage"));
-const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
-const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const PluginStorePage = lazy(() => import("./pages/PluginStore"));
-const SupplierPOsPage = lazy(() => import("./pages/SupplierPOs"));
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
-const ProfilePage = lazy(() => import("./pages/Profile"));
-const BotSettingsPage = lazy(() => import("./pages/BotSettings"));
 const WorkflowsPage = lazy(() => import("./pages/Workflows"));
 const ChatPage = lazy(() => import("./pages/Chat"));
-const ApprovalsPage = lazy(() => import("./pages/Approvals"));
 const InboxPage = lazy(() => import("./pages/Inbox"));
 const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
@@ -114,25 +108,25 @@ function Router() {
                     <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>
-                    <Route path="/activity" component={ActivityPage} />
-                    <Route path="/analytics" component={AnalyticsPage} />
-                    <Route path="/integrations" component={IntegrationsPage} />
-
-                    <Route path="/health">{() => <ErrorBoundary inline label="Platform Health"><PlatformHealthPage /></ErrorBoundary>}</Route>
-                    <Route path="/intelligence" component={IntelligencePage} />
-                    <Route path="/config" component={ConfigPage} />
-
-                    <Route path="/plugins" component={PluginStorePage} />
-                    <Route path="/supplier" component={SupplierPOsPage} />
-                    <Route path="/prompt-lab" component={PromptLabPage} />
-                    <Route path="/profile" component={ProfilePage} />
-                    {/* /gmail-bot is now folded into Storefronts as the "Email Channel" tab.
-                        Legacy bookmarks land on the right tab via this redirect. */}
+                    {/* Legacy direct routes redirect to their consolidated hub tab.
+                        Old bookmarks resolve cleanly into the new layout instead of
+                        rendering naked, header-less pages. */}
+                    <Route path="/activity">{() => <Redirect to="/inbox#activity" />}</Route>
+                    <Route path="/approvals">{() => <Redirect to="/inbox#approvals" />}</Route>
+                    <Route path="/analytics">{() => <Redirect to="/insights#stores" />}</Route>
+                    <Route path="/intelligence">{() => <Redirect to="/insights#intelligence" />}</Route>
+                    <Route path="/integrations">{() => <Redirect to="/storefronts#integrations" />}</Route>
+                    <Route path="/plugins">{() => <Redirect to="/storefronts#plugins" />}</Route>
+                    <Route path="/supplier">{() => <Redirect to="/storefronts#supplier" />}</Route>
                     <Route path="/gmail-bot">{() => <Redirect to="/storefronts#email" />}</Route>
-                    <Route path="/bot-settings">{() => <ErrorBoundary inline label="Bot Settings"><BotSettingsPage /></ErrorBoundary>}</Route>
+                    <Route path="/profile">{() => <Redirect to="/settings#profile" />}</Route>
+                    <Route path="/bot-settings">{() => <Redirect to="/settings#bots" />}</Route>
+                    <Route path="/health">{() => <Redirect to="/settings#platform" />}</Route>
+
+                    <Route path="/config" component={ConfigPage} />
+                    <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>
-                    <Route path="/approvals">{() => <ErrorBoundary inline label="Approvals"><ApprovalsPage /></ErrorBoundary>}</Route>
                     <Route path="/inbox">{() => <ErrorBoundary inline label="Inbox"><InboxPage /></ErrorBoundary>}</Route>
                     <Route path="/storefronts">{() => <ErrorBoundary inline label="Storefronts"><StorefrontsPage /></ErrorBoundary>}</Route>
                     <Route path="/insights">{() => <ErrorBoundary inline label="Insights"><InsightsPage /></ErrorBoundary>}</Route>

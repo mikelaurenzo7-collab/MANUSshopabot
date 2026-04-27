@@ -97,10 +97,14 @@ describe("Platform Health Router", () => {
     expect(src).toContain("orders/create");
   });
 
-  it("/health route is registered in App.tsx", () => {
+  it("/health legacy route redirects to the Settings hub", () => {
+    // Post-redirect-consolidation, the /health URL no longer mounts the
+    // page directly — it redirects to /settings#platform where the
+    // Settings hub renders PlatformHealthPage as an admin-gated tab. This
+    // keeps old bookmarks working without duplicating the page chrome.
     const src = readFile("client/src/App.tsx");
     expect(src).toContain("path=\"/health\"");
-    expect(src).toContain("PlatformHealthPage");
+    expect(src).toContain("/settings#platform");
   });
 
   it("Platform Health is reachable from DashboardLayout chrome (now via Settings shell)", () => {
@@ -114,10 +118,6 @@ describe("Platform Health Router", () => {
     const settingsShell = readFile("client/src/pages/Settings.tsx");
     expect(settingsShell).toContain("PlatformHealthPage");
     expect(settingsShell).toContain("./PlatformHealth");
-
-    const app = readFile("client/src/App.tsx");
-    expect(app).toContain("path=\"/health\"");
-    expect(app).toContain("PlatformHealthPage");
   });
 });
 

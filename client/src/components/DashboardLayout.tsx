@@ -9,7 +9,7 @@
  * + Platform Health (admin). Live status comes from `dashboard.agentStatus`,
  * `approvals.pending`, `connectors.connectionSummary`, and `stores.list`.
  */
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -87,12 +87,59 @@ function brandDotClass(brand: NavItem["brand"]): string | null {
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { setOpen: setPaletteOpen } = useCommandPalette();
   const { activeStoreId, setActiveStoreId } = useWorkspace();
+
+  // ── Keyboard nav: press `g` then a letter to jump. Linear/GitHub style. ──
+  // Only active outside text inputs; the leader key (`g`) is consumed only
+  // when followed within 1.2s by a recognised target letter — otherwise the
+  // browser's normal `g` behavior is preserved.
+  const leaderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaderActiveRef = useRef(false);
+  useEffect(() => {
+    if (!user) return;
+    const targets: Record<string, string> = {
+      h: "/", c: "/", // home / command center
+      i: "/inbox",
+      b: "/architect", // builder
+      m: "/merchant",
+      o: "/social",    // social — `s` is taken by Settings
+      w: "/workflows",
+      f: "/storefronts", // storefronts
+      n: "/insights",   // iNsights
+      s: "/settings",
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (leaderActiveRef.current) {
+        const dest = targets[e.key.toLowerCase()];
+        if (dest) {
+          e.preventDefault();
+          setLocation(dest);
+        }
+        leaderActiveRef.current = false;
+        if (leaderTimerRef.current) clearTimeout(leaderTimerRef.current);
+        return;
+      }
+      if (e.key === "g" && !e.shiftKey) {
+        leaderActiveRef.current = true;
+        if (leaderTimerRef.current) clearTimeout(leaderTimerRef.current);
+        leaderTimerRef.current = setTimeout(() => { leaderActiveRef.current = false; }, 1200);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (leaderTimerRef.current) clearTimeout(leaderTimerRef.current);
+    };
+  }, [user, setLocation]);
 
   const { data: pendingApprovals } = trpc.approvals.pending.useQuery(undefined, {
     enabled: !!user,

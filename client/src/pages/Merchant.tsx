@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   Package, Loader2, AlertTriangle, DollarSign, TrendingUp, ShoppingCart, 
-  Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers, Target
+  Truck, Zap, RotateCcw, Activity, Store, Cpu, Layers
 } from "lucide-react";
 import {
   Select,
@@ -55,9 +55,9 @@ export default function MerchantPage() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col md:flex-row">
-      {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full md:border-r border-b md:border-b-0 border-white/[0.08]">
+    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+      {/* Main Workspace — full width; inspector is a slide-over */}
+      <div className="flex-1 flex flex-col h-full">
         {/* Header Bar */}
         <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -265,27 +265,38 @@ export default function MerchantPage() {
         </div>
       </div>
 
-      {/* Metadata Inspector (Rig      {/* Right Inspector */}
-      <aside className={`${isMobile ? 'w-full' : 'w-[380px] shrink-0'} bg-black/40 flex flex-col ${isMobile ? 'border-t' : 'border-l'} border-white/[0.08]`}>
-        <div className="h-14 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
-          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+      {/* Metadata Inspector — slide-over */}
+      {selectedEntity && (
+        <button
+          type="button"
+          onClick={() => { setSelectedEntity(null); setEntityType(null); }}
+          className="absolute inset-0 z-20 bg-black/30 backdrop-blur-[2px] cursor-default"
+          aria-label="Close inspector"
+        />
+      )}
+      <aside
+        className={`absolute top-0 right-0 h-full w-[360px] bg-black/95 flex flex-col z-30 border-l border-white/[0.08] transition-transform duration-300 ease-out ${
+          selectedEntity ? "translate-x-0 shadow-[-12px_0_36px_rgba(0,0,0,0.6)]" : "translate-x-full pointer-events-none"
+        }`}
+        aria-hidden={!selectedEntity}
+      >
+        <div className="h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
+          <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
+            <Cpu className="w-3 h-3 text-cyan-400" />
             Merchant Inspector
           </span>
-          <span className="flex items-center gap-2">
-             <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-          </span>
+          <button
+            type="button"
+            onClick={() => { setSelectedEntity(null); setEntityType(null); }}
+            className="w-6 h-6 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            aria-label="Close inspector"
+          >
+            <span aria-hidden="true" className="text-base leading-none">×</span>
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
-           {!selectedEntity ? (
-             <div className="flex flex-col items-center justify-center text-center min-h-[300px]">
-                <div className="h-14 w-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
-                  <Target className="w-7 h-7 text-cyan-400/60" />
-                </div>
-                <p className="font-mono text-xs uppercase tracking-widest text-white/50 font-bold">No Entity Selected</p>
-                <p className="font-mono text-[9px] text-white/30 mt-2 max-w-[200px]">Select a product or order from the data stream to view telemetry.</p>
-             </div>
-           ) : entityType === "product" ? (
+           {!selectedEntity ? null : entityType === "product" ? (
              <div className="space-y-6">
                 <div>
                    <h2 className="font-mono text-sm uppercase text-white font-bold mb-1 border-b border-white/[0.08] pb-2 break-all">{selectedEntity.title}</h2>

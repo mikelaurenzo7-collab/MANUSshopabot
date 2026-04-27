@@ -166,7 +166,7 @@ const STEPS = [
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
     <ol
-      className="flex items-center justify-center gap-1 mb-8"
+      className="flex items-center justify-center gap-1 mb-4"
       aria-label="Onboarding progress"
     >
       {STEPS.map((step, i) => {
@@ -175,11 +175,11 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
         return (
           <li key={step.id} className="flex items-center gap-1">
             <div
-              className="flex flex-col items-center gap-1.5"
+              className="flex flex-col items-center gap-1"
               aria-current={isActive ? "step" : undefined}
             >
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 motion-reduce:transition-none ${
+                className={`h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300 motion-reduce:transition-none ${
                   isComplete
                     ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
                     : isActive
@@ -188,10 +188,10 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                 }`}
                 aria-label={`Step ${step.id}: ${step.title}${isComplete ? " (complete)" : isActive ? " (current)" : ""}`}
               >
-                {isComplete ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : step.id}
+                {isComplete ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : step.id}
               </div>
               <span
-                className={`text-[10px] font-medium hidden sm:block transition-colors ${
+                className={`text-[10px] font-medium hidden sm:block transition-colors leading-none ${
                   isActive
                     ? "text-sky-300"
                     : isComplete
@@ -205,7 +205,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             {i < STEPS.length - 1 && (
               <div
                 aria-hidden="true"
-                className={`h-0.5 w-10 mb-5 transition-all duration-500 motion-reduce:transition-none ${
+                className={`h-0.5 w-8 mb-4 transition-all duration-500 motion-reduce:transition-none ${
                   isComplete ? "bg-gradient-to-r from-emerald-500 to-sky-500" : "bg-white/[0.06]"
                 }`}
               />
@@ -267,15 +267,14 @@ function WelcomeStep({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-3">
-        <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-2">
-          <ShoppingBag className="h-8 w-8 text-primary" />
+    <div className="space-y-4">
+      <div className="text-center space-y-2">
+        <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 mb-1">
+          <ShoppingBag className="h-5 w-5 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Welcome to <BrandName size="2xl" /></h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Your three autonomous bots work 24/7 to build, run, and grow your e-commerce business.
-          Zero-touch. No daily management required.
+        <h2 className="text-lg font-bold text-foreground leading-tight">Welcome to <BrandName size="lg" /></h2>
+        <p className="text-xs text-muted-foreground max-w-md mx-auto">
+          Three autonomous bots work 24/7 to build, run, and grow your e-commerce business. Zero-touch.
         </p>
       </div>
 
@@ -994,23 +993,23 @@ function LaunchStep({
 
         <div className="relative">
           {/* Pulsing bot avatar */}
-          <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/20 to-cyan-500/10 border border-sky-500/30 mx-auto shadow-[0_0_30px_rgba(14,165,233,0.25)] motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
-            <Bot className="h-12 w-12 text-sky-300" aria-hidden="true" />
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-cyan-500/10 border border-sky-500/30 mx-auto shadow-[0_0_24px_rgba(14,165,233,0.22)] motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
+            <Bot className="h-7 w-7 text-sky-300" aria-hidden="true" />
           </div>
           {/* Online badge */}
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm">
             <span
               aria-hidden="true"
               className="w-1.5 h-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]"
             />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-300">
               {status === "completed" ? "Done" : status === "failed" ? "Failed" : "Online"}
             </span>
           </div>
         </div>
 
-        <div className="space-y-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
-          <h2 className="text-2xl font-bold text-foreground">
+        <div className="space-y-1.5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
+          <h2 className="text-lg font-bold text-foreground leading-tight">
             {hasStore ? "Your Bot is Awake" : "Builder is researching"}
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
@@ -1395,12 +1394,12 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3">
       <div className="w-full max-w-2xl">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <div className="inline-flex items-center gap-2">
-            <BrandName size="xl" />
+            <BrandName size="lg" />
           </div>
         </div>
 
@@ -1412,7 +1411,7 @@ export default function OnboardingPage() {
         </div>
 
         <Card className="bg-card border-border/50 shadow-xl">
-          <CardContent className="p-8">
+          <CardContent className="p-5 md:p-6">
             {/*
               Optimistic crossfade between steps (item 17). Replaces the
               350ms blanket skeleton — content is rendered immediately and
