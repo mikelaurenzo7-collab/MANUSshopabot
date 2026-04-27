@@ -141,6 +141,41 @@
       "when": 1777189848454,
       "tag": "0019_hard_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1777200000000,
+      "tag": "0020_multitenancy_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1777210000000,
+      "tag": "0021_webhooks_and_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1777220000000,
+      "tag": "0022_users_onboarded_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1777230000000,
+      "tag": "0023_multitenancy_isolation",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1777240000000,
+      "tag": "0024_parallel_group_step_type",
+      "breakpoints": true
     }
   ]
 }
