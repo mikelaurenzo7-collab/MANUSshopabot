@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, orgProcedure, orgAdminProcedure, router } from "./_core/trpc";
 import { dashboardRouter } from "./routers/dashboard";
 import { storesRouter } from "./routers/stores";
 import { architectRouter } from "./routers/architect";
@@ -107,25 +107,32 @@ export const appRouter = router({
     }),
   }),
 
-  // Approval Queue — listing is shared across the workspace (approvals are
-  // not scoped to a user; the table has no userId column). Only review
-  // (approve/reject) is restricted to admins.
+  // Approval Queue — scoped to the active organization. Each approval
+  // row carries `orgId` (migration 0023); listing must filter by it
+  // so an approval from Org A never surfaces in Org B's queue.
   approvals: router({
-    pending: protectedProcedure.query(async () => {
-      return db.getPendingApprovals();
+    pending: orgProcedure.query(async ({ ctx }) => {
+      return db.getPendingApprovalsByOrg(ctx.org.id);
     }),
-    all: protectedProcedure
+    all: orgProcedure
       .input(z.object({ limit: z.number().min(1).max(100).default(50) }).optional())
-      .query(async ({ input }) => {
-        return db.getAllApprovals(input?.limit ?? 50);
+      .query(async ({ ctx, input }) => {
+        return db.getAllApprovalsByOrg(ctx.org.id, input?.limit ?? 50);
       }),
-    review: adminProcedure
+    review: orgAdminProcedure
       .input(z.object({
         id: z.number(),
         status: z.enum(["approved", "rejected"]),
         reviewNote: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Verify the approval belongs to the active org before mutating it.
+        const orgApprovals = await db.getAllApprovalsByOrg(ctx.org.id, 500);
+        const item = orgApprovals.find((a: any) => a.id === input.id);
+        if (!item) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Approval not found" });
+        }
+
         // 1. Update the approval_queue row
         await db.updateApproval(input.id, {
           status: input.status,
@@ -133,8 +140,6 @@ export const appRouter = router({
         });
 
         // 2. If the approval item has a linked workflow, resume or cancel it
-        const allApprovals = await db.getAllApprovals(200);
-        const item = allApprovals.find((a: any) => a.id === input.id);
         const proposed = item?.proposedAction as { workflowId?: number; stepId?: number } | null;
 
         if (proposed?.workflowId && proposed?.stepId) {
@@ -155,12 +160,12 @@ export const appRouter = router({
       }),
   }),
 
-  // Bot Configuration — admin only
+  // Bot Configuration — per-organization. Owner/admin can edit.
   botConfig: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return db.getBotConfigs(ctx.user.id);
+    list: orgProcedure.query(async ({ ctx }) => {
+      return db.getBotConfigsByOrg(ctx.org.id);
     }),
-    upsert: adminProcedure
+    upsert: orgAdminProcedure
       .input(z.object({
         agentType: z.enum(["architect", "merchant", "social"]),
         enabled: z.boolean().optional(),
@@ -173,12 +178,8 @@ export const appRouter = router({
         approvalRequired: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Bot config is per-org; admins acting from their own session
-        // attach via their currentOrgId. Backfilled in migration 0023.
-        const orgId = ctx.user.currentOrgId
-          ?? (await db.ensurePersonalOrg(ctx.user.id)).id;
         return db.upsertBotConfig({
-          orgId,
+          orgId: ctx.org.id,
           userId: ctx.user.id,
           agentType: input.agentType,
           enabled: input.enabled,

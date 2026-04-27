@@ -588,13 +588,13 @@ async function executeImageGenStep(context: StepContext): Promise<any> {
     }
   }
 
-  const result = await invokeLLM({
-    messages: [{ role: "user", content: prompt }], // Use standard text generation for now since DALL-E integration is missing from demo sandbox
-  });
-  
-  // We'll mock the image generation in the sandbox with an unsplash placeholder,
-  // then pass it through sharp to optimize it
-  const rawUrl = `https://source.unsplash.com/1080x1080/?ecommerce,${encodeURIComponent(prompt.split(' ')[0])}`;
+  // Image source: Unsplash placeholder, then run through Sharp for
+  // optimization + S3 upload. The previous version of this function
+  // also fired an `invokeLLM` call with `prompt` and discarded the
+  // result — pure cost (~1-2s + tokens per step) with no effect.
+  // Removed: keyword extraction is local now.
+  const keyword = prompt.split(/\s+/).find((w: string) => w.length > 2) ?? "ecommerce";
+  const rawUrl = `https://source.unsplash.com/1080x1080/?ecommerce,${encodeURIComponent(keyword)}`;
   const optimizedUrl = await optimizeAndUploadImage(rawUrl);
 
   return { imageUrl: optimizedUrl, prompt, source: rawUrl };
