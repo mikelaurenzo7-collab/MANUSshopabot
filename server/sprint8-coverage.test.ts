@@ -13,6 +13,7 @@ const makeCtx = (role?: "user" | "admin") => ({
   user: role
     ? ({ id: 1, role, openId: "test-open-id", name: "Test User" } as any)
     : null,
+  activeOrg: role ? { id: 1, role: "owner" as const } : null,
   req: {} as any,
   res: {} as any,
 });

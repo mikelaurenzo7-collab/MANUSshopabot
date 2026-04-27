@@ -21,7 +21,8 @@ function fileExists(rel: string) {
 describe("Workflow Retry Mutation", () => {
   it("retry procedure exists in workflows router", () => {
     const src = readFile("server/routers/workflows.ts");
-    expect(src).toContain("retry: protectedProcedure");
+    // After multi-tenancy migration the procedure is org-scoped.
+    expect(src).toContain("retry: orgProcedure");
     expect(src).toContain("workflowId: z.number()");
   });
 
@@ -33,7 +34,9 @@ describe("Workflow Retry Mutation", () => {
 
   it("retry re-launches workflow with same parameters", () => {
     const src = readFile("server/routers/workflows.ts");
-    expect(src).toContain("launchWorkflow(ctx.user.id");
+    expect(src).toContain("launchWorkflow(");
+    expect(src).toContain("ctx.user.id");
+    expect(src).toContain("orgId: ctx.org.id");
     expect(src).toContain("newWorkflowId");
     expect(src).toContain("[Retry]");
   });

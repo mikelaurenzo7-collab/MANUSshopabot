@@ -219,7 +219,7 @@ export const merchantRouter = router({
       productId: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await assertStoreOwnership(input.storeId, ctx.user.id);
+      const store = await assertStoreOwnership(input.storeId, ctx.user.id);
       const product = await assertProductOwnership(input.productId, ctx.user.id);
       if (product.storeId !== input.storeId) {
         throw new TRPCError({
@@ -282,10 +282,12 @@ export const merchantRouter = router({
         const suggestion = parseLLMJson<any>(llmResult.choices[0].message.content, "merchant.priceOptimization");
         await db.updateAgentTask(task.id, { status: "completed", result: suggestion });
 
-        // Create approval item for high-impact pricing changes
+        // Create approval item for high-impact pricing changes — scoped
+        // to the store's org so it lands in the right tenant's queue.
         const priceDiff = Math.abs(suggestion.suggestedPrice - product.price);
         if (priceDiff > product.price * 0.2) {
           await db.createApprovalItem({
+            orgId: store.orgId,
             agentTaskId: task.id,
             agentType: "merchant",
             actionType: "pricing_change",

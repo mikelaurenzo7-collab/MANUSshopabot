@@ -105,24 +105,30 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
   const autonomy = merchantConfig?.autonomyLevel || "fully_autonomous";
 
   if (autonomy === "fully_autonomous") {
-    // Launch Zero-Touch fulfillment workflow immediately
-    await launchWorkflow(store.userId, {
-      agentType: "merchant",
-      workflowType: "fulfillment_automation",
-      title: `Auto-Fulfill Order #${payload.order_number || orderId}`,
-      scope: "specific_store",
-      storeId: store.id,
-      input: {
-        orderId: dbOrderId,
-        platformOrderId: orderId,
+    // Launch Zero-Touch fulfillment workflow immediately. Org context
+    // comes from the store row (not the user) so multi-org users
+    // attribute to the right tenant.
+    await launchWorkflow(
+      store.userId,
+      {
+        agentType: "merchant",
+        workflowType: "fulfillment_automation",
+        title: `Auto-Fulfill Order #${payload.order_number || orderId}`,
+        scope: "specific_store",
         storeId: store.id,
-        customerName: `${payload.customer?.first_name || ""} ${payload.customer?.last_name || ""}`.trim(),
-        totalAmount: payload.total_price,
-        currency: payload.currency,
-        lineItems: payload.line_items,
+        input: {
+          orderId: dbOrderId,
+          platformOrderId: orderId,
+          storeId: store.id,
+          customerName: `${payload.customer?.first_name || ""} ${payload.customer?.last_name || ""}`.trim(),
+          totalAmount: payload.total_price,
+          currency: payload.currency,
+          lineItems: payload.line_items,
+        },
+        steps: [],
       },
-      steps: [],
-    });
+      { orgId: store.orgId },
+    );
     console.log(`[Webhook] Zero-Touch: Launched fulfillment_automation for order ${orderId} (store ${store.id})`);
 
     // Telemetry: log zero-touch fulfillment trigger
@@ -299,22 +305,26 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
       content: `Inventory for a product in your ${store.name} store has dropped to ${available} units (threshold: ${threshold}). The Merchant Bot will initiate a restock workflow.`,
     });
 
-    // Auto-launch restock alert workflow
-    await launchWorkflow(store.userId, {
-      agentType: "merchant",
-      workflowType: "restock_alert",
-      title: `Low Stock Alert — ${store.name}`,
-      scope: "specific_store",
-      storeId: store.id,
-      input: {
+    // Auto-launch restock alert workflow — org-scoped via store.
+    await launchWorkflow(
+      store.userId,
+      {
+        agentType: "merchant",
+        workflowType: "restock_alert",
+        title: `Low Stock Alert — ${store.name}`,
+        scope: "specific_store",
         storeId: store.id,
-        inventoryItemId: payload.inventory_item_id,
-        locationId: payload.location_id,
-        available,
-        threshold,
+        input: {
+          storeId: store.id,
+          inventoryItemId: payload.inventory_item_id,
+          locationId: payload.location_id,
+          available,
+          threshold,
+        },
+        steps: [],
       },
-      steps: [],
-    });
+      { orgId: store.orgId },
+    );
     console.log(`[Webhook] inventory_levels/update: Low stock alert triggered (${available} units)`);
   }
 }

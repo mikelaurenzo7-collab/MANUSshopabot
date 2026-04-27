@@ -81,6 +81,15 @@ export const stripeRouter = router({
             quantity: 1,
           },
         ],
+        // Honor the "7-day free trial, no credit card" promise on Landing/FAQ.
+        // Stripe will collect the card up-front but won't charge until day 7;
+        // `customer.subscription.updated` fires when status flips to `active`.
+        subscription_data: {
+          trial_period_days: 7,
+          trial_settings: {
+            end_behavior: { missing_payment_method: "cancel" },
+          },
+        },
         client_reference_id: user.id.toString(),
         metadata: {
           user_id: user.id.toString(),

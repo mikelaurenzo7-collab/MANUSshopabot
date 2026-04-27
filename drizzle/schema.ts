@@ -16,6 +16,13 @@ export const users = mysqlTable("users", {
    * the personal org auto-created for each user.
    */
   currentOrgId: int("currentOrgId"),
+  /**
+   * Server-side onboarding completion. Set by `auth.completeOnboarding`
+   * when the user finishes the wizard. Replaces the localStorage
+   * flag used previously, which couldn't sync across devices and
+   * could be trivially bypassed.
+   */
+  onboardedAt: timestamp("onboardedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -224,6 +231,8 @@ export type InsertAgentTask = typeof agentTasks.$inferInsert;
  */
 export const approvalQueue = mysqlTable("approval_queue", {
   id: int("id").autoincrement().primaryKey(),
+  /** Owning org — backfilled from agentTask.userId → user.currentOrgId in migration 0023. */
+  orgId: int("orgId").notNull(),
   agentTaskId: int("agentTaskId").notNull(),
   agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   actionType: varchar("actionType", { length: 100 }).notNull(),
@@ -237,6 +246,7 @@ export const approvalQueue = mysqlTable("approval_queue", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   statusIdx: index("approval_queue_status_idx").on(table.status, table.createdAt),
+  orgIdx: index("approval_queue_org_id_idx").on(table.orgId),
 }));
 
 export type ApprovalItem = typeof approvalQueue.$inferSelect;
@@ -247,6 +257,8 @@ export type InsertApprovalItem = typeof approvalQueue.$inferInsert;
  */
 export const botConfig = mysqlTable("bot_config", {
   id: int("id").autoincrement().primaryKey(),
+  /** Owning org — bot config is per-org, not per-user. Backfilled from user.currentOrgId. */
+  orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
   agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   enabled: boolean("enabled").default(true).notNull(),
@@ -262,6 +274,7 @@ export const botConfig = mysqlTable("bot_config", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   userAgentIdx: index("bot_config_user_agent_idx").on(table.userId, table.agentType),
+  orgAgentIdx: index("bot_config_org_agent_idx").on(table.orgId, table.agentType),
 }));
 
 export type BotConfig = typeof botConfig.$inferSelect;
@@ -442,12 +455,18 @@ export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 export type InsertAnalyticsSnapshot = typeof analyticsSnapshots.$inferInsert;
 
 /**
- * Platform credentials — per-user OAuth tokens with refresh lifecycle.
- * Supports all e-commerce platforms and tracks token health.
+ * Platform credentials — OAuth tokens with refresh lifecycle.
+ *
+ * Owned by an organization (not a user). When a user is in multiple
+ * orgs, switching the active org gives them access ONLY to that org's
+ * platform credentials — preventing the leak where Org B sees Org A's
+ * Shopify token. Migration 0023 backfills `orgId` from
+ * `users.currentOrgId` for existing rows.
  */
 export const platformCredentials = mysqlTable("platform_credentials", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+  orgId: int("orgId").notNull(),
+  userId: int("userId").notNull(), // creator — retained for audit
   storeId: int("storeId"), // linked store (null for social accounts)
   platform: varchar("platform", { length: 50 }).notNull(), // shopify, woocommerce, amazon, etsy, ebay, tiktok_shop, walmart
   accessToken: text("accessToken"),
@@ -465,6 +484,8 @@ export const platformCredentials = mysqlTable("platform_credentials", {
 }, (table) => ({
   userIdIdx: index("platform_creds_user_id_idx").on(table.userId),
   userPlatformIdx: index("platform_creds_user_platform_idx").on(table.userId, table.platform),
+  orgIdIdx: index("platform_creds_org_id_idx").on(table.orgId),
+  orgPlatformIdx: index("platform_creds_org_platform_idx").on(table.orgId, table.platform),
 }));
 
 export type PlatformCredential = typeof platformCredentials.$inferSelect;
@@ -476,6 +497,8 @@ export type InsertPlatformCredential = typeof platformCredentials.$inferInsert;
  */
 export const socialAccounts = mysqlTable("social_accounts", {
   id: int("id").autoincrement().primaryKey(),
+  /** Owning org. See platformCredentials for rationale. */
+  orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
   platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
@@ -495,6 +518,8 @@ export const socialAccounts = mysqlTable("social_accounts", {
 }, (table) => ({
   userIdIdx: index("social_accounts_user_id_idx").on(table.userId),
   userPlatformIdx: index("social_accounts_user_platform_idx").on(table.userId, table.platform),
+  orgIdIdx: index("social_accounts_org_id_idx").on(table.orgId),
+  orgPlatformIdx: index("social_accounts_org_platform_idx").on(table.orgId, table.platform),
 }));
 
 export type SocialAccount = typeof socialAccounts.$inferSelect;
@@ -580,6 +605,8 @@ export type InsertJobQueueItem = typeof jobQueue.$inferInsert;
  */
 export const agentWorkflows = mysqlTable("agent_workflows", {
   id: int("id").autoincrement().primaryKey(),
+  /** Owning org. Replaces userId as the access-control key after migration 0023. */
+  orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
   agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
   workflowType: varchar("workflowType", { length: 100 }).notNull(), // e.g. niche_research, product_sourcing, ad_campaign, inventory_sync
@@ -603,6 +630,7 @@ export const agentWorkflows = mysqlTable("agent_workflows", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   userStatusIdx: index("agent_workflows_user_id_idx").on(table.userId, table.status),
+  orgStatusIdx: index("agent_workflows_org_id_idx").on(table.orgId, table.status),
   storeIdIdx: index("agent_workflows_store_id_idx").on(table.storeId),
 }));
 

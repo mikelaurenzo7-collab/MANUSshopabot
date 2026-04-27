@@ -3,11 +3,11 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import {
-  getWorkflowsByUser, getWorkflowById, getWorkflowSteps,
-  getActiveWorkflows, getWorkflowCounts, getPendingApprovalSteps,
+  getWorkflowsByOrg, getWorkflowById, getWorkflowSteps,
+  getActiveWorkflowsByOrg, getWorkflowCountsByOrg, getPendingApprovalStepsByOrg,
   getUserByOpenId,
 } from "../db";
 import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workflowEngine";
@@ -20,7 +20,7 @@ import "../engine/platformEliteWorkflows";
 
 export const workflowRouter = router({
   // ─── Launch a workflow ─────────────────────────────────────────────────
-  launch: protectedProcedure
+  launch: orgProcedure
     .input(z.object({
       agentType: z.enum(["architect", "merchant", "social"]),
       workflowType: z.string(),
@@ -32,35 +32,39 @@ export const workflowRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const dbUser = await getUserByOpenId(ctx.user.openId);
-      // In test environments without a seeded DB, fall back to ctx.user (no subscription gate)
-      const user = dbUser ?? ctx.user;
-      
-      // The Revenue Moat: Hard enforcement (only when DB user exists)
+
+      // The Revenue Moat: hard enforcement when a real DB user exists.
+      // `trialing` is honored — Phase 1.2 wired Stripe trials so new
+      // signups get 7 days before this gate fires.
       if (dbUser) {
         const isSubscribed = dbUser.stripeSubscriptionStatus === "active" || dbUser.stripeSubscriptionStatus === "trialing";
         if (!isSubscribed) {
-          throw new TRPCError({ 
-            code: "FORBIDDEN", 
-            message: "Please upgrade to a paid plan to launch bot workflows." 
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Please upgrade to a paid plan to launch bot workflows.",
           });
         }
       }
 
-      const workflowId = await launchWorkflow(ctx.user.id, {
-        agentType: input.agentType,
-        workflowType: input.workflowType,
-        title: input.title,
-        description: input.description,
-        scope: input.scope,
-        storeId: input.storeId,
-        input: input.input ?? {},
-        steps: [], // Will be resolved from registry
-      });
+      const workflowId = await launchWorkflow(
+        ctx.user.id,
+        {
+          agentType: input.agentType,
+          workflowType: input.workflowType,
+          title: input.title,
+          description: input.description,
+          scope: input.scope,
+          storeId: input.storeId,
+          input: input.input ?? {},
+          steps: [], // Will be resolved from registry
+        },
+        { orgId: ctx.org.id },
+      );
       return { workflowId };
     }),
 
   // ─── List workflows ────────────────────────────────────────────────────
-  list: protectedProcedure
+  list: orgProcedure
     .input(z.object({
       agentType: z.enum(["architect", "merchant", "social"]).optional(),
       status: z.string().optional(),
@@ -69,37 +73,37 @@ export const workflowRouter = router({
       offset: z.number().default(0),
     }).optional())
     .query(async ({ ctx, input }) => {
-      return getWorkflowsByUser(ctx.user.id, input ?? {});
+      return getWorkflowsByOrg(ctx.org.id, input ?? {});
     }),
 
   // ─── Get active workflows ──────────────────────────────────────────────
-  active: protectedProcedure.query(async ({ ctx }) => {
-    return getActiveWorkflows(ctx.user.id);
+  active: orgProcedure.query(async ({ ctx }) => {
+    return getActiveWorkflowsByOrg(ctx.org.id);
   }),
 
   // ─── Get workflow counts ───────────────────────────────────────────────
-  counts: protectedProcedure.query(async ({ ctx }) => {
-    return getWorkflowCounts(ctx.user.id);
+  counts: orgProcedure.query(async ({ ctx }) => {
+    return getWorkflowCountsByOrg(ctx.org.id);
   }),
 
   // ─── Get workflow detail with steps ────────────────────────────────────
-  detail: protectedProcedure
+  detail: orgProcedure
     .input(z.object({ workflowId: z.number() }))
     .query(async ({ ctx, input }) => {
       const workflow = await getWorkflowById(input.workflowId);
       if (!workflow) throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
-      if (workflow.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.orgId !== ctx.org.id) throw new TRPCError({ code: "FORBIDDEN" });
       const steps = await getWorkflowSteps(input.workflowId);
       return { workflow, steps };
     }),
 
   // ─── Get pending approval steps ────────────────────────────────────────
-  pendingApprovals: protectedProcedure.query(async ({ ctx }) => {
-    return getPendingApprovalSteps(ctx.user.id);
+  pendingApprovals: orgProcedure.query(async ({ ctx }) => {
+    return getPendingApprovalStepsByOrg(ctx.org.id);
   }),
 
   // ─── Approve or reject a step ──────────────────────────────────────────
-  reviewStep: protectedProcedure
+  reviewStep: orgProcedure
     .input(z.object({
       workflowId: z.number(),
       stepId: z.number(),
@@ -109,44 +113,47 @@ export const workflowRouter = router({
     .mutation(async ({ ctx, input }) => {
       const workflow = await getWorkflowById(input.workflowId);
       if (!workflow) throw new TRPCError({ code: "NOT_FOUND" });
-      if (workflow.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.orgId !== ctx.org.id) throw new TRPCError({ code: "FORBIDDEN" });
       await resumeWorkflow(input.workflowId, input.stepId, input.approved, input.note);
       return { success: true };
     }),
 
   // ─── Cancel a workflow ─────────────────────────────────────────────────
-  cancel: protectedProcedure
+  cancel: orgProcedure
     .input(z.object({ workflowId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const workflow = await getWorkflowById(input.workflowId);
       if (!workflow) throw new TRPCError({ code: "NOT_FOUND" });
-      if (workflow.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.orgId !== ctx.org.id) throw new TRPCError({ code: "FORBIDDEN" });
       await cancelWorkflow(input.workflowId);
       return { success: true };
     }),
 
   // ─── Retry a failed or cancelled workflow ─────────────────────────────
-  retry: protectedProcedure
+  retry: orgProcedure
     .input(z.object({ workflowId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const workflow = await getWorkflowById(input.workflowId);
       if (!workflow) throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
-      if (workflow.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.orgId !== ctx.org.id) throw new TRPCError({ code: "FORBIDDEN" });
       if (workflow.status !== "failed" && workflow.status !== "cancelled") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Only failed or cancelled workflows can be retried" });
       }
 
-      // Re-launch the workflow with the same parameters
-      const newWorkflowId = await launchWorkflow(ctx.user.id, {
-        agentType: workflow.agentType,
-        workflowType: workflow.workflowType,
-        title: `[Retry] ${workflow.title.replace(/^\[Retry\] /, "")}`,
-        description: workflow.description ?? undefined,
-        scope: workflow.scope,
-        storeId: workflow.storeId ?? undefined,
-        input: (workflow.input as Record<string, any>) ?? {},
-        steps: [],
-      });
+      const newWorkflowId = await launchWorkflow(
+        ctx.user.id,
+        {
+          agentType: workflow.agentType,
+          workflowType: workflow.workflowType,
+          title: `[Retry] ${workflow.title.replace(/^\[Retry\] /, "")}`,
+          description: workflow.description ?? undefined,
+          scope: workflow.scope,
+          storeId: workflow.storeId ?? undefined,
+          input: (workflow.input as Record<string, any>) ?? {},
+          steps: [],
+        },
+        { orgId: ctx.org.id },
+      );
 
       return { newWorkflowId };
     }),

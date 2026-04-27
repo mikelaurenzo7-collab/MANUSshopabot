@@ -61,9 +61,19 @@ function OnboardingGuard() {
     if (loading) return;
     if (!user) return; // Not logged in — auth handles redirect
     if (location === "/onboarding") return; // Already on onboarding
-    // Check if user has completed onboarding
-    // Support old keys for backward compatibility
-    const hasOnboarded = localStorage.getItem("shop_a_bot_onboarded") || localStorage.getItem("shopabots_onboarded") || localStorage.getItem("beastbots_onboarded") || localStorage.getItem("shopbots_onboarded") || localStorage.getItem("shopbot_onboarded");
+
+    // Server-truth first — `onboardedAt` is set by `auth.completeOnboarding`
+    // when the wizard's Finish handler fires. Falls back to legacy
+    // localStorage flags so users mid-flight don't get bounced back into
+    // onboarding right after this deploy.
+    const onboardedFromServer = (user as { onboardedAt?: string | Date | null }).onboardedAt;
+    const hasOnboarded =
+      !!onboardedFromServer ||
+      localStorage.getItem("shop_a_bot_onboarded") ||
+      localStorage.getItem("shopabots_onboarded") ||
+      localStorage.getItem("beastbots_onboarded") ||
+      localStorage.getItem("shopbots_onboarded") ||
+      localStorage.getItem("shopbot_onboarded");
     if (!hasOnboarded) {
       setLocation("/onboarding");
     }
@@ -94,6 +104,11 @@ function Router() {
                 <ErrorBoundary inline label="page">
                   <Switch>
                     <Route path="/" component={Home} />
+                    {/* Stripe checkout success_url points here — keep both
+                        routes pointing at Home so the URL is stable even
+                        if we ever rename. StripeSuccessBanner reads
+                        ?subscription=success and fires automatically. */}
+                    <Route path="/command-center" component={Home} />
                     <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>

@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getRenderedStoreContext } from "../utils/userContext";
 import * as db from "../db";
@@ -42,7 +42,7 @@ export const chatRouter = router({
    * Send a message to the selected bot and receive a response.
    * The client sends the full conversation history (excluding system msg).
    */
-  message: protectedProcedure
+  message: orgProcedure
     .input(z.object({
       agentType: z.enum(["architect", "merchant", "social"]),
       messages: z.array(MessageSchema).min(1).max(50),
@@ -54,10 +54,16 @@ export const chatRouter = router({
       // Inject live store context when a store is selected
       let storeContext = "";
       if (input.storeId) {
-        storeContext = await getRenderedStoreContext(input.storeId);
+        // Verify the store belongs to the active org before injecting
+        // its data into the LLM context — otherwise a user in two orgs
+        // could exfiltrate Org A data while chatting in Org B.
+        const store = await db.getStoreById(input.storeId);
+        if (store && store.orgId === ctx.org.id) {
+          storeContext = await getRenderedStoreContext(input.storeId);
+        }
       } else {
-        // Fall back: attach a lightweight summary of ALL user stores
-        const stores = await db.getStoresByUser(ctx.user.id);
+        // Fall back: attach a lightweight summary of ALL stores in the active org
+        const stores = await db.getStoresByOrg(ctx.org.id);
         if (stores.length > 0) {
           const storeList = stores
             .map((s: any) => `  - "${s.name}" on ${s.platform} (${s.status})`)
@@ -87,9 +93,9 @@ export const chatRouter = router({
     }),
 
   /**
-   * Fetch the user's stores so the Chat page can populate the store selector.
+   * Fetch the active org's stores so the Chat page can populate the store selector.
    */
-  stores: protectedProcedure.query(async ({ ctx }) => {
-    return db.getStoresByUser(ctx.user.id);
+  stores: orgProcedure.query(async ({ ctx }) => {
+    return db.getStoresByOrg(ctx.org.id);
   }),
 });

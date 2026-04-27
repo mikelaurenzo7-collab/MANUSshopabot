@@ -16,14 +16,57 @@ interface SubscriptionGateProps {
   soft?: boolean;
 }
 
-const PLAN_FEATURES = [
-  "Unlimited workflow automation",
-  "All 3 bots: Builder, Merchant, Social",
-  "Multi-platform integrations (Shopify, Amazon, Etsy, TikTok)",
-  "AI-powered product sourcing & pricing",
-  "Email campaigns & social scheduling",
-  "Priority support",
-];
+type PlanId = "starter" | "growth" | "pro" | "scale";
+
+/** Pick the next-tier upsell from the user's current plan. */
+function nextTier(current: PlanId | null | undefined): PlanId {
+  switch (current) {
+    case "starter": return "growth";
+    case "growth":  return "pro";
+    case "pro":     return "scale";
+    case "scale":   return "scale";
+    default:        return "growth"; // fresh user → Growth is the entry-point upsell
+  }
+}
+
+const PLAN_LABEL: Record<PlanId, string> = {
+  starter: "Starter",
+  growth: "Growth",
+  pro: "Pro",
+  scale: "Scale",
+};
+
+/** Surfaced under the upgrade card — keeps each tier's pitch honest. */
+const TIER_HIGHLIGHTS: Record<PlanId, string[]> = {
+  starter: [
+    "1 connected store",
+    "Builder Bot — niche research + store setup",
+    "Merchant Bot — basic fulfillment",
+    "500 AI actions / month",
+    "Email support",
+  ],
+  growth: [
+    "3 connected stores",
+    "All 3 Bots — Builder + Merchant + Social",
+    "5,000 AI actions / month",
+    "Meta + TikTok ad automation",
+    "Priority support",
+  ],
+  pro: [
+    "10 connected stores",
+    "All 3 Bots + Elite workflows",
+    "25,000 AI actions / month",
+    "Full platform integration suite",
+    "Dedicated Slack support",
+  ],
+  scale: [
+    "Unlimited stores",
+    "All 3 Bots + custom workflows",
+    "Unlimited AI actions",
+    "White-label option",
+    "Dedicated success manager",
+  ],
+};
 
 export default function SubscriptionGate({ feature, children, soft = false }: SubscriptionGateProps) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -47,9 +90,12 @@ export default function SubscriptionGate({ feature, children, soft = false }: Su
     onSettled: () => setCheckoutLoading(false),
   });
 
+  const currentPlan = (subscriptionData?.plan ?? null) as PlanId | null;
+  const upsellPlan = nextTier(currentPlan);
+
   const handleUpgrade = () => {
     setCheckoutLoading(true);
-    createCheckout.mutate({ planId: "pro", origin: window.location.origin });
+    createCheckout.mutate({ planId: upsellPlan, origin: window.location.origin });
   };
 
   if (isLoading) {
@@ -117,19 +163,21 @@ export default function SubscriptionGate({ feature, children, soft = false }: Su
             {/* Headline */}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 mb-4">
               <Zap className="h-3 w-3 text-sky-400" />
-              <span className="text-[10px] font-semibold text-sky-400 uppercase tracking-wider">Pro Feature</span>
+              <span className="text-[10px] font-semibold text-sky-400 uppercase tracking-wider">{PLAN_LABEL[upsellPlan]} Feature</span>
             </div>
 
             <h2 className="text-lg font-bold text-foreground mb-2 leading-snug">
-              {feature} requires<br />a Pro subscription
+              {feature} requires<br />the {PLAN_LABEL[upsellPlan]} plan
             </h2>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              Automate your entire e-commerce operation with all three bots working 24/7.
+              {currentPlan
+                ? `You're on ${PLAN_LABEL[currentPlan]}. Upgrade to ${PLAN_LABEL[upsellPlan]} to unlock this and the rest of the tier's capabilities.`
+                : "Start your 7-day free trial — bots running 24/7 across your store."}
             </p>
 
-            {/* Feature list */}
+            {/* Feature list — tier-aware */}
             <ul className="text-left space-y-2.5 mb-7 px-1">
-              {PLAN_FEATURES.map((f, i) => (
+              {TIER_HIGHLIGHTS[upsellPlan].map((f, i) => (
                 <li key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                   <div className="h-4 w-4 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
                     <CheckCircle className="h-2.5 w-2.5 text-emerald-400" />
@@ -148,7 +196,7 @@ export default function SubscriptionGate({ feature, children, soft = false }: Su
               {checkoutLoading ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" />Starting checkout…</>
               ) : (
-                <><Zap className="h-4 w-4 mr-2" />Upgrade to Pro</>
+                <><Zap className="h-4 w-4 mr-2" />Upgrade to {PLAN_LABEL[upsellPlan]}</>
               )}
             </Button>
 

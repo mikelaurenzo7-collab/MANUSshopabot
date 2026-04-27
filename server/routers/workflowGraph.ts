@@ -9,17 +9,16 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 
 export const workflowGraphRouter = router({
   /**
-   * Live state snapshot: all active workflows + tasks for the current user,
+   * Live state snapshot: all active workflows + tasks for the active org,
    * formatted as nodes and edges for the ReactFlow canvas.
    */
-  liveState: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.id;
-    const stores = await db.getStoresByUser(userId);
+  liveState: orgProcedure.query(async ({ ctx }) => {
+    const stores = await db.getStoresByOrg(ctx.org.id);
     const storeIds = stores.map((s: any) => s.id);
 
     // Gather recent tasks across all stores (last 100)

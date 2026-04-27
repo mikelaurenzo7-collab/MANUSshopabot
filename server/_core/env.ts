@@ -115,6 +115,18 @@ export function validateRequiredEnv(): void {
     if (!process.env[key]) missing.push(key);
   }
 
+  // JWT_SECRET strength check — short secrets are trivially brute-forceable.
+  // 32 chars is the minimum recommended for HS256.
+  const jwt = process.env.JWT_SECRET ?? "";
+  if (jwt && jwt.length < 32) {
+    missing.push("JWT_SECRET (must be ≥ 32 chars; generate with `openssl rand -base64 48`)");
+  }
+
+  // Production CORS hardening — never fall back to localhost in prod.
+  if (process.env.NODE_ENV === "production" && !process.env.ALLOWED_ORIGINS) {
+    missing.push("ALLOWED_ORIGINS (required in production — comma-separated list)");
+  }
+
   for (const key of RECOMMENDED_VARS) {
     if (!process.env[key]) warned.push(key);
   }

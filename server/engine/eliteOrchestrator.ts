@@ -431,6 +431,7 @@ export async function runDynamicPricingEngine(userId: number): Promise<DynamicPr
             });
 
             await db.createApprovalItem({
+              orgId: store.orgId,
               agentTaskId: task.id,
               agentType: "merchant",
               actionType: "price_change",
@@ -551,7 +552,13 @@ export async function runCreativeVelocityOptimization(userId: number): Promise<{
           metadata: { campaignId: campaign.id },
         });
 
+        // Resolve org from the campaign's store so the approval lands
+        // in the right tenant's queue.
+        const campaignStore = await db.getStoreById(campaign.storeId);
+        if (!campaignStore) continue;
+
         await db.createApprovalItem({
+          orgId: campaignStore.orgId,
           agentTaskId: task.id,
           agentType: "social",
           actionType: "budget_increase",

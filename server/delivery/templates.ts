@@ -150,3 +150,63 @@ export function renderOrgInviteEmail(input: OrgInviteTemplateInput): {
 
   return { subject, html, text };
 }
+
+interface TrialEndingTemplateInput {
+  recipientEmail: string;
+  firstName: string;
+  planName: string;
+  /** Pretty date, already formatted ("Friday, May 3"). */
+  trialEndDate: string;
+  billingPortalUrl: string;
+}
+
+export function renderTrialEndingEmail(input: TrialEndingTemplateInput): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const { firstName, planName, trialEndDate, billingPortalUrl } = input;
+  const subject = `Your Shop_a_Bot trial ends ${trialEndDate}`;
+
+  const inner = `
+    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:800;color:${TEXT_COLOR};letter-spacing:-0.01em;">Your trial ends ${escapeHtml(trialEndDate)}</h1>
+    <p style="margin:0 0 8px;color:${TEXT_COLOR};">Hi ${escapeHtml(firstName)},</p>
+    <p style="margin:0 0 16px;color:${TEXT_COLOR};">
+      Heads up — your free trial of <strong>Shop_a_Bot ${escapeHtml(planName)}</strong> ends
+      on <strong>${escapeHtml(trialEndDate)}</strong>. We'll automatically convert your
+      subscription on that day so your bots keep running uninterrupted.
+    </p>
+    <p style="margin:0 0 16px;color:${TEXT_COLOR};">
+      If you'd like to update your payment method, change plans, or cancel before then,
+      you can do it in one click from your billing portal:
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+      <tr>
+        <td style="border-radius:8px;background:${BRAND_COLOR};">
+          <a href="${escapeHtml(billingPortalUrl)}" style="display:inline-block;padding:12px 24px;font-size:15px;font-weight:600;color:#fff;text-decoration:none;border-radius:8px;">
+            Manage subscription
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0;font-size:13px;color:${MUTED_COLOR};">
+      No action needed if you're happy — your bots will keep running and you'll be
+      charged on ${escapeHtml(trialEndDate)}.
+    </p>
+  `;
+
+  const html = renderEmailShell(inner, {
+    preheader: `Your Shop_a_Bot ${planName} trial ends ${trialEndDate}.`,
+    footnote: `You're receiving this because you started a free trial. Manage notifications anytime from Settings.`,
+  });
+
+  const text = renderEmailShellText(
+    `Your Shop_a_Bot trial ends ${trialEndDate}\n\n` +
+      `Hi ${firstName},\n\n` +
+      `Your free trial of Shop_a_Bot ${planName} ends on ${trialEndDate}. We'll auto-convert your subscription so your bots keep running.\n\n` +
+      `Manage your subscription:\n${billingPortalUrl}\n\n` +
+      `No action needed if you're happy — you'll be charged on ${trialEndDate}.`,
+  );
+
+  return { subject, html, text };
+}

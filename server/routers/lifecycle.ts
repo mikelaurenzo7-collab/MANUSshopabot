@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 import {
   LIFECYCLE_BY_ID,
@@ -26,9 +26,10 @@ import {
 
 const storeIdInput = z.object({ storeId: z.number().int().positive() });
 
-async function loadOwnedStore(userId: number, storeId: number) {
+/** Org-scoped store load — returns NOT_FOUND if the store isn't in the active org. */
+async function loadOrgStore(orgId: number, storeId: number) {
   const store = await db.getStoreById(storeId);
-  if (!store || store.userId !== userId) {
+  if (!store || store.orgId !== orgId) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
   }
   return store;
@@ -59,10 +60,10 @@ export const lifecycleRouter = router({
    * ready, we promote it to `transitioning` here so the celebration surfaces
    * automatically the moment the store earns it. Writes are idempotent.
    */
-  get: protectedProcedure
+  get: orgProcedure
     .input(storeIdInput)
     .query(async ({ ctx, input }) => {
-      const store = await loadOwnedStore(ctx.user.id, input.storeId);
+      const store = await loadOrgStore(ctx.org.id, input.storeId);
       const signals = await buildSignals(input.storeId, store);
       let stage: LifecycleStage = store.lifecycleStage ?? "building";
       let setupCompletedAt = store.setupCompletedAt;
@@ -100,8 +101,8 @@ export const lifecycleRouter = router({
    * Returns the lifecycle for every store the user owns — used for
    * dashboard rollups.
    */
-  listAll: protectedProcedure.query(async ({ ctx }) => {
-    const stores = await db.getStoresByUser(ctx.user.id);
+  listAll: orgProcedure.query(async ({ ctx }) => {
+    const stores = await db.getStoresByOrg(ctx.org.id);
     return stores.map((s) => ({
       storeId: s.id,
       storeName: s.name,
@@ -117,10 +118,10 @@ export const lifecycleRouter = router({
    * Marks the Builder's work as done. Moves stage to `transitioning` so the
    * dashboard surfaces the celebration on next view. Idempotent.
    */
-  markSetupComplete: protectedProcedure
+  markSetupComplete: orgProcedure
     .input(storeIdInput)
     .mutation(async ({ ctx, input }) => {
-      const store = await loadOwnedStore(ctx.user.id, input.storeId);
+      const store = await loadOrgStore(ctx.org.id, input.storeId);
       const next: Partial<{ lifecycleStage: LifecycleStage; setupCompletedAt: Date }> = {
         setupCompletedAt: store.setupCompletedAt ?? new Date(),
       };
@@ -143,10 +144,10 @@ export const lifecycleRouter = router({
    * The user has seen the handoff celebration and acknowledged it. Moves to
    * `operating`. This is the moment the Merchant becomes the default bot.
    */
-  acknowledgeHandoff: protectedProcedure
+  acknowledgeHandoff: orgProcedure
     .input(storeIdInput)
     .mutation(async ({ ctx, input }) => {
-      const store = await loadOwnedStore(ctx.user.id, input.storeId);
+      const store = await loadOrgStore(ctx.org.id, input.storeId);
       if (store.lifecycleStage === "operating") {
         return { storeId: store.id, stage: "operating" as const };
       }
@@ -172,10 +173,10 @@ export const lifecycleRouter = router({
    * Reverts a store back to building mode. Useful if the user is mid-redesign
    * and wants the Builder back as the lead. Soft — does not erase progress.
    */
-  reopenBuilder: protectedProcedure
+  reopenBuilder: orgProcedure
     .input(storeIdInput)
     .mutation(async ({ ctx, input }) => {
-      const store = await loadOwnedStore(ctx.user.id, input.storeId);
+      const store = await loadOrgStore(ctx.org.id, input.storeId);
       await db.updateStore(store.id, { lifecycleStage: "building" });
       return { storeId: store.id, stage: "building" as const };
     }),

@@ -16,7 +16,7 @@ import {
   createWorkflow, updateWorkflow, getWorkflowById,
   createWorkflowSteps, getWorkflowSteps, updateWorkflowStep, getBestPromptVariant, getWorkflowStepById,
   createAgentTask, createNotification, createApprovalItem,
-  getStoresByUser, getStoreById, getBotConfigs, withTransaction,
+  getStoresByUser, getStoresByOrg, getStoreById, getBotConfigs, withTransaction,
   getBotProfile, getBotMemory,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
@@ -87,9 +87,20 @@ export function registerWorkflow(workflowType: string, stepFactory: (input: Reco
 
 /**
  * Launch a new workflow. Creates the DB records and begins execution.
+ *
+ * `orgId` is required: every workflow belongs to an organization, and
+ * scope="all_stores" runs against `getStoresByOrg(orgId)`. `userId`
+ * remains as the actor — the human who launched the workflow — so the
+ * audit trail tracks who initiated it.
  */
-export async function launchWorkflow(userId: number, definition: WorkflowDefinition): Promise<number> {
-  // Check if agent is enabled
+export async function launchWorkflow(
+  userId: number,
+  definition: WorkflowDefinition,
+  options: { orgId: number },
+): Promise<number> {
+  const { orgId } = options;
+
+  // Check if agent is enabled (per-org config now — falls back to per-user for backfill)
   const configs = await getBotConfigs(userId);
   const agentConfig = configs.find(c => c.agentType === definition.agentType);
   if (agentConfig && !agentConfig.enabled) {
@@ -109,6 +120,7 @@ export async function launchWorkflow(userId: number, definition: WorkflowDefinit
 
   // Create workflow record
   const workflowData: InsertAgentWorkflow = {
+    orgId,
     userId,
     agentType: definition.agentType,
     workflowType: definition.workflowType,
@@ -186,10 +198,14 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
   const dbSteps = await getWorkflowSteps(workflowId);
   const previousOutputs: Record<string, any>[] = [];
 
-  // Load stores if scope is all_stores
+  // Load stores if scope is all_stores. Org-scoped now — when a user is
+  // in two orgs and launches a workflow in Org B, the engine must NOT
+  // see Org A's stores.
   let allStores: any[] | undefined;
   if (workflow.scope === "all_stores") {
-    allStores = await getStoresByUser(userId);
+    allStores = workflow.orgId
+      ? await getStoresByOrg(workflow.orgId)
+      : await getStoresByUser(userId); // legacy fallback for pre-migration rows
   }
 
   // Load bot profile and memory
@@ -221,8 +237,10 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
       });
       await updateWorkflow(workflowId, { status: "awaiting_approval" });
 
-      // Create approval item
+      // Create approval item — scoped to the workflow's org so it
+      // surfaces in the right tenant's approval queue.
       await createApprovalItem({
+        orgId: workflow.orgId,
         agentTaskId: workflowId,
         agentType: workflow.agentType,
         actionType: stepDef.stepType,

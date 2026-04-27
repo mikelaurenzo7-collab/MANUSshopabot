@@ -6,7 +6,15 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { consumeOAuthStateToken, getDb, getOAuthStateToken } from "./db";
+import {
+  consumeOAuthStateToken,
+  ensurePersonalOrg,
+  getDb,
+  getOAuthStateToken,
+  getStoreById,
+  getUserById,
+} from "./db";
+import * as dbHelpers from "./db";
 import { platformCredentials } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
@@ -193,7 +201,22 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
           })
           .where(eq(platformCredentials.id, existing[0].id));
       } else {
+        // Resolve orgId from the store (preferred) or the user's
+        // active org. Either path keeps the credential scoped to the
+        // tenant that initiated the OAuth flow.
+        let orgId: number | null = null;
+        if (storeId) {
+          const storeRow = await dbHelpers.getStoreById(storeId);
+          orgId = storeRow?.orgId ?? null;
+        }
+        if (orgId == null) {
+          const personalOrg = await dbHelpers.ensurePersonalOrg(userId);
+          const userRow = await dbHelpers.getUserById(userId);
+          orgId = userRow?.currentOrgId ?? personalOrg.id;
+        }
+
         await db.insert(platformCredentials).values({
+          orgId,
           userId,
           storeId: storeId || null,
           platform,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 import { checkInventoryAcrossStores, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
 import { agentScheduler } from "../scheduler";
@@ -28,9 +28,8 @@ export const dashboardRouter = router({
     }),
 
   // ─── Cross-Store Intelligence ───────────────────────────────────
-  crossStoreIntelligence: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.user.id;
-    const stores = await db.getStoresByUser(userId);
+  crossStoreIntelligence: orgProcedure.query(async ({ ctx }) => {
+    const stores = await db.getStoresByOrg(ctx.org.id);
     const activeStores = stores.filter(s => s.status === "active");
 
     // Batch: fetch all metrics and low-stock counts in parallel (2 queries total instead of 2*N)
