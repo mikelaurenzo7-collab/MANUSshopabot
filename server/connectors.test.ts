@@ -19,6 +19,7 @@ function createUserContext(overrides?: Partial<AuthenticatedUser>): TrpcContext 
   };
   return {
     user,
+    activeOrg: { id: 1, role: "owner" },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };
@@ -31,6 +32,7 @@ function createAdminContext(): TrpcContext {
 function createAnonContext(): TrpcContext {
   return {
     user: null,
+    activeOrg: null,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };

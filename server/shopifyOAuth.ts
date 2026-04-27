@@ -264,7 +264,14 @@ export function registerShopifyOAuthRoutes(app: Express) {
           return;
         }
 
+        // Stores connected via OAuth go into the user's personal org.
+        // Future: surface an org-picker on the install page so an
+        // admin/agency operator can decide which org to land the
+        // connection in. For now: personal org keeps OAuth flow simple
+        // and matches single-user behavior.
+        const personalOrg = await db.ensurePersonalOrg(nonceData.userId);
         const createdStore = await db.createStore({
+          orgId: personalOrg.id,
           userId: nonceData.userId,
           name: storeName,
           platform: "shopify",

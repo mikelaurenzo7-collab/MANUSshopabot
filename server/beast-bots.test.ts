@@ -30,13 +30,17 @@ function makeAdmin(overrides: Partial<TrpcContext["user"]> = {}): NonNullable<Tr
 
 type CookieCall = { name: string; options: Record<string, unknown> };
 
-function makeCtx(user: NonNullable<TrpcContext["user"]> | null = null): {
+function makeCtx(
+  user: NonNullable<TrpcContext["user"]> | null = null,
+  activeOrg: TrpcContext["activeOrg"] = user ? { id: 1, role: "owner" } : null,
+): {
   ctx: TrpcContext;
   clearedCookies: CookieCall[];
 } {
   const clearedCookies: CookieCall[] = [];
   const ctx: TrpcContext = {
     user,
+    activeOrg,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {
       clearCookie: (name: string, options: Record<string, unknown>) => {

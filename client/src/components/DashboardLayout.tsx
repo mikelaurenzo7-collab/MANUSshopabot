@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import { useCommandPalette } from "@/components/CommandPalette";
+import { OrgSwitcher } from "@/components/OrgSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -288,7 +289,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const NavContent = () => (
     <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-3">
-      {/* Workspace switcher */}
+      {/* Organization switcher (always visible) */}
+      <div className="mb-2 px-1">
+        <OrgSwitcher />
+      </div>
+      {/* Workspace (store) switcher */}
       {stores && stores.length > 0 && (
         <div className="mb-3 px-1">
           <DropdownMenu>
