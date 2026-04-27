@@ -407,21 +407,21 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
           <div className="text-center lg:text-left">
             {/* Announcement pill */}
-            <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
+            <div className="mb-6 inline-flex items-center gap-2 announcement-banner">
               <span className="eyebrow">New</span>
-              <span className="text-white/65 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
-              <ArrowRight className="w-3.5 h-3.5 text-white/35" />
+              <span className="text-white/65 text-xs">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
+              <ArrowRight className="w-3 h-3 text-white/35" />
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.88]">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
               <span className="text-white">Your store</span>
               <br />
               <span className="hero-title-shine">runs itself.</span>
             </h1>
 
             {/* Subtext */}
-            <p className="text-lg md:text-xl text-white/58 max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed font-normal">
+            <p className="text-base md:text-lg text-white/58 max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal">
               Shop_a_Bot turns e-commerce into an autonomous operating system. The Builder ships your store. The Merchant
               <span className="text-cyan-300"> takes the keys</span> the day it goes live. The Social Bot manufactures demand while you sleep.
             </p>
@@ -591,11 +591,11 @@ export default function Landing() {
       </section>
 
       {/* ── The Three Bots ─────────────────────────────────────────────────── */}
-      <section className="py-24 px-4">
+      <section className="py-14 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">The Platform</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">The Builder ships your store. The Merchant runs it. The Social Bot grows it. Each bot wakes up at the right moment.</p>
           </div>
 
@@ -649,11 +649,11 @@ export default function Landing() {
       </section>
 
       {/* ── How It Works — honest capability walkthrough ───────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-14 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">How It Works</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">From signup to autopilot</h2>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">From signup to autopilot</h2>
             <p className="mt-4 text-white/45 max-w-xl mx-auto">No fabricated testimonials. Just the actual sequence of what happens after you connect your first store.</p>
           </div>
 
@@ -698,11 +698,11 @@ export default function Landing() {
       </section>
 
       {/* ── Pricing ────────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
+      <section id="pricing" className="py-14 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">Pricing</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Simple Pricing</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
@@ -764,11 +764,11 @@ export default function Landing() {
       </section>
 
       {/* ── FAQ ────────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-14 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">FAQ</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Common questions</h2>
           </div>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
@@ -779,7 +779,7 @@ export default function Landing() {
       </section>
 
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
-      <section className="py-24 px-4 border-t border-white/[0.06]">
+      <section className="py-14 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center reveal reveal-visible">
           <div className="bento-card-featured gradient-ring rounded-2xl p-12 relative overflow-hidden">
             <div className="aurora-mesh opacity-50" />
