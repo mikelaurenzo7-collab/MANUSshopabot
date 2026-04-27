@@ -532,6 +532,31 @@ async function executeStepByType(stepType: StepType, context: StepContext): Prom
   }
 }
 
+/**
+ * Process-local cache for prompt-variant lookups. Without this, every
+ * LLM step queries `prompt_variants` even though the result rarely
+ * changes during a single workflow run. 5-minute TTL keeps RL updates
+ * visible to in-flight workflows without becoming stale forever.
+ */
+const PROMPT_VARIANT_TTL_MS = 5 * 60 * 1000;
+const promptVariantCache = new Map<string, { value: any; expiresAt: number }>();
+
+async function getCachedPromptVariant(agentType: string, promptClass: string) {
+  const key = `${agentType}::${promptClass}`;
+  const cached = promptVariantCache.get(key);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.value;
+
+  const fresh = await getBestPromptVariant(agentType, promptClass);
+  promptVariantCache.set(key, { value: fresh, expiresAt: now + PROMPT_VARIANT_TTL_MS });
+  // Cap cache size — protect against unbounded growth on long-running processes
+  if (promptVariantCache.size > 200) {
+    const firstKey = promptVariantCache.keys().next().value;
+    if (firstKey) promptVariantCache.delete(firstKey);
+  }
+  return fresh;
+}
+
 async function executeLLMStep(context: StepContext): Promise<any> {
   const { input, previousOutputs, agentType } = context;
   let systemPrompt = input.systemPrompt ?? "You are a helpful e-commerce AI assistant.";
@@ -539,12 +564,10 @@ async function executeLLMStep(context: StepContext): Promise<any> {
 
   // -- MANUS AI AUTONOMOUS OVERRIDE: Reinforcement Learning Prompt Injection --
   if (input.promptClass) {
-    const bestVariant = await getBestPromptVariant(agentType, input.promptClass);
+    const bestVariant = await getCachedPromptVariant(agentType, input.promptClass);
     if (bestVariant) {
-      console.log(`[RL_ENGINE] Injecting high-performing prompt variant for ${input.promptClass} (Agent: ${agentType})`);
+      // Logged once per cache miss in getCachedPromptVariant; quiet here to avoid log spam.
       systemPrompt = bestVariant.promptTemplate;
-    } else {
-      console.log(`[RL_ENGINE] No active variants found for ${input.promptClass}. Using static fallback.`);
     }
   }
 
@@ -554,13 +577,29 @@ async function executeLLMStep(context: StepContext): Promise<any> {
     contextStr = `\n\nContext from previous steps:\n${JSON.stringify(previousOutputs.slice(-3), null, 2)}`;
   }
 
-  const response = await invokeLLM({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt + contextStr },
-    ],
-    ...(input.responseFormat ? { response_format: input.responseFormat } : {}),
-  });
+  // Resilience: a single LLM hiccup shouldn't crash a 10-step
+  // workflow. The engine has its own retry around each step (3
+  // attempts with backoff via `withRetries` in workflow execution),
+  // but if all attempts time out we still want a structured failure
+  // marker the next step can react to instead of a thrown exception
+  // bubbling up.
+  let response: Awaited<ReturnType<typeof invokeLLM>>;
+  try {
+    response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt + contextStr },
+      ],
+      ...(input.responseFormat ? { response_format: input.responseFormat } : {}),
+    });
+  } catch (err: any) {
+    console.error(`[WorkflowEngine.LLMStep] invokeLLM failed: ${err?.message ?? err}`);
+    // Re-throw — the engine retry layer wraps this call, so a bare
+    // throw triggers retries before failing the step. Returning a
+    // structured error here would BYPASS retries and treat a
+    // transient timeout as success, which is worse.
+    throw err;
+  }
 
   const content = String(response.choices?.[0]?.message?.content ?? "");
 
@@ -605,12 +644,18 @@ async function executeAnalysisStep(context: StepContext): Promise<any> {
   // Use LLM to analyze data from previous steps
   const dataToAnalyze = input.data ?? previousOutputs;
 
-  const response = await invokeLLM({
-    messages: [
-      { role: "system", content: "You are an expert e-commerce data analyst. Analyze the provided data and return actionable insights." },
-      { role: "user", content: `Analyze this data and provide insights:\n${JSON.stringify(dataToAnalyze, null, 2)}\n\n${input.analysisPrompt ?? "Provide key findings and recommendations."}` },
-    ],
-  });
+  let response: Awaited<ReturnType<typeof invokeLLM>>;
+  try {
+    response = await invokeLLM({
+      messages: [
+        { role: "system", content: "You are an expert e-commerce data analyst. Analyze the provided data and return actionable insights." },
+        { role: "user", content: `Analyze this data and provide insights:\n${JSON.stringify(dataToAnalyze, null, 2)}\n\n${input.analysisPrompt ?? "Provide key findings and recommendations."}` },
+      ],
+    });
+  } catch (err: any) {
+    console.error(`[WorkflowEngine.AnalysisStep] invokeLLM failed: ${err?.message ?? err}`);
+    throw err; // Engine retry wraps; let it kick in.
+  }
 
   return { analysis: response.choices?.[0]?.message?.content ?? "" };
 }

@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3 } from "lucide-react";
 import AnalyticsPage from "./Analytics";
 import IntelligencePage from "./Intelligence";
+import CampaignFunnel from "./CampaignFunnel";
 
-type InsightsTab = "stores" | "intelligence";
-const TAB_VALUES: InsightsTab[] = ["stores", "intelligence"];
+type InsightsTab = "stores" | "campaigns" | "intelligence";
+const TAB_VALUES: InsightsTab[] = ["stores", "campaigns", "intelligence"];
 
 function readTabFromHash(): InsightsTab {
   if (typeof window === "undefined") return "stores";
@@ -83,6 +84,14 @@ export default function InsightsPage() {
             My Stores
           </TabsTrigger>
           <TabsTrigger
+            value="campaigns"
+            role="tab"
+            aria-selected={tab === "campaigns"}
+            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+          >
+            Campaigns
+          </TabsTrigger>
+          <TabsTrigger
             value="intelligence"
             role="tab"
             aria-selected={tab === "intelligence"}
@@ -99,6 +108,14 @@ export default function InsightsPage() {
           className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
         >
           <AnalyticsPage />
+        </TabsContent>
+        <TabsContent
+          value="campaigns"
+          role="tabpanel"
+          aria-labelledby="campaigns-tab"
+          className={`mt-4 transition-all duration-300 ${isTransitioning ? "opacity-0 translate-y-1" : "opacity-100 translate-y-0"}`}
+        >
+          <CampaignFunnel />
         </TabsContent>
         <TabsContent
           value="intelligence"

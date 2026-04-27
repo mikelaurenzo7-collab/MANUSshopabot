@@ -12,8 +12,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import ProfilePage from "./Profile";
 import BotSettingsPage from "./BotSettings";
 import PlatformHealthPage from "./PlatformHealth";
+import MembersPage from "./Members";
 
-type SettingsTab = "profile" | "bots" | "platform";
+type SettingsTab = "profile" | "members" | "bots" | "platform";
 
 function readTabFromHash(allowed: SettingsTab[]): SettingsTab {
   if (typeof window === "undefined") return "profile";
@@ -26,7 +27,9 @@ export default function SettingsPage() {
   const isAdmin = user?.role === "admin";
 
   const allowed = useMemo<SettingsTab[]>(
-    () => (isAdmin ? ["profile", "bots", "platform"] : ["profile", "bots"]),
+    () => (isAdmin
+      ? ["profile", "members", "bots", "platform"]
+      : ["profile", "members", "bots"]),
     [isAdmin],
   );
 
@@ -74,12 +77,16 @@ export default function SettingsPage() {
       <Tabs value={tab} onValueChange={handleTabChange} className="px-6 pt-2 relative">
         <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
           <TabsTrigger value="profile" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Profile</TabsTrigger>
+          <TabsTrigger value="members" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Members</TabsTrigger>
           <TabsTrigger value="bots" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Bot Settings</TabsTrigger>
           {isAdmin && <TabsTrigger value="platform" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Platform Health</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
           <ProfilePage />
+        </TabsContent>
+        <TabsContent value="members" className="mt-4">
+          <MembersPage />
         </TabsContent>
         <TabsContent value="bots" className="mt-4">
           <BotSettingsPage />
