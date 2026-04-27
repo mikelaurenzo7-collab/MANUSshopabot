@@ -58,14 +58,16 @@ export function Celebration({
     <div
       key={String(visibleKey)}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden flex items-center justify-center motion-reduce:hidden"
+      className="pointer-events-none absolute inset-0 overflow-hidden flex items-center justify-center"
     >
-      {/* Soft radial shimmer glow */}
+      {/* Soft radial shimmer glow — kept for reduced-motion users so they
+          still get a visual ack of the milestone, just without the
+          fade/zoom intro animation. */}
       <div
-        className="absolute h-48 w-48 rounded-full bg-gradient-to-br from-sky-400/30 via-cyan-300/20 to-transparent blur-2xl animate-in fade-in zoom-in-50 duration-500"
+        className="absolute h-48 w-48 rounded-full bg-gradient-to-br from-sky-400/30 via-cyan-300/20 to-transparent blur-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-50 motion-safe:duration-500"
         style={{ animationFillMode: "forwards" }}
       />
-      {/* Particles */}
+      {/* Particles — only for users who haven't opted out of motion. */}
       {Array.from({ length: particles }).map((_, i) => {
         const angle = (i / particles) * Math.PI * 2;
         const distance = 90 + ((i * 13) % 40);
@@ -73,18 +75,21 @@ export function Celebration({
         const dy = Math.sin(angle) * distance;
         const color = PARTICLE_COLORS[i % PARTICLE_COLORS.length];
         const delay = (i % 5) * 30;
+        const particleStyle: React.CSSProperties & {
+          ["--cx"]?: string;
+          ["--cy"]?: string;
+        } = {
+          backgroundColor: color,
+          boxShadow: `0 0 6px ${color}`,
+          animation: `celebrate-particle ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms forwards`,
+          "--cx": `${dx}px`,
+          "--cy": `${dy}px`,
+        };
         return (
           <span
             key={i}
-            className="absolute h-1.5 w-1.5 rounded-full"
-            style={{
-              backgroundColor: color,
-              boxShadow: `0 0 6px ${color}`,
-              animation: `celebrate-particle ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms forwards`,
-              // CSS variables consumed by the keyframes below
-              ["--cx" as string]: `${dx}px`,
-              ["--cy" as string]: `${dy}px`,
-            }}
+            className="absolute h-1.5 w-1.5 rounded-full motion-reduce:hidden"
+            style={particleStyle}
           />
         );
       })}

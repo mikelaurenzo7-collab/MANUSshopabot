@@ -46,8 +46,8 @@ export function trackOnboardingEvent(
   if (!isBrowser()) return;
   try {
     if (
-      typeof process !== "undefined" &&
-      process.env?.NODE_ENV !== "production"
+      typeof import.meta !== "undefined" &&
+      (import.meta as { env?: { DEV?: boolean } }).env?.DEV
     ) {
       // eslint-disable-next-line no-console
       console.debug("[onboarding]", name, payload);
