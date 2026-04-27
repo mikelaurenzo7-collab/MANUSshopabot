@@ -26,6 +26,7 @@ import {
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/EmptyState";
 
 type AgentType = "architect" | "merchant" | "social";
 
@@ -192,7 +193,11 @@ export default function BotSettings() {
                 </Button>
               </div>
             ) : (
-              <div className="text-center py-8 text-white/30 text-sm">No profile data available</div>
+              <EmptyState
+                icon={<Settings className="w-5 h-5 text-white/40" />}
+                title="No profile data yet"
+                description="This bot hasn't been configured. Add instructions on the left to give it personality, guardrails, and a tone of voice."
+              />
             )}
           </div>
         </TabsContent>

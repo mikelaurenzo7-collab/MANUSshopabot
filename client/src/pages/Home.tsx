@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/context-menu";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 import { ActivationCoach } from "@/components/ActivationCoach";
+import { FirstRunTour } from "@/components/FirstRunTour";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -641,6 +642,9 @@ export default function Home() {
       <div className="shrink-0 px-4 md:px-6 pt-3 z-20">
         <ActivationCoach />
       </div>
+
+      {/* ── First-run dashboard tour (item 12) ── */}
+      <FirstRunTour />
 
       {/* ── Canvas + Inspector ── */}
       <div className="flex flex-1 min-h-0">

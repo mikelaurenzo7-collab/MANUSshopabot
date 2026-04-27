@@ -7,7 +7,7 @@
  * 4. Launch — pick a niche and fire the Builder Bot
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -45,14 +45,20 @@ import {
   PauseCircle,
 } from "lucide-react";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
+import { Celebration } from "@/components/Celebration";
+import { trackOnboardingEvent } from "@/lib/onboardingTelemetry";
 
 /**
  * Persisted onboarding state — keyed per user so multi-account environments
  * don't collide. Survives refresh, OAuth bounces, and accidental tab close
- * (item 2 in the onboarding-polish proposal).
+ * (item 2 in the onboarding-polish proposal). PR2 also persists the user's
+ * "What brings you here?" answer so reorder/copy decisions survive too
+ * (item 1).
  */
 const ONBOARDING_STORAGE_PREFIX = "shop_a_bot_onboarding_state:";
 const ONBOARDING_STORAGE_VERSION = 1;
+
+export type OnboardingPersona = "new" | "existing" | "exploring";
 
 interface PersistedOnboardingState {
   v: number;
@@ -60,6 +66,10 @@ interface PersistedOnboardingState {
   shopDomain?: string;
   storeName?: string;
   niche?: string;
+  /** Item 1 — "What brings you here?" answer; optional. */
+  persona?: OnboardingPersona;
+  /** Has the first-store connect celebration already played? (item 7) */
+  celebratedStoreConnect?: boolean;
 }
 
 function loadPersistedOnboarding(
@@ -207,26 +217,53 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
-function WelcomeStep({ onNext }: { onNext: () => void }) {
+function WelcomeStep({
+  persona,
+  onPersonaChange,
+  onNext,
+}: {
+  persona: OnboardingPersona | null;
+  onPersonaChange: (next: OnboardingPersona) => void;
+  onNext: (persona: OnboardingPersona | null) => void;
+}) {
   const bots = [
     {
       name: "Builder Bot",
       icon: Bot,
       color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
       description: "Researches niches, sources products, and builds your store in under 30 minutes.",
+      // Item 8 — animated 1-line "live" message previews so the bots
+      // feel alive instead of static product copy.
+      preview: "Builder: I'll have your store live by morning ☕",
+      previewTone: "text-sky-200/90",
     },
     {
       name: "Merchant Bot",
       icon: Package,
       color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
       description: "Monitors inventory, processes orders, and adjusts pricing — all without you.",
+      preview: "Merchant: I just restocked your top SKU before it sold out 📦",
+      previewTone: "text-cyan-200/90",
     },
     {
       name: "Social Bot",
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
+      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set ✨",
+      previewTone: "text-amber-200/90",
     },
+  ];
+
+  const personas: Array<{
+    id: OnboardingPersona;
+    label: string;
+    sub: string;
+    emoji: string;
+  }> = [
+    { id: "new", label: "Start a new store", sub: "I'm building from scratch", emoji: "🚀" },
+    { id: "existing", label: "Automate an existing store", sub: "I have a Shopify store already", emoji: "🛍️" },
+    { id: "exploring", label: "Just exploring", sub: "Show me what it can do", emoji: "🔭" },
   ];
 
   return (
@@ -242,8 +279,47 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         </p>
       </div>
 
+      {/* Item 1 — optional persona prompt. Drives reorder + tailored copy
+          downstream. Skipping is a no-op (persona stays null). */}
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-medium text-muted-foreground/90 mb-1.5 px-0.5">
+          What brings you here? <span className="text-muted-foreground/60 font-normal">(optional)</span>
+        </legend>
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          role="radiogroup"
+          aria-label="What brings you here?"
+        >
+          {personas.map((p) => {
+            const isActive = persona === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                onClick={() => onPersonaChange(p.id)}
+                className={`text-left rounded-lg border p-3 transition-all motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 ${
+                  isActive
+                    ? "bg-sky-500/[0.08] border-sky-500/40 shadow-[0_0_0_1px_rgba(14,165,233,0.25)]"
+                    : "bg-secondary/30 border-border/50 hover:border-primary/30 hover:bg-secondary/60"
+                }`}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-lg leading-none mt-0.5" aria-hidden="true">{p.emoji}</span>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium ${isActive ? "text-sky-100" : "text-foreground"}`}>{p.label}</p>
+                    <p className="text-[11px] text-muted-foreground/90 mt-0.5">{p.sub}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {bots.map(({ name, icon: Icon, color, description }) => {
+        {bots.map(({ name, icon: Icon, color, description, preview, previewTone }, idx) => {
           const borderClass = color.split(" ").find(c => c.startsWith("border")) || "border-white/[0.08]";
           const glowColor = color.includes("sky") ? "hover:shadow-sky-500/10" : color.includes("cyan") ? "hover:shadow-cyan-500/10" : "hover:shadow-amber-500/10";
           return (
@@ -256,6 +332,14 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
                   <h3 className="font-semibold text-sm text-foreground">{name}</h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
                 </div>
+                {/* Bot personality preview — staggered fade-in so the
+                    three bots "speak" one after the other (item 8). */}
+                <p
+                  className={`text-[11px] italic leading-relaxed ${previewTone} motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-700 motion-safe:[animation-fill-mode:both]`}
+                  style={{ animationDelay: `${300 + idx * 350}ms` }}
+                >
+                  {preview}
+                </p>
               </CardContent>
             </Card>
           );
@@ -263,7 +347,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="flex justify-center">
-        <Button onClick={onNext} size="lg" className="gap-2 px-8">
+        <Button onClick={() => onNext(persona)} size="lg" className="gap-2 px-8">
           Let's Get Started <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -276,12 +360,17 @@ function ConnectStoreStep({
   onSkip,
   initialShopDomain,
   initialStoreName,
+  alreadyCelebrated,
+  onCelebrated,
   onPersistDraft,
 }: {
   onNext: () => void;
   onSkip: () => void;
   initialShopDomain: string;
   initialStoreName: string;
+  /** Has the first-store-connect celebration already played? (item 7) */
+  alreadyCelebrated: boolean;
+  onCelebrated: () => void;
   onPersistDraft: (patch: { shopDomain?: string; storeName?: string }) => void;
 }) {
   const [shopDomain, setShopDomain] = useState(initialShopDomain);
@@ -296,6 +385,14 @@ function ConnectStoreStep({
     reason?: string;
   }>(() => evaluateShopDomain(initialShopDomain));
   const [hasInteracted, setHasInteracted] = useState(false);
+  // Item 15 — persistent inline OAuth-success card. Survives the toast
+  // expiring so the user has a clear, durable confirmation until they
+  // hit Continue.
+  const [oauthJustConnected, setOauthJustConnected] = useState(false);
+  // Item 7 — confetti when stores transition from 0 → 1+ for the first
+  // time during this onboarding session. Persisted across renders so we
+  // don't re-fire on a refetch.
+  const [celebrateTrigger, setCelebrateTrigger] = useState<number | null>(null);
   const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
   const activeStores = stores?.filter((s: any) => s.status === "active") ?? [];
   const hasActiveStore = activeStores.length > 0;
@@ -304,7 +401,11 @@ function ConnectStoreStep({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("connected") === "true") {
+      // Item 15 — keep the toast for at-a-glance feedback, but also
+      // show a persistent inline card on the step until the user moves
+      // on. The toast disappears; the card doesn't.
       toast.success("Store connected successfully!");
+      setOauthJustConnected(true);
       refetchStores();
       // Clean URL
       window.history.replaceState({}, "", "/onboarding");
@@ -314,6 +415,16 @@ function ConnectStoreStep({
       window.history.replaceState({}, "", "/onboarding");
     }
   }, []);
+
+  // Item 7 — fire celebration once, the first time a store appears.
+  useEffect(() => {
+    if (!hasActiveStore || alreadyCelebrated) return;
+    setCelebrateTrigger(Date.now());
+    onCelebrated();
+    trackOnboardingEvent("onboarding_celebration_shown", {
+      reason: "first_store_connected",
+    });
+  }, [hasActiveStore, alreadyCelebrated, onCelebrated]);
 
   // Re-evaluate the domain on a debounce so the green tick / inline error
   // settles ~300ms after the user stops typing.
@@ -387,7 +498,10 @@ function ConnectStoreStep({
     hasInteracted && validation.status === "invalid" && !!shopDomain.trim();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Item 7 — confetti when the store first appears (positioned
+          absolutely so it sits over the hero icon). */}
+      <Celebration trigger={celebrateTrigger} />
       <div className="text-center space-y-2">
         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 mb-2">
           <Store className="h-7 w-7 text-green-300" aria-hidden="true" />
@@ -400,13 +514,31 @@ function ConnectStoreStep({
 
       {hasActiveStore ? (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {activeStores.length} store{activeStores.length > 1 ? "s" : ""} connected
-              </p>
-              <p className="text-xs text-muted-foreground">{activeStores.map((s: any) => s.name).join(", ")}</p>
+          {/* Item 15 — persistent inline success card. Stays visible
+              until the user clicks Continue, even after the toast
+              evaporates and the URL is scrubbed of OAuth params. */}
+          <div
+            className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-300"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {oauthJustConnected
+                    ? "Store connected — you're in."
+                    : `${activeStores.length} store${activeStores.length > 1 ? "s" : ""} connected`}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {activeStores.map((s: any) => s.name).join(", ")}
+                </p>
+                {oauthJustConnected && (
+                  <p className="text-[11px] text-emerald-200/80 mt-1.5">
+                    Builder Bot now has read & write access. We&apos;ll keep this confirmation here until you continue so you have a clear record.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           <Button onClick={onNext} className="w-full gap-2">
@@ -710,25 +842,59 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
 function LaunchStep({
   onComplete,
   initialNiche,
+  persona,
   onPersistDraft,
 }: {
   onComplete: () => void;
   initialNiche: string;
+  persona: OnboardingPersona | null;
   onPersistDraft: (patch: { niche?: string }) => void;
 }) {
   const [niche, setNiche] = useState(initialNiche);
   const [isLaunching, setIsLaunching] = useState(false);
   const [launched, setLaunched] = useState(false);
+  // Item 9 — capture the workflowId returned by `workflows.launch` so we
+  // can poll real status and replace the static "~28 minutes" promise
+  // with a live elapsed-time + step indicator.
+  const [workflowId, setWorkflowId] = useState<number | null>(null);
+  const [launchedAt, setLaunchedAt] = useState<number | null>(null);
+  // Item 7 — celebration trigger fires once when launch succeeds.
+  const [celebrateTrigger, setCelebrateTrigger] = useState<number | null>(null);
 
   // Surface store-connection status so the post-launch promise ("store
   // ready in ~28 min") is only shown when a store actually exists.
   const { data: stores } = trpc.stores.list.useQuery();
   const hasStore = (stores?.length ?? 0) > 0;
 
+  // Item 9 — poll the workflow once we have an id. 5s interval is gentle
+  // on the server but feels live to the user. Stops automatically once
+  // the workflow reaches a terminal status.
+  const workflowDetail = trpc.workflows.detail.useQuery(
+    { workflowId: workflowId ?? 0 },
+    {
+      enabled: workflowId !== null,
+      refetchInterval: (query) => {
+        const status = (query.state.data as any)?.workflow?.status;
+        if (status === "completed" || status === "failed" || status === "cancelled") {
+          return false;
+        }
+        return 5000;
+      },
+    }
+  );
+
   const launchWorkflow = trpc.workflows.launch.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsLaunching(false);
       setLaunched(true);
+      setLaunchedAt(Date.now());
+      if (data && typeof (data as any).workflowId === "number") {
+        setWorkflowId((data as any).workflowId);
+      }
+      setCelebrateTrigger(Date.now());
+      trackOnboardingEvent("onboarding_celebration_shown", {
+        reason: "first_launch",
+      });
     },
     onError: (err) => {
       setIsLaunching(false);
@@ -736,14 +902,49 @@ function LaunchStep({
     },
   });
 
-  const nicheExamples = [
-    "Minimalist Home Decor",
-    "Pet Accessories",
-    "Fitness & Wellness",
-    "Eco-Friendly Products",
-    "Gaming Peripherals",
-    "Baby & Kids",
-  ];
+  // Item 1 — niche suggestions tailored to the user's persona answer.
+  // Keeps the surface small but proves the answer earns its place.
+  const nicheExamples = useMemo(() => {
+    if (persona === "exploring") {
+      // Show evergreen, broadly-appealing demos so explorers can pick
+      // any one and see the bot work end-to-end.
+      return [
+        "Minimalist Home Decor",
+        "Pet Accessories",
+        "Coffee & Tea Gifts",
+        "Travel Essentials",
+      ];
+    }
+    if (persona === "existing") {
+      // Existing-store operators usually know their category; surface
+      // higher-margin / scale-friendly verticals.
+      return [
+        "Premium Skincare",
+        "Outdoor & Camping Gear",
+        "Smart Home Gadgets",
+        "Specialty Coffee",
+      ];
+    }
+    // Default / "new store" persona — well-trodden starter niches.
+    return [
+      "Minimalist Home Decor",
+      "Pet Accessories",
+      "Fitness & Wellness",
+      "Eco-Friendly Products",
+      "Gaming Peripherals",
+      "Baby & Kids",
+    ];
+  }, [persona]);
+
+  // Live elapsed-time tick once launched (item 9).
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    if (!launchedAt) return;
+    const tick = () => setElapsedMs(Date.now() - launchedAt);
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [launchedAt]);
 
   const handleLaunch = () => {
     if (!niche.trim()) return;
@@ -754,17 +955,40 @@ function LaunchStep({
       title: `Niche Research: ${niche}`,
       description: `Automated niche research and store setup for: ${niche}`,
       scope: "global",
-      input: { niche, source: "onboarding" },
+      input: { niche, source: "onboarding", persona: persona ?? "unset" },
     });
   };
 
   if (launched) {
+    const wf = (workflowDetail.data as any)?.workflow;
+    const steps = ((workflowDetail.data as any)?.steps ?? []) as Array<{
+      status?: string;
+      stepName?: string;
+      title?: string;
+    }>;
+    const status = wf?.status as string | undefined;
+    const isTerminal = status === "completed" || status === "failed" || status === "cancelled";
+    const currentStep = steps.find((s) => s?.status === "running")
+      ?? steps.find((s) => s?.status === "pending");
+    const currentStepLabel =
+      currentStep?.title ?? currentStep?.stepName ?? null;
+
+    const formatElapsed = (ms: number) => {
+      const totalSec = Math.floor(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      if (m === 0) return `${s}s`;
+      return `${m}m ${String(s).padStart(2, "0")}s`;
+    };
+
     return (
       <div
         className="text-center space-y-6 py-4 relative"
         role="status"
         aria-live="polite"
       >
+        {/* Item 7 — confetti behind the bot avatar on first launch. */}
+        <Celebration trigger={celebrateTrigger} />
         {/* Background glow — animation suppressed for reduced-motion users (item 11) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none motion-safe:animate-pulse motion-reduce:opacity-60" />
 
@@ -779,7 +1003,9 @@ function LaunchStep({
               aria-hidden="true"
               className="w-1.5 h-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]"
             />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">Online</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+              {status === "completed" ? "Done" : status === "failed" ? "Failed" : "Online"}
+            </span>
           </div>
         </div>
 
@@ -819,15 +1045,32 @@ function LaunchStep({
           </div>
         </div>
 
-        {/* Live activity preview */}
         <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-1000">
           <div className="flex flex-col gap-2 max-w-xs mx-auto">
             <Button onClick={onComplete} size="lg" className="gap-2 btn-glow">
               Enter Command Center <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            {/* Item 9 — live status. We bind to the actual workflow when
+                we have one; otherwise we fall back to the original
+                static promise so the UI never shows nothing. */}
+            <div
+              className="flex items-center justify-center gap-2 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
               <Clock className="h-3 w-3" aria-hidden="true" />
-              <span>{hasStore ? "Store ready in ~28 minutes" : "Niche report ready in ~5 minutes"}</span>
+              {workflowId !== null ? (
+                <span>
+                  {isTerminal
+                    ? status === "completed"
+                      ? `Done · ran for ${formatElapsed(elapsedMs)}`
+                      : `${status === "failed" ? "Failed" : "Stopped"} after ${formatElapsed(elapsedMs)}`
+                    : currentStepLabel
+                      ? `${currentStepLabel} · ${formatElapsed(elapsedMs)} elapsed`
+                      : `Working · ${formatElapsed(elapsedMs)} elapsed`}
+                </span>
+              ) : (
+                <span>{hasStore ? "Store ready in ~28 minutes" : "Niche report ready in ~5 minutes"}</span>
+              )}
             </div>
           </div>
         </div>
@@ -843,7 +1086,11 @@ function LaunchStep({
         </div>
         <h2 className="text-xl font-bold text-foreground">Launch Your First Bot</h2>
         <p className="text-muted-foreground text-sm">
-          Give the Builder Bot a niche and it will research, source products, and build your store.
+          {persona === "exploring"
+            ? "Pick any niche to see Builder Bot run a full research workflow end-to-end."
+            : persona === "existing"
+              ? "Tell Builder Bot the category your store is in and it will surface margin-friendly product picks."
+              : "Give the Builder Bot a niche and it will research, source products, and build your store."}
         </p>
       </div>
 
@@ -961,8 +1208,22 @@ export default function OnboardingPage() {
   const [shopDomainDraft, setShopDomainDraft] = useState<string>(initial?.shopDomain ?? "");
   const [storeNameDraft, setStoreNameDraft] = useState<string>(initial?.storeName ?? "");
   const [nicheDraft, setNicheDraft] = useState<string>(initial?.niche ?? "");
+  // PR2 item 1 — persona persists in the same per-user blob.
+  const [persona, setPersona] = useState<OnboardingPersona | null>(
+    initial?.persona ?? null
+  );
+  const [celebratedStoreConnect, setCelebratedStoreConnect] = useState<boolean>(
+    initial?.celebratedStoreConnect ?? false
+  );
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [, setLocation] = useLocation();
+  // PR3 item 18 — fire `onboarding_step_viewed` once per step entry. We
+  // dedupe on the previous value so a state-merge re-render doesn't
+  // double-fire.
+  const lastViewedStepRef = useRef<number | null>(null);
+  // Track whether the user reached "complete" — anything else is an
+  // abandonment when they leave.
+  const completedRef = useRef(false);
 
   // Re-hydrate from storage once the user becomes available (auth resolves
   // asynchronously, so the very first render may have userKey = null). We
@@ -977,6 +1238,10 @@ export default function OnboardingPage() {
     setShopDomainDraft((prev) => prev || hydrated.shopDomain || "");
     setStoreNameDraft((prev) => prev || hydrated.storeName || "");
     setNicheDraft((prev) => prev || hydrated.niche || "");
+    setPersona((prev) => prev ?? hydrated.persona ?? null);
+    setCelebratedStoreConnect(
+      (prev) => prev || !!hydrated.celebratedStoreConnect
+    );
   }, [userKey]);
 
   // If returning from OAuth, jump to the right step (overrides persistence).
@@ -992,7 +1257,23 @@ export default function OnboardingPage() {
     }
   }, [userKey]);
 
-  const goToStep = (step: number) => {
+  const goToStep = (step: number, opts?: { reason?: "next" | "skip" }) => {
+    // PR3 item 18 — fire completion / skip events as the user advances.
+    if (step !== currentStep) {
+      const fromStep = currentStep;
+      const fromName = STEPS[fromStep - 1]?.title;
+      if (opts?.reason === "skip") {
+        trackOnboardingEvent("onboarding_skipped", {
+          step: fromStep,
+          stepName: fromName,
+        });
+      } else {
+        trackOnboardingEvent("onboarding_step_completed", {
+          step: fromStep,
+          stepName: fromName,
+        });
+      }
+    }
     setCurrentStep(step);
     savePersistedOnboarding(userKey, { currentStep: step });
   };
@@ -1001,12 +1282,66 @@ export default function OnboardingPage() {
     shopDomain?: string;
     storeName?: string;
     niche?: string;
+    persona?: OnboardingPersona;
+    celebratedStoreConnect?: boolean;
   }) => {
     if (patch.shopDomain !== undefined) setShopDomainDraft(patch.shopDomain);
     if (patch.storeName !== undefined) setStoreNameDraft(patch.storeName);
     if (patch.niche !== undefined) setNicheDraft(patch.niche);
+    if (patch.persona !== undefined) setPersona(patch.persona);
+    if (patch.celebratedStoreConnect !== undefined) {
+      setCelebratedStoreConnect(patch.celebratedStoreConnect);
+    }
     savePersistedOnboarding(userKey, patch);
   };
+
+  const handlePersonaChange = (next: OnboardingPersona) => {
+    persistDraft({ persona: next });
+    trackOnboardingEvent("onboarding_persona_selected", { persona: next });
+  };
+
+  /**
+   * Item 1 — reorder downstream steps based on persona:
+   *   • "exploring" → jump straight to Launch (4) so they see the bot
+   *     work before being asked to connect anything;
+   *   • "existing"  → keep the default order (Connect Store is next),
+   *     since they already have a store and the OAuth handshake is the
+   *     fastest path to value;
+   *   • "new" / unset → default order.
+   */
+  const handleWelcomeNext = (chosen: OnboardingPersona | null) => {
+    if (chosen === "exploring") {
+      goToStep(4);
+    } else {
+      goToStep(2);
+    }
+  };
+
+  // PR3 item 18 — `onboarding_step_viewed` on every step change.
+  useEffect(() => {
+    if (lastViewedStepRef.current === currentStep) return;
+    lastViewedStepRef.current = currentStep;
+    trackOnboardingEvent("onboarding_step_viewed", {
+      step: currentStep,
+      stepName: STEPS[currentStep - 1]?.title,
+      persona: persona ?? undefined,
+    });
+  }, [currentStep, persona]);
+
+  // PR3 item 18 — flag abandonment when the user leaves the page without
+  // hitting Finish. Fires on tab close, navigation away, hard refresh.
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      if (completedRef.current) return;
+      trackOnboardingEvent("onboarding_abandoned", {
+        step: currentStep,
+        stepName: STEPS[currentStep - 1]?.title,
+        persona: persona ?? undefined,
+      });
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [currentStep, persona]);
 
   // Esc opens "save & exit" — keyboard-first parity with Enter advancing
   // each step (item 10). When our own confirm dialog is already open we
@@ -1028,6 +1363,12 @@ export default function OnboardingPage() {
   const utils = trpc.useUtils();
 
   const handleComplete = async () => {
+    completedRef.current = true;
+    trackOnboardingEvent("onboarding_step_completed", {
+      step: currentStep,
+      stepName: STEPS[currentStep - 1]?.title,
+      reason: "finish",
+    });
     // Server-truth — survives device switches and storage clears.
     try {
       await completeOnboarding.mutateAsync();
@@ -1083,27 +1424,36 @@ export default function OnboardingPage() {
               className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
             >
               {currentStep === 1 && (
-                <WelcomeStep onNext={() => goToStep(2)} />
+                <WelcomeStep
+                  persona={persona}
+                  onPersonaChange={handlePersonaChange}
+                  onNext={handleWelcomeNext}
+                />
               )}
               {currentStep === 2 && (
                 <ConnectStoreStep
                   onNext={() => goToStep(3)}
-                  onSkip={() => goToStep(3)}
+                  onSkip={() => goToStep(3, { reason: "skip" })}
                   initialShopDomain={shopDomainDraft}
                   initialStoreName={storeNameDraft}
+                  alreadyCelebrated={celebratedStoreConnect}
+                  onCelebrated={() =>
+                    persistDraft({ celebratedStoreConnect: true })
+                  }
                   onPersistDraft={persistDraft}
                 />
               )}
               {currentStep === 3 && (
                 <ConnectSocialsStep
                   onNext={() => goToStep(4)}
-                  onSkip={() => goToStep(4)}
+                  onSkip={() => goToStep(4, { reason: "skip" })}
                 />
               )}
               {currentStep === 4 && (
                 <LaunchStep
                   onComplete={handleComplete}
                   initialNiche={nicheDraft}
+                  persona={persona}
                   onPersistDraft={persistDraft}
                 />
               )}
