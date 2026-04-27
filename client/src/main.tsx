@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { readActiveOrgIdFromStorage } from "./contexts/OrgContext";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,13 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      // Attach the active org id (if any) on every request. The server
+      // verifies membership and falls back to the user's currentOrgId
+      // if this header is absent or stale.
+      headers() {
+        const orgId = readActiveOrgIdFromStorage();
+        return orgId != null ? { "X-Org-Id": String(orgId) } : {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

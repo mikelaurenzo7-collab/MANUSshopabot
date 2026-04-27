@@ -39,6 +39,8 @@ import {
   botSafetyRules, InsertBotSafetyRule,
   botExecutionLogs, InsertBotExecutionLog,
   webhookEvents, InsertWebhookEvent,
+  organizations, InsertOrganization, Organization,
+  orgMembers, InsertOrgMember, OrgMember,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -137,6 +139,166 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// ─── Organization helpers ───────────────────────────────────────────────────
+
+/**
+ * Create an organization and add the owner as a member in one transaction.
+ * Returns the created org. The slug is generated from the name; collisions
+ * are resolved by suffixing `-<random>`.
+ */
+export async function createOrganization(
+  data: { name: string; ownerId: number; kind?: "personal" | "team"; plan?: Organization["plan"] },
+): Promise<Organization> {
+  const db = await requireDb();
+  const baseSlug = (data.name || `user-${data.ownerId}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || `user-${data.ownerId}`;
+
+  // Resolve slug collisions deterministically
+  let slug = baseSlug;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const existing = await db.select().from(organizations).where(eq(organizations.slug, slug)).limit(1);
+    if (!existing[0]) break;
+    slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  const insert = await db.insert(organizations).values({
+    name: data.name,
+    slug,
+    ownerId: data.ownerId,
+    kind: data.kind ?? "personal",
+    plan: data.plan ?? null,
+  } as InsertOrganization);
+
+  const orgId = insert[0].insertId;
+
+  await db.insert(orgMembers).values({
+    orgId,
+    userId: data.ownerId,
+    role: "owner",
+    joinedAt: new Date(),
+  } as InsertOrgMember);
+
+  const created = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1);
+  return created[0]!;
+}
+
+/** Get all organizations the user is a member of, with their role. */
+export async function getOrgsForUser(userId: number): Promise<Array<Organization & { role: OrgMember["role"] }>> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      org: organizations,
+      role: orgMembers.role,
+    })
+    .from(orgMembers)
+    .innerJoin(organizations, eq(orgMembers.orgId, organizations.id))
+    .where(eq(orgMembers.userId, userId))
+    .orderBy(desc(organizations.createdAt));
+  return rows.map((r) => ({ ...r.org, role: r.role }));
+}
+
+/** Get a specific org by id, or undefined. */
+export async function getOrgById(id: number): Promise<Organization | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(organizations).where(eq(organizations.id, id)).limit(1);
+  return rows[0];
+}
+
+/**
+ * Look up the membership row for (orgId, userId). Returns the role + joinedAt
+ * status, or undefined if the user is not a member.
+ */
+export async function getOrgMembership(
+  orgId: number,
+  userId: number,
+): Promise<OrgMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(orgMembers)
+    .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, userId)))
+    .limit(1);
+  return rows[0];
+}
+
+/**
+ * Ensure a personal org exists for the user; create one if not. Used at
+ * authentication time for users who predate the multi-tenancy migration
+ * or were created before the migration ran. Idempotent.
+ */
+export async function ensurePersonalOrg(userId: number): Promise<Organization> {
+  const db = await requireDb();
+  const existing = await db
+    .select()
+    .from(organizations)
+    .where(and(eq(organizations.ownerId, userId), eq(organizations.kind, "personal")))
+    .limit(1);
+  if (existing[0]) return existing[0];
+
+  const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const userName = userRows[0]?.name?.trim() || `User ${userId}`;
+  return createOrganization({ name: userName, ownerId: userId, kind: "personal" });
+}
+
+/**
+ * Set the user's "active" org. Caller must have already verified
+ * membership — this function does NOT re-check.
+ */
+export async function setCurrentOrgForUser(userId: number, orgId: number): Promise<void> {
+  const db = await requireDb();
+  await db.update(users).set({ currentOrgId: orgId }).where(eq(users.id, userId));
+}
+
+/**
+ * Add a user to an org with the given role. Idempotent: if a row already
+ * exists, the role is updated and joinedAt is preserved.
+ */
+export async function addOrgMember(data: {
+  orgId: number;
+  userId: number;
+  role: OrgMember["role"];
+  invitedByUserId?: number;
+}): Promise<void> {
+  const db = await requireDb();
+  await db
+    .insert(orgMembers)
+    .values({
+      orgId: data.orgId,
+      userId: data.userId,
+      role: data.role,
+      invitedAt: new Date(),
+      joinedAt: new Date(),
+      invitedByUserId: data.invitedByUserId ?? null,
+    } as InsertOrgMember)
+    .onDuplicateKeyUpdate({ set: { role: data.role } });
+}
+
+/** Get all members of an org, joined to the user table. */
+export async function getOrgMembers(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: orgMembers.id,
+      userId: orgMembers.userId,
+      role: orgMembers.role,
+      invitedAt: orgMembers.invitedAt,
+      joinedAt: orgMembers.joinedAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
+    .from(orgMembers)
+    .innerJoin(users, eq(orgMembers.userId, users.id))
+    .where(eq(orgMembers.orgId, orgId))
+    .orderBy(desc(orgMembers.joinedAt));
+}
+
 // ─── Store helpers ──────────────────────────────────────────────────────────
 
 export async function createStore(data: InsertStore, executor?: DbExecutor) {
@@ -156,6 +318,18 @@ export async function getStoresByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
   const results = await db.select().from(stores).where(eq(stores.userId, userId)).orderBy(desc(stores.createdAt));
+  return results.map(store => decryptStoreTokens(store)!);
+}
+
+/**
+ * Canonical store-list query — scoped to an organization. Replaces
+ * `getStoresByUser` for any code that has gone through the org context
+ * middleware. The latter is retained for legacy single-user paths only.
+ */
+export async function getStoresByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const results = await db.select().from(stores).where(eq(stores.orgId, orgId)).orderBy(desc(stores.createdAt));
   return results.map(store => decryptStoreTokens(store)!);
 }
 

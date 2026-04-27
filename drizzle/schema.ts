@@ -10,6 +10,12 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  /**
+   * Active organization context — used to scope queries when no
+   * explicit X-Org-Id header is sent. Backfilled by migration 0020 to
+   * the personal org auto-created for each user.
+   */
+  currentOrgId: int("currentOrgId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -23,10 +29,78 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
+ * Organizations — the unit of multi-tenancy.
+ *
+ * Every user has at least one personal organization (auto-created on
+ * signup, or backfilled for existing users). Stores, workflows, and all
+ * scoped resources hang off `orgId`. Memberships in `org_members`
+ * govern who can access what.
+ *
+ * The `ownerId` is the user who created the org and has irrevocable
+ * super-admin rights. The `plan` mirrors the user's Stripe plan today;
+ * per-org billing is a future migration.
+ */
+export const organizations = mysqlTable("organizations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  /** URL-safe slug, unique. Used in vanity URLs and invitation links. */
+  slug: varchar("slug", { length: 80 }).notNull().unique(),
+  ownerId: int("ownerId").notNull(),
+  /** "personal" for the auto-created single-user org; "team" once a second member joins. */
+  kind: mysqlEnum("kind", ["personal", "team"]).default("personal").notNull(),
+  plan: mysqlEnum("plan", ["starter", "growth", "pro", "scale"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  ownerIdx: index("organizations_owner_id_idx").on(table.ownerId),
+}));
+
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = typeof organizations.$inferInsert;
+
+/**
+ * Organization membership — governs which users can access which orgs.
+ *
+ * Roles:
+ *  - `owner`  : full control, billing, can delete org. The org's `ownerId`
+ *               always has this role; transfer requires explicit owner action.
+ *  - `admin`  : everything except billing + delete + transfer ownership.
+ *  - `member` : read + run-bot access; cannot manage members.
+ *
+ * `joinedAt` is null for invitations that haven't been accepted yet.
+ */
+export const orgMembers = mysqlTable("org_members", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["owner", "admin", "member"]).default("member").notNull(),
+  invitedAt: timestamp("invitedAt").defaultNow().notNull(),
+  joinedAt: timestamp("joinedAt"),
+  invitedByUserId: int("invitedByUserId"),
+}, (table) => ({
+  orgUserUnique: uniqueIndex("org_members_org_user_unique").on(table.orgId, table.userId),
+  userIdx: index("org_members_user_id_idx").on(table.userId),
+  orgIdx: index("org_members_org_id_idx").on(table.orgId),
+}));
+
+export type OrgMember = typeof orgMembers.$inferSelect;
+export type InsertOrgMember = typeof orgMembers.$inferInsert;
+
+/**
  * Connected e-commerce stores (multi-platform)
  */
 export const stores = mysqlTable("stores", {
   id: int("id").autoincrement().primaryKey(),
+  /**
+   * Owning organization — the unit of access control. Backfilled by
+   * migration 0020 from `userId → user's personal org`. Going forward,
+   * every store belongs to exactly one org; transfer = update orgId.
+   */
+  orgId: int("orgId").notNull(),
+  /**
+   * Creator user. Retained for audit / "who connected this store" UI;
+   * NOT used for access control any more — see `orgId`.
+   */
   userId: int("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   platform: mysqlEnum("platform", ["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]).default("shopify").notNull(),
@@ -53,6 +127,7 @@ export const stores = mysqlTable("stores", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
+  orgIdIdx: index("stores_org_id_idx").on(table.orgId),
   userIdIdx: index("stores_user_id_idx").on(table.userId),
   platformDomainIdx: index("stores_platform_domain_idx").on(table.platform, table.platformDomain),
   lifecycleStageIdx: index("stores_lifecycle_stage_idx").on(table.lifecycleStage),

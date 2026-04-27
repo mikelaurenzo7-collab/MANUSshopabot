@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import axios from "axios";
@@ -9,22 +9,31 @@ import { sanitizeName, sanitizeText } from "../utils/sanitize";
 
 const platformEnum = z.enum(["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]);
 
+/**
+ * Throw NOT_FOUND if the store doesn't exist OR doesn't belong to the
+ * caller's active org. Centralizes the org-scoping check that every
+ * single-store mutation needs.
+ */
+async function requireStoreInOrg(storeId: number, orgId: number) {
+  const store = await db.getStoreById(storeId);
+  if (!store || store.orgId !== orgId) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
+  }
+  return store;
+}
+
 export const storesRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
-    return db.getStoresByUser(ctx.user.id);
+  list: orgProcedure.query(async ({ ctx }) => {
+    return db.getStoresByOrg(ctx.org.id);
   }),
 
-  get: protectedProcedure
+  get: orgProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.id);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
-      return store;
+      return requireStoreInOrg(input.id, ctx.org.id);
     }),
 
-  create: protectedProcedure
+  create: orgProcedure
     .input(z.object({
       name: z.string().min(1).max(255),
       platform: platformEnum.default("shopify"),
@@ -35,6 +44,7 @@ export const storesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const result = await db.withTransaction(async (tx) => {
         const createdStore = await db.createStore({
+          orgId: ctx.org.id,
           userId: ctx.user.id,
           name: sanitizeName(input.name, 255),
           platform: input.platform,
@@ -56,7 +66,7 @@ export const storesRouter = router({
       return result;
     }),
 
-  update: protectedProcedure
+  update: orgProcedure
     .input(z.object({
       id: z.number(),
       name: z.string().min(1).max(255).optional(),
@@ -68,10 +78,7 @@ export const storesRouter = router({
       currency: z.string().max(10).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.id);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.id, ctx.org.id);
       const { id, ...data } = input;
       const sanitized = {
         ...data,
@@ -86,7 +93,7 @@ export const storesRouter = router({
   // ─── Deep Store Data Procedures ────────────────────────────────────────────
 
   /** Products for a store — from DB (synced by bots) */
-  products: protectedProcedure
+  products: orgProcedure
     .input(z.object({
       storeId: z.number(),
       limit: z.number().min(1).max(100).default(50),
@@ -94,10 +101,7 @@ export const storesRouter = router({
       status: z.enum(["all", "active", "draft", "archived", "low_stock", "out_of_stock"]).default("all"),
     }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const allProducts = await db.getProductsByStore(input.storeId);
       let filtered = allProducts;
 
@@ -120,17 +124,14 @@ export const storesRouter = router({
     }),
 
   /** Orders for a store — from DB */
-  orders: protectedProcedure
+  orders: orgProcedure
     .input(z.object({
       storeId: z.number(),
       limit: z.number().min(1).max(100).default(20),
       status: z.enum(["all", "pending", "processing", "shipped", "delivered", "cancelled", "refunded"]).default("all"),
     }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const allOrders = await db.getOrdersByStore(input.storeId, 200);
       let filtered = allOrders;
       if (input.status !== "all") {
@@ -140,13 +141,10 @@ export const storesRouter = router({
     }),
 
   /** Revenue summary — aggregated from orders in DB */
-  revenueSummary: protectedProcedure
+  revenueSummary: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      const store = await requireStoreInOrg(input.storeId, ctx.org.id);
       const allOrders = await db.getOrdersByStore(input.storeId, 500);
       const now = Date.now();
       const day = 86400000;
@@ -225,27 +223,21 @@ export const storesRouter = router({
     }),
 
   /** Bot activity for a store — from agentTasks table */
-  botActivity: protectedProcedure
+  botActivity: orgProcedure
     .input(z.object({
       storeId: z.number(),
       limit: z.number().min(1).max(50).default(20),
     }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getAgentTasks({ storeId: input.storeId, limit: input.limit });
     }),
 
   /** Overview — combines store info + key metrics in one call */
-  overview: protectedProcedure
+  overview: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      const store = await requireStoreInOrg(input.storeId, ctx.org.id);
       const [allProducts, recentOrders, recentTasks] = await Promise.all([
         db.getProductsByStore(input.storeId),
         db.getOrdersByStore(input.storeId, 50),
@@ -290,17 +282,14 @@ export const storesRouter = router({
    * Optimize a product image — resize to thumbnail/medium/large, convert to WebP, upload to S3.
    * Returns CDN URLs for all sizes plus savings stats.
    */
-  optimizeProductImage: protectedProcedure
+  optimizeProductImage: orgProcedure
     .input(z.object({
       storeId: z.number(),
       imageUrl: z.string().url(),
       productId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       try {
         // Fetch the image buffer from the URL, then pass Buffer to the optimizer
         const response = await axios.get(input.imageUrl, { responseType: "arraybuffer" });
@@ -326,7 +315,7 @@ export const storesRouter = router({
 
   // ─── Shopify OAuth ──────────────────────────────────────────────────────────
 
-  shopifyOAuthUrl: protectedProcedure
+  shopifyOAuthUrl: orgProcedure
     .input(z.object({
       shopDomain: z.string().min(1).max(255),
       storeId: z.number(),
@@ -334,10 +323,7 @@ export const storesRouter = router({
       returnTo: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-      }
+      await requireStoreInOrg(input.storeId, ctx.org.id);
 
       const clientId = ENV.shopifyPartnerClientId;
       if (!clientId) {

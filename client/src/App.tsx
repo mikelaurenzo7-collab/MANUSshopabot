@@ -4,6 +4,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { OrgProvider } from "./contexts/OrgContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import DashboardLayout from "./components/DashboardLayout";
 import BotPageShell from "./components/BotPageShell";
@@ -143,11 +144,13 @@ function App() {
             }}
           />
           <StripeSuccessBanner />
-          <WorkspaceProvider>
-            <CommandPalette>
-              <Router />
-            </CommandPalette>
-          </WorkspaceProvider>
+          <OrgProvider>
+            <WorkspaceProvider>
+              <CommandPalette>
+                <Router />
+              </CommandPalette>
+            </WorkspaceProvider>
+          </OrgProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
