@@ -646,14 +646,13 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2" role="list">
+      <div className="grid grid-cols-1 gap-2">
         {platforms.map(({ name, key, color, emoji }) => {
           const isConnected = connectedPlatforms.has(key);
           const isLoading = generateOAuthUrl.isPending && generateOAuthUrl.variables?.platform === key;
           return (
             <button
               key={key}
-              role="listitem"
               type="button"
               onClick={() => {
                 if (!isConnected && !isLoading) {
@@ -863,12 +862,11 @@ function LaunchStep({
           className="text-base"
           autoComplete="off"
         />
-        <div className="flex flex-wrap gap-2" role="list" aria-label="Suggested niches">
+        <div className="flex flex-wrap gap-2" aria-label="Suggested niches">
           {nicheExamples.map((example) => (
             <button
               key={example}
               type="button"
-              role="listitem"
               onClick={() => {
                 setNiche(example);
                 onPersistDraft({ niche: example });
@@ -944,13 +942,13 @@ function LaunchStep({
  */
 export default function OnboardingPage() {
   const { user } = useAuth();
-  const userKey = (user as { id?: string | number; email?: string } | null)
-    ? String(
-        (user as { id?: string | number }).id ??
-          (user as { email?: string }).email ??
-          ""
-      ) || null
-    : null;
+  const userKey = (() => {
+    if (!user) return null;
+    const u = user as { id?: string | number | null; email?: string | null };
+    if (u.id !== undefined && u.id !== null && u.id !== "") return String(u.id);
+    if (u.email) return u.email;
+    return null;
+  })();
 
   // Initialize from persisted state (if any) so a refresh / OAuth bounce /
   // accidental close lands the user back on the step they were on.
@@ -967,7 +965,10 @@ export default function OnboardingPage() {
   const [, setLocation] = useLocation();
 
   // Re-hydrate from storage once the user becomes available (auth resolves
-  // asynchronously, so the very first render may have userKey = null).
+  // asynchronously, so the very first render may have userKey = null). We
+  // only overwrite `currentStep` when the wizard is still on the default
+  // step 1 — otherwise the user may already have advanced (or been bumped
+  // by the OAuth-return effect below) and we don't want to clobber that.
   useEffect(() => {
     if (!userKey) return;
     const hydrated = loadPersistedOnboarding(userKey);
@@ -1008,14 +1009,14 @@ export default function OnboardingPage() {
   };
 
   // Esc opens "save & exit" — keyboard-first parity with Enter advancing
-  // each step (item 10). Ignore when an interactive overlay (e.g. the
-  // confirm dialog itself) is already open so Radix can handle close.
+  // each step (item 10). When our own confirm dialog is already open we
+  // bow out so Radix can handle the close. Other Radix dialogs / popovers
+  // stop Esc propagation themselves before it reaches `window`, so a
+  // simple guard on our state is enough.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (showExitDialog) return;
-      // Don't hijack Esc when a Radix overlay (dialog/popover) is open.
-      if (document.querySelector("[data-state='open'][role='dialog']")) return;
       e.preventDefault();
       setShowExitDialog(true);
     };
@@ -1112,9 +1113,16 @@ export default function OnboardingPage() {
 
         <p className="text-center text-xs text-muted-foreground/90 mt-4">
           Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].title}
-          <span className="hidden sm:inline">
+          <span className="hidden sm:inline" aria-hidden="true">
             {" "}
-            · Press <kbd className="px-1 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] font-mono text-foreground/80">Esc</kbd> to save &amp; exit
+            ·{" "}
+          </span>
+          <span className="hidden sm:inline">
+            Press{" "}
+            <kbd className="px-1 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] font-mono text-foreground/80">
+              Esc
+            </kbd>{" "}
+            to save &amp; exit
           </span>
         </p>
       </div>
