@@ -17,6 +17,7 @@ function createUserContext(role: "user" | "admin" = "user"): TrpcContext {
       updatedAt: new Date(),
       lastSignedIn: new Date(),
     },
+    activeOrg: { id: 1, role: "owner" },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: () => {} } as TrpcContext["res"],
   };
@@ -25,6 +26,7 @@ function createUserContext(role: "user" | "admin" = "user"): TrpcContext {
 function createAnonContext(): TrpcContext {
   return {
     user: null,
+    activeOrg: null,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: () => {} } as TrpcContext["res"],
   };

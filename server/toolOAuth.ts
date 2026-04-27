@@ -12,7 +12,12 @@
 
 import type { Express, Request, Response } from "express";
 import { eq, and } from "drizzle-orm";
-import { consumeOAuthStateToken, getDb } from "./db";
+import {
+  consumeOAuthStateToken,
+  ensurePersonalOrg,
+  getDb,
+  getUserById,
+} from "./db";
 import { platformCredentials } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { logAgentAction } from "./telemetry";
@@ -91,7 +96,14 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
           })
           .where(eq(platformCredentials.id, existing[0].id));
       } else {
+        // Tool credentials follow the user's active org. Falls back to
+        // the personal org if `currentOrgId` is null (pre-migration users).
+        const personalOrg = await ensurePersonalOrg(userId);
+        const userRow = await getUserById(userId);
+        const orgId = userRow?.currentOrgId ?? personalOrg.id;
+
         await db.insert(platformCredentials).values({
+          orgId,
           userId,
           platform: tool,
           accessToken: tokenData.access_token,

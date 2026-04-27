@@ -134,6 +134,23 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
 }
 
+/**
+ * Mark a user as having completed the onboarding wizard. Idempotent —
+ * re-calls overwrite the timestamp, which is fine because we only care
+ * about presence/absence in the OnboardingGuard.
+ */
+export async function markUserOnboarded(userId: number): Promise<void> {
+  const db = await requireDb();
+  await db.update(users).set({ onboardedAt: new Date() }).where(eq(users.id, userId));
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return rows[0];
+}
+
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -314,6 +331,17 @@ export async function getStoreCount(userId: number) {
   if (!db) return 0;
   const result = await db.select({ count: count() }).from(stores).where(eq(stores.userId, userId));
   return result[0]?.count ?? 0;
+}
+
+/**
+ * Number of stores connected to an org. Used by `stores.create` to
+ * enforce per-plan caps (Starter 1 / Growth 3 / Pro 10 / Scale ∞).
+ */
+export async function getStoreCountForOrg(orgId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: count() }).from(stores).where(eq(stores.orgId, orgId));
+  return Number(result[0]?.count ?? 0);
 }
 
 export async function getStoresByUser(userId: number) {
@@ -1089,12 +1117,38 @@ export async function getWorkflowsByUser(userId: number, filters?: { agentType?:
     .offset(filters?.offset ?? 0);
 }
 
+/** Org-scoped variant — preferred for new callers. */
+export async function getWorkflowsByOrg(orgId: number, filters?: { agentType?: string; status?: string; storeId?: number; limit?: number; offset?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [eq(agentWorkflows.orgId, orgId)];
+  if (filters?.agentType) conditions.push(eq(agentWorkflows.agentType, filters.agentType as any));
+  if (filters?.status) conditions.push(eq(agentWorkflows.status, filters.status as any));
+  if (filters?.storeId) conditions.push(eq(agentWorkflows.storeId, filters.storeId));
+  return db.select().from(agentWorkflows)
+    .where(and(...conditions))
+    .orderBy(desc(agentWorkflows.createdAt))
+    .limit(filters?.limit ?? 20)
+    .offset(filters?.offset ?? 0);
+}
+
 export async function getActiveWorkflows(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(agentWorkflows)
     .where(and(
       eq(agentWorkflows.userId, userId),
+      sql`${agentWorkflows.status} IN ('pending', 'running', 'awaiting_approval')`
+    ))
+    .orderBy(desc(agentWorkflows.createdAt));
+}
+
+export async function getActiveWorkflowsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(agentWorkflows)
+    .where(and(
+      eq(agentWorkflows.orgId, orgId),
       sql`${agentWorkflows.status} IN ('pending', 'running', 'awaiting_approval')`
     ))
     .orderBy(desc(agentWorkflows.createdAt));
@@ -1116,6 +1170,19 @@ export async function getWorkflowCounts(userId: number) {
     failed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'failed' THEN 1 ELSE 0 END)`,
     awaiting: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'awaiting_approval' THEN 1 ELSE 0 END)`,
   }).from(agentWorkflows).where(eq(agentWorkflows.userId, userId));
+  return result[0] ?? { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
+}
+
+export async function getWorkflowCountsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
+  const result = await db.select({
+    total: count(),
+    running: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'running' THEN 1 ELSE 0 END)`,
+    completed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'completed' THEN 1 ELSE 0 END)`,
+    failed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'failed' THEN 1 ELSE 0 END)`,
+    awaiting: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'awaiting_approval' THEN 1 ELSE 0 END)`,
+  }).from(agentWorkflows).where(eq(agentWorkflows.orgId, orgId));
   return result[0] ?? { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
 }
 
@@ -1159,6 +1226,21 @@ export async function getPendingApprovalSteps(userId: number) {
     .innerJoin(agentWorkflows, eq(workflowSteps.workflowId, agentWorkflows.id))
     .where(and(
       eq(agentWorkflows.userId, userId),
+      eq(workflowSteps.approvalStatus, "pending")
+    ))
+    .orderBy(desc(workflowSteps.createdAt));
+}
+
+export async function getPendingApprovalStepsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    step: workflowSteps,
+    workflow: agentWorkflows,
+  }).from(workflowSteps)
+    .innerJoin(agentWorkflows, eq(workflowSteps.workflowId, agentWorkflows.id))
+    .where(and(
+      eq(agentWorkflows.orgId, orgId),
       eq(workflowSteps.approvalStatus, "pending")
     ))
     .orderBy(desc(workflowSteps.createdAt));

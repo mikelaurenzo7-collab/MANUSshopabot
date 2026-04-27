@@ -121,6 +121,50 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       break;
     }
 
+    /**
+     * Stripe fires this 3 days before a trial ends. We email the user
+     * a heads-up via the delivery layer so they can update payment
+     * method or cancel before the auto-conversion charge.
+     */
+    case "customer.subscription.trial_will_end": {
+      const sub = event.data.object as Stripe.Subscription;
+      const user = await db.getUserByStripeSubscriptionId(sub.id);
+      if (!user || !user.email) {
+        logger.info("stripe_trial_warning_skipped", {
+          subId: sub.id,
+          reason: !user ? "user-not-found" : "no-email",
+        });
+        break;
+      }
+      try {
+        const { sendEmail } = await import("../delivery");
+        const { renderTrialEndingEmail } = await import("../delivery/templates");
+        const trialEndDate = sub.trial_end ? new Date(sub.trial_end * 1000) : null;
+        const { subject, html, text } = renderTrialEndingEmail({
+          recipientEmail: user.email,
+          firstName: user.name?.split(" ")[0] ?? "there",
+          planName: user.stripePlan ?? "Growth",
+          trialEndDate: trialEndDate?.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          }) ?? "in 3 days",
+          billingPortalUrl: "https://billing.stripe.com/p/login",
+        });
+        await sendEmail(
+          { to: { email: user.email, name: user.name ?? undefined }, subject, html, text },
+          { provider: "sendgrid", userId: user.id },
+        );
+        logger.info("stripe_trial_warning_sent", { userId: user.id });
+      } catch (err) {
+        logger.error("stripe_trial_warning_failed", {
+          userId: user.id,
+          error: (err as Error).message,
+        });
+      }
+      break;
+    }
+
     default:
       logger.info("stripe_webhook_unhandled", { type: event.type });
   }

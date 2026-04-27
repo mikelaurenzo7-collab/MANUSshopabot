@@ -41,6 +41,16 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    /**
+     * Mark the calling user as having completed the onboarding wizard.
+     * The OnboardingGuard reads this server-side timestamp instead of
+     * a localStorage flag, so the redirect respects real state across
+     * devices and can't be bypassed by clearing storage.
+     */
+    completeOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.markUserOnboarded(ctx.user.id);
+      return { success: true, onboardedAt: new Date() } as const;
+    }),
   }),
 
   // Feature routers
@@ -163,7 +173,12 @@ export const appRouter = router({
         approvalRequired: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Bot config is per-org; admins acting from their own session
+        // attach via their currentOrgId. Backfilled in migration 0023.
+        const orgId = ctx.user.currentOrgId
+          ?? (await db.ensurePersonalOrg(ctx.user.id)).id;
         return db.upsertBotConfig({
+          orgId,
           userId: ctx.user.id,
           agentType: input.agentType,
           enabled: input.enabled,

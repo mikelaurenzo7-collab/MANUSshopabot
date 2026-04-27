@@ -6,6 +6,7 @@ import * as db from "../db";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
+import { getStoreLimit } from "../stripe/products";
 
 const platformEnum = z.enum(["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]);
 
@@ -42,6 +43,26 @@ export const storesRouter = router({
       currency: z.string().max(10).default("USD"),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Plan-tier cap enforcement. Look up the org's owner to read the
+      // active plan — `users.stripePlan`. Per-org billing is a future
+      // pass; until then, the org owner's plan governs the org's caps.
+      const org = await db.getOrgById(ctx.org.id);
+      if (!org) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found." });
+      }
+      const owner = await db.getUserById(org.ownerId);
+      const limit = getStoreLimit(owner?.stripePlan ?? null);
+      const currentCount = await db.getStoreCountForOrg(ctx.org.id);
+      if (currentCount >= limit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            limit === Infinity
+              ? "Unable to create store — please retry."
+              : `You've reached your plan's store limit (${limit}). Upgrade to add more stores.`,
+        });
+      }
+
       const result = await db.withTransaction(async (tx) => {
         const createdStore = await db.createStore({
           orgId: ctx.org.id,

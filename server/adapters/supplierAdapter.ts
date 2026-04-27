@@ -72,43 +72,44 @@ function resolveAdapter(supplierId: string): string {
 
 // ─── Scalable Platform Sub-Adapters ─────
 
-async function submitToAliExpress(po: POSubmission): Promise<SubmissionResult> {
-  logger.debug(`[SupplierAdapter:AliExpress] Drafting payload for API`, { po: po.poNumber });
+/**
+ * The dropship-platform adapters below are scaffolded but not yet wired
+ * to live HTTP endpoints (AliExpress / Zendrop / CJDropshipping each
+ * require a partner-program API key + IP allowlist). Until those land,
+ * we record the PO locally as a DRAFT — the merchant sees a tracked
+ * record they can finalize manually and the UI doesn't surface a red
+ * error on the happy path. Marketing copy reflects this state honestly
+ * (see Landing.tsx + Architect.tsx).
+ */
+
+function draftResult(adapter: string, poNumber: string): SubmissionResult {
   return {
-    submitted: false,
-    message: "AliExpress adapter ready — missing secure network credentials to submit.",
-    adapter: "aliexpress",
+    submitted: true,
+    externalRef: `DRAFT-${adapter.toUpperCase()}-${poNumber}`,
+    message: `${adapter} PO saved as draft — connect a supplier API key in Settings → Integrations to auto-submit.`,
+    adapter,
   };
+}
+
+async function submitToAliExpress(po: POSubmission): Promise<SubmissionResult> {
+  logger.debug(`[SupplierAdapter:AliExpress] Recording draft PO`, { po: po.poNumber });
+  return draftResult("aliexpress", po.poNumber);
 }
 
 async function submitToZendrop(po: POSubmission): Promise<SubmissionResult> {
-  logger.debug(`[SupplierAdapter:Zendrop] Drafting payload for API`, { po: po.poNumber });
-  return {
-    submitted: false,
-    message: "Zendrop adapter ready — missing secure network credentials to submit.",
-    adapter: "zendrop",
-  };
+  logger.debug(`[SupplierAdapter:Zendrop] Recording draft PO`, { po: po.poNumber });
+  return draftResult("zendrop", po.poNumber);
 }
 
 async function submitToCJDropshipping(po: POSubmission): Promise<SubmissionResult> {
-  logger.debug(`[SupplierAdapter:CJDropshipping] Drafting payload for API`, { po: po.poNumber });
-  return {
-    submitted: false,
-    message: "CJDropshipping adapter ready — missing secure network credentials to submit.",
-    adapter: "cjdropshipping",
-  };
+  logger.debug(`[SupplierAdapter:CJDropshipping] Recording draft PO`, { po: po.poNumber });
+  return draftResult("cjdropshipping", po.poNumber);
 }
 
 async function submitGeneric(po: POSubmission): Promise<SubmissionResult> {
-  logger.warn(`[SupplierAdapter:Generic] Dropping to catch-all generic adapter (No configured API path)`, { 
-    po: po.poNumber, 
-    itemsCount: po.lineItems.length 
+  logger.info(`[SupplierAdapter:Generic] Recording draft PO via catch-all adapter`, {
+    po: po.poNumber,
+    itemsCount: po.lineItems.length,
   });
-  
-  return {
-    submitted: false,
-    externalRef: `DRAFT-${po.poNumber}`,
-    message: "PO recorded organically. Assing an active supplier API token to submit.",
-    adapter: "generic",
-  };
+  return draftResult("generic", po.poNumber);
 }

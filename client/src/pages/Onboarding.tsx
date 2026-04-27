@@ -452,6 +452,11 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
   const [isLaunching, setIsLaunching] = useState(false);
   const [launched, setLaunched] = useState(false);
 
+  // Surface store-connection status so the post-launch promise ("store
+  // ready in ~28 min") is only shown when a store actually exists.
+  const { data: stores } = trpc.stores.list.useQuery();
+  const hasStore = (stores?.length ?? 0) > 0;
+
   const launchWorkflow = trpc.workflows.launch.useMutation({
     onSuccess: () => {
       setIsLaunching(false);
@@ -504,16 +509,37 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
         </div>
 
         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-700">
-          <h2 className="text-2xl font-bold text-foreground">Your Bot is Awake</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {hasStore ? "Your Bot is Awake" : "Builder is researching"}
+          </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
-            Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> right now.
-            Products are being sourced. Copy is being written. Your store is coming alive.
+            {hasStore ? (
+              <>
+                Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> right now.
+                Products are being sourced. Copy is being written. Your store is coming alive.
+              </>
+            ) : (
+              <>
+                Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> —
+                niche analysis, competitor scan, and product picks. Connect a store next so the
+                Builder can import the products it recommends.
+              </>
+            )}
           </p>
           <div className="mt-4 max-w-sm mx-auto rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-left">
             <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-300 mb-1">What happens next</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              When Builder finishes, you'll see a handoff moment on your dashboard.
-              The <span className="text-cyan-300 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
+              {hasStore ? (
+                <>
+                  When Builder finishes, you'll see a handoff moment on your dashboard.
+                  The <span className="text-cyan-300 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
+                </>
+              ) : (
+                <>
+                  Research will land in your Command Center as a niche report.
+                  Connect a Shopify store to turn the recommendations into a real, fulfilled storefront.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -526,7 +552,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
             </Button>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
-              <span>Store ready in ~28 minutes</span>
+              <span>{hasStore ? "Store ready in ~28 minutes" : "Niche report ready in ~5 minutes"}</span>
             </div>
           </div>
         </div>
@@ -663,7 +689,21 @@ export default function OnboardingPage() {
     }, 350);
   };
 
-  const handleComplete = () => {
+  const completeOnboarding = trpc.auth.completeOnboarding.useMutation();
+  const utils = trpc.useUtils();
+
+  const handleComplete = async () => {
+    // Server-truth — survives device switches and storage clears.
+    try {
+      await completeOnboarding.mutateAsync();
+      // Refresh `auth.me` so the OnboardingGuard sees the new
+      // `onboardedAt` immediately and doesn't bounce the user back here.
+      await utils.auth.me.invalidate();
+    } catch {
+      // Non-fatal: localStorage fallback below still lets the user
+      // through; they'll be re-flagged on their next sign-in once the
+      // mutation succeeds.
+    }
     localStorage.setItem("shop_a_bot_onboarded", "true");
     setLocation("/");
   };

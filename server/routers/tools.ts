@@ -275,7 +275,10 @@ export const toolsRouter = router({
         });
       }
 
+      const orgId = ctx.user.currentOrgId
+        ?? (await db.ensurePersonalOrg(ctx.user.id)).id;
       const cred = await db.createPlatformCredential({
+        orgId,
         userId: ctx.user.id,
         platform: input.tool,
         accessToken: JSON.stringify(input.credentials),

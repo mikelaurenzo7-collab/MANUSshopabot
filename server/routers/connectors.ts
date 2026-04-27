@@ -234,8 +234,26 @@ const SOCIAL_PLATFORMS = {
 export const connectorsRouter = router({
   // ─── E-Commerce Platform Connectors ──────────────────────────────────────
 
+  /**
+   * Map of platform-id → which env vars must be set for the Connect
+   * button to actually complete OAuth. The query below uses this to
+   * mark each tile `available: true | false` so the UI can either
+   * gate the button or show a "Coming soon" badge instead of taking
+   * the user to a 404.
+   */
+  // (intentionally local — not exported; kept next to the consumer)
+
   /** List all supported e-commerce platforms with their connection details */
   ecommercePlatforms: protectedProcedure.query(() => {
+    const ecommerceAvailability: Record<string, boolean> = {
+      shopify: !!ENV.shopifyPartnerClientId && !!ENV.shopifyPartnerClientSecret,
+      etsy: !!ENV.etsyApiKey && !!ENV.etsySharedSecret,
+      ebay: !!ENV.ebayAppId && !!ENV.ebayCertId,
+      amazon: !!ENV.amazonSpClientId && !!ENV.amazonSpClientSecret,
+      tiktok_shop: !!ENV.tiktokAppId && !!ENV.tiktokClientSecret,
+      walmart: false, // adapter scaffolded, no OAuth wired yet
+      woocommerce: true, // API-key based, no shared OAuth required
+    };
     return Object.entries(ECOMMERCE_PLATFORMS).map(([id, platform]) => ({
       id,
       name: platform.name,
@@ -245,11 +263,20 @@ export const connectorsRouter = router({
       description: platform.description,
       capabilities: platform.capabilities,
       requiredFields: "requiredFields" in platform ? platform.requiredFields : undefined,
+      available: ecommerceAvailability[id] ?? false,
     }));
   }),
 
   /** List all supported social media platforms */
   socialPlatforms: protectedProcedure.query(() => {
+    const socialAvailability: Record<string, boolean> = {
+      meta: !!ENV.metaAppId && !!ENV.metaAppSecret,
+      instagram: !!ENV.metaAppId && !!ENV.metaAppSecret,
+      tiktok: !!ENV.tiktokClientKey && !!ENV.tiktokClientSecret,
+      twitter: !!ENV.twitterClientId && !!ENV.twitterClientSecret,
+      pinterest: !!ENV.pinterestAppId && !!ENV.pinterestAppSecret,
+      gmail: !!ENV.googleClientId && !!ENV.googleClientSecret,
+    };
     return Object.entries(SOCIAL_PLATFORMS).map(([id, platform]) => ({
       id,
       name: platform.name,
@@ -258,6 +285,7 @@ export const connectorsRouter = router({
       connectionType: platform.connectionType,
       description: platform.description,
       capabilities: platform.capabilities,
+      available: socialAvailability[id] ?? false,
     }));
   }),
 
@@ -297,6 +325,7 @@ export const connectorsRouter = router({
 
       const cred = await db.withTransaction(async (tx) => {
         const createdCredential = await db.createPlatformCredential({
+          orgId: store.orgId,
           userId: ctx.user.id,
           storeId: input.storeId,
           platform: input.platform,
@@ -337,8 +366,15 @@ export const connectorsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const platformName = SOCIAL_PLATFORMS[input.platform]?.name || input.platform;
+      // Social accounts go into the user's currently-active org. We
+      // can't read ctx.org here because this stays on protectedProcedure
+      // for backward compat with the manual-token flow; fall back to
+      // user.currentOrgId (always populated by migration 0020).
+      const orgId = ctx.user.currentOrgId
+        ?? (await db.ensurePersonalOrg(ctx.user.id)).id;
       const result = await db.withTransaction(async (tx) => {
         const createdAccount = await db.createSocialAccount({
+          orgId,
           userId: ctx.user.id,
           platform: input.platform,
           accountName: input.accountName,

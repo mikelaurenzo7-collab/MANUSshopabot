@@ -6,7 +6,13 @@
  */
 
 import type { Express, Request, Response } from "express";
-import { consumeOAuthStateToken, getDb, getOAuthStateToken } from "./db";
+import {
+  consumeOAuthStateToken,
+  ensurePersonalOrg,
+  getDb,
+  getOAuthStateToken,
+  getUserById,
+} from "./db";
 import { socialAccounts } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
@@ -320,7 +326,14 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
           })
           .where(eq(socialAccounts.id, existing[0].id));
       } else {
+        // Resolve the user's active org so the new social account is
+        // scoped correctly and visible only inside that tenant.
+        const personalOrg = await ensurePersonalOrg(userId);
+        const userRow = await getUserById(userId);
+        const orgId = userRow?.currentOrgId ?? personalOrg.id;
+
         await db.insert(socialAccounts).values({
+          orgId,
           userId,
           platform: platform as any,
           accountId: profile.accountId,

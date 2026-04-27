@@ -24,7 +24,7 @@ const BOTS = [
     name: "Builder Bot" as const,
     tagline: "Day 1 — store live in 30 minutes",
     description: "Researches winning niches, sources products, configures your storefront, and writes all product copy — then hands the keys to the Merchant.",
-    features: ["Niche & competitor research", "Product sourcing (Zendrop/AliExpress)", "Theme setup & legal pages", "SEO-optimized product listings"],
+    features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
   },
   {
     icon: Package,
@@ -174,7 +174,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How does the Builder Bot source products?",
-    a: "The Builder Bot connects to Zendrop, AliExpress, and other supplier networks to find products that match your niche. It evaluates profit margins, competition levels, and trend data before importing anything to your store.",
+    a: "The Builder Bot researches products that match your niche — evaluating profit margins, competition levels, and trend data — and drafts purchase orders for the suppliers you've connected (Shopify-native today; AliExpress / Zendrop / CJDropshipping API submission rolling out per platform — drafts are recorded and ready to submit the moment a supplier key is connected in Settings).",
   },
   {
     q: "Can I run multiple stores from one account?",
@@ -182,7 +182,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens if a bot makes a mistake?",
-    a: "Every bot action is logged in real time and can be reviewed in the Activity feed. You can set approval gates for high-stakes actions (like large orders or ad spend above a threshold) so nothing happens without your sign-off.",
+    a: "Every bot action is logged in real time in the Activity feed with timestamps and the input that triggered it. You can pause, override, or roll back any workflow from the Activity view, and configurable per-action approval gates are rolling out by bot — Builder gates ship first.",
   },
   {
     q: "Is there a free trial?",
@@ -636,7 +636,7 @@ export default function Landing() {
                 accent: "#fb923c",
                 Icon: Shield,
                 title: "You stay in control",
-                text: "Every bot action is logged. Set approval gates for high-stakes actions. Pause, override, or hand back to human review at any moment.",
+                text: "Every bot action is logged in the Activity feed in real time. Pause, override, or roll back any workflow at any moment — your bots run with full audit trail.",
               },
             ].map(({ step, accent, Icon, title, text }) => (
               <div key={step} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
