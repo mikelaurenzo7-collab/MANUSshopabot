@@ -998,3 +998,82 @@ export const webhookEvents = mysqlTable("webhook_events", {
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type InsertWebhookEvent = typeof webhookEvents.$inferInsert;
+
+/**
+ * Email delivery events — populated by the SendGrid Event Webhook.
+ *
+ * Every send fans out into a stream of events: `processed` and
+ * `delivered` (success), `open` and `click` (engagement), `bounce` /
+ * `dropped` / `deferred` / `spamreport` / `unsubscribe` (problems).
+ * One row per event so we can replay history and compute per-campaign
+ * funnels in the analytics layer.
+ *
+ * `providerMessageId` matches `DeliveryResult.providerMessageId` returned
+ * by `delivery.sendEmail` so we can join back to the campaign that
+ * originated the send.
+ */
+export const emailDeliveryEvents = mysqlTable("email_delivery_events", {
+  id: int("id").autoincrement().primaryKey(),
+  /** SendGrid message id (X-Message-Id from the send response). */
+  providerMessageId: varchar("providerMessageId", { length: 255 }).notNull(),
+  /** SendGrid sg_event_id — useful for dedupe; webhook can replay. */
+  eventId: varchar("eventId", { length: 128 }),
+  /** "processed" | "delivered" | "open" | "click" | "bounce" | "dropped" | "deferred" | "spamreport" | "unsubscribe" */
+  eventType: varchar("eventType", { length: 32 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  /** Which campaign id this send originated from, if any. */
+  campaignId: int("campaignId"),
+  /** Categories sent on the original message — useful for filtering. */
+  categories: json("categories"),
+  /** Optional URL on click events. */
+  url: text("url"),
+  /** Bounce reason / dropped reason / etc. */
+  reason: text("reason"),
+  /** Provider event timestamp (epoch seconds → JS Date). */
+  occurredAt: timestamp("occurredAt").notNull(),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+}, (table) => ({
+  providerMessageIdx: index("email_delivery_events_provider_msg_idx").on(table.providerMessageId),
+  campaignIdx: index("email_delivery_events_campaign_idx").on(table.campaignId),
+  eventTypeIdx: index("email_delivery_events_event_type_idx").on(table.eventType),
+  eventIdUnique: uniqueIndex("email_delivery_events_event_id_unique").on(table.eventId),
+}));
+
+export type EmailDeliveryEvent = typeof emailDeliveryEvents.$inferSelect;
+export type InsertEmailDeliveryEvent = typeof emailDeliveryEvents.$inferInsert;
+
+/**
+ * Organization invitations — pending invites sent by email.
+ *
+ * Lifecycle:
+ *  1. owner/admin calls `orgs.inviteByEmail({ email, role })`
+ *  2. Row is created with a random token + expiresAt (default 7 days).
+ *  3. SendGrid (or whatever delivery layer picks) emails the invitee
+ *     a link: `<origin>/invite/<token>`.
+ *  4. Invitee opens the link, signs in if needed, clicks Accept.
+ *  5. `orgs.acceptInvite({ token })` validates expiry, looks up the
+ *     row, adds an `org_members` row, marks `acceptedAt`, and switches
+ *     the user's active org to the new one.
+ *
+ * Tokens are single-use: rows with `acceptedAt` set are no longer valid.
+ * Re-inviting the same email simply creates a new row.
+ */
+export const orgInvitations = mysqlTable("org_invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: int("orgId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  role: mysqlEnum("role", ["admin", "member"]).default("member").notNull(),
+  /** URL-safe random token; opaque to clients, indexed for lookup. */
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  invitedByUserId: int("invitedByUserId").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+  acceptedByUserId: int("acceptedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index("org_invitations_org_id_idx").on(table.orgId),
+  emailIdx: index("org_invitations_email_idx").on(table.email),
+}));
+
+export type OrgInvitation = typeof orgInvitations.$inferSelect;
+export type InsertOrgInvitation = typeof orgInvitations.$inferInsert;

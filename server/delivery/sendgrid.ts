@@ -40,7 +40,16 @@ function toSendgridRecipient(r: EmailRecipient) {
 
 export async function sendViaSendgrid(
   message: EmailMessage,
-  options: { fromEmail?: string; fromName?: string } = {},
+  options: {
+    fromEmail?: string;
+    fromName?: string;
+    /**
+     * Attached as `custom_args.campaignId` on the send so the SendGrid
+     * Event Webhook can re-attribute delivered/open/click/bounce events
+     * back to the campaign that originated them.
+     */
+    campaignId?: number;
+  } = {},
 ): Promise<DeliveryResult> {
   if (!isSendgridConfigured()) {
     throw new NoDeliveryProviderError(
@@ -80,6 +89,9 @@ export async function sendViaSendgrid(
   }
   if (message.categories?.length) {
     payload.categories = message.categories;
+  }
+  if (options.campaignId !== undefined) {
+    payload.custom_args = { campaignId: String(options.campaignId) };
   }
 
   try {
