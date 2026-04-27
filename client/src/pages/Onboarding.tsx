@@ -7,15 +7,26 @@
  * 4. Launch — pick a niche and fire the Builder Bot
  */
 
-import { useState, useEffect, useRef } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useState, useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Bot,
   Package,
@@ -30,11 +41,110 @@ import {
   ExternalLink,
   Sparkles,
   ShoppingBag,
-  Globe,
   AlertCircle,
+  PauseCircle,
 } from "lucide-react";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
-import { Skeleton } from "@/components/ui/skeleton";
+
+/**
+ * Persisted onboarding state — keyed per user so multi-account environments
+ * don't collide. Survives refresh, OAuth bounces, and accidental tab close
+ * (item 2 in the onboarding-polish proposal).
+ */
+const ONBOARDING_STORAGE_PREFIX = "shop_a_bot_onboarding_state:";
+const ONBOARDING_STORAGE_VERSION = 1;
+
+interface PersistedOnboardingState {
+  v: number;
+  currentStep: number;
+  shopDomain?: string;
+  storeName?: string;
+  niche?: string;
+}
+
+function loadPersistedOnboarding(
+  userKey: string | null
+): PersistedOnboardingState | null {
+  if (!userKey || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      ONBOARDING_STORAGE_PREFIX + userKey
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedOnboardingState;
+    if (parsed?.v !== ONBOARDING_STORAGE_VERSION) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedOnboarding(
+  userKey: string | null,
+  patch: Partial<PersistedOnboardingState>
+) {
+  if (!userKey || typeof window === "undefined") return;
+  try {
+    const prev = loadPersistedOnboarding(userKey) ?? {
+      v: ONBOARDING_STORAGE_VERSION,
+      currentStep: 1,
+    };
+    const next: PersistedOnboardingState = {
+      ...prev,
+      ...patch,
+      v: ONBOARDING_STORAGE_VERSION,
+    };
+    window.localStorage.setItem(
+      ONBOARDING_STORAGE_PREFIX + userKey,
+      JSON.stringify(next)
+    );
+  } catch {
+    // Storage may be unavailable (private mode, quota); persistence is best-effort.
+  }
+}
+
+function clearPersistedOnboarding(userKey: string | null) {
+  if (!userKey || typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ONBOARDING_STORAGE_PREFIX + userKey);
+  } catch {
+    /* noop */
+  }
+}
+
+/**
+ * Validate a Shopify domain client-side. Mirrors the server-side check so the
+ * green tick (item 4) only fires when the value would actually be accepted by
+ * the OAuth handshake.
+ */
+const SHOPIFY_DOMAIN_RE = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
+
+function normalizeShopDomain(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
+}
+
+function evaluateShopDomain(input: string): {
+  status: "empty" | "valid" | "invalid";
+  normalized: string;
+  reason?: string;
+} {
+  const trimmed = input.trim();
+  if (!trimmed) return { status: "empty", normalized: "" };
+  let domain = normalizeShopDomain(trimmed);
+  if (!domain.includes(".")) domain = `${domain}.myshopify.com`;
+  if (!SHOPIFY_DOMAIN_RE.test(domain)) {
+    return {
+      status: "invalid",
+      normalized: domain,
+      reason: "Use the format your-store or your-store.myshopify.com",
+    };
+  }
+  return { status: "valid", normalized: domain };
+}
 
 const STEPS = [
   { id: 1, title: `Welcome to ${BRAND_NAME}`, icon: Sparkles },
@@ -45,39 +155,55 @@ const STEPS = [
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-1 mb-8">
+    <ol
+      className="flex items-center justify-center gap-1 mb-8"
+      aria-label="Onboarding progress"
+    >
       {STEPS.map((step, i) => {
         const isComplete = step.id < currentStep;
         const isActive = step.id === currentStep;
         return (
-          <div key={step.id} className="flex items-center gap-1">
-            <div className="flex flex-col items-center gap-1.5">
+          <li key={step.id} className="flex items-center gap-1">
+            <div
+              className="flex flex-col items-center gap-1.5"
+              aria-current={isActive ? "step" : undefined}
+            >
               <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 motion-reduce:transition-none ${
                   isComplete
                     ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
                     : isActive
                       ? "bg-sky-500 text-white ring-4 ring-sky-500/20 shadow-lg shadow-sky-500/30"
                       : "bg-white/[0.05] text-muted-foreground border border-white/[0.08]"
                 }`}
+                aria-label={`Step ${step.id}: ${step.title}${isComplete ? " (complete)" : isActive ? " (current)" : ""}`}
               >
-                {isComplete ? <CheckCircle2 className="h-4 w-4" /> : step.id}
+                {isComplete ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : step.id}
               </div>
-              <span className={`text-[10px] font-medium hidden sm:block transition-colors ${
-                isActive ? "text-sky-400" : isComplete ? "text-emerald-400" : "text-muted-foreground"
-              }`}>
+              <span
+                className={`text-[10px] font-medium hidden sm:block transition-colors ${
+                  isActive
+                    ? "text-sky-300"
+                    : isComplete
+                      ? "text-emerald-300"
+                      : "text-muted-foreground"
+                }`}
+              >
                 {step.title.split(" ").slice(0, 2).join(" ")}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`h-0.5 w-10 mb-5 transition-all duration-500 ${
-                isComplete ? "bg-gradient-to-r from-emerald-500 to-sky-500" : "bg-white/[0.06]"
-              }`} />
+              <div
+                aria-hidden="true"
+                className={`h-0.5 w-10 mb-5 transition-all duration-500 motion-reduce:transition-none ${
+                  isComplete ? "bg-gradient-to-r from-emerald-500 to-sky-500" : "bg-white/[0.06]"
+                }`}
+              />
             )}
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 
@@ -145,11 +271,31 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [shopDomain, setShopDomain] = useState("");
-  const [storeName, setStoreName] = useState("");
+function ConnectStoreStep({
+  onNext,
+  onSkip,
+  initialShopDomain,
+  initialStoreName,
+  onPersistDraft,
+}: {
+  onNext: () => void;
+  onSkip: () => void;
+  initialShopDomain: string;
+  initialStoreName: string;
+  onPersistDraft: (patch: { shopDomain?: string; storeName?: string }) => void;
+}) {
+  const [shopDomain, setShopDomain] = useState(initialShopDomain);
+  const [storeName, setStoreName] = useState(initialStoreName);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState("");
+  // Debounced live validation — green tick / inline error fires while typing
+  // instead of only on submit (proposal item 4).
+  const [validation, setValidation] = useState<{
+    status: "empty" | "valid" | "invalid";
+    normalized: string;
+    reason?: string;
+  }>(() => evaluateShopDomain(initialShopDomain));
+  const [hasInteracted, setHasInteracted] = useState(false);
   const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
   const activeStores = stores?.filter((s: any) => s.status === "active") ?? [];
   const hasActiveStore = activeStores.length > 0;
@@ -168,6 +314,16 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
       window.history.replaceState({}, "", "/onboarding");
     }
   }, []);
+
+  // Re-evaluate the domain on a debounce so the green tick / inline error
+  // settles ~300ms after the user stops typing.
+  useEffect(() => {
+    if (!hasInteracted) return;
+    const t = setTimeout(() => {
+      setValidation(evaluateShopDomain(shopDomain));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [shopDomain, hasInteracted]);
 
   // Step 1: Create store record, then Step 2: Get OAuth URL
   const createStoreForOAuth = trpc.stores.create.useMutation({
@@ -204,35 +360,37 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
       return;
     }
 
-    // Clean and validate the domain
-    let domain = shopDomain.trim().toLowerCase();
-    domain = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-    if (!domain.includes(".")) domain = `${domain}.myshopify.com`;
-
-    // Basic validation
-    if (!domain.match(/^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/)) {
-      setError("Invalid domain format. Use: your-store or your-store.myshopify.com");
+    const result = evaluateShopDomain(shopDomain);
+    if (result.status !== "valid") {
+      setError(
+        result.reason ??
+          "Invalid domain format. Use: your-store or your-store.myshopify.com"
+      );
       return;
     }
 
     setIsConnecting(true);
 
     // Derive store name from domain if not provided
-    const name = storeName.trim() || domain.replace(".myshopify.com", "");
+    const name = storeName.trim() || result.normalized.replace(".myshopify.com", "");
 
     // Create store record first, then OAuth URL is generated in onSuccess
     createStoreForOAuth.mutate({
       name,
       platform: "shopify",
-      platformDomain: domain,
+      platformDomain: result.normalized,
     });
   };
+
+  const showValid = hasInteracted && validation.status === "valid";
+  const showInvalid =
+    hasInteracted && validation.status === "invalid" && !!shopDomain.trim();
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10 mb-2">
-          <Store className="h-7 w-7 text-green-400" />
+          <Store className="h-7 w-7 text-green-300" aria-hidden="true" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Connect Your Store</h2>
         <p className="text-muted-foreground text-sm">
@@ -243,7 +401,7 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
       {hasActiveStore ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium text-foreground">
                 {activeStores.length} store{activeStores.length > 1 ? "s" : ""} connected
@@ -252,62 +410,146 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
             </div>
           </div>
           <Button onClick={onNext} className="w-full gap-2">
-            Continue <ArrowRight className="h-4 w-4" />
+            Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div
+              className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-300"
+              role="alert"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
               {error}
             </div>
           )}
 
           <div className="space-y-3">
             <div>
-              <Label htmlFor="storeName" className="text-sm text-foreground">Store Name <span className="text-muted-foreground">(optional)</span></Label>
+              <Label htmlFor="storeName" className="text-sm text-foreground">
+                Store Name <span className="text-muted-foreground">(optional)</span>
+              </Label>
               <Input
                 id="storeName"
                 placeholder="My Awesome Store"
                 value={storeName}
-                onChange={e => { setStoreName(e.target.value); setError(""); }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStoreName(v);
+                  setError("");
+                  onPersistDraft({ storeName: v });
+                }}
                 className="mt-1.5"
+                autoComplete="organization"
               />
             </div>
             <div>
-              <Label htmlFor="shopDomain" className="text-sm text-foreground">Shopify Store Domain</Label>
-              <div className="flex gap-2 mt-1.5">
+              <Label htmlFor="shopDomain" className="text-sm text-foreground">
+                Shopify Store Domain
+              </Label>
+              <div className="relative mt-1.5">
                 <Input
                   id="shopDomain"
                   placeholder="your-store.myshopify.com"
                   value={shopDomain}
-                  onChange={e => { setShopDomain(e.target.value); setError(""); }}
-                  className="flex-1"
-                  onKeyDown={e => e.key === "Enter" && handleConnect()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setShopDomain(v);
+                    setHasInteracted(true);
+                    setError("");
+                    onPersistDraft({ shopDomain: v });
+                  }}
+                  onBlur={() => setHasInteracted(true)}
+                  className={`pr-9 ${
+                    showValid
+                      ? "border-emerald-500/50 focus-visible:ring-emerald-500/30"
+                      : showInvalid
+                        ? "border-red-500/50 focus-visible:ring-red-500/30"
+                        : ""
+                  }`}
+                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
+                  aria-invalid={showInvalid || undefined}
+                  aria-describedby="shopDomain-hint shopDomain-status"
+                  autoComplete="url"
+                  inputMode="url"
+                  spellCheck={false}
                 />
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                  {showValid && (
+                    <CheckCircle2
+                      className="h-4 w-4 text-emerald-400 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-75"
+                      aria-hidden="true"
+                    />
+                  )}
+                  {showInvalid && (
+                    <AlertCircle
+                      className="h-4 w-4 text-red-400"
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                Enter your store name (e.g., <span className="font-mono text-foreground/70">my-store</span>) or full domain (<span className="font-mono text-foreground/70">my-store.myshopify.com</span>)
+              <p
+                id="shopDomain-status"
+                className="text-xs mt-1.5 min-h-[1rem]"
+                aria-live="polite"
+              >
+                {showValid && (
+                  <span className="text-emerald-300">
+                    Looks good — we&apos;ll connect <span className="font-mono">{validation.normalized}</span>
+                  </span>
+                )}
+                {showInvalid && (
+                  <span className="text-red-300">{validation.reason}</span>
+                )}
               </p>
+              <p
+                id="shopDomain-hint"
+                className="text-xs text-muted-foreground/90 mt-1"
+              >
+                Enter your store name (e.g.,{" "}
+                <span className="font-mono text-foreground/70">my-store</span>) or full domain (
+                <span className="font-mono text-foreground/70">my-store.myshopify.com</span>)
+              </p>
+              <details className="mt-2 text-xs text-muted-foreground/90 group">
+                <summary className="cursor-pointer hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 rounded">
+                  What we&apos;ll access — and what we won&apos;t
+                </summary>
+                <div className="mt-2 space-y-1 pl-3 border-l border-border/50">
+                  <p>
+                    <span className="text-emerald-300">✓</span> Read products, orders, and inventory so the bots can run your store.
+                  </p>
+                  <p>
+                    <span className="text-emerald-300">✓</span> Write product listings, prices, and themes you approve.
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">✗</span> No access to customer payment details or your Shopify password.
+                  </p>
+                </div>
+              </details>
             </div>
           </div>
 
           <Button
             onClick={handleConnect}
-            disabled={isConnecting || !shopDomain.trim()}
+            disabled={isConnecting || !shopDomain.trim() || (hasInteracted && validation.status === "invalid")}
             className="w-full gap-2"
             size="lg"
           >
             {isConnecting ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Connecting to Shopify...</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:hidden" aria-hidden="true" /> Connecting to Shopify...
+              </>
             ) : (
-              <><ExternalLink className="h-4 w-4" /> Connect Shopify Store</>
+              <>
+                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Connect Shopify Store
+              </>
             )}
           </Button>
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-border/50" />
             </div>
             <div className="relative flex justify-center text-xs">
@@ -321,7 +563,7 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
               { name: "Etsy", emoji: "🧡" },
               { name: "Amazon", emoji: "📦" },
               { name: "TikTok Shop", emoji: "🎵" },
-            ].map(platform => (
+            ].map((platform) => (
               <Button
                 key={platform.name}
                 variant="outline"
@@ -330,15 +572,17 @@ function ConnectStoreStep({ onNext, onSkip }: { onNext: () => void; onSkip: () =
                   toast.info(`${platform.name} can be connected after onboarding in the Integrations page.`);
                 }}
               >
-                <span>{platform.emoji}</span>
+                <span aria-hidden="true">{platform.emoji}</span>
                 {platform.name}
-                <Badge variant="outline" className="text-[9px] ml-auto">After Setup</Badge>
+                <Badge variant="outline" className="text-[9px] ml-auto">
+                  After Setup
+                </Badge>
               </Button>
             ))}
           </div>
 
           <Button variant="ghost" onClick={onSkip} className="w-full text-muted-foreground text-sm">
-            Skip for now — I'll connect later
+            Skip for now — I&apos;ll connect later
           </Button>
         </div>
       )}
@@ -354,10 +598,10 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
   const connectedCount = connectedPlatforms.size;
 
   const platforms = [
-    { name: "Meta (Facebook + Instagram)", key: "meta", color: "text-blue-400", emoji: "📘" },
-    { name: "TikTok", key: "tiktok", color: "text-pink-400", emoji: "🎵" },
-    { name: "Twitter / X", key: "twitter", color: "text-sky-400", emoji: "𝕏" },
-    { name: "Pinterest", key: "pinterest", color: "text-red-400", emoji: "📌" },
+    { name: "Meta (Facebook + Instagram)", key: "meta", color: "text-blue-300", emoji: "📘" },
+    { name: "TikTok", key: "tiktok", color: "text-pink-300", emoji: "🎵" },
+    { name: "Twitter / X", key: "twitter", color: "text-sky-300", emoji: "𝕏" },
+    { name: "Pinterest", key: "pinterest", color: "text-red-300", emoji: "📌" },
   ];
 
   const generateOAuthUrl = trpc.connectors.generateSocialOAuthUrl.useMutation({
@@ -387,7 +631,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 mb-2">
-          <Share2 className="h-7 w-7 text-amber-400" />
+          <Share2 className="h-7 w-7 text-amber-300" aria-hidden="true" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Connect Social Platforms</h2>
         <p className="text-muted-foreground text-sm">
@@ -397,58 +641,83 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
 
       {connectedCount > 0 && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0" aria-hidden="true" />
           <p className="text-sm text-foreground">{connectedCount} platform{connectedCount > 1 ? "s" : ""} connected</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 gap-2" role="list">
         {platforms.map(({ name, key, color, emoji }) => {
           const isConnected = connectedPlatforms.has(key);
           const isLoading = generateOAuthUrl.isPending && generateOAuthUrl.variables?.platform === key;
           return (
             <button
               key={key}
+              role="listitem"
+              type="button"
               onClick={() => {
                 if (!isConnected && !isLoading) {
                   generateOAuthUrl.mutate({ platform: key as any, origin: window.location.origin, returnTo: "/onboarding" });
                 }
               }}
               disabled={isLoading}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+              aria-label={isConnected ? `${name} (connected)` : `Connect ${name}`}
+              aria-busy={isLoading || undefined}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-all motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 ${
                 isConnected
                   ? "bg-emerald-500/10 border-emerald-500/20 cursor-default"
                   : "bg-secondary/30 border-border/50 hover:border-primary/30 hover:bg-secondary/60 cursor-pointer"
               }`}
             >
-              <span className="text-xl">{emoji}</span>
+              <span className="text-xl" aria-hidden="true">{emoji}</span>
               <span className={`text-sm font-medium flex-1 text-left ${color}`}>{name}</span>
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-muted-foreground shrink-0" aria-hidden="true" />
               ) : isConnected ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" aria-hidden="true" />
               ) : (
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
               )}
             </button>
           );
         })}
       </div>
 
+      {connectedCount === 0 && (
+        // Skip-cost transparency (item 6) — make the trade-off explicit so
+        // skipping feels informed rather than lossy.
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/[0.06] border border-amber-500/20 text-xs text-amber-100/90">
+          <PauseCircle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
+          <p>
+            <span className="font-medium text-amber-200">Social Bot will stay paused</span> until
+            you connect at least one platform. You can do this in 30 seconds later from{" "}
+            <span className="font-medium">Settings → Integrations</span>.
+          </p>
+        </div>
+      )}
+
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onSkip} className="flex-1 text-muted-foreground">
           Skip for now
         </Button>
         <Button onClick={onNext} className="flex-1 gap-2">
-          Continue <ArrowRight className="h-4 w-4" />
+          Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
     </div>
   );
 }
 
-function LaunchStep({ onComplete }: { onComplete: () => void }) {
-  const [niche, setNiche] = useState("");
+function LaunchStep({
+  onComplete,
+  initialNiche,
+  onPersistDraft,
+}: {
+  onComplete: () => void;
+  initialNiche: string;
+  onPersistDraft: (patch: { niche?: string }) => void;
+}) {
+  const [niche, setNiche] = useState(initialNiche);
   const [isLaunching, setIsLaunching] = useState(false);
   const [launched, setLaunched] = useState(false);
 
@@ -492,47 +761,54 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
   if (launched) {
     return (
-      <div className="text-center space-y-6 py-4 relative">
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none animate-pulse" />
+      <div
+        className="text-center space-y-6 py-4 relative"
+        role="status"
+        aria-live="polite"
+      >
+        {/* Background glow — animation suppressed for reduced-motion users (item 11) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none motion-safe:animate-pulse motion-reduce:opacity-60" />
 
         <div className="relative">
           {/* Pulsing bot avatar */}
-          <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/20 to-cyan-500/10 border border-sky-500/30 mx-auto shadow-[0_0_30px_rgba(14,165,233,0.25)] animate-in zoom-in-95 duration-500">
-            <Bot className="h-12 w-12 text-sky-400" />
+          <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/20 to-cyan-500/10 border border-sky-500/30 mx-auto shadow-[0_0_30px_rgba(14,165,233,0.25)] motion-safe:animate-in motion-safe:zoom-in-95 motion-safe:duration-500">
+            <Bot className="h-12 w-12 text-sky-300" aria-hidden="true" />
           </div>
           {/* Online badge */}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Online</span>
+            <span
+              aria-hidden="true"
+              className="w-1.5 h-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.6)]"
+            />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">Online</span>
           </div>
         </div>
 
-        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-3 duration-700">
+        <div className="space-y-2 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
           <h2 className="text-2xl font-bold text-foreground">
             {hasStore ? "Your Bot is Awake" : "Builder is researching"}
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
             {hasStore ? (
               <>
-                Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> right now.
+                Builder Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> right now.
                 Products are being sourced. Copy is being written. Your store is coming alive.
               </>
             ) : (
               <>
-                Builder Bot is researching <span className="text-sky-400 font-medium">"{niche}"</span> —
+                Builder Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> —
                 niche analysis, competitor scan, and product picks. Connect a store next so the
                 Builder can import the products it recommends.
               </>
             )}
           </p>
           <div className="mt-4 max-w-sm mx-auto rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-3 text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-300 mb-1">What happens next</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-200 mb-1">What happens next</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {hasStore ? (
                 <>
-                  When Builder finishes, you'll see a handoff moment on your dashboard.
-                  The <span className="text-cyan-300 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
+                  When Builder finishes, you&apos;ll see a handoff moment on your dashboard.
+                  The <span className="text-cyan-200 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
                 </>
               ) : (
                 <>
@@ -545,13 +821,13 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
         </div>
 
         {/* Live activity preview */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-1000">
           <div className="flex flex-col gap-2 max-w-xs mx-auto">
             <Button onClick={onComplete} size="lg" className="gap-2 btn-glow">
-              Enter Command Center <ArrowRight className="h-4 w-4" />
+              Enter Command Center <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Button>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3 w-3" aria-hidden="true" />
               <span>{hasStore ? "Store ready in ~28 minutes" : "Niche report ready in ~5 minutes"}</span>
             </div>
           </div>
@@ -564,7 +840,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 mb-2">
-          <Zap className="h-7 w-7 text-primary" />
+          <Zap className="h-7 w-7 text-primary" aria-hidden="true" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Launch Your First Bot</h2>
         <p className="text-muted-foreground text-sm">
@@ -578,16 +854,26 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
           id="niche"
           placeholder="e.g. Minimalist Home Decor"
           value={niche}
-          onChange={e => setNiche(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleLaunch()}
+          onChange={(e) => {
+            const v = e.target.value;
+            setNiche(v);
+            onPersistDraft({ niche: v });
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleLaunch()}
           className="text-base"
+          autoComplete="off"
         />
-        <div className="flex flex-wrap gap-2">
-          {nicheExamples.map(example => (
+        <div className="flex flex-wrap gap-2" role="list" aria-label="Suggested niches">
+          {nicheExamples.map((example) => (
             <button
               key={example}
-              onClick={() => setNiche(example)}
-              className="text-xs px-2.5 py-1 rounded-full bg-secondary/60 border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors"
+              type="button"
+              role="listitem"
+              onClick={() => {
+                setNiche(example);
+                onPersistDraft({ niche: example });
+              }}
+              className="text-xs px-2.5 py-1 rounded-full bg-secondary/60 border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
             >
               {example}
             </button>
@@ -597,7 +883,7 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Bot className="h-4 w-4 text-sky-400" /> What the Builder Bot will do:
+          <Bot className="h-4 w-4 text-sky-300" aria-hidden="true" /> What the Builder Bot will do:
         </h4>
         <ul className="space-y-1.5">
           {[
@@ -606,9 +892,9 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
             "Generate SEO-optimized product listings",
             "Configure your store theme, pages, and navigation",
             "Set up pricing strategy and profit targets",
-          ].map(item => (
+          ].map((item) => (
             <li key={item} className="flex items-start gap-2 text-xs text-muted-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
               {item}
             </li>
           ))}
@@ -617,18 +903,23 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
 
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onComplete} className="flex-1 text-muted-foreground">
-          Skip — I'll do this later
+          Skip — I&apos;ll do this later
         </Button>
         <Button
           onClick={handleLaunch}
           disabled={isLaunching || !niche.trim()}
           className="flex-1 gap-2"
           size="lg"
+          aria-busy={isLaunching || undefined}
         >
           {isLaunching ? (
-            <><Loader2 className="h-4 w-4 animate-spin" /> Launching...</>
+            <>
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Launching...
+            </>
           ) : (
-            <><Zap className="h-4 w-4" /> Launch Bot</>
+            <>
+              <Zap className="h-4 w-4" aria-hidden="true" /> Launch Bot
+            </>
           )}
         </Button>
       </div>
@@ -636,58 +927,101 @@ function LaunchStep({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-/** Skeleton shown for 350ms during step transitions to prevent layout flash */
-function StepSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      {/* Icon + heading */}
-      <div className="flex flex-col items-center gap-3 pt-2">
-        <Skeleton className="h-16 w-16 rounded-2xl bg-white/[0.06]" />
-        <Skeleton className="h-7 w-56 rounded-lg bg-white/[0.06]" />
-        <Skeleton className="h-4 w-80 rounded bg-white/[0.04]" />
-      </div>
-      {/* Content rows */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-28 rounded-xl bg-white/[0.04]" />
-        ))}
-      </div>
-      {/* CTA */}
-      <Skeleton className="h-11 w-full rounded-lg bg-white/[0.06]" />
-    </div>
-  );
-}
-
+/**
+ * OnboardingPage — orchestrator for the 4-step flow.
+ *
+ * Polish notes (proposal PR1):
+ *   • Per-user `localStorage` persistence so currentStep + niche + storeName +
+ *     shopDomain survive refresh, OAuth bounce, and accidental tab close
+ *     (item 2).
+ *   • Step transitions use an optimistic crossfade instead of a 350ms blanket
+ *     skeleton so navigation feels instant rather than artificially delayed
+ *     (item 17).
+ *   • `Esc` opens a "Save & exit" confirmation; progress is saved when the
+ *     user leaves so they resume in place next time (item 10).
+ *   • A single polite live region announces step changes for screen-reader
+ *     users (item 16).
+ */
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [displayStep, setDisplayStep] = useState(1);
-  const [, setLocation] = useLocation();
-  const transitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { user } = useAuth();
+  const userKey = (user as { id?: string | number; email?: string } | null)
+    ? String(
+        (user as { id?: string | number }).id ??
+          (user as { email?: string }).email ??
+          ""
+      ) || null
+    : null;
 
-  // If returning from OAuth, jump to the right step
+  // Initialize from persisted state (if any) so a refresh / OAuth bounce /
+  // accidental close lands the user back on the step they were on.
+  const initial = useMemo(
+    () => loadPersistedOnboarding(userKey),
+    [userKey]
+  );
+
+  const [currentStep, setCurrentStep] = useState<number>(initial?.currentStep ?? 1);
+  const [shopDomainDraft, setShopDomainDraft] = useState<string>(initial?.shopDomain ?? "");
+  const [storeNameDraft, setStoreNameDraft] = useState<string>(initial?.storeName ?? "");
+  const [nicheDraft, setNicheDraft] = useState<string>(initial?.niche ?? "");
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [, setLocation] = useLocation();
+
+  // Re-hydrate from storage once the user becomes available (auth resolves
+  // asynchronously, so the very first render may have userKey = null).
+  useEffect(() => {
+    if (!userKey) return;
+    const hydrated = loadPersistedOnboarding(userKey);
+    if (!hydrated) return;
+    setCurrentStep((prev) => (prev === 1 ? hydrated.currentStep : prev));
+    setShopDomainDraft((prev) => prev || hydrated.shopDomain || "");
+    setStoreNameDraft((prev) => prev || hydrated.storeName || "");
+    setNicheDraft((prev) => prev || hydrated.niche || "");
+  }, [userKey]);
+
+  // If returning from OAuth, jump to the right step (overrides persistence).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("connected") === "true" || params.get("error")) {
       setCurrentStep(2);
-      setDisplayStep(2);
+      savePersistedOnboarding(userKey, { currentStep: 2 });
     }
     if (params.get("social_connected")) {
       setCurrentStep(3);
-      setDisplayStep(3);
+      savePersistedOnboarding(userKey, { currentStep: 3 });
     }
-  }, []);
+  }, [userKey]);
 
   const goToStep = (step: number) => {
-    if (transitionTimeout.current) clearTimeout(transitionTimeout.current);
-    setIsTransitioning(true);
     setCurrentStep(step);
-    // Show skeleton for 350ms, then reveal the new step
-    transitionTimeout.current = setTimeout(() => {
-      setDisplayStep(step);
-      setIsTransitioning(false);
-    }, 350);
+    savePersistedOnboarding(userKey, { currentStep: step });
   };
+
+  const persistDraft = (patch: {
+    shopDomain?: string;
+    storeName?: string;
+    niche?: string;
+  }) => {
+    if (patch.shopDomain !== undefined) setShopDomainDraft(patch.shopDomain);
+    if (patch.storeName !== undefined) setStoreNameDraft(patch.storeName);
+    if (patch.niche !== undefined) setNicheDraft(patch.niche);
+    savePersistedOnboarding(userKey, patch);
+  };
+
+  // Esc opens "save & exit" — keyboard-first parity with Enter advancing
+  // each step (item 10). Ignore when an interactive overlay (e.g. the
+  // confirm dialog itself) is already open so Radix can handle close.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (showExitDialog) return;
+      // Don't hijack Esc when a Radix overlay (dialog/popover) is open.
+      if (document.querySelector("[data-state='open'][role='dialog']")) return;
+      e.preventDefault();
+      setShowExitDialog(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showExitDialog]);
 
   const completeOnboarding = trpc.auth.completeOnboarding.useMutation();
   const utils = trpc.useUtils();
@@ -705,6 +1039,16 @@ export default function OnboardingPage() {
       // mutation succeeds.
     }
     localStorage.setItem("shop_a_bot_onboarded", "true");
+    clearPersistedOnboarding(userKey);
+    setLocation("/");
+  };
+
+  // "Save & exit" — keep the persisted draft so they resume here next time,
+  // but don't mark onboarded. The OnboardingGuard will route them straight
+  // back to /onboarding on their next visit.
+  const handleSaveAndExit = () => {
+    savePersistedOnboarding(userKey, { currentStep });
+    setShowExitDialog(false);
     setLocation("/");
   };
 
@@ -720,42 +1064,77 @@ export default function OnboardingPage() {
 
         <StepIndicator currentStep={currentStep} />
 
+        {/* Polite SR announcement of step changes (item 16). */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1].title}
+        </div>
+
         <Card className="bg-card border-border/50 shadow-xl">
           <CardContent className="p-8">
-            {isTransitioning ? (
-              <StepSkeleton />
-            ) : (
-              <div
-                key={displayStep}
-                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-              >
-                {displayStep === 1 && (
-                  <WelcomeStep onNext={() => goToStep(2)} />
-                )}
-                {displayStep === 2 && (
-                  <ConnectStoreStep
-                    onNext={() => goToStep(3)}
-                    onSkip={() => goToStep(3)}
-                  />
-                )}
-                {displayStep === 3 && (
-                  <ConnectSocialsStep
-                    onNext={() => goToStep(4)}
-                    onSkip={() => goToStep(4)}
-                  />
-                )}
-                {displayStep === 4 && (
-                  <LaunchStep onComplete={handleComplete} />
-                )}
-              </div>
-            )}
+            {/*
+              Optimistic crossfade between steps (item 17). Replaces the
+              350ms blanket skeleton — content is rendered immediately and
+              animates in, which feels faster and avoids a flash of empty
+              chrome. `motion-reduce` users get the new step instantly.
+            */}
+            <div
+              key={currentStep}
+              className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
+            >
+              {currentStep === 1 && (
+                <WelcomeStep onNext={() => goToStep(2)} />
+              )}
+              {currentStep === 2 && (
+                <ConnectStoreStep
+                  onNext={() => goToStep(3)}
+                  onSkip={() => goToStep(3)}
+                  initialShopDomain={shopDomainDraft}
+                  initialStoreName={storeNameDraft}
+                  onPersistDraft={persistDraft}
+                />
+              )}
+              {currentStep === 3 && (
+                <ConnectSocialsStep
+                  onNext={() => goToStep(4)}
+                  onSkip={() => goToStep(4)}
+                />
+              )}
+              {currentStep === 4 && (
+                <LaunchStep
+                  onComplete={handleComplete}
+                  initialNiche={nicheDraft}
+                  onPersistDraft={persistDraft}
+                />
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
+        <p className="text-center text-xs text-muted-foreground/90 mt-4">
           Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].title}
+          <span className="hidden sm:inline">
+            {" "}
+            · Press <kbd className="px-1 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] font-mono text-foreground/80">Esc</kbd> to save &amp; exit
+          </span>
         </p>
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save your progress and exit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              We&apos;ll keep your spot at step {currentStep} of {STEPS.length} and any details you&apos;ve entered so far. You can pick up where you left off next time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep going</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndExit}>
+              Save &amp; exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
