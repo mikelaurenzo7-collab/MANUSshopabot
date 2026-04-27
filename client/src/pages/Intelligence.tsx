@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   Clock,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 // ─── Scheduler task card ───────────────────────────────────────────────────────
 function SchedulerTask({ name, freq, agent }: { name: string; freq: string; agent: string }) {
@@ -282,7 +283,12 @@ export default function Intelligence() {
           />
         </div>
       ) : (
-        <div className="text-center py-12 text-white/40">No metrics available. Connect a store to get started.</div>
+        <EmptyState
+          icon={<BarChart3 className="w-5 h-5 text-white/40" />}
+          title="No metrics yet"
+          description="Connect a store to see anomaly detection, performance trends, and revenue intelligence."
+          action={{ label: "Connect a store", href: "/storefronts" }}
+        />
       )}
 
       <Tabs defaultValue="anomalies" className="space-y-4">

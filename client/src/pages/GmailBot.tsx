@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Send, MailPlus, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function GmailBot() {
   const [selectedTab, setSelectedTab] = useState("inbox");
@@ -260,7 +261,11 @@ export default function GmailBot() {
             <CardContent>
               {templatesQuery.isLoading && <div className="text-center py-8">Loading templates...</div>}
               {templatesQuery.data && templatesQuery.data.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No templates available</div>
+                <EmptyState
+                  icon={<MailPlus className="w-5 h-5 text-white/40" />}
+                  title="No templates yet"
+                  description="Save reusable email templates to speed up replies and abandoned-cart flows. Templates you create here are available to the Social Bot too."
+                />
               )}
               <div className="grid grid-cols-1 gap-4">
                 {templatesQuery.data?.map((template) => (
