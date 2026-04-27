@@ -8,7 +8,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
-  ChevronDown, Star, Quote, KeyRound, Loader2,
+  ChevronDown, KeyRound, Loader2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -151,33 +151,12 @@ const INTEGRATION_LOGOS = [
 ];
 
 const SOCIAL_TICKER = [
-  "2,400+ stores launched",
-  "$4.2M revenue processed",
-  "1.2M orders fulfilled",
   "15+ platform integrations",
   "3 AI bots running 24/7",
   "Zero manual fulfillment",
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Marcus T.",
-    role: "Shopify store owner",
-    stars: 5,
-    text: "I launched my first dropshipping store in 22 minutes. The Builder Bot handled everything — niche research, product import, even the legal pages. I didn't write a single line of copy.",
-  },
-  {
-    name: "Priya S.",
-    role: "E-commerce entrepreneur",
-    stars: 5,
-    text: "I loved the moment the Builder handed the keys to the Merchant. It actually felt like a graduation. I went from spending 3 hours a day on fulfillment to literally zero. My store runs while I sleep.",
-  },
-  {
-    name: "Jordan K.",
-    role: "TikTok shop seller",
-    stars: 5,
-    text: "Social Bot created my first TikTok ad campaign in 4 minutes. It generated the creative, wrote the copy, and scheduled the posts. My ROAS went up 2.4x in the first week.",
-  },
+  "Builder → Merchant → Social, in one platform",
+  "Stripe-grade billing built in",
+  "Built for Shopify, Amazon, Etsy, TikTok Shop & more",
 ];
 
 const FAQ_ITEMS = [
@@ -627,34 +606,49 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Social Proof / Testimonials ────────────────────────────────────── */}
+      {/* ── How It Works — honest capability walkthrough ───────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <span className="eyebrow mb-4">Social Proof</span>
-            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using Shop_a_Bot.</p>
+            <span className="eyebrow mb-4">How It Works</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">From signup to autopilot</h2>
+            <p className="mt-4 text-white/45 max-w-xl mx-auto">No fabricated testimonials. Just the actual sequence of what happens after you connect your first store.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
-                <Quote className="w-6 h-6 text-sky-500/40 shrink-0" />
-                <p className="text-white/60 text-sm leading-relaxed flex-1">"{t.text}"</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
-                  <div className="w-9 h-9 rounded-full bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-sky-300">{t.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white/80">{t.name}</div>
-                    <div className="text-xs text-white/35">{t.role}</div>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {Array.from({ length: t.stars }).map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
+            {[
+              {
+                step: "Step 1",
+                accent: "#38bdf8",
+                Icon: Zap,
+                title: "Connect in minutes",
+                text: "OAuth into Shopify, Amazon, Etsy, TikTok Shop, Meta, TikTok, Pinterest, Twitter, Pinterest, Gmail, and more. Credentials are encrypted at rest with AES-256-GCM.",
+              },
+              {
+                step: "Step 2",
+                accent: "#22d3ee",
+                Icon: Bot,
+                title: "Bots wake up",
+                text: "Builder researches your niche and configures your storefront. Merchant takes the keys on launch day and runs orders, pricing, and inventory. Social manufactures demand.",
+              },
+              {
+                step: "Step 3",
+                accent: "#fb923c",
+                Icon: Shield,
+                title: "You stay in control",
+                text: "Every bot action is logged. Set approval gates for high-stakes actions. Pause, override, or hand back to human review at any moment.",
+              },
+            ].map(({ step, accent, Icon, title, text }) => (
+              <div key={step} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: `${accent}1a`, border: `1px solid ${accent}40`, boxShadow: `0 0 16px ${accent}33` }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: accent }} />
                 </div>
+                <span className="micro-label" style={{ color: accent }}>{step}</span>
+                <h3 className="text-lg font-heading font-bold text-white -mt-1">{title}</h3>
+                <p className="text-white/55 text-sm leading-relaxed">{text}</p>
               </div>
             ))}
           </div>
