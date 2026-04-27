@@ -108,7 +108,7 @@ export default function Architect() {
             )}
             
             {/* Input Module */}
-            <div className="border border-white/[0.08] bg-black/40 p-5 relative">
+            <div className="border border-white/[0.08] bg-black/40 p-4 relative">
               <div className="absolute top-0 left-0 w-1 h-full bg-sky-400/50" />
               <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white mb-3">Target Coordinate Input</h2>
               <div className="flex gap-2">
@@ -318,7 +318,7 @@ function ImageOptimizerPanel() {
   };
 
   return (
-    <div className="border border-white/[0.08] bg-black/40 p-5 relative">
+    <div className="border border-white/[0.08] bg-black/40 p-4 relative">
       <div className="absolute top-0 left-0 w-1 h-full bg-violet-400/50" />
       <div className="flex items-center gap-2 mb-3">
         <ImageIcon className="w-4 h-4 text-violet-400" />

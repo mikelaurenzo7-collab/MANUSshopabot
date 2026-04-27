@@ -14,7 +14,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import { useIsMobile } from "@/hooks/useMobile";
+import { useIsMobile, useIsNarrow } from "@/hooks/useMobile";
 import {
   LayoutDashboard,
   Inbox as InboxIcon,
@@ -90,7 +90,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const isNarrow = useIsNarrow();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Manual override: clicking the rail toggle in narrow mode pins the sidebar
+  // expanded for that session. null = auto (follow viewport).
+  const [railOverride, setRailOverride] = useState<boolean | null>(null);
+  const railMode = railOverride === null ? isNarrow : railOverride;
   const { setOpen: setPaletteOpen } = useCommandPalette();
   const { activeStoreId, setActiveStoreId } = useWorkspace();
 
@@ -251,12 +256,51 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return location === path || location.startsWith(path + "/");
   };
 
-  const renderNavItem = (item: NavItem) => {
+  const renderNavItem = (item: NavItem, rail: boolean = false) => {
     const isActive = activePathFor(item.path);
     // For bots we collapse brand-dot + status-dot into a single dot. When
     // the bot is healthy we paint with brand color; when it changes state
     // (running/error) we let status take over so the user notices.
     const dotCls = statusDotClass(item.dot) ?? brandDotClass(item.brand);
+    if (rail) {
+      return (
+        <Link
+          key={item.title}
+          href={item.path}
+          onClick={() => isMobile && setMobileMenuOpen(false)}
+          title={item.title + (item.badge && item.badge > 0 ? ` (${item.badge})` : "")}
+          aria-label={item.title}
+          className={`relative w-9 h-9 mx-auto flex items-center justify-center rounded-md transition-all duration-200 group ${
+            isActive
+              ? "bg-sky-500/[0.14] text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22)]"
+              : "text-white/40 hover:text-white/85 hover:bg-white/[0.04]"
+          }`}
+        >
+          {isActive && <span className="nav-active-bar" aria-hidden="true" />}
+          <item.icon
+            aria-hidden="true"
+            className={`w-4 h-4 transition-all duration-200 ${
+              isActive ? "text-sky-400" : "opacity-50 group-hover:opacity-85"
+            }`}
+          />
+          {dotCls && (
+            <span
+              className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${dotCls}`}
+              role="status"
+              aria-label={item.dot ? `${item.title} status: ${item.dot}` : undefined}
+            />
+          )}
+          {item.badge && item.badge > 0 ? (
+            <span
+              className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-1 rounded-full bg-amber-500 text-black text-[9px] font-bold flex items-center justify-center"
+              aria-label={`${item.badge} pending`}
+            >
+              {item.badge > 9 ? "9+" : item.badge}
+            </span>
+          ) : null}
+        </Link>
+      );
+    }
     return (
       <Link
         key={item.title}
@@ -367,41 +411,95 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {dividerIndices.has(i) && (
               <div className="my-1.5 mx-2 nav-group-rule" aria-hidden="true" />
             )}
-            {renderNavItem(item)}
+            {renderNavItem(item, false)}
           </div>
         ))}
       </div>
     </nav>
   );
 
-  const SidebarFooter = () => (
-    <div className="border-t border-white/[0.05] p-2 relative">
-      <div className="absolute top-0 left-2 right-2 hairline opacity-40" />
-      <Link href="/settings" onClick={() => isMobile && setMobileMenuOpen(false)}>
-        <div className="flex items-center gap-2 px-2 py-1.5 mb-1.5 rounded-md bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/25 transition-all cursor-pointer group">
-          <div className="brand-mark shrink-0" style={{ width: "1.6rem", height: "1.6rem" }}>
-            <span className="text-[10px] font-bold text-white">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
-            </span>
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[12px] font-semibold text-white/85 truncate leading-tight">{user?.name}</span>
-            <span className="text-[10px] text-white/35 truncate font-mono leading-tight">{user?.email}</span>
-          </div>
-          <div className="live-pip" aria-label="online" />
-        </div>
-      </Link>
-      <Button
-        onClick={handleLogout}
-        variant="ghost"
-        size="sm"
-        className="w-full justify-start text-[11px] font-medium h-7 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
+  // Icon-rail variant — used at narrow viewports. Drops every label and
+  // both switchers (org + workspace) for max canvas; the command palette
+  // shrinks to a centered ⌘K glyph.
+  const RailNavContent = () => (
+    <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 flex flex-col items-center gap-px">
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        title="Search & run (⌘K)"
+        aria-label="Open command palette"
+        className="w-9 h-9 mb-2 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all flex items-center justify-center text-white/40 hover:text-sky-300"
       >
-        <LogOut className="w-3 h-3 mr-1.5" />
-        Sign Out
-      </Button>
-    </div>
+        <Search className="w-4 h-4" />
+      </button>
+      {navItems.map((item, i) => (
+        <div key={item.title} className="w-full flex flex-col items-center">
+          {dividerIndices.has(i) && (
+            <div className="my-1 w-6 h-px bg-white/[0.08]" aria-hidden="true" />
+          )}
+          {renderNavItem(item, true)}
+        </div>
+      ))}
+    </nav>
   );
+
+  const SidebarFooter = ({ rail = false }: { rail?: boolean }) => {
+    if (rail) {
+      return (
+        <div className="border-t border-white/[0.05] p-2 flex flex-col items-center gap-1">
+          <Link
+            href="/settings"
+            onClick={() => isMobile && setMobileMenuOpen(false)}
+            title={user?.name ?? "Account"}
+            aria-label="Account settings"
+          >
+            <div className="brand-mark shrink-0" style={{ width: "1.8rem", height: "1.8rem" }}>
+              <span className="text-[10px] font-bold text-white">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </span>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="w-7 h-7 rounded-md text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all flex items-center justify-center"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="border-t border-white/[0.05] p-2 relative">
+        <div className="absolute top-0 left-2 right-2 hairline opacity-40" />
+        <Link href="/settings" onClick={() => isMobile && setMobileMenuOpen(false)}>
+          <div className="flex items-center gap-2 px-2 py-1.5 mb-1.5 rounded-md bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/25 transition-all cursor-pointer group">
+            <div className="brand-mark shrink-0" style={{ width: "1.6rem", height: "1.6rem" }}>
+              <span className="text-[10px] font-bold text-white">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </span>
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-[12px] font-semibold text-white/85 truncate leading-tight">{user?.name}</span>
+              <span className="text-[10px] text-white/35 truncate font-mono leading-tight">{user?.email}</span>
+            </div>
+            <div className="live-pip" aria-label="online" />
+          </div>
+        </Link>
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-[11px] font-medium h-7 text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all"
+        >
+          <LogOut className="w-3 h-3 mr-1.5" />
+          Sign Out
+        </Button>
+      </div>
+    );
+  };
 
   if (isMobile) {
     return (
@@ -445,22 +543,39 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white app-chrome">
-      {/* Desktop Sidebar */}
-      <aside className="w-56 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
+      {/* Desktop Sidebar — rail at narrow viewports unless user pinned expanded */}
+      <aside
+        className={`shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe transition-[width] duration-200 ${
+          railMode ? "w-14" : "w-56"
+        }`}
+      >
         {/* Header */}
-        <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2 relative" aria-label={BRAND_NAME}>
+        <div className={`h-12 flex items-center border-b border-white/[0.05] relative ${railMode ? "justify-center px-2" : "px-4 gap-2"}`} aria-label={BRAND_NAME}>
           <div className="brand-mark shrink-0">
             <Zap className="w-3 h-3 text-white" />
           </div>
-          <BrandName size="sm" className="flex-1" />
-          <div className="absolute bottom-0 left-4 right-4 hairline opacity-50" />
+          {!railMode && <BrandName size="sm" className="flex-1" />}
+          <div className="absolute bottom-0 left-3 right-3 hairline opacity-50" />
         </div>
 
         {/* Nav Content */}
-        <NavContent />
+        {railMode ? <RailNavContent /> : <NavContent />}
+
+        {/* Rail toggle — only visible when the auto-rail kicked in or user pinned. */}
+        {(isNarrow || railOverride === false) && (
+          <button
+            type="button"
+            onClick={() => setRailOverride(railMode ? false : true)}
+            title={railMode ? "Expand sidebar" : "Collapse to rail"}
+            aria-label={railMode ? "Expand sidebar" : "Collapse to rail"}
+            className="mx-2 mb-1 h-6 rounded-md text-white/30 hover:text-white/70 hover:bg-white/[0.04] flex items-center justify-center transition-colors"
+          >
+            <ChevronDown className={`w-3 h-3 transition-transform ${railMode ? "-rotate-90" : "rotate-90"}`} />
+          </button>
+        )}
 
         {/* Footer */}
-        <SidebarFooter />
+        <SidebarFooter rail={railMode} />
       </aside>
 
       {/* Main Content */}
