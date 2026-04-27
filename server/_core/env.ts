@@ -74,6 +74,21 @@ export const ENV = {
 
   // Redis (for BullMQ job queues)
   redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379",
+
+  // ── Outbound delivery providers ─────────────────────────────────────────
+  // Email
+  sendgridApiKey: process.env.SENDGRID_API_KEY ?? "",
+  /** From-address used for SendGrid sends. Must be a verified sender. */
+  sendgridFromEmail: process.env.SENDGRID_FROM_EMAIL ?? "",
+  sendgridFromName: process.env.SENDGRID_FROM_NAME ?? "Shop_a_Bot",
+
+  // SMS
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
+  /** E.164 phone number provisioned in Twilio (e.g. +14155551234). */
+  twilioFromNumber: process.env.TWILIO_FROM_NUMBER ?? "",
+  /** Twilio Messaging Service SID — alternative to a single from-number. */
+  twilioMessagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID ?? "",
 };
 
 // ─── Startup Validation ──────────────────────────────────────────────────

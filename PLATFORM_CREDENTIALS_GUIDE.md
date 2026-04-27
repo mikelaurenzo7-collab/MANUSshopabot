@@ -289,6 +289,90 @@ This guide documents all API credentials needed for the 14 platform integrations
 
 ---
 
+## Outbound Delivery (Email + SMS)
+
+Shop_a_Bot routes all outbound email and SMS through a unified delivery layer at `server/delivery/*`. Three providers fan in; the layer auto-selects based on intent + which env vars are set.
+
+### Email — SendGrid (preferred for transactional / marketing)
+
+When configured, SendGrid is the default for `social.sendEmailCampaign`, recovery flows, and any programmatic send. It runs from a single verified sender so the platform doesn't need to round-trip through each user's Gmail token.
+
+**Required env vars:**
+- `SENDGRID_API_KEY` — full API key from https://app.sendgrid.com/settings/api_keys (start with `SG.`)
+- `SENDGRID_FROM_EMAIL` — verified sender address (must match a Sender Identity in SendGrid)
+
+**Optional:**
+- `SENDGRID_FROM_NAME` — display name (default: `Shop_a_Bot`)
+
+**Setup:**
+1. Create a SendGrid account → free tier ships with 100 emails/day, paid starts at $19.95/mo for 50k.
+2. Verify a single sender (Settings → Sender Authentication → Single Sender) OR set up domain authentication for the merchant's domain.
+3. Generate a Full Access API key.
+4. Drop both vars into `.env` / production secret store.
+
+**Verify it's working:** call `delivery.getDeliveryStatus()` from the diagnostics router — should report `email.sendgrid: true`.
+
+### Email — Gmail (per-user, personal-mode merchants)
+
+Already wired via the existing social-OAuth flow (`/api/social/oauth/callback` for `gmail`). When a merchant connects Gmail at `/integrations`, the layer can route their sends through their own inbox. Best for solo operators who want emails to come from their personal address.
+
+**Limits:** Gmail caps non-Workspace accounts at 500 sends/day. For higher volume, use SendGrid.
+
+**Required env vars:** uses the existing `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` — no new config.
+
+### SMS — Twilio (only SMS provider today)
+
+Powers `social.sendSms` and any future recovery-flow / order-shipped notifications.
+
+**Required env vars (one of two profiles):**
+
+*Profile A — single from-number (simple, sandbox-friendly):*
+- `TWILIO_ACCOUNT_SID` — starts with `AC`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER` — E.164 format (e.g. `+14155551234`); must be a number you've provisioned in Twilio Console
+
+*Profile B — Messaging Service (recommended for production):*
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_MESSAGING_SERVICE_SID` — starts with `MG`; handles A2P registration, geographic routing, and opt-out compliance for you
+
+**Setup:**
+1. Create a Twilio account (or use the trial — $15 credit).
+2. Provision a phone number, OR create a Messaging Service and attach a number.
+3. For US/Canada production traffic, complete A2P 10DLC registration.
+4. Find SID + auth token at the top of the Twilio Console dashboard.
+
+**Cost:** US SMS is ~$0.0079 per segment; international varies by destination.
+
+### Provider selection (how the layer picks)
+
+For email, when `provider` is not explicitly set:
+1. SendGrid if `SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL` are set.
+2. Gmail if the user has a connected Gmail account.
+3. `NoDeliveryProviderError` — the caller surfaces a friendly message.
+
+For SMS, only Twilio is currently supported. If `TWILIO_*` env is unset, callers get `NoDeliveryProviderError` with a setup hint.
+
+### Smoke test (after configuring)
+
+```bash
+# from a node REPL or script with the same env loaded as the server:
+const { sendEmail, sendSms, getDeliveryStatus } = require('./server/delivery');
+
+await getDeliveryStatus();
+// → { email: { sendgrid: true, gmail: false }, sms: { twilio: true } }
+
+await sendEmail({
+  to: { email: 'you@example.com' },
+  subject: 'Shop_a_Bot delivery test',
+  html: '<p>Working!</p>',
+});
+
+await sendSms({ to: '+14155551234', body: 'Twilio works.' });
+```
+
+---
+
 ## Summary: What I Can Do vs. What You Need to Do
 
 ### ✅ I Can Do (Browser Access Available)
