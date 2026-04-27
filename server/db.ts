@@ -700,6 +700,13 @@ export async function getEmailCampaigns(storeId: number) {
   return db.select().from(emailCampaigns).where(eq(emailCampaigns.storeId, storeId)).orderBy(desc(emailCampaigns.createdAt));
 }
 
+export async function getEmailCampaignById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(emailCampaigns).where(eq(emailCampaigns.id, id)).limit(1);
+  return rows[0];
+}
+
 export async function updateEmailCampaign(id: number, data: Partial<InsertEmailCampaign>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

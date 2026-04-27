@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getSocialAccountsByPlatform } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { sanitizeEmail, sanitizeName, sanitizeMultiline } from "../utils/sanitize";
+import { sendEmail, DeliveryFailedError, NoDeliveryProviderError } from "../delivery";
 
 // ─── Input Schemas ───────────────────────────────────────────────────────
 
@@ -152,40 +153,52 @@ export const gmailBotRouter = router({
     }),
 
   /**
-   * Send an email
+   * Send an email — explicitly via the user's connected Gmail account.
+   * Delegates to the unified delivery layer with `provider: "gmail"`.
+   * For automated/transactional sends elsewhere in the codebase, use
+   * `delivery.sendEmail()` directly so the platform can pick the best
+   * provider (SendGrid by default, Gmail as fallback).
    */
   sendEmail: protectedProcedure
     .input(SendEmailInput)
     .mutation(async ({ ctx, input }) => {
-      const credentials = await getGmailCredentials(ctx.user.id);
-      // Sanitize inputs before sending
       const safeSubject = sanitizeName(input.subject, 500);
       const safeBody = input.isHtml ? input.body : sanitizeMultiline(input.body, 50000);
       const safeTo = sanitizeEmail(input.to);
       if (!safeTo) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid email address" });
 
-      // Build RFC 2822 MIME message
-      const messageParts = [
-        `To: ${safeTo}`,
-        `Subject: ${safeSubject}`,
-        "MIME-Version: 1.0",
-        `Content-Type: text/${input.isHtml ? "html" : "plain"}; charset="UTF-8"`,
-        "",
-        input.body,
-      ];
-      const rawMessage = messageParts.join("\r\n");
-      const encodedMessage = Buffer.from(rawMessage).toString("base64url");
-
-      const result = await gmailFetch("/users/me/messages/send", credentials, {
-        method: "POST",
-        body: { raw: encodedMessage },
-      });
-
-      return {
-        messageId: result.id,
-        threadId: result.threadId,
-        sent: true,
-      };
+      try {
+        const result = await sendEmail(
+          {
+            to: { email: safeTo },
+            subject: safeSubject,
+            ...(input.isHtml ? { html: safeBody } : { text: safeBody }),
+          },
+          { provider: "gmail", userId: ctx.user.id },
+        );
+        return {
+          messageId: result.providerMessageId,
+          // threadId only available from raw Gmail response — keep
+          // backward compat by returning the same id for both fields
+          // when the API used here doesn't surface threadId.
+          threadId: result.providerMessageId,
+          sent: true,
+        };
+      } catch (err) {
+        if (err instanceof NoDeliveryProviderError) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: err.message,
+          });
+        }
+        if (err instanceof DeliveryFailedError) {
+          throw new TRPCError({
+            code: err.statusCode === 401 ? "UNAUTHORIZED" : "INTERNAL_SERVER_ERROR",
+            message: err.message,
+          });
+        }
+        throw err;
+      }
     }),
 
   /**
