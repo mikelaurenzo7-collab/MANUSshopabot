@@ -346,11 +346,21 @@ export default function IntegrationsPage() {
                   ? connectedPlatformIds.has(platform.id)
                   : connectedSocialIds.has(platform.id);
                 const color = PLATFORM_COLORS[platform.id] || "#64748b";
+                // `available` is the server's truth-check that the OAuth credentials
+                // for this platform are actually configured in env. Tiles where it's
+                // false still appear (so users can see the roadmap), but the Connect
+                // button is replaced with a "Coming soon" hint — clicking would send
+                // them through an OAuth flow that has no client_id and 404s.
+                const isAvailable = platform.available !== false;
 
                 return (
                   <div
                     key={platform.id}
-                    className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
+                    className={`border rounded-xl p-4 transition-colors ${
+                      isAvailable
+                        ? "bg-white/4 border-white/8 hover:bg-white/6"
+                        : "bg-white/[0.02] border-white/[0.05] opacity-70"
+                    }`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -371,28 +381,37 @@ export default function IntegrationsPage() {
                       </div>
                     )}
 
-                    <Button
-                      size="sm"
-                      className={`w-full text-xs ${
-                        isConnected
-                          ? "bg-white/6 text-slate-300 hover:bg-white/10 border border-white/10"
-                          : "text-white hover:opacity-90"
-                      }`}
-                      style={!isConnected ? { backgroundColor: color } : {}}
-                      onClick={() => {
-                        if (connectTab === "ecommerce") {
-                          generateOAuth.mutate({ platform: platform.id, origin: window.location.origin });
-                        } else {
-                          generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
-                        }
-                      }}
-                      disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
-                    >
-                      {generateOAuth.isPending || generateSocialOAuth.isPending ? (
-                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                      ) : null}
-                      {isConnected ? "Reconnect" : "Connect"}
-                    </Button>
+                    {!isAvailable ? (
+                      <div
+                        className="w-full text-center text-[11px] text-slate-400 border border-dashed border-white/10 bg-white/[0.02] rounded-md py-1.5"
+                        aria-label={`${platform.name} coming soon`}
+                      >
+                        Coming soon
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className={`w-full text-xs ${
+                          isConnected
+                            ? "bg-white/6 text-slate-300 hover:bg-white/10 border border-white/10"
+                            : "text-white hover:opacity-90"
+                        }`}
+                        style={!isConnected ? { backgroundColor: color } : {}}
+                        onClick={() => {
+                          if (connectTab === "ecommerce") {
+                            generateOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                          } else {
+                            generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                          }
+                        }}
+                        disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
+                      >
+                        {generateOAuth.isPending || generateSocialOAuth.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        ) : null}
+                        {isConnected ? "Reconnect" : "Connect"}
+                      </Button>
+                    )}
                   </div>
                 );
               })}

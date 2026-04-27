@@ -46,7 +46,7 @@ const METRICS = [
   { icon: Clock,        value: "< 30 min", label: "Store goes live",        color: "text-sky-400"    },
   { icon: ShoppingCart, value: "0 clicks", label: "To fulfill an order",    color: "text-cyan-400"   },
   { icon: TrendingUp,   value: "24 / 7",   label: "Bots running for you",   color: "text-emerald-400"},
-  { icon: Globe,        value: "15+",      label: "Platform integrations",  color: "text-orange-400" },
+  { icon: Globe,        value: "Live",     label: "Shopify · OAuth ready",  color: "text-orange-400" },
 ];
 
 const PRICING = [
@@ -163,12 +163,12 @@ const INTEGRATION_LOGOS = [
 ];
 
 const SOCIAL_TICKER = [
-  "15+ platform integrations",
+  "Shopify OAuth — live today",
   "3 AI bots running 24/7",
   "Zero manual fulfillment",
   "Builder → Merchant → Social, in one platform",
   "Stripe-grade billing built in",
-  "Built for Shopify, Amazon, Etsy, TikTok Shop & more",
+  "Amazon, Etsy, TikTok Shop adapters scaffolded — see status page",
 ];
 
 const FAQ_ITEMS = [
@@ -182,7 +182,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Which platforms does Shop_a_Bot support?",
-    a: "Shop_a_Bot integrates with Shopify, Amazon, Etsy, TikTok Shop, Pinterest, Instagram, Facebook, and 7+ additional platforms. New integrations are added regularly.",
+    a: "Shopify is live today via OAuth. Amazon, Etsy, TikTok Shop, Meta (Instagram + Facebook), Pinterest, and several other adapters are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
   },
   {
     q: "How does the Builder Bot source products?",

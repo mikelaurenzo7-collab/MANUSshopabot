@@ -65,8 +65,21 @@ async function startServer() {
   }));
 
   // ─── CORS ───────────────────────────────────────────────────────────────
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
+  // Production must declare ALLOWED_ORIGINS explicitly. Falling back to
+  // localhost in prod is a footgun: production traffic gets rejected,
+  // and a localhost-running attacker would trivially get CORS access.
+  // Fail loud at boot — Manus surfaces the missing env var immediately
+  // instead of users hitting CORS errors after deploy.
+  const rawOrigins = process.env.ALLOWED_ORIGINS;
+  if (process.env.NODE_ENV === "production" && !rawOrigins) {
+    throw new Error(
+      "[CORS] NODE_ENV=production but ALLOWED_ORIGINS is not set. " +
+      "Set ALLOWED_ORIGINS to a comma-separated list of production origins " +
+      "(e.g. https://app.shopabot.com) in your Manus secrets store.",
+    );
+  }
+  const allowedOrigins = rawOrigins
+    ? rawOrigins.split(",").map(o => o.trim()).filter(Boolean)
     : ["http://localhost:3000", "http://localhost:5173"];
   app.use(cors({
     origin: process.env.NODE_ENV === "production"
