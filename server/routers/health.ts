@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getDeliveryStatus } from "../delivery";
@@ -86,11 +86,12 @@ export const healthRouter = router({
   /**
    * Run live health checks on all connected e-commerce credentials and social accounts.
    * Returns per-platform status with latency and last-checked timestamp.
+   * Org-scoped: only the active org's credentials are probed.
    */
-  checkAll: protectedProcedure.mutation(async ({ ctx }) => {
+  checkAll: orgProcedure.mutation(async ({ ctx }) => {
     const [credentials, socialAccounts] = await Promise.all([
-      db.getPlatformCredentials(ctx.user.id),
-      db.getSocialAccounts(ctx.user.id),
+      db.getPlatformCredentialsByOrg(ctx.org.id),
+      db.getSocialAccountsByOrg(ctx.org.id),
     ]);
 
     const ecomResults = await Promise.allSettled(

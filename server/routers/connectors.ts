@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 
@@ -289,19 +289,19 @@ export const connectorsRouter = router({
     }));
   }),
 
-  /** Get user's platform credentials (e-commerce) */
-  listCredentials: protectedProcedure.query(async ({ ctx }) => {
-    return db.getPlatformCredentials(ctx.user.id);
+  /** Org's e-commerce platform credentials */
+  listCredentials: orgProcedure.query(async ({ ctx }) => {
+    return db.getPlatformCredentialsByOrg(ctx.org.id);
   }),
 
-  /** Get user's social media accounts */
-  listSocialAccounts: protectedProcedure.query(async ({ ctx }) => {
-    return db.getSocialAccounts(ctx.user.id);
+  /** Org's social media accounts */
+  listSocialAccounts: orgProcedure.query(async ({ ctx }) => {
+    return db.getSocialAccountsByOrg(ctx.org.id);
   }),
 
-  /** Get connected platform summary for dashboard */
-  connectionSummary: protectedProcedure.query(async ({ ctx }) => {
-    return db.getConnectedPlatformSummary(ctx.user.id);
+  /** Connected-platform summary for the active org's dashboard */
+  connectionSummary: orgProcedure.query(async ({ ctx }) => {
+    return db.getConnectedPlatformSummaryByOrg(ctx.org.id);
   }),
 
   /** Connect an e-commerce platform via API keys (WooCommerce, Walmart) */

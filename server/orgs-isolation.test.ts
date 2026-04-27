@@ -226,6 +226,37 @@ describe("Multi-tenancy: cross-org isolation canary", () => {
     expect(anaSrc).toContain("getAgentStatusSummaryByOrg(ctx.org.id");
   });
 
+  it("connectors + tools + health credential reads are org-scoped (regression guard)", async () => {
+    // Pre-fix every credential-reading procedure called
+    // `getPlatformCredentials(ctx.user.id)` / `getSocialAccounts(ctx.user.id)`
+    // — both span every org the user belongs to. Reading credentials,
+    // tool connections, or running a live health check while signed in
+    // to one org would surface another org's connections.
+    const fs = await import("fs");
+    const path = await import("path");
+    const conn = fs.readFileSync(path.resolve(__dirname, "routers/connectors.ts"), "utf-8");
+    const tools = fs.readFileSync(path.resolve(__dirname, "routers/tools.ts"), "utf-8");
+    const health = fs.readFileSync(path.resolve(__dirname, "routers/health.ts"), "utf-8");
+
+    // connectors: listCredentials / listSocialAccounts / connectionSummary
+    expect(conn).toContain("listCredentials: orgProcedure");
+    expect(conn).toContain("listSocialAccounts: orgProcedure");
+    expect(conn).toContain("connectionSummary: orgProcedure");
+    expect(conn).toContain("getPlatformCredentialsByOrg(ctx.org.id)");
+    expect(conn).toContain("getSocialAccountsByOrg(ctx.org.id)");
+    expect(conn).toContain("getConnectedPlatformSummaryByOrg(ctx.org.id)");
+
+    // tools.listConnected + tools.byBot
+    expect(tools).toContain("listConnected: orgProcedure");
+    expect(tools).toContain("byBot: orgProcedure");
+    expect(tools).toContain("getPlatformCredentialsByOrg(ctx.org.id)");
+
+    // health.checkAll — the live-probe mutation
+    expect(health).toContain("checkAll: orgProcedure");
+    expect(health).toContain("getPlatformCredentialsByOrg(ctx.org.id)");
+    expect(health).toContain("getSocialAccountsByOrg(ctx.org.id)");
+  });
+
   it("shopifyOAuth dupe-check is scoped to the user's personal org, not all stores", async () => {
     // Pre-fix the OAuth callback called `getStoresByUser(userId)` to
     // de-dupe an existing connection — but `getStoresByUser` spans

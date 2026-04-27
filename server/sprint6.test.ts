@@ -64,7 +64,10 @@ describe("Platform Health Router", () => {
 
   it("health router has checkAll mutation", () => {
     const src = readFile("server/routers/health.ts");
-    expect(src).toContain("checkAll: protectedProcedure.mutation");
+    // Migrated from protectedProcedure → orgProcedure as part of the
+    // cross-tenant hardening pass — the mutation now reads the active
+    // org's credentials, not the user's union of every org they're in.
+    expect(src).toContain("checkAll: orgProcedure.mutation");
     expect(src).toContain("getEcommerceAdapter");
     expect(src).toContain("getSocialAdapter");
   });

@@ -344,6 +344,13 @@ export async function getStoreCountForOrg(orgId: number): Promise<number> {
   return Number(result[0]?.count ?? 0);
 }
 
+/**
+ * @deprecated Spans every org the user belongs to — a cross-tenant leak
+ * in any tenant-facing code path. Use `getStoresByOrg(ctx.org.id)`
+ * instead. Retained only for legacy single-user/global flows
+ * (e.g. operator dashboards, scheduler tasks that haven't been
+ * migrated to per-org execution yet).
+ */
 export async function getStoresByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -514,6 +521,11 @@ export async function getOpenHeatmapByOrg(orgId: number, sinceDate: Date) {
   }));
 }
 
+/**
+ * @deprecated Returns orders across the entire platform. Use
+ * `getRecentOrdersByOrg(ctx.org.id, limit)` from any tenant-facing
+ * route. Kept for operator-side admin dashboards.
+ */
 export async function getRecentOrders(limit = 20) {
   const db = await getDb();
   if (!db) return [];
@@ -552,6 +564,11 @@ export async function createAgentTask(data: InsertAgentTask, executor?: DbExecut
   return { id: result[0].insertId };
 }
 
+/**
+ * @deprecated Returns agent tasks from every tenant. Use
+ * `getAgentTasksByOrg(ctx.org.id, filters)` from any tenant-facing
+ * route. Kept for the scheduler's own self-introspection.
+ */
 export async function getAgentTasks(filters?: { agentType?: string; storeId?: number; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
@@ -756,6 +773,11 @@ export async function getAdCampaigns(storeId: number) {
   return db.select().from(adCampaigns).where(eq(adCampaigns.storeId, storeId)).orderBy(desc(adCampaigns.createdAt));
 }
 
+/**
+ * @deprecated Use `getAdCampaignsByOrg(ctx.org.id)` in any tenant-facing
+ * code. This helper joins through `stores.userId`, which spans every
+ * org the user belongs to. Retained for legacy scheduler tasks only.
+ */
 export async function getAdCampaignsByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -975,6 +997,11 @@ export async function getDashboardMetricsForOrg(orgId: number, storeId?: number)
   };
 }
 
+/**
+ * @deprecated Aggregates across every store on the platform when
+ * `storeId` is omitted. Use `getDashboardMetricsForOrg(ctx.org.id, storeId?)`
+ * from any tenant-facing route. Retained for operator/admin metrics.
+ */
 export async function getDashboardMetrics(storeId?: number) {
   const db = await getDb();
   if (!db) return { totalRevenue: 0, totalOrders: 0, activeProducts: 0, pendingApprovals: 0 };
@@ -1021,6 +1048,11 @@ export async function getDashboardMetrics(storeId?: number) {
   };
 }
 
+/**
+ * @deprecated Aggregates agent tasks across every tenant. Use
+ * `getAgentStatusSummaryByOrg(ctx.org.id)` from any tenant-facing
+ * route. Kept for operator-side dashboards.
+ */
 export async function getAgentStatusSummary() {
   const db = await getDb();
   if (!db) return [];
@@ -1064,6 +1096,11 @@ export async function createPlatformCredential(data: InsertPlatformCredential, e
   return { id: result[0].insertId };
 }
 
+/**
+ * @deprecated Use `getPlatformCredentialsByOrg(ctx.org.id)` for any
+ * caller in a tenant context. Filters by `platformCredentials.userId`
+ * and spans every org the user belongs to.
+ */
 export async function getPlatformCredentials(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1114,6 +1151,11 @@ export async function createSocialAccount(data: InsertSocialAccount, executor?: 
   return { id: result[0].insertId };
 }
 
+/**
+ * @deprecated Use `getSocialAccountsByOrg(ctx.org.id)` for any caller
+ * in a tenant context. This helper filters by `socialAccounts.userId`
+ * and spans every org the user belongs to.
+ */
 export async function getSocialAccounts(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1162,6 +1204,11 @@ export async function deleteSocialAccount(id: number, executor?: DbExecutor) {
   await db.delete(socialAccounts).where(eq(socialAccounts.id, id));
 }
 
+/**
+ * @deprecated Sums across every org the user belongs to. Use
+ * `getConnectedPlatformSummaryByOrg(ctx.org.id)` from any tenant-facing
+ * route.
+ */
 export async function getConnectedPlatformSummary(userId: number) {
   const db = await getDb();
   if (!db) return { stores: 0, credentials: 0, socialAccounts: 0 };
@@ -1176,6 +1223,44 @@ export async function getConnectedPlatformSummary(userId: number) {
     credentials: credCount?.count ?? 0,
     socialAccounts: socialCount?.count ?? 0,
   };
+}
+
+/**
+ * Org-scoped variant of `getConnectedPlatformSummary`. Counts stores,
+ * platform credentials, and social accounts that belong to the active
+ * org — not the legacy user-wide aggregate (which spans every org the
+ * user is a member of).
+ */
+export async function getConnectedPlatformSummaryByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return { stores: 0, credentials: 0, socialAccounts: 0 };
+  const [storeCount] = await db.select({ count: count() }).from(stores)
+    .where(and(eq(stores.orgId, orgId), eq(stores.status, "active")));
+  const [credCount] = await db.select({ count: count() }).from(platformCredentials)
+    .where(and(eq(platformCredentials.orgId, orgId), eq(platformCredentials.status, "active")));
+  const [socialCount] = await db.select({ count: count() }).from(socialAccounts)
+    .where(and(eq(socialAccounts.orgId, orgId), eq(socialAccounts.status, "active")));
+  return {
+    stores: storeCount?.count ?? 0,
+    credentials: credCount?.count ?? 0,
+    socialAccounts: socialCount?.count ?? 0,
+  };
+}
+
+/**
+ * Org-scoped platform credentials. Used by `connectors.listCredentials`,
+ * `tools.connected`, and `health.checkAll` — every callsite that
+ * surfaces credentials to a tenant-facing user should use this rather
+ * than `getPlatformCredentials(userId)`, which spans every org the
+ * user belongs to.
+ */
+export async function getPlatformCredentialsByOrg(orgId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const results = await db.select().from(platformCredentials)
+    .where(eq(platformCredentials.orgId, orgId))
+    .orderBy(desc(platformCredentials.createdAt));
+  return results.map(credential => decryptCredentialTokens(credential)!);
 }
 
 // ─── OAuth State helpers ───────────────────────────────────────────────────

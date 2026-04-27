@@ -15,7 +15,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getToolAdapter, buildToolCredentials, SUPPORTED_TOOL_CONNECTORS } from "../adapters/tools";
@@ -182,9 +182,9 @@ export const toolsRouter = router({
     }));
   }),
 
-  /** List user's currently connected tools. */
-  listConnected: protectedProcedure.query(async ({ ctx }) => {
-    const all = await db.getPlatformCredentials(ctx.user.id);
+  /** Org's currently connected tool credentials. */
+  listConnected: orgProcedure.query(async ({ ctx }) => {
+    const all = await db.getPlatformCredentialsByOrg(ctx.org.id);
     return (all || []).filter((c: any) => SUPPORTED_TOOL_CONNECTORS.includes(c.platform));
   }),
 
@@ -192,10 +192,11 @@ export const toolsRouter = router({
    * Group tools by bot — the canonical "what does each bot have?" view.
    * Returns one entry per bot with its connected + available tools so
    * the UI (and any future LLM tool-selection) can answer the question
-   * with one round-trip.
+   * with one round-trip. Org-scoped: only the active org's connected
+   * credentials are surfaced.
    */
-  byBot: protectedProcedure.query(async ({ ctx }) => {
-    const connectedRecords = await db.getPlatformCredentials(ctx.user.id);
+  byBot: orgProcedure.query(async ({ ctx }) => {
+    const connectedRecords = await db.getPlatformCredentialsByOrg(ctx.org.id);
     const connectedSet = new Set(
       (connectedRecords || [])
         .filter((c: any) => SUPPORTED_TOOL_CONNECTORS.includes(c.platform))
