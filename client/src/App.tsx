@@ -24,6 +24,7 @@ const IntegrationsPage = lazy(() => import("./pages/Integrations"));
 
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
 const LandingPage = lazy(() => import("./pages/Landing"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
 const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -75,6 +76,10 @@ function Router() {
       <Switch>
         {/* Public marketing landing page */}
         <Route path="/landing" component={LandingPage} />
+        {/* Public legal pages — full-screen, outside DashboardLayout */}
+        <Route path="/privacy">{() => <LegalPage kind="privacy" />}</Route>
+        <Route path="/terms">{() => <LegalPage kind="terms" />}</Route>
+        <Route path="/docs">{() => <LegalPage kind="docs" />}</Route>
         {/* Onboarding is full-screen, outside DashboardLayout */}
         <Route path="/onboarding" component={OnboardingPage} />
         <Route>

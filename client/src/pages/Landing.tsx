@@ -8,7 +8,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
-  ChevronDown, Star, Quote, KeyRound,
+  ChevronDown, KeyRound, Loader2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -151,33 +151,12 @@ const INTEGRATION_LOGOS = [
 ];
 
 const SOCIAL_TICKER = [
-  "2,400+ stores launched",
-  "$4.2M revenue processed",
-  "1.2M orders fulfilled",
   "15+ platform integrations",
   "3 AI bots running 24/7",
   "Zero manual fulfillment",
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Marcus T.",
-    role: "Shopify store owner",
-    stars: 5,
-    text: "I launched my first dropshipping store in 22 minutes. The Builder Bot handled everything — niche research, product import, even the legal pages. I didn't write a single line of copy.",
-  },
-  {
-    name: "Priya S.",
-    role: "E-commerce entrepreneur",
-    stars: 5,
-    text: "I loved the moment the Builder handed the keys to the Merchant. It actually felt like a graduation. I went from spending 3 hours a day on fulfillment to literally zero. My store runs while I sleep.",
-  },
-  {
-    name: "Jordan K.",
-    role: "TikTok shop seller",
-    stars: 5,
-    text: "Social Bot created my first TikTok ad campaign in 4 minutes. It generated the creative, wrote the copy, and scheduled the posts. My ROAS went up 2.4x in the first week.",
-  },
+  "Builder → Merchant → Social, in one platform",
+  "Stripe-grade billing built in",
+  "Built for Shopify, Amazon, Etsy, TikTok Shop & more",
 ];
 
 const FAQ_ITEMS = [
@@ -354,10 +333,18 @@ export default function Landing() {
                 </Button>
                 <Button
                   onClick={() => handlePricingClick("growth")}
+                  disabled={checkoutMutation.isPending}
                   size="sm"
-                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition-all"
+                  className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 transition-all disabled:opacity-70"
                 >
-                  Get Started
+                  {checkoutMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    "Get Started"
+                  )}
                 </Button>
               </>
             )}
@@ -366,9 +353,10 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
         {/* Background effects */}
-        <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
+        <div className="aurora-mesh" />
+        <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
         <div className="light-leak-blue absolute -top-32 left-1/3 opacity-80" />
         <div className="light-leak-cyan absolute top-1/3 right-0 opacity-50" />
@@ -378,8 +366,8 @@ export default function Landing() {
           <div className="text-center lg:text-left">
             {/* Announcement pill */}
             <div className="mb-8 inline-flex items-center gap-2 announcement-banner">
-              <span className="micro-label">NEW</span>
-              <span className="text-white/60 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
+              <span className="eyebrow">New</span>
+              <span className="text-white/65 text-sm">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
               <ArrowRight className="w-3.5 h-3.5 text-white/35" />
             </div>
 
@@ -387,7 +375,7 @@ export default function Landing() {
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 leading-[0.88]">
               <span className="text-white">Your store</span>
               <br />
-              <span className="hero-line-gradient">runs itself.</span>
+              <span className="hero-title-shine">runs itself.</span>
             </h1>
 
             {/* Subtext */}
@@ -400,10 +388,20 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
               <Button
                 onClick={() => handlePricingClick("growth")}
+                disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-8 h-12 text-base font-semibold"
+                className="btn-glow text-white px-8 h-12 text-base font-semibold disabled:opacity-70"
               >
-                Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                {checkoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Opening checkout…
+                  </>
+                ) : (
+                  <>
+                    Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
               <Button
                 onClick={() => {
@@ -531,15 +529,19 @@ export default function Landing() {
       </section>
 
       {/* ── Metrics Strip ──────────────────────────────────────────────────── */}
-      <section className="py-12 px-4 border-y border-white/[0.06]">
+      <section className="py-14 px-4 border-y border-white/[0.06] relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 hairline opacity-60" />
+        <div className="absolute inset-x-0 bottom-0 hairline opacity-60" />
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card p-6 text-center group"
+              className="bento-card spotlight-card lift-on-hover p-7 text-center group"
             >
-              <metric.icon className={`w-5 h-5 ${metric.color} mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`} />
-              <div className="text-2xl font-black font-heading text-white mb-1 metric-number">{metric.value}</div>
+              <div className="w-10 h-10 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 transition-colors">
+                <metric.icon className={`w-5 h-5 ${metric.color} group-hover:scale-110 transition-transform duration-300`} />
+              </div>
+              <div className="lux-numeral text-3xl text-white mb-1.5 metric-number">{metric.value}</div>
               <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
             </div>
           ))}
@@ -550,8 +552,8 @@ export default function Landing() {
       <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">The Platform</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
+            <span className="eyebrow mb-4">The Platform</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">The Builder ships your store. The Merchant runs it. The Social Bot grows it. Each bot wakes up at the right moment.</p>
           </div>
 
@@ -570,7 +572,7 @@ export default function Landing() {
               return (
                 <div
                   key={bot.name}
-                  className="bento-card p-8 group relative overflow-hidden hover-lift"
+                  className="bento-card spotlight-card p-8 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
@@ -604,34 +606,49 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Social Proof / Testimonials ────────────────────────────────────── */}
+      {/* ── How It Works — honest capability walkthrough ───────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">Social Proof</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">What founders say</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Real results from real store owners using Shop_a_Bot.</p>
+            <span className="eyebrow mb-4">How It Works</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">From signup to autopilot</h2>
+            <p className="mt-4 text-white/45 max-w-xl mx-auto">No fabricated testimonials. Just the actual sequence of what happens after you connect your first store.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bento-card p-7 flex flex-col gap-4">
-                <Quote className="w-6 h-6 text-sky-500/40 shrink-0" />
-                <p className="text-white/60 text-sm leading-relaxed flex-1">"{t.text}"</p>
-                <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
-                  <div className="w-9 h-9 rounded-full bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-sky-300">{t.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white/80">{t.name}</div>
-                    <div className="text-xs text-white/35">{t.role}</div>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {Array.from({ length: t.stars }).map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
+            {[
+              {
+                step: "Step 1",
+                accent: "#38bdf8",
+                Icon: Zap,
+                title: "Connect in minutes",
+                text: "OAuth into Shopify, Amazon, Etsy, TikTok Shop, Meta, TikTok, Pinterest, Twitter, Pinterest, Gmail, and more. Credentials are encrypted at rest with AES-256-GCM.",
+              },
+              {
+                step: "Step 2",
+                accent: "#22d3ee",
+                Icon: Bot,
+                title: "Bots wake up",
+                text: "Builder researches your niche and configures your storefront. Merchant takes the keys on launch day and runs orders, pricing, and inventory. Social manufactures demand.",
+              },
+              {
+                step: "Step 3",
+                accent: "#fb923c",
+                Icon: Shield,
+                title: "You stay in control",
+                text: "Every bot action is logged. Set approval gates for high-stakes actions. Pause, override, or hand back to human review at any moment.",
+              },
+            ].map(({ step, accent, Icon, title, text }) => (
+              <div key={step} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: `${accent}1a`, border: `1px solid ${accent}40`, boxShadow: `0 0 16px ${accent}33` }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: accent }} />
                 </div>
+                <span className="micro-label" style={{ color: accent }}>{step}</span>
+                <h3 className="text-lg font-heading font-bold text-white -mt-1">{title}</h3>
+                <p className="text-white/55 text-sm leading-relaxed">{text}</p>
               </div>
             ))}
           </div>
@@ -642,8 +659,8 @@ export default function Landing() {
       <section id="pricing" className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">Pricing</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
+            <span className="eyebrow mb-4">Pricing</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Simple Pricing</h2>
             <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
@@ -651,10 +668,10 @@ export default function Landing() {
             {PRICING.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl p-6 transition-all duration-300 ${
+                className={`relative rounded-xl p-6 transition-all duration-500 lift-on-hover ${
                   tier.featured
-                    ? "bg-sky-500/5 border border-sky-500/40 shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 hover:border-sky-500/60"
-                    : "bento-card"
+                    ? "tier-popular bg-gradient-to-b from-sky-500/[0.08] via-sky-500/[0.03] to-transparent shadow-[0_0_40px_rgba(14,165,233,0.15)]"
+                    : "bento-card spotlight-card"
                 }`}
               >
                 {tier.badge && (
@@ -708,8 +725,8 @@ export default function Landing() {
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
-            <p className="micro-label mb-3">FAQ</p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
+            <span className="eyebrow mb-4">FAQ</span>
+            <h2 className="mt-4 text-4xl md:text-5xl font-black tracking-tighter text-white">Common questions</h2>
           </div>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item) => (
@@ -722,10 +739,11 @@ export default function Landing() {
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center reveal reveal-visible">
-          <div className="bento-card-featured rounded-2xl p-12 relative overflow-hidden">
+          <div className="bento-card-featured gradient-ring rounded-2xl p-12 relative overflow-hidden">
+            <div className="aurora-mesh opacity-50" />
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
             <div className="relative">
-              <p className="micro-label mb-4">Ready to automate?</p>
+              <p className="eyebrow mb-4">Ready to automate?</p>
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-4">
                 Launch your first autonomous store
               </h2>
@@ -734,10 +752,20 @@ export default function Landing() {
               </p>
               <Button
                 onClick={() => handlePricingClick("growth")}
+                disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto"
+                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto disabled:opacity-70"
               >
-                Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                {checkoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Opening checkout…
+                  </>
+                ) : (
+                  <>
+                    Start Free Trial <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
               <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/25">
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> 7-day free trial</span>
@@ -760,9 +788,20 @@ export default function Landing() {
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
-              {["Terms", "Privacy", "Contact", "Docs", "Status"].map((link) => (
-                <a key={link} href="#" className="text-white/35 text-sm hover:text-sky-400 transition-colors">
-                  {link}
+              {[
+                { label: "Terms", href: "/terms" },
+                { label: "Privacy", href: "/privacy" },
+                { label: "Contact", href: "mailto:hello@shop-a-bot.app" },
+                { label: "Docs", href: "/docs" },
+                { label: "Status", href: "https://status.shop-a-bot.app", external: true },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  className="text-white/35 text-sm hover:text-sky-400 transition-colors"
+                >
+                  {link.label}
                 </a>
               ))}
             </div>

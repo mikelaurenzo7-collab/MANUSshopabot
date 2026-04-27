@@ -142,7 +142,19 @@ export default function MerchantPage() {
                     </div>
                     <div className="flex-1 p-0 overflow-auto custom-scrollbar">
                       {productsLoading ? (
-                        <div className="p-8 text-center text-muted-foreground font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                        <div className="p-6 space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground font-mono text-[10px] uppercase tracking-widest mb-3">
+                            <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                            Loading product matrix…
+                          </div>
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-2 border-b border-white/[0.04]">
+                              <div className="h-3 w-1/2 rounded bg-white/[0.04] animate-pulse" />
+                              <div className="h-3 w-12 rounded bg-white/[0.03] animate-pulse" />
+                              <div className="h-3 w-14 ml-auto rounded bg-white/[0.04] animate-pulse" />
+                            </div>
+                          ))}
+                        </div>
                       ) : !products?.length ? (
                         <div className="p-8 text-center">
                           <Package className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
@@ -192,7 +204,19 @@ export default function MerchantPage() {
                     </div>
                     <div className="flex-1 p-0 overflow-auto custom-scrollbar">
                       {ordersLoading ? (
-                        <div className="p-8 text-center text-muted-foreground font-mono text-[10px] uppercase">Awaiting Matrix Data...</div>
+                        <div className="p-6 space-y-2">
+                          <div className="flex items-center gap-2 text-muted-foreground font-mono text-[10px] uppercase tracking-widest mb-3">
+                            <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                            Streaming order data…
+                          </div>
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-2 border-b border-white/[0.04]">
+                              <div className="h-3 w-1/3 rounded bg-white/[0.04] animate-pulse" />
+                              <div className="h-3 w-16 rounded bg-white/[0.03] animate-pulse" />
+                              <div className="h-3 w-14 ml-auto rounded bg-white/[0.04] animate-pulse" />
+                            </div>
+                          ))}
+                        </div>
                       ) : !orders?.length ? (
                         <div className="p-8 text-center">
                           <ShoppingCart className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />

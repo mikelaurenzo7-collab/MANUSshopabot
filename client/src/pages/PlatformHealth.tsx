@@ -311,7 +311,7 @@ export default function PlatformHealth() {
       <div className="ghost-watermark" aria-hidden="true">HEALTH</div>
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
-      <div className="light-leak-purple" style={{top: '50%', right: '5%'}} aria-hidden="true" />
+      <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between page-header">

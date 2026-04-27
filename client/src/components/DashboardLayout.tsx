@@ -248,16 +248,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         key={item.title}
         href={item.path}
         onClick={() => isMobile && setMobileMenuOpen(false)}
-        className={`flex items-center h-9 px-3 rounded-lg transition-all duration-200 group relative ${
+        className={`flex items-center h-9 pl-3.5 pr-3 rounded-lg transition-all duration-300 group relative ${
           isActive
-            ? "bg-sky-500/10 text-sky-300 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
-            : "text-white/40 hover:text-white/80 hover:bg-white/[0.04]"
+            ? "bg-gradient-to-r from-sky-500/[0.14] via-sky-500/[0.06] to-transparent text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
+            : "text-white/40 hover:text-white/85 hover:bg-white/[0.035]"
         }`}
       >
-        {isActive && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gradient-to-b from-sky-400 to-cyan-500 rounded-full" />
-        )}
+        {isActive && <span className="nav-active-bar" aria-hidden="true" />}
         <item.icon
+          aria-hidden="true"
           className={`w-4 h-4 mr-2.5 transition-all duration-200 ${
             isActive ? "text-sky-400" : "opacity-40 group-hover:opacity-70"
           }`}
@@ -266,16 +265,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {item.title}
         </span>
         {brandCls && (
-          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${brandCls} opacity-70 shrink-0 mr-1`} aria-hidden="true" />
         )}
         {dotCls && (
           <span
             className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0`}
-            aria-label={`status ${item.dot}`}
+            role="status"
+            aria-label={`${item.title} status: ${item.dot}`}
           />
         )}
         {item.badge && item.badge > 0 ? (
-          <span className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0">
+          <span
+            className="ml-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center shrink-0"
+            aria-label={`${item.badge} pending`}
+          >
             {item.badge > 99 ? "99+" : item.badge}
           </span>
         ) : null}
@@ -292,14 +295,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.1] transition-all"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-gradient-to-r from-white/[0.025] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] hover:border-sky-400/25 transition-all group"
                 data-testid="workspace-switcher"
               >
-                <Store className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <span className="text-xs font-semibold text-white/85 truncate flex-1 text-left">
-                  {activeStore?.name ?? "All stores"}
+                <span className="w-6 h-6 rounded-md bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
+                  <Store className="w-3 h-3 text-sky-300" />
                 </span>
-                <ChevronDown className="w-3 h-3 text-white/30 shrink-0" />
+                <div className="min-w-0 flex-1 flex flex-col items-start">
+                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/30 leading-none">Workspace</span>
+                  <span className="text-xs font-semibold text-white/85 truncate w-full text-left">
+                    {activeStore?.name ?? "All stores"}
+                  </span>
+                </div>
+                <ChevronDown className="w-3 h-3 text-white/35 shrink-0 group-hover:text-sky-300 transition-colors" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 bg-[#0a0a0f] border-white/10">
@@ -333,14 +341,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        className="w-full mb-4 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.1] transition-all text-left"
+        className="w-full mb-4 flex items-center gap-2 px-2.5 py-2 rounded-lg border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all text-left group"
         data-testid="command-palette-trigger"
       >
-        <Search className="w-3.5 h-3.5 text-white/40 shrink-0" />
-        <span className="text-xs text-white/40 truncate flex-1">Search & run…</span>
-        <kbd className="text-[9px] text-white/30 font-mono px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">
-          ⌘K
-        </kbd>
+        <Search className="w-3.5 h-3.5 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
+        <span className="text-xs text-white/40 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
+        <kbd className="kbd-lux">⌘K</kbd>
       </button>
 
       {navGroups.map((group, i) => {
@@ -366,7 +372,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   {group.label}
                 </span>
               )}
-              <div className="h-px mt-1.5 bg-gradient-to-r from-white/8 to-transparent" />
+              <div className="nav-group-rule" />
             </div>
             {open && <div className="space-y-0.5">{group.items.map(renderNavItem)}</div>}
           </div>
@@ -376,19 +382,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   );
 
   const SidebarFooter = () => (
-    <div className="border-t border-white/[0.05] p-3">
+    <div className="border-t border-white/[0.05] p-3 relative">
+      <div className="absolute top-0 left-3 right-3 hairline opacity-40" />
       <Link href="/settings" onClick={() => isMobile && setMobileMenuOpen(false)}>
-        <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/20 transition-all cursor-pointer group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:shadow-[0_0_14px_rgba(14,165,233,0.5)] transition-shadow">
-            <span className="text-xs font-bold text-white">
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-2 rounded-lg bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.05] hover:border-sky-500/25 transition-all cursor-pointer group">
+          <div className="brand-mark shrink-0" style={{ width: "2rem", height: "2rem" }}>
+            <span className="text-[11px] font-bold text-white">
               {user?.name?.charAt(0)?.toUpperCase() || "U"}
             </span>
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-xs font-semibold text-white/75 truncate">{user?.name}</span>
-            <span className="text-[10px] text-white/28 truncate">{user?.email}</span>
+            <span className="text-xs font-semibold text-white/85 truncate">{user?.name}</span>
+            <span className="text-[10px] text-white/35 truncate font-mono">{user?.email}</span>
           </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 opacity-70 shrink-0" />
+          <div className="live-pip" aria-label="online" />
         </div>
       </Link>
       <Button
@@ -409,21 +416,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Mobile Header */}
         <div className="flex items-center justify-between h-14 px-4 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.35)]">
+            <div className="brand-mark">
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
             <BrandName size="sm" />
           </div>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open navigation menu">
                 <Menu className="w-4 h-4" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
               <div className="flex h-full flex-col">
                 <div className="h-14 flex items-center px-4 border-b border-white/[0.05] gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.35)]">
+                  <div className="brand-mark">
                     <Zap className="w-3.5 h-3.5 text-white" />
                   </div>
                   <BrandName size="sm" />
@@ -446,11 +453,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="w-64 shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe">
         {/* Header */}
-        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5" aria-label={BRAND_NAME}>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(14,165,233,0.35)]">
+        <div className="h-14 flex items-center px-5 border-b border-white/[0.05] gap-2.5 relative" aria-label={BRAND_NAME}>
+          <div className="brand-mark shrink-0">
             <Zap className="w-3.5 h-3.5 text-white" />
           </div>
           <BrandName size="sm" className="flex-1" />
+          <div className="absolute bottom-0 left-4 right-4 hairline opacity-50" />
         </div>
 
         {/* Nav Content */}

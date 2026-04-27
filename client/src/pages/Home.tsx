@@ -556,10 +556,14 @@ export default function Home() {
 
   const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
   const todayOrders = (metrics?.totalOrders ?? 0) as number;
-  const recommendation = (intel as any)?.totalLowStock > 0
-    ? `${(intel as any).totalLowStock} SKU${(intel as any).totalLowStock > 1 ? "s" : ""} low on inventory across your stores — review`
-    : (intel as any)?.topStore
-      ? `${(intel as any).topStore.name} is your top store this period — $${(((intel as any).topStore.revenue ?? 0) / 100).toFixed(0)}`
+  const intelData = intel as { totalLowStock?: number; topStore?: { name?: string; revenue?: number } } | undefined;
+  const lowStockCount = intelData?.totalLowStock ?? 0;
+  const topStoreName = intelData?.topStore?.name;
+  const topStoreRevenue = intelData?.topStore?.revenue ?? 0;
+  const recommendation = lowStockCount > 0
+    ? `${lowStockCount} SKU${lowStockCount > 1 ? "s" : ""} low on inventory across your stores — review`
+    : topStoreName
+      ? `${topStoreName} is your top store this period — $${(topStoreRevenue / 100).toFixed(0)}`
       : "No recommendations yet — connect a store to see insights";
 
   return (
@@ -597,7 +601,8 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 border-b border-white/[0.06] bg-[#040406]/70 backdrop-blur-xl px-4 md:px-6 py-3 flex flex-wrap items-center gap-3 md:gap-5 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/85 via-[#050507]/75 to-[#040406]/85 backdrop-blur-xl px-4 md:px-6 py-3.5 flex flex-wrap items-center gap-3 md:gap-3.5 z-20">
+        <div className="absolute inset-x-0 top-0 hairline opacity-40" />
         <Kpi
           icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400" />}
           label="Today's revenue"
@@ -624,10 +629,10 @@ export default function Home() {
           value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"}
           sub={botHealth.text}
         />
-        <div className="ml-auto flex items-center gap-2 max-w-[420px] truncate rounded-lg border border-sky-500/20 bg-sky-500/[0.05] px-3 py-1.5">
+        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-3 py-1.5 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3.5 h-3.5 text-sky-300 shrink-0" />
-          <span className="text-[11px] text-white/70 truncate" title={recommendation}>{recommendation}</span>
+          <span className="text-[11px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
@@ -671,15 +676,15 @@ export default function Home() {
         </div>
 
         {/* Inspector */}
-        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/82 backdrop-blur-2xl flex flex-col z-20">
-          <div className="h-11 flex items-center px-4 border-b border-white/[0.05] justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Inspector</span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
-              <span className="text-[9px] font-mono text-emerald-400/70">LIVE</span>
+        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/85 backdrop-blur-2xl flex flex-col z-20 relative">
+          <div className="h-12 flex items-center px-4 border-b border-white/[0.05] justify-between relative">
+            <span className="eyebrow">Inspector</span>
+            <span className="flex items-center gap-2">
+              <span className="live-pip" />
+              <span className="text-[9px] font-mono font-bold text-emerald-400/85 tracking-[0.2em]">LIVE</span>
             </span>
           </div>
-          <div className="h-px bg-gradient-to-r from-sky-500/30 via-transparent to-transparent shrink-0" />
+          <div className="hairline shrink-0" />
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {selected ? (
               <NodeInspector
@@ -700,14 +705,12 @@ export default function Home() {
 
 function Kpi({ icon, label, value, sub, href }: { icon: React.ReactNode; label: string; value: string; sub?: string; href?: string }) {
   const body = (
-    <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 transition-all hover:border-sky-500/30 hover:bg-sky-500/[0.06]">
-      <div className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0">
-        {icon}
-      </div>
+    <div className="kpi-lux">
+      <div className="kpi-icon">{icon}</div>
       <div className="min-w-0">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-white/35">{label}</p>
-        <p className="text-sm font-semibold text-white leading-tight">{value}</p>
-        {sub && <p className="text-[10px] text-white/40 leading-tight truncate">{sub}</p>}
+        <p className="kpi-label">{label}</p>
+        <p className="kpi-value mt-0.5">{value}</p>
+        {sub && <p className="kpi-sub truncate">{sub}</p>}
       </div>
     </div>
   );
