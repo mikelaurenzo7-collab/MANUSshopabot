@@ -26,6 +26,7 @@ const IntegrationsPage = lazy(() => import("./pages/Integrations"));
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
 const LandingPage = lazy(() => import("./pages/Landing"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
+const InviteAcceptPage = lazy(() => import("./pages/InviteAccept"));
 const PlatformHealthPage = lazy(() => import("./pages/PlatformHealth"));
 const IntelligencePage = lazy(() => import("./pages/Intelligence"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -81,6 +82,8 @@ function Router() {
         <Route path="/privacy">{() => <LegalPage kind="privacy" />}</Route>
         <Route path="/terms">{() => <LegalPage kind="terms" />}</Route>
         <Route path="/docs">{() => <LegalPage kind="docs" />}</Route>
+        {/* Org invite acceptance — full-screen, public-ish (auth required for the mutation) */}
+        <Route path="/invite/:token" component={InviteAcceptPage} />
         {/* Onboarding is full-screen, outside DashboardLayout */}
         <Route path="/onboarding" component={OnboardingPage} />
         <Route>

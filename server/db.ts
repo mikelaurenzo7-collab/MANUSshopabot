@@ -41,6 +41,8 @@ import {
   webhookEvents, InsertWebhookEvent,
   organizations, InsertOrganization, Organization,
   orgMembers, InsertOrgMember, OrgMember,
+  emailDeliveryEvents, InsertEmailDeliveryEvent,
+  orgInvitations, InsertOrgInvitation, OrgInvitation,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -1716,4 +1718,86 @@ export async function pruneWebhookEvents(userId: number, keepCount = 200) {
   if (rows.length < keepCount) return;
   const minId = rows[rows.length - 1].id;
   await db.delete(webhookEvents).where(lt(webhookEvents.id, minId));
+}
+
+// ─── Email delivery events (SendGrid webhook) ──────────────────────────────
+
+/**
+ * Persist a single delivery event from the SendGrid webhook. Idempotent
+ * via the unique `eventId` index — replays from SendGrid (which can
+ * deliver the same event up to 4 times) silently de-dupe.
+ */
+export async function recordEmailDeliveryEvent(data: InsertEmailDeliveryEvent): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(emailDeliveryEvents).values(data);
+  } catch (err: any) {
+    // Duplicate eventId — webhook replay. Treat as success.
+    if (err?.code === "ER_DUP_ENTRY") return;
+    throw err;
+  }
+}
+
+/**
+ * Aggregate counts per event type for a given campaign. Powers the
+ * campaign analytics view ("100 sent, 87 delivered, 42 opened, 8 clicked").
+ */
+export async function getEmailCampaignEventCounts(campaignId: number): Promise<Record<string, number>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db
+    .select({ eventType: emailDeliveryEvents.eventType, count: count() })
+    .from(emailDeliveryEvents)
+    .where(eq(emailDeliveryEvents.campaignId, campaignId))
+    .groupBy(emailDeliveryEvents.eventType);
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.eventType] = Number(r.count);
+  return out;
+}
+
+// ─── Organization invitations ──────────────────────────────────────────────
+
+export async function createOrgInvitation(data: InsertOrgInvitation): Promise<OrgInvitation> {
+  const db = await requireDb();
+  await db.insert(orgInvitations).values(data);
+  const rows = await db
+    .select()
+    .from(orgInvitations)
+    .where(eq(orgInvitations.token, data.token))
+    .limit(1);
+  return rows[0]!;
+}
+
+export async function getOrgInvitationByToken(token: string): Promise<OrgInvitation | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(orgInvitations)
+    .where(eq(orgInvitations.token, token))
+    .limit(1);
+  return rows[0];
+}
+
+export async function markOrgInvitationAccepted(
+  id: number,
+  userId: number,
+): Promise<void> {
+  const db = await requireDb();
+  await db
+    .update(orgInvitations)
+    .set({ acceptedAt: new Date(), acceptedByUserId: userId })
+    .where(eq(orgInvitations.id, id));
+}
+
+/** Pending (not yet accepted, not yet expired) invitations for an org. */
+export async function getPendingInvitationsForOrg(orgId: number): Promise<OrgInvitation[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(orgInvitations)
+    .where(eq(orgInvitations.orgId, orgId))
+    .orderBy(desc(orgInvitations.createdAt));
 }

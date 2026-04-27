@@ -51,6 +51,13 @@ export interface EmailDeliveryOptions {
    */
   fromEmail?: string;
   fromName?: string;
+  /**
+   * If set and the chosen provider is SendGrid, attached as
+   * `custom_args.campaignId` so the SendGrid Event Webhook can
+   * re-attribute delivered/open/click/bounce events back to the
+   * originating campaign.
+   */
+  campaignId?: number;
 }
 
 /** Inputs to deliver an SMS. */

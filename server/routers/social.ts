@@ -475,6 +475,7 @@ export const socialRouter = router({
           {
             provider: input.provider,
             userId: ctx.user.id,
+            campaignId: campaign.id,
           },
         );
 

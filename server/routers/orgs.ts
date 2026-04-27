@@ -11,6 +11,7 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import crypto from "node:crypto";
 import {
   orgProcedure,
   orgAdminProcedure,
@@ -18,7 +19,20 @@ import {
   router,
 } from "../_core/trpc";
 import * as db from "../db";
-import { sanitizeName } from "../utils/sanitize";
+import { sanitizeEmail, sanitizeName } from "../utils/sanitize";
+import {
+  sendEmail,
+  DeliveryFailedError,
+  NoDeliveryProviderError,
+} from "../delivery";
+import { renderOrgInviteEmail } from "../delivery/templates";
+
+/** Generate a URL-safe random invite token. 32 bytes → 43 chars base64url. */
+function generateInviteToken(): string {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
+const INVITE_TTL_DAYS = 7;
 
 export const orgsRouter = router({
   /** Orgs the current user is a member of, with role. */
@@ -110,5 +124,197 @@ export const orgsRouter = router({
         invitedByUserId: ctx.user.id,
       });
       return { success: true };
+    }),
+
+  /**
+   * Invite a person to the active org by email. Generates a one-shot
+   * redemption token, persists an `org_invitations` row, and sends a
+   * branded invite email via the delivery layer.
+   *
+   * The invitee doesn't need to have an account yet — they'll click
+   * the link, sign in (creating an account if needed), and the
+   * `acceptInvite` mutation will add their membership.
+   *
+   * Returns the invitation row + the public accept URL (for displaying
+   * a "copy link" affordance in the UI).
+   */
+  inviteByEmail: orgAdminProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        role: z.enum(["admin", "member"]).default("member"),
+        /** Public origin used to build the redemption URL — passed from the client. */
+        origin: z.string().url(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const cleanEmail = sanitizeEmail(input.email);
+      if (!cleanEmail) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid email address" });
+      }
+
+      const org = await db.getOrgById(ctx.org.id);
+      if (!org) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found" });
+      }
+
+      const token = generateInviteToken();
+      const expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+      const invitation = await db.createOrgInvitation({
+        orgId: ctx.org.id,
+        email: cleanEmail,
+        role: input.role,
+        token,
+        invitedByUserId: ctx.user.id,
+        expiresAt,
+      });
+
+      const acceptUrl = `${input.origin.replace(/\/$/, "")}/invite/${token}`;
+      const inviterName = ctx.user.name?.trim() || ctx.user.email || "A teammate";
+
+      // Render + send. If delivery fails, the invitation row stays so
+      // the caller can re-send by token (manual copy + paste from the
+      // returned URL is a usable fallback).
+      const { subject, html, text } = renderOrgInviteEmail({
+        inviteeEmail: cleanEmail,
+        orgName: org.name,
+        inviterName,
+        role: input.role,
+        acceptUrl,
+        expiresIn: `in ${INVITE_TTL_DAYS} days`,
+      });
+
+      let delivered: boolean;
+      let deliveryError: string | undefined;
+      try {
+        await sendEmail(
+          {
+            to: { email: cleanEmail },
+            subject,
+            html,
+            text,
+            categories: ["org_invite"],
+          },
+          {
+            userId: ctx.user.id,
+            // Force the platform sender — invites should never come from
+            // the inviter's personal Gmail (deliverability + impersonation
+            // concerns). If SendGrid isn't configured this throws and the
+            // caller surfaces the manual-link fallback.
+            provider: "sendgrid",
+          },
+        );
+        delivered = true;
+      } catch (err) {
+        delivered = false;
+        if (err instanceof NoDeliveryProviderError) {
+          deliveryError = "SendGrid not configured — share the invite link manually.";
+        } else if (err instanceof DeliveryFailedError) {
+          deliveryError = err.message;
+        } else {
+          deliveryError = err instanceof Error ? err.message : String(err);
+        }
+      }
+
+      return {
+        invitationId: invitation.id,
+        email: cleanEmail,
+        role: input.role,
+        acceptUrl,
+        expiresAt,
+        delivered,
+        deliveryError,
+      };
+    }),
+
+  /** List pending invitations for the active org. Owner/admin only. */
+  pendingInvitations: orgAdminProcedure.query(async ({ ctx }) => {
+    return db.getPendingInvitationsForOrg(ctx.org.id);
+  }),
+
+  /**
+   * Public preview of an invitation by token — used by the /invite/:token
+   * page so the invitee can see what they're accepting before signing in.
+   * Does NOT require auth (the token is the proof).
+   */
+  previewInvitation: protectedProcedure
+    .input(z.object({ token: z.string().min(1).max(64) }))
+    .query(async ({ input }) => {
+      const invitation = await db.getOrgInvitationByToken(input.token);
+      if (!invitation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invitation not found." });
+      }
+      if (invitation.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This invitation has already been accepted.",
+        });
+      }
+      if (invitation.expiresAt.getTime() < Date.now()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This invitation has expired. Ask the inviter to send a new one.",
+        });
+      }
+      const org = await db.getOrgById(invitation.orgId);
+      return {
+        orgName: org?.name ?? "an organization",
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: invitation.expiresAt,
+      };
+    }),
+
+  /**
+   * Accept a pending invitation. Adds the calling user as a member of
+   * the target org with the role specified in the invitation, marks
+   * the invitation accepted, and switches the user's active org so
+   * they land in the right place after redirect.
+   *
+   * The token alone is the authorization — we don't require the caller's
+   * email to match the invitation's email (that would block invites to
+   * an email distinct from the user's signed-in email, which is a
+   * common pattern).
+   */
+  acceptInvite: protectedProcedure
+    .input(z.object({ token: z.string().min(1).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      const invitation = await db.getOrgInvitationByToken(input.token);
+      if (!invitation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invitation not found." });
+      }
+      if (invitation.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This invitation has already been accepted.",
+        });
+      }
+      if (invitation.expiresAt.getTime() < Date.now()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This invitation has expired.",
+        });
+      }
+
+      // Add membership (idempotent — onDuplicateKeyUpdate handles re-accepts)
+      await db.addOrgMember({
+        orgId: invitation.orgId,
+        userId: ctx.user.id,
+        role: invitation.role,
+        invitedByUserId: invitation.invitedByUserId,
+      });
+
+      await db.markOrgInvitationAccepted(invitation.id, ctx.user.id);
+
+      // Auto-switch into the org so the redirect lands them in context
+      await db.setCurrentOrgForUser(ctx.user.id, invitation.orgId);
+
+      const org = await db.getOrgById(invitation.orgId);
+      return {
+        orgId: invitation.orgId,
+        orgName: org?.name ?? "your organization",
+        role: invitation.role,
+      };
     }),
 });

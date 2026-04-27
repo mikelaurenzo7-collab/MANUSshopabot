@@ -99,6 +99,7 @@ export async function sendEmail(
       result = await sendViaSendgrid(message, {
         fromEmail: options.fromEmail,
         fromName: options.fromName,
+        campaignId: options.campaignId,
       });
     }
 

@@ -13,6 +13,7 @@ import { registerToolOAuthRoutes } from "../toolOAuth";
 import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { registerPlatformWebhookRoutes } from "../platformWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
+import { registerSendGridWebhookRoutes } from "../sendgridWebhooks";
 import { generalRateLimiter, webhookRateLimiter, workflowRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
@@ -158,6 +159,8 @@ async function startServer() {
   registerPlatformWebhookRoutes(app);
   // Stripe webhook (subscription lifecycle: created, updated, canceled, payment_failed)
   registerStripeWebhook(app);
+  // SendGrid Event Webhook — delivered/open/click/bounce/dropped/etc.
+  registerSendGridWebhookRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
