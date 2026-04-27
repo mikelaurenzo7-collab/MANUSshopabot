@@ -660,3 +660,122 @@ Return as JSON with specific product-level recommendations.`,
     },
   ];
 });
+
+// ─── Competitor Pricing Scan ────────────────────────────────────────────────
+//
+// Scans 5-10 competitors in a niche, surfaces a pricing-intelligence
+// report with min/median/max price, common discount patterns, and a
+// suggested price band for the merchant. Powers the new
+// "Competitor Insights" surface — a key Shop_a_Bot moat is being able
+// to compare across walled gardens (Shopify, Amazon, Etsy, TikTok Shop)
+// in one query.
+//
+// Uses parallel_group so the pricing analysis + positioning analysis
+// LLM calls fire concurrently; ~50% faster than sequential.
+
+registerWorkflow("competitor_pricing_scan", (input): WorkflowStepDefinition[] => {
+  const niche = input.niche ?? "your category";
+  const productType = input.productType ?? "your product";
+  const targetMarginPct = input.targetMarginPct ?? 40;
+  return [
+    {
+      stepType: "parallel_group",
+      title: "Pricing Intelligence — competitor + positioning",
+      description: `Pulling competitor pricing for ${niche} and computing positioning advice.`,
+      input: {
+        substeps: [
+          {
+            stepType: "llm_call",
+            input: {
+              systemPrompt: `You are a competitive-pricing analyst. Identify 5-10 real competitors selling "${productType}" in the "${niche}" niche across Shopify, Amazon, Etsy, and TikTok Shop. For each, estimate their typical price, sale-price discount %, and key positioning angle. Be concrete — name real brands when possible.`,
+              userPrompt: `Map competitors for "${productType}" in "${niche}". Return JSON.`,
+              responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                  name: "competitor_pricing",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      competitors: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string" },
+                            platform: { type: "string" },
+                            typicalPriceUsd: { type: "number" },
+                            salePriceDiscountPct: { type: "number" },
+                            positioning: { type: "string" },
+                            url: { type: "string" },
+                          },
+                          required: ["name", "platform", "typicalPriceUsd", "salePriceDiscountPct", "positioning", "url"],
+                          additionalProperties: false,
+                        },
+                      },
+                      priceBandUsd: {
+                        type: "object",
+                        properties: {
+                          min: { type: "number" },
+                          median: { type: "number" },
+                          max: { type: "number" },
+                        },
+                        required: ["min", "median", "max"],
+                        additionalProperties: false,
+                      },
+                    },
+                    required: ["competitors", "priceBandUsd"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          },
+          {
+            stepType: "llm_call",
+            input: {
+              systemPrompt: `You are a pricing strategist. Given a niche + product + target margin, recommend a pricing strategy: penetration / parity / premium, with a justified price band.`,
+              userPrompt: `Niche: ${niche}\nProduct: ${productType}\nTarget margin: ${targetMarginPct}%\n\nReturn JSON with: recommendedStrategy ("penetration"|"parity"|"premium"), suggestedPriceUsdMin, suggestedPriceUsdMax, marginFloorWarningUsd, justification (2-3 sentences).`,
+              responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                  name: "pricing_strategy",
+                  strict: true,
+                  schema: {
+                    type: "object",
+                    properties: {
+                      recommendedStrategy: { type: "string", enum: ["penetration", "parity", "premium"] },
+                      suggestedPriceUsdMin: { type: "number" },
+                      suggestedPriceUsdMax: { type: "number" },
+                      marginFloorWarningUsd: { type: "number" },
+                      justification: { type: "string" },
+                    },
+                    required: ["recommendedStrategy", "suggestedPriceUsdMin", "suggestedPriceUsdMax", "marginFloorWarningUsd", "justification"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+    {
+      stepType: "data_transform",
+      title: "Combine intel into report",
+      description: "Merging competitor scan + positioning advice into a single report",
+      input: {
+        operation: "merge_pricing_report",
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Notify merchant",
+      input: {
+        title: "Competitor Pricing Report ready",
+        message: `Pricing intelligence for "${productType}" in "${niche}" is in your inbox.`,
+        notifyOwner: true,
+      },
+    },
+  ];
+});

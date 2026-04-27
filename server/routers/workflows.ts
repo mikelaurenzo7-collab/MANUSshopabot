@@ -169,6 +169,7 @@ export const workflowRouter = router({
         { type: "multi_store_expansion", title: "Multi-Store Expansion", description: "Cross-platform expansion strategy — analyze Shopify, Etsy, Amazon fit and launch order", icon: "Globe", scope: "global" },
         { type: "brand_audit", title: "Brand Audit", description: "Comprehensive brand health assessment — consistency, trust signals, conversion, and customer journey", icon: "ShieldCheck", scope: "specific_store" },
         { type: "product_optimization", title: "Product Optimization", description: "Optimize listings — titles, descriptions, pricing psychology, cross-sells, and dead product cleanup", icon: "Sparkles", scope: "specific_store" },
+        { type: "competitor_pricing_scan", title: "Competitor Pricing Scan", description: "Cross-platform pricing intelligence — Shopify + Amazon + Etsy + TikTok Shop in one report, with a recommended price band", icon: "DollarSign", scope: "global" },
       ],
       merchant: [
         { type: "inventory_audit", title: "Inventory Audit", description: "Cross-store inventory analysis with restock recommendations and dead stock alerts", icon: "ClipboardCheck", scope: "all_stores" },
@@ -184,6 +185,7 @@ export const workflowRouter = router({
         { type: "etsy_listing_refresh", title: "Etsy Listing Refresh", description: "Weekly SEO-optimized title and tag updates to maintain Etsy search visibility", icon: "RefreshCw", scope: "specific_store" },
         { type: "woocommerce_oos_hide", title: "WooCommerce OOS Hide", description: "Hide out-of-stock products from catalog while preserving SEO rankings and backlinks", icon: "EyeOff", scope: "specific_store" },
         { type: "walmart_performance_alarm", title: "Walmart Performance Alarm", description: "Monitor Walmart seller performance metrics and generate corrective action plans", icon: "AlertTriangle", scope: "specific_store" },
+        { type: "margin_guard_audit", title: "Margin Guard Audit", description: "Scans every active SKU and flags products selling below your margin floor — with proposed price-fix or pause actions for owner approval", icon: "Shield", scope: "specific_store" },
       ],
       social: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
@@ -202,6 +204,7 @@ export const workflowRouter = router({
         { type: "instagram_reels_boost", title: "Instagram Reels Boost", description: "Identify high watch-time Reels and boost them for maximum reach amplification", icon: "Film", scope: "global" },
         { type: "google_pmax_optimization", title: "Google PMax Optimization", description: "Performance Max campaign audit — asset groups, audience signals, and bid strategy", icon: "Cpu", scope: "global" },
         { type: "twitter_stream_monitor", title: "Twitter/X Brand Monitor", description: "Real-time brand mention tracking, sentiment analysis, and crisis detection", icon: "Radio", scope: "global" },
+        { type: "subject_line_ab_test", title: "Subject-Line A/B Test", description: "Generates 5 subject-line variants using different psychological angles, predicts open-rate lift, and ranks the winner", icon: "Mail", scope: "global" },
       ],
     };
   }),

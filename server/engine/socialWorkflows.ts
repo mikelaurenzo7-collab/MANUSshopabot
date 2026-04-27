@@ -790,3 +790,88 @@ Return as JSON.`,
     },
   ];
 });
+
+// ─── Subject-Line A/B Test Generator ────────────────────────────────────────
+//
+// Email open rate hinges on subject-line creative more than any other
+// variable. This workflow generates 5 distinct subject-line variants
+// (curiosity / urgency / benefit / question / personalization) for a
+// given campaign concept, predicts each variant's open-rate lift
+// vs. the baseline, and returns a ranked recommendation.
+//
+// Pairs naturally with the existing `email_flow` workflow: run this
+// first to pick a winning subject, then plug the winner into the
+// email-campaign generator.
+
+registerWorkflow("subject_line_ab_test", (input): WorkflowStepDefinition[] => {
+  const campaignType = input.campaignType ?? "promotional";
+  const productOrTopic = input.productOrTopic ?? "your store";
+  const brandVoice = input.brandVoice ?? "friendly and direct";
+  return [
+    {
+      stepType: "llm_call",
+      title: "Generate subject-line variants",
+      description: `5 variants × 5 angles for "${productOrTopic}"`,
+      input: {
+        systemPrompt: `You are a senior email copywriter who's optimized millions of dollars in email revenue. Generate FIVE distinct subject-line variants for the campaign described below. Each variant must use a DIFFERENT psychological angle:
+  1. Curiosity gap — withhold info, make them open to learn
+  2. Urgency / scarcity — time-bound stakes
+  3. Benefit-led — explicit promise of value
+  4. Question — direct engagement hook
+  5. Personalization-friendly — leaves room for {firstName} merge
+
+Constraints: ≤ 50 characters preferred, ≤ 65 hard cap. No clickbait. No emoji unless brand voice explicitly allows. For each variant, predict an open-rate lift vs. industry baseline (in percentage points) with a one-sentence justification.`,
+        userPrompt: `Campaign: ${campaignType}\nProduct/topic: "${productOrTopic}"\nBrand voice: ${brandVoice}\n\nReturn JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "subject_line_variants",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                variants: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      angle: { type: "string", enum: ["curiosity", "urgency", "benefit", "question", "personalization"] },
+                      subject: { type: "string" },
+                      characterCount: { type: "number" },
+                      predictedLiftPct: { type: "number" },
+                      justification: { type: "string" },
+                    },
+                    required: ["angle", "subject", "characterCount", "predictedLiftPct", "justification"],
+                    additionalProperties: false,
+                  },
+                },
+                recommendedWinner: {
+                  type: "object",
+                  properties: {
+                    angle: { type: "string" },
+                    subject: { type: "string" },
+                    why: { type: "string" },
+                  },
+                  required: ["angle", "subject", "why"],
+                  additionalProperties: false,
+                },
+                preheaderSuggestion: { type: "string" },
+              },
+              required: ["variants", "recommendedWinner", "preheaderSuggestion"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Subject-line A/B test ready",
+      input: {
+        title: "Subject-Line A/B variants generated",
+        message: `5 ranked subject-line variants for "${productOrTopic}" — winner picked, ready to ship.`,
+        notifyOwner: true,
+      },
+    },
+  ];
+});

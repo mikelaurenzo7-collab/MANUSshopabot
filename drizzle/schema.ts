@@ -645,7 +645,7 @@ export const workflowSteps = mysqlTable("workflow_steps", {
   id: int("id").autoincrement().primaryKey(),
   workflowId: int("workflowId").notNull(),
   stepIndex: int("stepIndex").notNull(), // 0-based order within workflow
-  stepType: mysqlEnum("stepType", ["llm_call", "api_call", "image_generation", "data_transform", "approval_gate", "notification", "store_action", "analysis"]).notNull(),
+  stepType: mysqlEnum("stepType", ["llm_call", "api_call", "image_generation", "data_transform", "approval_gate", "notification", "store_action", "analysis", "parallel_group"]).notNull(),
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   // Execution

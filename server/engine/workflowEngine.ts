@@ -37,7 +37,7 @@ import { logAgentAction } from "../telemetry";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-export type StepType = "llm_call" | "api_call" | "image_generation" | "data_transform" | "approval_gate" | "notification" | "store_action" | "analysis";
+export type StepType = "llm_call" | "api_call" | "image_generation" | "data_transform" | "approval_gate" | "notification" | "store_action" | "analysis" | "parallel_group";
 
 export interface WorkflowStepDefinition {
   stepType: StepType;
@@ -77,7 +77,7 @@ export interface StepContext {
 
 // ─── Workflow Registry ─────────────────────────────────────────────────────
 
-const workflowRegistry: Map<string, (input: Record<string, any>) => WorkflowStepDefinition[]> = new Map();
+export const workflowRegistry: Map<string, (input: Record<string, any>) => WorkflowStepDefinition[]> = new Map();
 
 export function registerWorkflow(workflowType: string, stepFactory: (input: Record<string, any>) => WorkflowStepDefinition[]) {
   workflowRegistry.set(workflowType, stepFactory);
@@ -527,9 +527,44 @@ async function executeStepByType(stepType: StepType, context: StepContext): Prom
       return executeStoreActionStep(context);
     case "api_call":
       return executeApiCallStep(context);
+    case "parallel_group":
+      return executeParallelGroupStep(context);
     default:
       return { message: `Step type "${stepType}" executed (no-op handler)` };
   }
+}
+
+/**
+ * Run a list of substeps concurrently. Use when each substep is
+ * independent of the others — typical example: a workflow that needs
+ * audience research AND ad copy AND product image, none of which
+ * depend on each other.
+ *
+ * Substeps share the parent's previousOutputs slice (read-only — they
+ * can't see each other's outputs). The result is `{ outputs: [...] }`
+ * positionally aligned with the input substeps array.
+ *
+ * Errors: a single substep failure rejects the whole group, so the
+ * engine's outer retry kicks in. This is intentional — partial
+ * success in a parallel group is rarely useful and tends to leave
+ * downstream steps in a confusing partial state.
+ */
+async function executeParallelGroupStep(context: StepContext): Promise<any> {
+  const { input } = context;
+  const substeps = (input.substeps as Array<{ stepType: StepType; input?: Record<string, any> }>) ?? [];
+  if (substeps.length === 0) {
+    return { outputs: [] };
+  }
+
+  const results = await Promise.all(
+    substeps.map((sub) =>
+      executeStepByType(sub.stepType, {
+        ...context,
+        input: sub.input ?? {},
+      }),
+    ),
+  );
+  return { outputs: results };
 }
 
 /**
@@ -834,9 +869,38 @@ export async function enforceSafetyRules(
         }
         break;
 
-      case "rate_limit":
-        // TODO: Implement rate limit checking (e.g., max 10 actions per hour)
+      case "rate_limit": {
+        // Window-based rate limiting: count agent_tasks of the same
+        // actionType in the rule's window (default 1 hour) and
+        // refuse the action if it would exceed the limit.
+        //
+        // Rule shape: rule.limit holds the max-per-window as a string;
+        // rule.windowSeconds (optional) scales the window. Falls back
+        // to 1 hour if unset.
+        const limit = parseInt(rule.limit, 10);
+        if (!Number.isFinite(limit) || limit <= 0) break;
+        const windowSec = (rule as any).windowSeconds
+          ? parseInt(String((rule as any).windowSeconds), 10)
+          : 3600;
+        const since = new Date(Date.now() - windowSec * 1000);
+        const dbMod = await import("../db");
+        // Count recent tasks of this actionType for this bot's user
+        const recent = await dbMod.getAgentTasks({
+          agentType: context.agentType,
+          limit: limit + 1,
+        });
+        const matching = (recent ?? []).filter((t: any) =>
+          t.taskType === proposedAction.actionType
+          && new Date(t.createdAt).getTime() >= since.getTime()
+        );
+        if (matching.length >= limit) {
+          return {
+            allowed: false,
+            reason: `Rate limit hit: max ${limit} ${proposedAction.actionType} actions per ${Math.round(windowSec / 60)} min — currently at ${matching.length}.`,
+          };
+        }
         break;
+      }
     }
   }
 

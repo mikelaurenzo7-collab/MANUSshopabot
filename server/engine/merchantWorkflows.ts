@@ -544,3 +544,103 @@ Return as JSON.`,
   ];
 });
 
+
+// ─── Margin Guard Audit ─────────────────────────────────────────────────────
+//
+// Scans every active product in a store, joins it with the most recent
+// pricing rule (if any), and flags products that are selling below
+// cost OR within a configurable margin floor. This is the bot
+// equivalent of an accountant's "your top SKU is losing money on every
+// unit" alert — direct revenue protection.
+//
+// Surfaces actionable proposals (raise price by X to hit floor, pause
+// the listing, or ignore if below threshold) as approval items so a
+// human signs off before the Merchant Bot ships price changes.
+
+registerWorkflow("margin_guard_audit", (input): WorkflowStepDefinition[] => {
+  const minMarginPct = input.minMarginPct ?? 15; // 15% default floor
+  const includePaused = input.includePaused ?? false;
+  return [
+    {
+      stepType: "data_transform",
+      title: "Pull products + cost data",
+      description: "Loading active products and cost prices for the store",
+      input: {
+        operation: "load_margin_audit_dataset",
+        minMarginPct,
+        includePaused,
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Margin analysis",
+      description: `Identify SKUs below ${minMarginPct}% margin floor`,
+      input: {
+        systemPrompt: `You are a precision-pricing analyst. Given a list of products with their sell price and cost price, identify any product whose margin is below the minimum floor. For each flagged product, propose either:
+  • RAISE_PRICE: raise to hit the floor (give exact target price)
+  • PAUSE_LISTING: when raising would price out of market
+  • LIQUIDATE: when stock is high and margin is unsalvageable
+
+Be precise. Always include the math.`,
+        userPrompt: `Audit margins. Minimum floor: ${minMarginPct}%. Use the dataset from the previous step. Return JSON.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "margin_audit",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                summary: {
+                  type: "object",
+                  properties: {
+                    productsAudited: { type: "number" },
+                    productsBelowFloor: { type: "number" },
+                    estimatedMonthlyLossUsd: { type: "number" },
+                  },
+                  required: ["productsAudited", "productsBelowFloor", "estimatedMonthlyLossUsd"],
+                  additionalProperties: false,
+                },
+                flaggedProducts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      productId: { type: "number" },
+                      title: { type: "string" },
+                      currentPriceUsd: { type: "number" },
+                      costPriceUsd: { type: "number" },
+                      currentMarginPct: { type: "number" },
+                      action: { type: "string", enum: ["RAISE_PRICE", "PAUSE_LISTING", "LIQUIDATE"] },
+                      proposedPriceUsd: { type: "number" },
+                      reasoning: { type: "string" },
+                    },
+                    required: ["productId", "title", "currentPriceUsd", "costPriceUsd", "currentMarginPct", "action", "proposedPriceUsd", "reasoning"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["summary", "flaggedProducts"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review flagged products",
+      description: "Owner approves or rejects each proposed margin-fix action",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Margin Guard report ready",
+      input: {
+        title: "Margin Guard scan complete",
+        message: "Review the flagged SKUs in your Approvals queue.",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
