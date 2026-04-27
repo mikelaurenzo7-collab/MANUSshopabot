@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import { PLANS, type PlanId } from "../stripe/products";
 import * as db from "../db";
@@ -123,9 +123,10 @@ export const stripeRouter = router({
     }),
 
   /**
-   * Get all available plans (public — used on landing page).
+   * Get all available plans (public — used on landing page so anonymous
+   * visitors can render the pricing grid from the canonical server list).
    */
-  getPlans: protectedProcedure.query(() => {
+  getPlans: publicProcedure.query(() => {
     return Object.values(PLANS);
   }),
 });
