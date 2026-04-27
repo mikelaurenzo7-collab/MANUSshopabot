@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -128,6 +128,18 @@ const TRUST_ITEMS = [
 
 const BOT_PREVIEW_PROGRESS_PERCENTAGES = [82, 67, 91];
 const HERO_GROWTH_BARS = [32, 48, 38, 70, 58, 84, 96];
+
+/**
+ * Canonical pricing-tier IDs accepted by the Stripe checkout flow. Kept in
+ * sync with `server/stripe/products.ts` `PlanId` and the zod input on the
+ * `createCheckoutSession` mutation. Used both for the direct CTA and the
+ * post-OAuth `?checkout=<planId>` resume path.
+ */
+const PLAN_IDS = ["starter", "growth", "pro", "scale"] as const;
+type CheckoutPlanId = (typeof PLAN_IDS)[number];
+function isCheckoutPlanId(value: string | null | undefined): value is CheckoutPlanId {
+  return value != null && (PLAN_IDS as readonly string[]).includes(value);
+}
 const HERO_ACTION_FEED = [
   "Imported 18 margin-safe SKUs",
   "Synced inventory across 6 channels",
@@ -267,13 +279,9 @@ export default function Landing() {
   const urlParams = new URLSearchParams(window.location.search);
   const subscriptionSuccess = urlParams.get("subscription") === "success";
 
-  const handlePricingClick = (planId: string) => {
-    if (!user) {
-      window.location.href = `/manus-oauth/login?returnPath=${encodeURIComponent(window.location.pathname)}`;
-      return;
-    }
+  const startCheckout = (planId: CheckoutPlanId) => {
     checkoutMutation.mutate(
-      { planId: planId as "starter" | "growth" | "pro" | "scale", origin: window.location.origin },
+      { planId, origin: window.location.origin },
       {
         onSuccess: (data) => {
           if (data.url) {
@@ -287,6 +295,40 @@ export default function Landing() {
       }
     );
   };
+
+  const handlePricingClick = (planId: string) => {
+    if (!isCheckoutPlanId(planId)) return;
+    if (!user) {
+      // Carry the selected plan through OAuth so checkout resumes automatically
+      // when the user lands back on `/`. Without this, the visitor would have
+      // to click the pricing CTA a second time after signing in — a known
+      // conversion-killer.
+      const returnPath = `/?checkout=${encodeURIComponent(planId)}`;
+      window.location.href = `/manus-oauth/login?returnPath=${encodeURIComponent(returnPath)}`;
+      return;
+    }
+    startCheckout(planId);
+  };
+
+  // Auto-resume Stripe Checkout once the post-OAuth redirect drops the user
+  // back on Landing with `?checkout=<planId>`. We strip the param immediately
+  // and fire the mutation exactly once per mount to avoid duplicate sessions
+  // across re-renders.
+  const autoCheckoutFiredRef = useRef(false);
+  useEffect(() => {
+    if (autoCheckoutFiredRef.current) return;
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const desired = params.get("checkout");
+    if (!isCheckoutPlanId(desired)) return;
+    autoCheckoutFiredRef.current = true;
+    // Clean the URL before firing so a refresh doesn't re-trigger checkout.
+    params.delete("checkout");
+    const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, "", next);
+    startCheckout(desired);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-[#050507] text-white overflow-x-hidden">
