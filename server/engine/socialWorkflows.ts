@@ -12,6 +12,7 @@
 
 import { registerWorkflow, type WorkflowStepDefinition } from "./workflowEngine";
 import { getSocialCapabilityMatrix } from "../adapters/social";
+import { composeSystemPrompt } from "./sharedPrompts";
 
 // ─── Ad Campaign Workflow ──────────────────────────────────────────────────
 
@@ -42,7 +43,13 @@ registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
   // concurrently via parallel_group (~12-18 sec).
   const audienceResearchInput = {
     promptClass: "audience_research",
-    systemPrompt: `You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads. ${platformBrief}`,
+    useClaudeDirect: true,
+    cacheSystemPrompt: true,
+    effort: "high" as const,
+    adaptiveThinking: true,
+    systemPrompt: composeSystemPrompt(
+      `You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads. ${platformBrief}`,
+    ),
     userPrompt: `Create a detailed target audience profile for advertising "${product}" on ${platform}:
 
 1. Primary Audience Segments (3-5 segments with demographics, interests, behaviors)
@@ -90,7 +97,13 @@ Return as JSON.`,
 
   const adCopyInput = {
     promptClass: "ad_copy_writer",
-    systemPrompt: `You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy. ${platformBrief}`,
+    useClaudeDirect: true,
+    cacheSystemPrompt: true,
+    effort: "high" as const,
+    adaptiveThinking: true,
+    systemPrompt: composeSystemPrompt(
+      `You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy. ${platformBrief}`,
+    ),
     userPrompt: `Generate 5 ad copy variations for "${product}" on ${platform}. For each variation include:
 - Hook (first line that stops the scroll)
 - Body copy (2-3 lines)
@@ -194,7 +207,13 @@ registerWorkflow("social_content", (input): WorkflowStepDefinition[] => {
       description: `Creating ${duration} content strategy for ${platforms.join(", ")}`,
       input: {
         promptClass: "social_content_strategy",
-        systemPrompt: `You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.\n\nPlatform briefs from the live capability matrix:\n${platformBriefs}\n\nRespect each platform's daily-post target + aspect-ratio + caption ceiling when planning the calendar.`,
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high" as const,
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          `You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.\n\nPlatform briefs from the live capability matrix:\n${platformBriefs}\n\nRespect each platform's daily-post target + aspect-ratio + caption ceiling when planning the calendar.`,
+        ),
         userPrompt: `Create a ${duration} social media content calendar for "${brand}" across ${platforms.join(", ")}:
 
 For each day, provide:
@@ -268,7 +287,13 @@ registerWorkflow("seo_audit", (input): WorkflowStepDefinition[] => {
       description: `Researching high-value keywords for ${niche}`,
       input: {
         promptClass: "seo_expert",
-        systemPrompt: "You are an SEO expert who has ranked hundreds of e-commerce stores on page 1 of Google. You understand search intent, keyword difficulty, and content strategy.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high" as const,
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are an SEO expert who has ranked hundreds of e-commerce stores on page 1 of Google. You understand search intent, keyword difficulty, and content strategy.",
+        ),
         userPrompt: `Conduct comprehensive keyword research for a ${niche} e-commerce store (${domain}):
 
 1. Primary Keywords (10): High-volume, high-intent commercial keywords
@@ -365,7 +390,13 @@ registerWorkflow("email_flow", (input): WorkflowStepDefinition[] => {
       description: `Creating a complete ${flowType} email automation sequence`,
       input: {
         promptClass: "email_campaign_expert",
-        systemPrompt: `You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.${channelBrief}`,
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high" as const,
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          `You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.${channelBrief}`,
+        ),
         userPrompt: `Create a complete ${flowType} email automation flow for "${brand}":
 
 Generate 5 emails in the sequence. For each email provide:
@@ -607,7 +638,13 @@ registerWorkflow("viral_trend_detector", (input): WorkflowStepDefinition[] => {
       title: "Trend Intelligence Scan",
       description: `Scanning viral trends across ${platforms.join(", ")} for "${niche}"`,
       input: {
-        systemPrompt: "You are a viral content strategist and trend forecaster. You've predicted and capitalized on trends that generated millions of views and six-figure revenue spikes for e-commerce brands.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high" as const,
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a viral content strategist and trend forecaster. You've predicted and capitalized on trends that generated millions of views and six-figure revenue spikes for e-commerce brands.",
+        ),
         userPrompt: `Conduct a comprehensive viral trend analysis for the "${niche}" niche across ${platforms.join(", ")}:
 
 1. Currently Viral Trends (Top 10):
@@ -796,7 +833,13 @@ registerWorkflow("conversion_funnel", (input): WorkflowStepDefinition[] => {
       description: `Analyzing conversion funnel for "${storeName}"`,
       input: {
         promptClass: "cro_expert",
-        systemPrompt: "You are a conversion rate optimization (CRO) expert who has increased e-commerce conversion rates by 50-300%. You think in funnels, test hypotheses, and optimize every micro-interaction.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high" as const,
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a conversion rate optimization (CRO) expert who has increased e-commerce conversion rates by 50-300%. You think in funnels, test hypotheses, and optimize every micro-interaction.",
+        ),
         userPrompt: `Conduct a comprehensive conversion funnel optimization analysis for "${storeName}" (current conversion rate: ${currentConversionRate}):
 
 1. Funnel Stage Analysis:

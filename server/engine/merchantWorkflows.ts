@@ -57,9 +57,15 @@ Provide specific restock quantities for low-stock items and clearance recommenda
       title: "Restock Recommendations",
       description: "Generating optimal restock quantities and timing",
       input: {
-        systemPrompt: caps
-          ? `You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts. Platform context: ${caps.strengths.slice(0, 2).join("; ")}.`
-          : "You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          caps
+            ? `You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts. Platform context: ${caps.strengths.slice(0, 2).join("; ")}.`
+            : "You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts.",
+        ),
         userPrompt: `Based on the inventory audit, generate restock recommendations:
 1. Priority restock list (items that will stock out within 7 days)
 2. Standard restock list (items below threshold but not critical)
@@ -380,7 +386,13 @@ registerWorkflow("supply_chain_intelligence", (input): WorkflowStepDefinition[] 
       title: "Supplier Performance Analysis",
       description: "Evaluating supplier reliability, lead times, and cost efficiency",
       input: {
-        systemPrompt: "You are a supply chain optimization expert for e-commerce. You've managed logistics for brands doing $50M+ in annual revenue.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a supply chain optimization expert for e-commerce. You've managed logistics for brands doing $50M+ in annual revenue.",
+        ),
         userPrompt: `Conduct a comprehensive supply chain intelligence analysis:
 
 1. Supplier Scorecard:
@@ -477,7 +489,13 @@ registerWorkflow("profit_loss_analysis", (input): WorkflowStepDefinition[] => {
       title: "Financial Intelligence Report",
       description: "Generating actionable financial insights and projections",
       input: {
-        systemPrompt: "You are a CFO-level financial analyst for e-commerce businesses. You turn raw financial data into strategic decisions.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a CFO-level financial analyst for e-commerce businesses. You turn raw financial data into strategic decisions.",
+        ),
         userPrompt: `Based on the financial data, generate a comprehensive P&L intelligence report:
 
 1. Profitability Analysis:
@@ -557,7 +575,13 @@ registerWorkflow("customer_segmentation", (input): WorkflowStepDefinition[] => {
       title: "Customer Behavior Analysis",
       description: "Analyzing customer purchase patterns and segmentation",
       input: {
-        systemPrompt: "You are a customer analytics expert specializing in e-commerce. You use RFM analysis, cohort analysis, and behavioral segmentation to drive retention and revenue.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a customer analytics expert specializing in e-commerce. You use RFM analysis, cohort analysis, and behavioral segmentation to drive retention and revenue.",
+        ),
         userPrompt: `Generate a comprehensive customer segmentation analysis:
 
 1. RFM Segmentation (Recency, Frequency, Monetary):
