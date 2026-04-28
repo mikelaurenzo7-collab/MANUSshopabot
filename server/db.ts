@@ -383,6 +383,29 @@ export async function getStoresByOrg(orgId: number) {
   return results.map(store => decryptStoreTokens(store)!);
 }
 
+/**
+ * Sum the active+draft product count across every store in an org.
+ * Used by the workflow recommender to classify the org's lifecycle
+ * stage (fresh / launching / operating / scaling) without dragging
+ * the full product list into memory. Drafts count — they signal
+ * intent to launch, which still maps to the "launching" stage.
+ */
+export async function getProductCountForOrg(orgId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const orgStores = await db
+    .select({ id: stores.id })
+    .from(stores)
+    .where(eq(stores.orgId, orgId));
+  if (orgStores.length === 0) return 0;
+  const ids = orgStores.map((s) => s.id);
+  const result = await db
+    .select({ c: count() })
+    .from(products)
+    .where(inArray(products.storeId, ids));
+  return Number(result[0]?.c ?? 0);
+}
+
 export async function getStoreById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
