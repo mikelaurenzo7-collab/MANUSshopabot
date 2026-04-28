@@ -250,7 +250,7 @@ export default function GmailBot() {
                 <button
                   onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                    autoReplyEnabled ? "bg-blue-600" : "bg-gray-700"
+                    autoReplyEnabled ? "bg-emerald-500" : "bg-white/[0.08]"
                   }`}
                 >
                   <span
@@ -291,9 +291,9 @@ export default function GmailBot() {
                       })
                     }
                     disabled={updateAutoReplyMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full"
                   >
-                    {updateAutoReplyMutation.isPending ? "Saving..." : "Save Auto-Reply"}
+                    {updateAutoReplyMutation.isPending ? "Saving…" : "Save auto-reply"}
                   </Button>
                 </>
               )}
