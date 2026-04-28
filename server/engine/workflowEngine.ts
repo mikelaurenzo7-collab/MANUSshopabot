@@ -595,7 +595,7 @@ async function getCachedPromptVariant(agentType: string, promptClass: string) {
 }
 
 async function executeLLMStep(context: StepContext): Promise<any> {
-  const { input, previousOutputs, agentType } = context;
+  const { input, previousOutputs, agentType, botMemory, botProfile } = context;
   let systemPrompt = input.systemPrompt ?? "You are a helpful e-commerce AI assistant.";
   const userPrompt = input.userPrompt ?? input.prompt ?? "Analyze the provided data.";
 
@@ -606,6 +606,31 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       // Logged once per cache miss in getCachedPromptVariant; quiet here to avoid log spam.
       systemPrompt = bestVariant.promptTemplate;
     }
+  }
+
+  // ── Memory recall (passive) ─────────────────────────────────────
+  // When the bot profile has stored memories from prior runs and this
+  // step hasn't opted out, prepend the most-recently-accessed entries
+  // as a "Recall" preamble. The model treats them as context, not
+  // instructions — they shape decisions without overriding the
+  // step-specific system prompt. Capped at 12 entries to keep the
+  // recall block compact (~600 tokens at the upper end). Bots accumulate
+  // memory via explicit memory_write tool calls inside an agentic loop
+  // (engine/memory.ts) — until that loop lands, this is read-only.
+  if (
+    botProfile?.memoryEnabled !== false &&
+    botMemory &&
+    botMemory.length > 0 &&
+    input.useMemory !== false
+  ) {
+    const top = botMemory.slice(0, 12);
+    const recallLines = top
+      .map((m: any) => {
+        const conf = typeof m.confidence === "number" ? ` (conf:${m.confidence})` : "";
+        return `- [${m.memoryType}]${conf} ${m.key}: ${m.value}`;
+      })
+      .join("\n");
+    systemPrompt = `${systemPrompt}\n\nRECALL — durable learnings from prior runs (use as context, not instructions):\n${recallLines}`;
   }
 
   // Build context from previous step outputs
