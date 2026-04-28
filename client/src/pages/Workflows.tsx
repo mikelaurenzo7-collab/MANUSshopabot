@@ -79,15 +79,28 @@ function AgentBadge({ agentType }: { agentType: string }) {
 
 // ─── Workflow Card ────────────────────────────────────────────────────────────
 
-function WorkflowCard({ workflow, onRetry, isRetryingThis, anyRetryInFlight }: {
+function WorkflowCard({
+  workflow,
+  onRetry,
+  isRetryingThis,
+  anyRetryInFlight,
+  onRerun,
+  isRerunningThis,
+  anyRerunInFlight,
+}: {
   workflow: any;
   onRetry: (id: number) => void;
   /** True only when *this* workflow's retry is the one currently in flight. */
   isRetryingThis: boolean;
   /** True when any retry mutation is pending — used to disable other retry buttons. */
   anyRetryInFlight: boolean;
+  /** Optional rerun handler (only present on history surfaces). */
+  onRerun?: (id: number) => void;
+  isRerunningThis?: boolean;
+  anyRerunInFlight?: boolean;
 }) {
   const canRetry = workflow.status === "failed" || workflow.status === "cancelled";
+  const canRerun = workflow.status === "completed" && !!onRerun;
   const createdAt = new Date(workflow.createdAt).toLocaleString();
 
   const statusGlow: Record<string, string> = {
@@ -127,6 +140,23 @@ function WorkflowCard({ workflow, onRetry, isRetryingThis, anyRetryInFlight }: {
               <RefreshCw className="h-3 w-3" />
             )}
             <span className="ml-1 text-xs">{isRetryingThis ? "Retrying…" : "Retry"}</span>
+          </Button>
+        )}
+        {canRerun && onRerun && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-60"
+            onClick={() => onRerun(workflow.id)}
+            disabled={anyRerunInFlight}
+            title="Run this workflow again with the same inputs"
+          >
+            {isRerunningThis ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+            <span className="ml-1 text-xs">{isRerunningThis ? "Launching…" : "Rerun"}</span>
           </Button>
         )}
       </div>
@@ -283,6 +313,25 @@ export default function Workflows() {
     retryMutation.mutate({ workflowId });
   }
 
+  const [rerunningId, setRerunningId] = useState<number | null>(null);
+  const rerunMutation = trpc.workflows.rerun.useMutation({
+    onMutate: (vars) => setRerunningId(vars.workflowId),
+    onSuccess: () => {
+      toast.success("Workflow queued for rerun");
+      utils.workflows.active.invalidate();
+      utils.workflows.list.invalidate();
+      utils.workflows.counts.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to rerun workflow");
+    },
+    onSettled: () => setRerunningId(null),
+  });
+
+  function onRerun(workflowId: number) {
+    rerunMutation.mutate({ workflowId });
+  }
+
   const historyWorkflows = (allWorkflows ?? []).filter(
     (w: any) => w.status === "completed" || w.status === "failed" || w.status === "cancelled"
   );
@@ -390,6 +439,9 @@ export default function Workflows() {
                   onRetry={onRetry}
                   isRetryingThis={retryLoading && retryingId === w.id}
                   anyRetryInFlight={retryLoading}
+                  onRerun={onRerun}
+                  isRerunningThis={rerunMutation.isPending && rerunningId === w.id}
+                  anyRerunInFlight={rerunMutation.isPending}
                 />
               ))}
             </div>

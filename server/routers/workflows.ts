@@ -158,6 +158,50 @@ export const workflowRouter = router({
       return { newWorkflowId };
     }),
 
+  /**
+   * Rerun a *completed* workflow with the same inputs. Distinct from
+   * `retry`, which is the failure-recovery affordance — `rerun` is
+   * "I liked the result, give me another fresh run" (e.g. weekly
+   * niche scans, repeated competitor checks). Creates a brand-new
+   * workflow row so the original's history is preserved.
+   *
+   * Title is prefixed with [Rerun] for visual distinction in the
+   * workflow list. Strips any prior [Rerun] / [Retry] tags so the
+   * title doesn't accumulate prefixes after multiple reruns.
+   */
+  rerun: orgProcedure
+    .input(z.object({ workflowId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const workflow = await getWorkflowById(input.workflowId);
+      if (!workflow) throw new TRPCError({ code: "NOT_FOUND", message: "Workflow not found" });
+      if (workflow.orgId !== ctx.org.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (workflow.status !== "completed") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Only completed workflows can be rerun. Use Retry for failed/cancelled runs.",
+        });
+      }
+
+      const cleanTitle = workflow.title.replace(/^\[(Rerun|Retry)\]\s+/g, "");
+
+      const newWorkflowId = await launchWorkflow(
+        ctx.user.id,
+        {
+          agentType: workflow.agentType,
+          workflowType: workflow.workflowType,
+          title: `[Rerun] ${cleanTitle}`,
+          description: workflow.description ?? undefined,
+          scope: workflow.scope,
+          storeId: workflow.storeId ?? undefined,
+          input: (workflow.input as Record<string, any>) ?? {},
+          steps: [],
+        },
+        { orgId: ctx.org.id },
+      );
+
+      return { newWorkflowId };
+    }),
+
   // ─── Available workflow types ──────────────────────────────────────────
   availableTypes: protectedProcedure.query(() => {
     return {
