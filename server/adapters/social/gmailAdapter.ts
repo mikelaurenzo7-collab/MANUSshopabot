@@ -10,6 +10,7 @@ import { withRetry } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -25,6 +26,47 @@ const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1";
 export class GmailAdapter implements SocialPlatformAdapter {
   readonly platform = "gmail";
   readonly platformName = "Gmail";
+
+  /**
+   * Gmail: 1:1 email channel for transactional + customer-support flows.
+   * No social-style audience features — Social Bot uses this for
+   * order-confirmation auto-replies, abandoned-cart sequences, and
+   * support triage rather than broadcast. No ads concept on Gmail's
+   * sender side. Daily send limits cap volume.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: false,
+      shortFormVideo: false,
+      carousel: false,
+      stories: false,
+      liveStream: false,
+      maxCopyChars: 0,
+      preferredAspectRatios: [],
+      maxVideoSeconds: 0,
+      scheduledPosting: true,
+      hashtagSupport: "ignored",
+      ads: false,
+      adFormats: [],
+      maxAdCopyChars: 0,
+      audienceTargeting: "none",
+      dynamicProductAds: false,
+      recommendedPostsPerDay: 50,
+      rateLimitTokensPerSec: 4,
+      audienceType: "engagement",
+      strengths: [
+        "Direct 1:1 reach — no algorithm filter between bot and customer",
+        "Native template + signature + scheduled-send — Social Bot drafts, sends on cadence",
+        "Highest-trust channel for transactional + support flows",
+      ],
+      limitations: [
+        "Daily send caps (~500/day on free Gmail, 2k/day on Workspace)",
+        "Spam-folder risk if bot misuses for broadcast (use SendGrid for that)",
+        "No paid-distribution surface — Gmail-as-channel is organic-only",
+      ],
+    };
+  }
 
   private async getAccessToken(credentials: SocialCredentials): Promise<string> {
     if (credentials.accessToken) return credentials.accessToken;

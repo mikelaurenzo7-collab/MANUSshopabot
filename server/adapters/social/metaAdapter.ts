@@ -7,6 +7,7 @@
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -25,6 +26,48 @@ const GRAPH_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
 export class MetaAdapter implements SocialPlatformAdapter {
   readonly platform = "meta";
   readonly platformName = "Meta (Facebook)";
+
+  /**
+   * Meta (Facebook): broadcast + ads powerhouse. Best-in-class lookalike
+   * audiences, Pixel/Conversions API for attribution, Advantage+ for
+   * automated creative + audience selection. Massive maxCopyChars (63k)
+   * but engagement collapses past ~150. Native scheduled posting via
+   * Creator Studio API.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: true,
+      stories: true,
+      liveStream: true,
+      maxCopyChars: 63206,
+      preferredAspectRatios: ["1:1", "4:5", "16:9", "9:16"],
+      maxVideoSeconds: 14400,
+      scheduledPosting: true,
+      hashtagSupport: "recommended",
+      ads: true,
+      adFormats: ["image", "video", "carousel", "collection", "advantage_plus"],
+      maxAdCopyChars: 125,
+      audienceTargeting: "lookalike",
+      dynamicProductAds: true,
+      recommendedPostsPerDay: 1,
+      rateLimitTokensPerSec: 5,
+      audienceType: "engagement",
+      strengths: [
+        "Lookalike audiences from custom seeds — highest-leverage targeting available",
+        "Conversions API + Pixel for first-party attribution post-iOS-14",
+        "Advantage+ auto-pilot creative + audience for Social Bot to delegate to",
+        "Catalog-driven Dynamic Product Ads — Builder feeds in, Meta serves out",
+      ],
+      limitations: [
+        "Ad copy past 125 chars truncates in feed — keep it tight",
+        "Pages need 100+ followers before some features unlock",
+        "iOS 14+ tracking opt-out shrinks lookalike accuracy outside Pixel/CAPI",
+      ],
+    };
+  }
 
   private getGraphBase(): string {
     return ENV.metaGraphApiBase || GRAPH_BASE;

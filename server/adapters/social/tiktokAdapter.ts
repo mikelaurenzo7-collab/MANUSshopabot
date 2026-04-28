@@ -9,6 +9,7 @@ import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -25,6 +26,48 @@ const TIKTOK_ADS_BASE = "https://business-api.tiktok.com/open_api/v1.3";
 export class TikTokAdapter implements SocialPlatformAdapter {
   readonly platform = "tiktok";
   readonly platformName = "TikTok";
+
+  /**
+   * TikTok: short-form vertical video, Gen-Z + millennial reach. Spark
+   * Ads boost organic content into paid distribution. Smart Performance
+   * Campaigns (TikTok's Advantage+ equivalent) auto-optimize creative.
+   * Algorithm rewards posting velocity — recommendedPostsPerDay = 3
+   * pushes the bot toward consistent output.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: true,
+      stories: false,
+      liveStream: true,
+      maxCopyChars: 2200,
+      preferredAspectRatios: ["9:16"],
+      maxVideoSeconds: 600,
+      scheduledPosting: true,
+      hashtagSupport: "native",
+      ads: true,
+      adFormats: ["spark", "in_feed_video", "topview", "branded_effect"],
+      maxAdCopyChars: 100,
+      audienceTargeting: "behavioral",
+      dynamicProductAds: true,
+      recommendedPostsPerDay: 3,
+      rateLimitTokensPerSec: 6,
+      audienceType: "engagement",
+      strengths: [
+        "Algorithm gives organic reach without follower count — best zero-spend channel",
+        "Spark Ads — boost an organic post into paid distribution at the same CPM",
+        "Smart Performance Campaigns auto-pick creative + audience",
+        "Vertical 9:16 only — Social Bot can hard-code one aspect ratio",
+      ],
+      limitations: [
+        "100-char ad copy ceiling — every word counts",
+        "Posting cadence matters; long pauses kill algorithmic reach",
+        "Video-only for ads (carousel + image are organic-only)",
+      ],
+    };
+  }
 
   private async contentFetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");

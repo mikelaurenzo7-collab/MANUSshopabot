@@ -8,6 +8,7 @@ import { withRetry } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -23,6 +24,48 @@ const GOOGLE_ADS_BASE = "https://googleads.googleapis.com/v17";
 export class GoogleAdsAdapter implements SocialPlatformAdapter {
   readonly platform = "google_ads";
   readonly platformName = "Google Ads";
+
+  /**
+   * Google Ads: search + Display + YouTube + Shopping under one API.
+   * Performance Max campaigns auto-optimize across surfaces. Search Ads
+   * intent is the highest-converting traffic source for most niches.
+   * Smart Bidding handles bid strategy automatically. The "ads" channel
+   * here covers paid distribution only — no organic posting concept.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: false,
+      stories: false,
+      liveStream: false,
+      maxCopyChars: 0,
+      preferredAspectRatios: ["1:1", "16:9", "9:16", "2:3"],
+      maxVideoSeconds: 360,
+      scheduledPosting: false,
+      hashtagSupport: "ignored",
+      ads: true,
+      adFormats: ["search", "display", "video_youtube", "shopping", "performance_max", "demand_gen"],
+      maxAdCopyChars: 90,
+      audienceTargeting: "behavioral",
+      dynamicProductAds: true,
+      recommendedPostsPerDay: 0,
+      rateLimitTokensPerSec: 5,
+      audienceType: "commerce",
+      strengths: [
+        "Search ads — purchase-intent traffic, highest conversion of any channel",
+        "Performance Max blends Search + Display + YouTube + Shopping in one campaign",
+        "Shopping feed driven by product catalog — Builder feeds in, Google serves",
+        "Smart Bidding handles bid strategy — Social Bot only picks the budget",
+      ],
+      limitations: [
+        "Ad copy: 30-char headlines + 90-char descriptions, repeated 15x per ad — highly constrained",
+        "Quality Score gates CPC — landing page + relevance matter as much as bid",
+        "No organic posting — ad budget is the entry ticket",
+      ],
+    };
+  }
 
   private async getAccessToken(credentials: SocialCredentials): Promise<string> {
     if (credentials.accessToken) return credentials.accessToken;

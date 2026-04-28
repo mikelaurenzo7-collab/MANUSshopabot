@@ -64,6 +64,23 @@ export function getSupportedPlatforms(): string[] {
 }
 
 /**
+ * Capability matrix for every registered ecommerce adapter. Used by
+ * bots (workflow planning), routers (tRPC surface), and the UI (connect
+ * tile detail view).
+ *
+ * Pulled lazily from each adapter's `getCapabilities()` so the matrix
+ * always reflects the live adapter behavior — no parallel doc to drift
+ * from the implementation.
+ */
+export function getEcommerceCapabilityMatrix(): Record<string, ReturnType<EcommercePlatformAdapter["getCapabilities"]>> {
+  const matrix: Record<string, ReturnType<EcommercePlatformAdapter["getCapabilities"]>> = {};
+  for (const [id, adapter] of Object.entries(adapters)) {
+    matrix[id] = adapter.getCapabilities();
+  }
+  return matrix;
+}
+
+/**
  * Build AdapterCredentials from a platform_credentials DB record.
  * Normalizes the DB schema into the adapter interface format.
  */

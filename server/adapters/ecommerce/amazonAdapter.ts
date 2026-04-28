@@ -16,6 +16,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
@@ -24,6 +25,49 @@ const limiter = platformRateLimiters.amazon;
 export class AmazonAdapter implements EcommercePlatformAdapter {
   readonly platform = "amazon";
   readonly platformName = "Amazon Seller";
+
+  /**
+   * Amazon SP-API: highest-volume marketplace, Buy-Box matters more than
+   * theme polish. Variants exist (parent/child ASIN), no metafields, FBA
+   * inventory propagation lags 5–10 minutes. Rate limits are stringent:
+   * 0.0167 req/sec for some endpoints (1/min), much higher for others —
+   * we pick a conservative 1 req/sec sustained and lean on the rate
+   * limiter's per-endpoint policy. Bots should use Buy-Box monitoring +
+   * dynamic pricing as the core value-add here, not store scaffolding.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: false,
+      bulkImport: true,
+      maxImagesPerProduct: 9,
+      categories: true,
+      webhooks: true,
+      webhookEvents: ["ORDER_CHANGE", "ANY_OFFER_CHANGED", "FBA_INVENTORY_AVAILABILITY_CHANGES"],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: false,
+      compareAtPrice: false,
+      bulkPriceUpdate: true,
+      scheduledSale: true,
+      recommendedBatchSize: 50,
+      rateLimitTokensPerSec: 1,
+      category: "marketplace",
+      feeStructure: "commission",
+      strengths: [
+        "Buy-Box monitoring + dynamic repricing — biggest single revenue lever",
+        "FBA fulfillment integration (Amazon ships, Merchant Bot just routes)",
+        "Brand Registry + sponsored ads available via the Advertising API",
+        "Massive built-in demand — no organic-traffic dependency",
+      ],
+      limitations: [
+        "No metafields, no theme — Amazon owns the listing presentation",
+        "Inventory updates lag 5–10 min on FBA",
+        "Rate limits are stringent and per-endpoint; bulk ops via feeds API only",
+        "Commission per sale (~15%) — margin needs to clear that floor",
+      ],
+    };
+  }
 
   private async getClient(credentials: AdapterCredentials) {
     const spApiModule = await import("amazon-sp-api");

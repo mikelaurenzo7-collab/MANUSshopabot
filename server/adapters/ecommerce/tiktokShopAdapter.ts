@@ -17,6 +17,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 
@@ -25,6 +26,44 @@ const TIKTOK_SHOP_BASE = "https://open-api.tiktokglobalshop.com";
 export class TikTokShopAdapter implements EcommercePlatformAdapter {
   readonly platform = "tiktok_shop";
   readonly platformName = "TikTok Shop";
+
+  /**
+   * TikTok Shop: social-commerce hybrid. Products tie to videos / lives,
+   * which is the main growth lever — Builder + Social Bot coordinate to
+   * generate creative + listing in lockstep. Variants supported (SKUs +
+   * attributes). Webhooks via the Open Platform's notification API.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: false,
+      bulkImport: true,
+      maxImagesPerProduct: 9,
+      categories: true,
+      webhooks: true,
+      webhookEvents: ["ORDER_STATUS_CHANGE", "PRODUCT_STATUS_CHANGE", "REFUND_STATUS_CHANGE"],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: true,
+      compareAtPrice: true,
+      bulkPriceUpdate: true,
+      scheduledSale: true,
+      recommendedBatchSize: 50,
+      rateLimitTokensPerSec: 10,
+      category: "social_commerce",
+      feeStructure: "commission",
+      strengths: [
+        "Native video + live shopping integration — Social Bot's home turf",
+        "Algorithm-driven discovery (Gen Z reach without ad spend)",
+        "Creator marketplace for affiliate-style growth",
+      ],
+      limitations: [
+        "Product approval can take 24–72h (vs. instant on Shopify/Etsy)",
+        "Limited to ~10 SKUs per livestream session",
+        "Per-region inventory + tax handling adds complexity",
+      ],
+    };
+  }
 
   private sign(path: string, params: Record<string, string>, appSecret: string): string {
     const sortedParams = Object.keys(params).sort().map(k => `${k}${params[k]}`).join("");

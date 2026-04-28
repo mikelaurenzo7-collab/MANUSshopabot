@@ -6,6 +6,7 @@
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -22,6 +23,47 @@ const PINTEREST_BASE = "https://api.pinterest.com/v5";
 export class PinterestAdapter implements SocialPlatformAdapter {
   readonly platform = "pinterest";
   readonly platformName = "Pinterest";
+
+  /**
+   * Pinterest: visual search + intent-driven discovery. Long content
+   * half-life (pins get traffic for months/years vs. minutes on TikTok).
+   * Idea Pins (multi-page mini-stories) drive the highest engagement.
+   * Best aspect ratio is 2:3 portrait. Strong commerce surface via
+   * Product Pins which auto-pull catalog data.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: true,
+      stories: true,
+      liveStream: false,
+      maxCopyChars: 800,
+      preferredAspectRatios: ["2:3", "1:1", "9:16"],
+      maxVideoSeconds: 60,
+      scheduledPosting: true,
+      hashtagSupport: "ignored",
+      ads: true,
+      adFormats: ["standard_pin", "video_pin", "shopping", "carousel", "idea_pin"],
+      maxAdCopyChars: 500,
+      audienceTargeting: "interests",
+      dynamicProductAds: true,
+      recommendedPostsPerDay: 5,
+      rateLimitTokensPerSec: 4,
+      audienceType: "commerce",
+      strengths: [
+        "Long content half-life — a single pin can drive traffic for years",
+        "Intent-driven (users searching, not scrolling) — higher conversion than IG/TikTok",
+        "Product Pins auto-sync catalog price + availability — hands-off commerce",
+      ],
+      limitations: [
+        "Hashtags don't influence ranking — Builder Bot uses keyword-rich descriptions instead",
+        "Slower velocity than IG/TikTok — content lifecycle is weeks not hours",
+        "Audience skews 60% women / DIY / lifestyle — niche fit matters",
+      ],
+    };
+  }
 
   private async fetch(path: string, credentials: SocialCredentials, options?: { method?: string; body?: any; params?: Record<string, string> }) {
     const { default: axios } = await import("axios");

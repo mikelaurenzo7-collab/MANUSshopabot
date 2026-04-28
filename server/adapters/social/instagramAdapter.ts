@@ -8,6 +8,7 @@
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -25,6 +26,47 @@ const IG_BASE = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
 export class InstagramAdapter implements SocialPlatformAdapter {
   readonly platform = "instagram";
   readonly platformName = "Instagram";
+
+  /**
+   * Instagram (via Meta Graph API): visual-first commerce. Reels +
+   * Shopping are the highest-converting surfaces. Hashtags work but
+   * algorithm has shifted toward keywords-in-caption. Stories + Reels
+   * use the same creative pipeline as Meta ads — Social Bot can
+   * cross-post most assets with no extra work.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: true,
+      stories: true,
+      liveStream: true,
+      maxCopyChars: 2200,
+      preferredAspectRatios: ["1:1", "4:5", "9:16"],
+      maxVideoSeconds: 90,
+      scheduledPosting: true,
+      hashtagSupport: "native",
+      ads: true,
+      adFormats: ["image", "video", "carousel", "reels", "stories", "shopping"],
+      maxAdCopyChars: 125,
+      audienceTargeting: "lookalike",
+      dynamicProductAds: true,
+      recommendedPostsPerDay: 2,
+      rateLimitTokensPerSec: 5,
+      audienceType: "commerce",
+      strengths: [
+        "Reels + Shopping tags — strongest visual-commerce funnel available",
+        "Cross-posts seamlessly with Meta (Social Bot reuses creative)",
+        "Native hashtag search still drives discovery for niche niches",
+      ],
+      limitations: [
+        "Caption truncated past 125 chars in feed view",
+        "Business account required for the API (~free but multi-step setup)",
+        "Carousels capped at 10 slides; Reels capped at 90s",
+      ],
+    };
+  }
 
   private getBase(): string {
     return ENV.metaGraphApiBase || IG_BASE;

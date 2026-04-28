@@ -9,6 +9,7 @@ import { platformRateLimiters } from "../../utils/rateLimiter";
 import type {
   SocialPlatformAdapter,
   SocialCredentials,
+  SocialPlatformCapabilities,
   SocialAccountInfo,
   CreatePostInput,
   SocialPost,
@@ -22,6 +23,46 @@ import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 export class TwitterAdapter implements SocialPlatformAdapter {
   readonly platform = "twitter";
   readonly platformName = "Twitter / X";
+
+  /**
+   * Twitter / X: real-time conversation, broadcast + tech audience.
+   * 280-char ceiling forces tight copy. Threads compound engagement —
+   * Social Bot can craft a hook tweet + auto-reply continuation.
+   * Ads API requires a paid Premium tier; organic-only by default.
+   */
+  getCapabilities(): SocialPlatformCapabilities {
+    return {
+      image: true,
+      video: true,
+      shortFormVideo: true,
+      carousel: false,
+      stories: false,
+      liveStream: true,
+      maxCopyChars: 280,
+      preferredAspectRatios: ["16:9", "1:1", "9:16"],
+      maxVideoSeconds: 140,
+      scheduledPosting: true,
+      hashtagSupport: "recommended",
+      ads: true,
+      adFormats: ["promoted_tweet", "promoted_video", "takeover"],
+      maxAdCopyChars: 280,
+      audienceTargeting: "interests",
+      dynamicProductAds: false,
+      recommendedPostsPerDay: 4,
+      rateLimitTokensPerSec: 3,
+      audienceType: "broadcast",
+      strengths: [
+        "Real-time — best surface for product launches + reactive marketing",
+        "Threads compound reach — Social Bot crafts hook + continuation",
+        "Tech / SaaS audience converts well for B2B niches",
+      ],
+      limitations: [
+        "280-char ceiling on every post (incl. ads) — copy must be punchy",
+        "Ads require paid API tier (~$200/mo Premium minimum)",
+        "Algorithm shifts frequently — what worked last quarter may not work now",
+      ],
+    };
+  }
 
   private getClient(credentials: SocialCredentials) {
     if (credentials.accessToken) {

@@ -66,6 +66,20 @@ export function getSupportedSocialPlatforms(): string[] {
 }
 
 /**
+ * Capability matrix for every registered social adapter. Used by the
+ * Social Bot to plan platform-aware content (e.g. 9:16 video for
+ * TikTok, 2:3 portrait for Pinterest, threads for Twitter).
+ */
+export function getSocialCapabilityMatrix(): Record<string, ReturnType<SocialPlatformAdapter["getCapabilities"]>> {
+  const matrix: Record<string, ReturnType<SocialPlatformAdapter["getCapabilities"]>> = {};
+  for (const id of SUPPORTED_SOCIAL_PLATFORMS) {
+    const adapter = adapters[id];
+    if (adapter) matrix[id] = adapter.getCapabilities();
+  }
+  return matrix;
+}
+
+/**
  * Build SocialCredentials from a social_accounts DB record.
  */
 export function buildSocialCredentials(record: {

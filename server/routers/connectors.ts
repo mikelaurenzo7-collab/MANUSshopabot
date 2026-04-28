@@ -3,6 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
 import * as db from "../db";
+import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
+import { getSocialCapabilityMatrix } from "../adapters/social";
 
 /**
  * Legacy in-memory fallback for pre-deployment OAuth callbacks.
@@ -243,7 +245,7 @@ export const connectorsRouter = router({
    */
   // (intentionally local — not exported; kept next to the consumer)
 
-  /** List all supported e-commerce platforms with their connection details */
+  /** List all supported e-commerce platforms with their connection details + capability matrix */
   ecommercePlatforms: protectedProcedure.query(() => {
     const ecommerceAvailability: Record<string, boolean> = {
       shopify: !!ENV.shopifyPartnerClientId && !!ENV.shopifyPartnerClientSecret,
@@ -254,6 +256,7 @@ export const connectorsRouter = router({
       walmart: false, // adapter scaffolded, no OAuth wired yet
       woocommerce: true, // API-key based, no shared OAuth required
     };
+    const matrix = getEcommerceCapabilityMatrix();
     return Object.entries(ECOMMERCE_PLATFORMS).map(([id, platform]) => ({
       id,
       name: platform.name,
@@ -264,6 +267,10 @@ export const connectorsRouter = router({
       capabilities: platform.capabilities,
       requiredFields: "requiredFields" in platform ? platform.requiredFields : undefined,
       available: ecommerceAvailability[id] ?? false,
+      // Structured per-integration capability + performance matrix.
+      // Bots branch on this; UI shows the strengths/limitations on the
+      // connect tile so users see what each integration actually does.
+      capabilityMatrix: matrix[id] ?? null,
     }));
   }),
 
@@ -277,6 +284,7 @@ export const connectorsRouter = router({
       pinterest: !!ENV.pinterestAppId && !!ENV.pinterestAppSecret,
       gmail: !!ENV.googleClientId && !!ENV.googleClientSecret,
     };
+    const matrix = getSocialCapabilityMatrix();
     return Object.entries(SOCIAL_PLATFORMS).map(([id, platform]) => ({
       id,
       name: platform.name,
@@ -286,7 +294,21 @@ export const connectorsRouter = router({
       description: platform.description,
       capabilities: platform.capabilities,
       available: socialAvailability[id] ?? false,
+      // Structured per-integration capability + performance matrix.
+      capabilityMatrix: matrix[id] ?? null,
     }));
+  }),
+
+  /**
+   * Combined capability matrix for every supported integration.
+   * Single endpoint for callers (workflows, status page, integration
+   * detail UI) that need the matrix without the connection detail.
+   */
+  capabilityMatrix: protectedProcedure.query(() => {
+    return {
+      ecommerce: getEcommerceCapabilityMatrix(),
+      social: getSocialCapabilityMatrix(),
+    };
   }),
 
   /** Org's e-commerce platform credentials */

@@ -15,11 +15,49 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 
 export class EbayAdapter implements EcommercePlatformAdapter {
   readonly platform = "ebay";
   readonly platformName = "eBay";
+
+  /**
+   * eBay: auction + buy-it-now marketplace. Best-offer flows are unique.
+   * Notification API exists but setup is heavier than Shopify webhooks;
+   * we keep it polling-friendly. Variants via item specifics.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: false,
+      bulkImport: true,
+      maxImagesPerProduct: 24,
+      categories: true,
+      webhooks: true,
+      webhookEvents: ["ITEM_SOLD", "ITEM_PAYMENT_RECEIVED", "ITEM_SHIPPED"],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: false,
+      compareAtPrice: true,
+      bulkPriceUpdate: true,
+      scheduledSale: false,
+      recommendedBatchSize: 100,
+      rateLimitTokensPerSec: 5,
+      category: "marketplace",
+      feeStructure: "commission",
+      strengths: [
+        "Best-offer + auction — unique price-discovery primitives",
+        "Strong in motors / collectibles / vintage (category-specific surfaces)",
+        "Free up to 250 listings/month before insertion fees",
+      ],
+      limitations: [
+        "Inventory propagation lags 1–2 minutes",
+        "Final-value fee 12.9% + $0.30/order on most categories",
+        "Notification API setup is heavier than peers",
+      ],
+    };
+  }
 
   private async getClient(credentials: AdapterCredentials) {
     const EbayApi = (await import("ebay-api")).default;

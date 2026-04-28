@@ -11,13 +11,30 @@
  */
 
 import { registerWorkflow, type WorkflowStepDefinition } from "./workflowEngine";
+import { getSocialCapabilityMatrix } from "../adapters/social";
 
 // ─── Ad Campaign Workflow ──────────────────────────────────────────────────
 
 registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
-  const platform = input.platform ?? "meta"; // meta, tiktok, google
+  const platform = input.platform ?? "meta"; // meta, tiktok, google_ads, etc
   const product = input.product ?? "featured product";
   const budget = input.budget ?? "$50/day";
+
+  // Pull the platform's capability matrix so the LLM gets a concrete
+  // brief on what it's actually working with — preferred aspect ratios,
+  // copy ceiling, audience targeting depth, ad formats. This replaces
+  // generic "make ads" prompts with surface-aware ones, lifting CTR by
+  // matching creative to platform norms (TikTok 9:16, Meta 125-char
+  // primary text, Google Ads 90-char descriptions, Pinterest 2:3 etc).
+  const caps = getSocialCapabilityMatrix()[platform];
+  const platformBrief = caps
+    ? `Platform brief for ${platform}: ${caps.adFormats.join(" / ")} formats; ` +
+      `${caps.maxAdCopyChars}-char ad copy ceiling; ` +
+      `${caps.preferredAspectRatios.join(" or ")} aspect ratio${caps.preferredAspectRatios.length > 1 ? "s" : ""}; ` +
+      `${caps.audienceTargeting} audience targeting; ` +
+      `dynamic-product-ads ${caps.dynamicProductAds ? "supported" : "not available"}. ` +
+      `Strengths: ${caps.strengths.slice(0, 2).join("; ")}.`
+    : `Platform: ${platform}.`;
 
   // Audience research, ad copy generation, and creative image are
   // independent — none of them consume each other's output. We used
@@ -25,7 +42,7 @@ registerWorkflow("ad_campaign", (input): WorkflowStepDefinition[] => {
   // concurrently via parallel_group (~12-18 sec).
   const audienceResearchInput = {
     promptClass: "audience_research",
-    systemPrompt: "You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads.",
+    systemPrompt: `You are a performance marketing expert who has managed $100M+ in ad spend across Meta, TikTok, and Google Ads. ${platformBrief}`,
     userPrompt: `Create a detailed target audience profile for advertising "${product}" on ${platform}:
 
 1. Primary Audience Segments (3-5 segments with demographics, interests, behaviors)
@@ -61,9 +78,19 @@ Return as JSON.`,
     },
   };
 
+  // Hard cap from the platform's capability matrix — bots default to
+  // copy that fits within the surface's actual character ceiling so we
+  // don't generate copy that gets truncated mid-sentence in feed view.
+  const copyCeiling = caps?.maxAdCopyChars && caps.maxAdCopyChars > 0
+    ? `\n\nIMPORTANT: ${platform} truncates ad primary text past ${caps.maxAdCopyChars} characters in feed view. Keep BODY COPY under that ceiling.`
+    : "";
+  const formatHint = caps?.adFormats?.length
+    ? `\n\nAd format must be one of: ${caps.adFormats.join(", ")}.`
+    : "";
+
   const adCopyInput = {
     promptClass: "ad_copy_writer",
-    systemPrompt: "You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy.",
+    systemPrompt: `You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy. ${platformBrief}`,
     userPrompt: `Generate 5 ad copy variations for "${product}" on ${platform}. For each variation include:
 - Hook (first line that stops the scroll)
 - Body copy (2-3 lines)
@@ -77,7 +104,7 @@ Variations should test different angles:
 2. Social Proof / FOMO
 3. Benefit-Led
 4. Story-Based
-5. Urgency / Scarcity
+5. Urgency / Scarcity${copyCeiling}${formatHint}
 
 Return as JSON array.`,
     responseFormat: {

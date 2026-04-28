@@ -374,11 +374,19 @@ export default function IntegrationsPage() {
                     </div>
 
                     {platform.capabilities && (
-                      <div className="flex flex-wrap gap-1 mb-3">
+                      <div className="flex flex-wrap gap-1 mb-2">
                         {platform.capabilities.slice(0, 3).map((cap: string) => (
                           <span key={cap} className="text-[10px] bg-white/6 text-slate-400 px-1.5 py-0.5 rounded">{cap}</span>
                         ))}
                       </div>
+                    )}
+                    {/* Top strength from the per-integration capability matrix —
+                        gives users a one-line "why this integration?" without
+                        forcing them to read the docs. */}
+                    {platform.capabilityMatrix?.strengths?.[0] && (
+                      <p className="text-[10.5px] text-emerald-300/80 mb-3 leading-snug line-clamp-2">
+                        ✦ {platform.capabilityMatrix.strengths[0]}
+                      </p>
                     )}
 
                     {!isAvailable ? (

@@ -15,6 +15,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
@@ -24,6 +25,44 @@ const ETSY_API_BASE = "https://openapi.etsy.com/v3";
 export class EtsyAdapter implements EcommercePlatformAdapter {
   readonly platform = "etsy";
   readonly platformName = "Etsy";
+
+  /**
+   * Etsy: handmade / vintage marketplace. Strong in tags + sections,
+   * weak in variants (inventory via attributes only). No webhooks —
+   * receipts propagate via polling. Auto-fulfillment supported but
+   * platform expects manual ship confirmation for most flows.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: false,
+      bulkImport: false,
+      maxImagesPerProduct: 10,
+      categories: true,
+      webhooks: false,
+      webhookEvents: [],
+      autoFulfillment: true,
+      partialFulfillment: false,
+      realTimeInventory: true,
+      compareAtPrice: false,
+      bulkPriceUpdate: false,
+      scheduledSale: true,
+      recommendedBatchSize: 25,
+      rateLimitTokensPerSec: 10,
+      category: "marketplace",
+      feeStructure: "hybrid",
+      strengths: [
+        "Tags + sections drive 60%+ of discovery — Builder Bot's SEO sweet spot",
+        "High-margin handmade / vintage / personalized niches",
+        "Built-in audience for craft + gift verticals",
+      ],
+      limitations: [
+        "No webhooks — orders polled every 5 min instead of pushed",
+        "$0.20 listing fee + 6.5% transaction fee + payment processing",
+        "Variants constrained to product attributes (no arbitrary metafields)",
+      ],
+    };
+  }
 
   private async fetch(path: string, credentials: AdapterCredentials, options?: { method?: string; body?: any }) {
     const { default: axios } = await import("axios");

@@ -15,6 +15,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
@@ -22,6 +23,55 @@ import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 export class ShopifyAdapter implements EcommercePlatformAdapter {
   readonly platform = "shopify";
   readonly platformName = "Shopify";
+
+  /**
+   * Shopify is the most capable storefront integration we ship — full
+   * webhook coverage, GraphQL bulk operations, native theme system,
+   * metafields for SEO. Highest throughput on a modern Shopify Plus
+   * plan; we target 4 req/s as a safe sustained rate (the platform
+   * burst limit is 40 calls per app per minute, ~0.66/s sustained, but
+   * GraphQL cost-based limits give more headroom for the bulk ops the
+   * bots prefer).
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: true,
+      bulkImport: true,
+      maxImagesPerProduct: 250,
+      categories: true,
+      webhooks: true,
+      webhookEvents: [
+        "orders/create",
+        "orders/updated",
+        "orders/fulfilled",
+        "products/create",
+        "products/update",
+        "inventory_levels/update",
+        "app/uninstalled",
+      ],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: true,
+      compareAtPrice: true,
+      bulkPriceUpdate: true,
+      scheduledSale: true,
+      recommendedBatchSize: 250,
+      rateLimitTokensPerSec: 4,
+      category: "storefront",
+      feeStructure: "subscription",
+      strengths: [
+        "Full webhook coverage — orders + inventory propagate in seconds",
+        "GraphQL bulk operations for catalog sweeps without rate-limit pain",
+        "Native theme + metafield system for SEO-tuned storefronts",
+        "Auto-fulfillment with carrier-level tracking",
+      ],
+      limitations: [
+        "Subscription fees scale with plan; not a fit for true zero-cost MVPs",
+        "Custom checkout requires Shopify Plus",
+      ],
+    };
+  }
 
   private buildHeaders(credentials: AdapterCredentials) {
     return {

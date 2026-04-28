@@ -15,6 +15,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry } from "../../utils/rateLimiter";
@@ -24,6 +25,45 @@ const WALMART_API_BASE = "https://marketplace.walmartapis.com/v3";
 export class WalmartAdapter implements EcommercePlatformAdapter {
   readonly platform = "walmart";
   readonly platformName = "Walmart Marketplace";
+
+  /**
+   * Walmart Marketplace: invitation-only marketplace with WFS (Walmart
+   * Fulfillment Services) for Prime-equivalent shipping. Lower commission
+   * than Amazon (6–15% vs 15%) but stricter approval. Feeds API for bulk
+   * ops; no real-time webhooks but item/order feeds give near-real-time
+   * status. Variants supported. No metafields.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: false,
+      bulkImport: true,
+      maxImagesPerProduct: 8,
+      categories: true,
+      webhooks: false,
+      webhookEvents: [],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: false,
+      compareAtPrice: false,
+      bulkPriceUpdate: true,
+      scheduledSale: true,
+      recommendedBatchSize: 100,
+      rateLimitTokensPerSec: 5,
+      category: "marketplace",
+      feeStructure: "commission",
+      strengths: [
+        "Lower commission than Amazon (6–15% by category vs flat 15%)",
+        "WFS (Walmart Fulfillment Services) gives Prime-equivalent shipping",
+        "Less seller saturation than Amazon — Buy-Box wins are easier",
+      ],
+      limitations: [
+        "Invitation-only — sellers need approval before listing",
+        "No webhooks; bot polls feed-status endpoints for state changes",
+        "Stricter content guidelines than Amazon — higher rejection rate",
+      ],
+    };
+  }
 
   private async getAccessToken(credentials: AdapterCredentials): Promise<string> {
     const { default: axios } = await import("axios");

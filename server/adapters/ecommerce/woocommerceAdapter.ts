@@ -17,6 +17,7 @@ import type {
   InventoryLevel,
   StoreInfo,
   ListParams,
+  PlatformCapabilities,
 } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 
@@ -25,6 +26,52 @@ const limiter = platformRateLimiters.woocommerce;
 export class WooCommerceAdapter implements EcommercePlatformAdapter {
   readonly platform = "woocommerce";
   readonly platformName = "WooCommerce";
+
+  /**
+   * WooCommerce: WordPress-based storefront. Capabilities depend heavily
+   * on installed plugins, but the core REST API supports variations,
+   * bulk endpoints, webhooks, and unlimited custom fields (postmeta) —
+   * effectively metafields. Self-hosted means no commission to the
+   * platform, just hosting cost.
+   */
+  getCapabilities(): PlatformCapabilities {
+    return {
+      variants: true,
+      metafields: true,
+      bulkImport: true,
+      maxImagesPerProduct: 100,
+      categories: true,
+      webhooks: true,
+      webhookEvents: [
+        "order.created",
+        "order.updated",
+        "order.deleted",
+        "product.created",
+        "product.updated",
+      ],
+      autoFulfillment: true,
+      partialFulfillment: true,
+      realTimeInventory: true,
+      compareAtPrice: true,
+      bulkPriceUpdate: true,
+      scheduledSale: true,
+      recommendedBatchSize: 100,
+      rateLimitTokensPerSec: 8,
+      category: "storefront",
+      feeStructure: "free",
+      strengths: [
+        "Self-hosted — no platform commission, only hosting + payment-processor fees",
+        "Custom fields (postmeta) act as unlimited metafields for SEO",
+        "Plugin ecosystem covers every niche workflow",
+        "Webhook coverage on par with Shopify",
+      ],
+      limitations: [
+        "Capabilities vary by installed plugins — bots can't always assume a feature is present",
+        "Self-hosting means uptime + security are the merchant's responsibility",
+        "No native mobile app for store management (Shopify advantage)",
+      ],
+    };
+  }
 
   private getClient(credentials: AdapterCredentials) {
     const url = credentials.storeUrl || "";

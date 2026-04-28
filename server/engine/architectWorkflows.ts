@@ -9,6 +9,7 @@
  */
 
 import { registerWorkflow, type WorkflowStepDefinition } from "./workflowEngine";
+import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 
 // ─── Niche Research Workflow ───────────────────────────────────────────────
 
@@ -797,6 +798,13 @@ registerWorkflow("brand_identity_kit", (input): WorkflowStepDefinition[] => {
   const niche = input.niche ?? "e-commerce";
   const target = input.target ?? "broad consumer audience";
   const brandStyle = input.brandStyle ?? "modern, premium, approachable";
+  // Platform-aware tuning. When `input.platform` is supplied, the
+  // workflow consults the capability matrix to decide whether to add
+  // a platform-specific asset step (Shopify gets metafields, Etsy gets
+  // tags + section names, marketplace platforms get listing-bullets, etc).
+  // Without a platform hint we just ship the universal kit.
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
   return [
     {
       stepType: "parallel_group",
@@ -894,12 +902,50 @@ registerWorkflow("brand_identity_kit", (input): WorkflowStepDefinition[] => {
         prompt: `Minimalist e-commerce brand logo for a "${niche}" store, ${brandStyle} aesthetic, clean typography, vector-style, on white background, professional, modern, memorable, suitable for mobile + favicon`,
       },
     },
+    // ── Platform-aware asset (only when a destination is hinted) ────────
+    // The Builder Bot consults the integration's capability matrix to
+    // emit assets tuned to that surface — metafield JSON for Shopify,
+    // tag + section recommendations for Etsy, listing bullets for
+    // Amazon, etc. Skipped entirely when no platform is hinted.
+    ...(caps ? [{
+      stepType: "llm_call" as const,
+      title: `${caps.category === "marketplace" ? "Listing bullets" : caps.metafields ? "SEO metafields" : "Storefront copy"} for ${platform}`,
+      description: `Tuning brand assets to ${platform}'s actual capabilities (${caps.metafields ? "metafields, " : ""}${caps.categories ? "categories, " : ""}${caps.maxImagesPerProduct} images max)`,
+      input: {
+        systemPrompt: `You are a senior conversion copywriter who tunes brand assets to a specific commerce surface. You know each platform's quirks: ${platform} ${caps.strengths.slice(0, 2).join("; ")}. Limitations: ${caps.limitations.slice(0, 2).join("; ")}.`,
+        userPrompt: `Tune the brand identity for the "${niche}" niche to a ${platform} ${caps.category}. Target: ${target}. Style: ${brandStyle}.\n\n${
+          caps.metafields
+            ? `Return JSON with key/value SEO metafields the bot will set on each product (title-tag, meta-description, og-title, og-description, schema-org-type). Each value <60 chars where applicable. Reflect the brand voice from earlier steps.`
+            : caps.category === "marketplace"
+              ? `Return JSON with marketplace-listing primitives: bullet points (5-7, each <200 chars), search-keyword backend list (8-12), category recommendation, and a hero-image art-direction note tuned for ${platform}'s ${caps.maxImagesPerProduct}-image cap.`
+              : `Return JSON with storefront-copy primitives: hero headline, hero subhead, CTA button text, value-prop trio (3 bullets, each <80 chars), trust-strip line (e.g. "Free shipping over $X | 30-day returns").`
+        }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "platform_assets",
+            strict: false,
+            schema: {
+              type: "object",
+              properties: {
+                platform: { type: "string" },
+                assets: { type: "object" },
+                tuningNotes: { type: "string" },
+              },
+              required: ["platform", "assets"],
+            },
+          },
+        },
+      },
+    }] : []),
     {
       stepType: "notification",
       title: "Brand Identity Kit ready",
       input: {
         title: "Brand Identity Kit complete",
-        message: `Voice profile, color palette, name + tagline shortlist, and a logo concept for your "${niche}" brand are ready.`,
+        message: caps
+          ? `Voice profile, color palette, name + tagline shortlist, logo concept, and ${platform}-tuned assets for your "${niche}" brand are ready.`
+          : `Voice profile, color palette, name + tagline shortlist, and a logo concept for your "${niche}" brand are ready.`,
         agentType: "architect",
         notificationType: "success",
         notifyOwner: true,

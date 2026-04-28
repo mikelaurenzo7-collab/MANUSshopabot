@@ -125,11 +125,81 @@ export interface SocialCredentials {
   metadata?: Record<string, any>;
 }
 
+// ─── Per-Platform Social Capability Matrix ────────────────────────────────
+//
+// Mirror of the e-commerce PlatformCapabilities idea. Bots branch on these
+// rather than hardcoding "if platform === 'tiktok' use 9:16 video" — moves
+// per-integration knowledge into a structured shape the LLM can reason
+// over at planning time.
+export interface SocialPlatformCapabilities {
+  // ── Post formats supported natively ──────────────────────────────────
+  /** Image post / carousel */
+  image: boolean;
+  /** Square or landscape video */
+  video: boolean;
+  /** Vertical short-form (Reels / TikTok / Shorts / Stories) */
+  shortFormVideo: boolean;
+  /** Multi-image carousel */
+  carousel: boolean;
+  /** Stories / 24h ephemeral content */
+  stories: boolean;
+  /** Live streaming */
+  liveStream: boolean;
+
+  // ── Media constraints ────────────────────────────────────────────────
+  /** Maximum characters in the caption / body. 0 = unlimited */
+  maxCopyChars: number;
+  /** Recommended aspect ratios — bots feed into image gen prompts. */
+  preferredAspectRatios: string[];
+  /** Maximum video length in seconds. 0 = unlimited / not applicable. */
+  maxVideoSeconds: number;
+
+  // ── Scheduling + automation ──────────────────────────────────────────
+  /** Native scheduled-post primitive (vs. bot-side cron) */
+  scheduledPosting: boolean;
+  /** Hashtag handling: native search, recommended, or hostile */
+  hashtagSupport: "native" | "recommended" | "ignored";
+
+  // ── Ads ──────────────────────────────────────────────────────────────
+  /** Whether the platform has a self-serve ads API the bot can use */
+  ads: boolean;
+  /** Ad creative formats this platform serves */
+  adFormats: string[];
+  /** Maximum characters in ad primary text */
+  maxAdCopyChars: number;
+  /** Audience-targeting depth. "interests" = OK, "behavioral" = strong,
+   *  "lookalike" = best-in-class, "none" = no API targeting. */
+  audienceTargeting: "none" | "interests" | "behavioral" | "lookalike";
+  /** Dynamic Product Ads — feed catalog into ad creative automatically */
+  dynamicProductAds: boolean;
+
+  // ── Performance hints ────────────────────────────────────────────────
+  /** Recommended posting cadence per day. The Social Bot uses this to
+   *  rate-limit content generation and avoid platform shadowbans. */
+  recommendedPostsPerDay: number;
+  /** Sustained API rate the bot should target. */
+  rateLimitTokensPerSec: number;
+
+  // ── Discovery ────────────────────────────────────────────────────────
+  /** Best-fit content category. Influences which workflows the Social
+   *  Bot routes here ("commerce" gets shopping ads, "engagement" gets
+   *  conversational posts). */
+  audienceType: "commerce" | "engagement" | "broadcast" | "professional";
+
+  // ── Bot-readable summary ─────────────────────────────────────────────
+  strengths: string[];
+  limitations: string[];
+}
+
 // ─── Core Social Adapter Interface ────────────────────────────────────────
 
 export interface SocialPlatformAdapter {
   readonly platform: string;
   readonly platformName: string;
+
+  /** Per-integration capability + performance matrix. Bots branch on this
+   *  rather than hardcoding per-platform behavior. */
+  getCapabilities(): SocialPlatformCapabilities;
 
   /** Verify credentials and return account info */
   verifyConnection(credentials: SocialCredentials): Promise<SocialAccountInfo>;
