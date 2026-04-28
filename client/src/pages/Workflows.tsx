@@ -342,7 +342,7 @@ export default function Workflows() {
         <TabsContent value="active" className="mt-4">
           {activeLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : (activeWorkflows?.length ?? 0) === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
@@ -371,7 +371,7 @@ export default function Workflows() {
         <TabsContent value="history" className="mt-4">
           {historyLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
+              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : historyWorkflows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
