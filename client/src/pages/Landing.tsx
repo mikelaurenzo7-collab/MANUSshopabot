@@ -8,7 +8,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
-  ChevronDown, KeyRound, Loader2,
+  ChevronDown, KeyRound, Loader2, Rocket, Store, Gauge, RefreshCw,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -199,6 +199,14 @@ const FAQ_ITEMS = [
   {
     q: "What happens if a bot makes a mistake?",
     a: "Every bot action is logged in real time in the Activity feed with timestamps and the input that triggered it. You can pause, override, or roll back any workflow from the Activity view, and configurable per-action approval gates are rolling out by bot — Builder gates ship first.",
+  },
+  {
+    q: "I already have a Shopify store — do the bots work with my existing catalog?",
+    a: "Yes — that's actually the easier path. Connect via Shopify OAuth and the bots inherit your products, orders, customers, and inventory immediately. The Merchant starts running operations from minute one (auto-fulfillment, inventory watching, price-floor monitoring, support triage). The Builder analyzes your catalog to find margin-friendly products to add. The Social bot tunes ad creative to your actual audience. No re-entry, no migration — just one OAuth click and the work moves off your plate.",
+  },
+  {
+    q: "What if I don't want a bot to take an action without my approval?",
+    a: "Every bot has an autonomy level (fully autonomous, supervised, manual) configurable per workflow class. Supervised mode queues high-impact actions in the Approval queue with a one-click approve/reject. The Activity feed logs every action in real time so you can pause or roll back anything. Configurable per-action approval gates are rolling out by bot — Builder gates ship first.",
   },
   {
     q: "Is there a free trial?",
@@ -469,6 +477,31 @@ export default function Landing() {
               </Button>
             </div>
 
+            {/* Two-paths affordance — most landings force a single
+                story. We have two real customer segments: operators
+                starting fresh, and operators with an existing store.
+                Tell each one which lane is theirs in one click. */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center lg:justify-start text-xs">
+              <button
+                type="button"
+                onClick={() => document.getElementById("lifecycle")?.scrollIntoView({ behavior: "smooth" })}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 hover:text-white hover:border-sky-400/40 hover:bg-sky-500/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+              >
+                <Rocket className="w-3 h-3 text-sky-300" aria-hidden="true" />
+                Starting from scratch
+                <ArrowRight className="w-3 h-3 opacity-50" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => document.getElementById("existing-store")?.scrollIntoView({ behavior: "smooth" })}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-200 hover:text-emerald-100 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <Store className="w-3 h-3" aria-hidden="true" />
+                I already have a Shopify store
+                <ArrowRight className="w-3 h-3 opacity-60" aria-hidden="true" />
+              </button>
+            </div>
+
             {/* Trust strip */}
             <div className="mt-12 grid sm:grid-cols-3 gap-3">
               {TRUST_ITEMS.map((item) => (
@@ -603,7 +636,7 @@ export default function Landing() {
       </section>
 
       {/* ── The Three Bots ─────────────────────────────────────────────────── */}
-      <section className="py-14 px-4">
+      <section id="lifecycle" className="py-14 px-4 scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">The Platform</span>
@@ -661,6 +694,113 @@ export default function Landing() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Already have a store? — the existing-operator lane ─────────────── */}
+      <section
+        id="existing-store"
+        className="py-14 px-4 border-t border-white/[0.06] scroll-mt-20 relative overflow-hidden"
+      >
+        <div className="light-leak-cyan absolute top-1/4 right-0 opacity-30 pointer-events-none" aria-hidden="true" />
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12 reveal reveal-visible">
+            <span className="eyebrow mb-4 text-emerald-300">Already running a store?</span>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">
+              The Merchant takes the wheel <span className="text-emerald-300">on day one</span>.
+            </h2>
+            <p className="mt-4 text-white/60 max-w-2xl mx-auto leading-relaxed">
+              You don't need to start over. Connect your existing Shopify store and the bots inherit your products, orders, and history immediately. The Merchant runs operations starting now. The Builder finds new opportunities in the catalog you already have. The Social bot drives traffic to listings you've already built.
+            </p>
+          </div>
+
+          {/* Three-card timeline showing the existing-operator path */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 reveal reveal-visible">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                  <RefreshCw className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200">Minute 1</span>
+              </div>
+              <h3 className="text-base font-bold text-white mb-1.5">Sync your existing catalog</h3>
+              <p className="text-xs text-white/55 leading-relaxed">
+                One-click Shopify OAuth pulls in every product, order, and inventory level. The Merchant immediately starts watching for low stock, anomalies, and pricing drift. No re-entry, no migration.
+              </p>
+            </div>
+            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-5 reveal reveal-visible">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-9 w-9 rounded-lg bg-cyan-500/15 border border-cyan-500/25 flex items-center justify-center">
+                  <Gauge className="h-4 w-4 text-cyan-300" aria-hidden="true" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-200">Day 1</span>
+              </div>
+              <h3 className="text-base font-bold text-white mb-1.5">Take the manual work off your plate</h3>
+              <p className="text-xs text-white/55 leading-relaxed">
+                Auto-fulfill orders. Adjust prices to your margin floor. Re-stock SKUs before they go to zero. Triage support emails. Every job a VA was doing — done by the bots, every minute, no oversight.
+              </p>
+            </div>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-5 reveal reveal-visible">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-9 w-9 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-amber-300" aria-hidden="true" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-200">Week 2+</span>
+              </div>
+              <h3 className="text-base font-bold text-white mb-1.5">Compound what's already working</h3>
+              <p className="text-xs text-white/55 leading-relaxed">
+                Builder finds margin-friendly products to add to your catalog. Social runs ads tuned to your actual audience. Memory means each bot gets sharper at <em className="not-italic text-white/75">your</em> store the longer it runs.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick math — what existing operators stop paying for */}
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 max-w-3xl mx-auto">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/85 mb-3">What stops being your problem</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+              {[
+                "Order fulfillment + tracking emails",
+                "Inventory low-stock alerts &amp; restocking",
+                "Price-floor monitoring on top SKUs",
+                "Customer support triage on common questions",
+                "TikTok / Meta ad creative + scheduling",
+                "Email recovery flows for abandoned carts",
+                "Weekly competitor + niche research",
+                "SEO-optimized listing copy on new products",
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm text-white/75">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300/85 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span dangerouslySetInnerHTML={{ __html: item }} />
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-white/45 mt-4 leading-relaxed border-t border-white/[0.04] pt-3">
+              Operators we benchmark replace <span className="text-white/65 font-mono">~$200–$500/mo</span> of stitched tools (Klaviyo, Inventory Planner, Triple Whale, plus a VA) with one Growth or Pro plan — and get a layer of automation those tools don't sell at any price.
+            </p>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Button
+              onClick={() => handlePricingClick("growth")}
+              disabled={checkoutMutation.isPending}
+              size="lg"
+              className="btn-glow text-white px-8 h-12 text-base font-semibold disabled:opacity-70"
+            >
+              {checkoutMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  Opening checkout…
+                </>
+              ) : (
+                <>
+                  Connect my Shopify store <ArrowRight className="w-4 h-4 ml-1" />
+                </>
+              )}
+            </Button>
+            <p className="text-[11px] text-white/40 mt-3 font-mono">
+              7-day trial · No credit card · OAuth read+write to your store
+            </p>
           </div>
         </div>
       </section>

@@ -152,3 +152,78 @@ describe("Landing positioning — cofounder one-liners landed", () => {
     expect(src).toContain("Three bots. One operation. Zero touch.");
   });
 });
+
+describe("Landing — existing-store operator lane", () => {
+  it("hero offers a dual-path affordance under the CTA", () => {
+    const src = read(LANDING);
+    // Two segments, two paths. New stores → /lifecycle.
+    // Existing stores → /existing-store.
+    expect(src).toContain("Starting from scratch");
+    expect(src).toContain("I already have a Shopify store");
+    expect(src).toContain('document.getElementById("existing-store")?.scrollIntoView');
+    expect(src).toContain('document.getElementById("lifecycle")?.scrollIntoView');
+  });
+
+  it("dedicated #existing-store section exists and leads with the day-1 promise", () => {
+    const src = read(LANDING);
+    expect(src).toContain('id="existing-store"');
+    // The headline that promises immediate operational takeover
+    expect(src).toContain("The Merchant takes the wheel");
+    expect(src).toContain("on day one");
+    // Reassurance: no migration, no re-entry
+    expect(src).toContain("No re-entry, no migration");
+  });
+
+  it("existing-store section walks the three-step takeover (sync → run → compound)", () => {
+    const src = read(LANDING);
+    expect(src).toContain("Sync your existing catalog");
+    expect(src).toContain("Take the manual work off your plate");
+    expect(src).toContain("Compound what's already working");
+  });
+
+  it("existing-store section enumerates the work that stops being theirs", () => {
+    const src = read(LANDING);
+    expect(src).toContain("What stops being your problem");
+    // Spot-check the high-leverage operational items
+    for (const item of [
+      "Order fulfillment",
+      "Inventory low-stock alerts",
+      "Price-floor monitoring",
+      "Customer support triage",
+      "TikTok / Meta ad creative",
+      "Email recovery flows",
+    ]) {
+      expect(src, `should call out ${item}`).toContain(item);
+    }
+  });
+
+  it("existing-store section names the cost-displacement story honestly", () => {
+    const src = read(LANDING);
+    // Operators replace ~$200-500/mo of stitched tools — calling that
+    // out anchors the price comparison without inventing numbers.
+    expect(src).toContain("$200–$500/mo");
+    expect(src).toContain("Klaviyo, Inventory Planner, Triple Whale");
+  });
+
+  it("existing-store CTA uses connect-language, not launch-language", () => {
+    const src = read(LANDING);
+    // "Connect my Shopify store" speaks to operators who already have
+    // one. "Launch my bot empire" works for fresh-start users.
+    expect(src).toContain("Connect my Shopify store");
+    // OAuth scope reassurance under the CTA
+    expect(src).toContain("OAuth read+write to your store");
+  });
+
+  it("FAQ has an existing-store entry covering the catalog-inheritance question", () => {
+    const src = read(LANDING);
+    expect(src).toContain("I already have a Shopify store — do the bots work with my existing catalog?");
+    expect(src).toContain("inherit your products, orders, customers, and inventory immediately");
+  });
+
+  it("FAQ has an autonomy / approval-gate entry for users worried about bot mistakes", () => {
+    const src = read(LANDING);
+    expect(src).toContain("What if I don't want a bot to take an action without my approval?");
+    expect(src).toContain("autonomy level");
+    expect(src).toContain("Approval queue");
+  });
+});
