@@ -223,8 +223,8 @@ export default function InfraTopology() {
           </>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <Cpu className="w-3 h-3 text-white/20" />
-          <span className="text-[10px] text-white/20 font-mono">{user?.name || "OPERATOR"}</span>
+          <Cpu className="w-3 h-3 text-white/45" />
+          <span className="text-[10px] text-white/55 font-mono">{user?.name || "OPERATOR"}</span>
         </div>
       </div>
 
