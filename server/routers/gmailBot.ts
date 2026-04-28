@@ -4,10 +4,10 @@
  * for customer communication and email marketing.
  */
 
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, orgProcedure, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getSocialAccountsByPlatform } from "../db";
+import { getSocialAccountsByPlatformForOrg } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { sanitizeEmail, sanitizeName, sanitizeMultiline } from "../utils/sanitize";
 import { sendEmail, DeliveryFailedError, NoDeliveryProviderError } from "../delivery";
@@ -43,14 +43,21 @@ const CreateTemplateInput = z.object({
 
 // ─── Helper: Get Gmail Credentials ────────────────────────────────────────
 
-async function getGmailCredentials(userId: number) {
-  const accounts = await getSocialAccountsByPlatform(userId, "gmail");
+/**
+ * Resolves the Gmail OAuth credential for the *active org*. A single
+ * user can be a member of multiple orgs and connect a different Gmail
+ * in each — this lookup must scope by `orgId`, never by userId, or
+ * else a user in Org A + Org B will accidentally send mail through
+ * Org A's Gmail while operating Org B's flows.
+ */
+async function getGmailCredentialsForOrg(orgId: number) {
+  const accounts = await getSocialAccountsByPlatformForOrg(orgId, "gmail");
   const account = accounts[0];
 
   if (!account || !account.accessToken) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
-      message: "Gmail account not connected. Please connect your Gmail account first.",
+      message: "Gmail account not connected for this org. Connect a Gmail account from /storefronts.",
     });
   }
 
@@ -66,7 +73,7 @@ async function getGmailCredentials(userId: number) {
 
 async function gmailFetch(
   path: string,
-  credentials: Awaited<ReturnType<typeof getGmailCredentials>>,
+  credentials: Awaited<ReturnType<typeof getGmailCredentialsForOrg>>,
   options?: { method?: string; body?: any }
 ) {
   const { default: axios } = await import("axios");
@@ -103,10 +110,10 @@ export const gmailBotRouter = router({
   /**
    * Get inbox messages matching a query
    */
-  getInbox: protectedProcedure
+  getInbox: orgProcedure
     .input(GetInboxInput)
     .query(async ({ ctx, input }) => {
-      const credentials = await getGmailCredentials(ctx.user.id);
+      const credentials = await getGmailCredentialsForOrg(ctx.org.id);
       const query = input.query || "is:unread";
 
       const data = await gmailFetch(
@@ -159,7 +166,7 @@ export const gmailBotRouter = router({
    * `delivery.sendEmail()` directly so the platform can pick the best
    * provider (SendGrid by default, Gmail as fallback).
    */
-  sendEmail: protectedProcedure
+  sendEmail: orgProcedure
     .input(SendEmailInput)
     .mutation(async ({ ctx, input }) => {
       const safeSubject = sanitizeName(input.subject, 500);
@@ -174,7 +181,7 @@ export const gmailBotRouter = router({
             subject: safeSubject,
             ...(input.isHtml ? { html: safeBody } : { text: safeBody }),
           },
-          { provider: "gmail", userId: ctx.user.id },
+          { provider: "gmail", orgId: ctx.org.id },
         );
         return {
           messageId: result.providerMessageId,
@@ -204,8 +211,8 @@ export const gmailBotRouter = router({
   /**
    * Get auto-reply settings
    */
-  getAutoReply: protectedProcedure.query(async ({ ctx }) => {
-    const credentials = await getGmailCredentials(ctx.user.id);
+  getAutoReply: orgProcedure.query(async ({ ctx }) => {
+    const credentials = await getGmailCredentialsForOrg(ctx.org.id);
 
     const data = await gmailFetch("/users/me/settings/autoReply", credentials);
 
@@ -221,10 +228,10 @@ export const gmailBotRouter = router({
   /**
    * Update auto-reply settings
    */
-  updateAutoReply: protectedProcedure
+  updateAutoReply: orgProcedure
     .input(CreateAutoReplyInput)
     .mutation(async ({ ctx, input }) => {
-      const credentials = await getGmailCredentials(ctx.user.id);
+      const credentials = await getGmailCredentialsForOrg(ctx.org.id);
 
       const body: any = {
         enableAutoReply: input.enabled,

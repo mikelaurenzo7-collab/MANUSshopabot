@@ -36,7 +36,7 @@ export function StripeSuccessBanner() {
   useEffect(() => {
     if (sessionId && subscriptionQuery.data?.isActive && !dismissed) {
       toast.success(
-        `🎉 Subscription activated! You're now on the ${subscriptionQuery.data.plan} plan.`,
+        `Subscription activated. You're now on the ${subscriptionQuery.data.plan} plan.`,
         { duration: 5000 }
       );
     }
@@ -53,10 +53,10 @@ export function StripeSuccessBanner() {
           <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
           <div className="flex flex-col">
             <p className="text-sm font-semibold text-green-300">
-              ✨ Subscription Activated
+              Subscription activated
             </p>
             <p className="text-xs text-green-200/70">
-              Your plan is now active. Enjoy unlimited access to Shop_a_Bot!
+              Your plan is now active. Welcome to Shop_a_Bot.
             </p>
           </div>
         </div>

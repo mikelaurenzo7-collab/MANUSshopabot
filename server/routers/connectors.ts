@@ -327,16 +327,17 @@ export const connectorsRouter = router({
   }),
 
   /** Connect an e-commerce platform via API keys (WooCommerce, Walmart) */
-  connectWithApiKey: protectedProcedure
+  connectWithApiKey: orgProcedure
     .input(z.object({
       platform: z.string(),
       storeId: z.number(),
       credentials: z.record(z.string(), z.string()),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Verify store ownership
+      // Verify the store belongs to the active org. A user in two orgs
+      // could otherwise call this from Org B and reach into Org A.
       const store = await db.getStoreById(input.storeId);
-      if (!store || store.userId !== ctx.user.id) {
+      if (!store || store.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
       }
 
@@ -424,11 +425,11 @@ export const connectorsRouter = router({
     }),
 
   /** Disconnect a platform credential */
-  disconnectCredential: protectedProcedure
+  disconnectCredential: orgProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const cred = await db.getPlatformCredentialById(input.id);
-      if (!cred || cred.userId !== ctx.user.id) {
+      if (!cred || cred.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
       }
       await db.withTransaction(async (tx) => {
@@ -449,11 +450,11 @@ export const connectorsRouter = router({
     }),
 
   /** Disconnect a social media account */
-  disconnectSocialAccount: protectedProcedure
+  disconnectSocialAccount: orgProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const account = await db.getSocialAccountById(input.id);
-      if (!account || account.userId !== ctx.user.id) {
+      if (!account || account.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Social account not found" });
       }
       const platformName = SOCIAL_PLATFORMS[account.platform]?.name || account.platform;
@@ -471,11 +472,11 @@ export const connectorsRouter = router({
     }),
 
   /** Check health of a platform credential (verify token is still valid) */
-  checkCredentialHealth: protectedProcedure
+  checkCredentialHealth: orgProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const cred = await db.getPlatformCredentialById(input.id);
-      if (!cred || cred.userId !== ctx.user.id) {
+      if (!cred || cred.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
       }
 

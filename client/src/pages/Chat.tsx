@@ -147,11 +147,11 @@ export default function Chat() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between shrink-0">
         <div>
           <p className="micro-label mb-1">AI Operations</p>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-sky-400" />
+          <h1 className="text-lg font-heading font-bold tracking-tight text-foreground leading-tight flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-sky-400" />
             Bot Chat
           </h1>
-          <p className="text-sm text-white/40 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Converse with your operators — they know your stores, metrics, and history
           </p>
         </div>

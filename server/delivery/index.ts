@@ -20,7 +20,7 @@
  * later (Mailgun, Postmark, SES) is a one-file change.
  */
 import { logger } from "../_core/logger";
-import { isGmailAvailableForUser, sendViaGmail } from "./gmail";
+import { isGmailAvailable, isGmailAvailableForUser, sendViaGmail } from "./gmail";
 import { isSendgridConfigured, sendViaSendgrid } from "./sendgrid";
 import { isTwilioConfigured, sendViaTwilio } from "./twilio";
 import {
@@ -65,9 +65,13 @@ async function pickEmailProvider(
 
   if (isSendgridConfigured()) return "sendgrid";
 
-  if (options.userId !== undefined && (await isGmailAvailableForUser(options.userId))) {
-    return "gmail";
-  }
+  // Prefer org-scoped Gmail availability check so a user in two orgs
+  // doesn't accidentally use the other org's Gmail account.
+  const gmailAvailable = await isGmailAvailable({
+    orgId: options.orgId,
+    userId: options.userId,
+  });
+  if (gmailAvailable) return "gmail";
 
   throw new NoDeliveryProviderError(
     "email",
@@ -88,13 +92,16 @@ export async function sendEmail(
   try {
     let result: DeliveryResult;
     if (provider === "gmail") {
-      if (options.userId === undefined) {
+      if (options.orgId === undefined && options.userId === undefined) {
         throw new DeliveryFailedError(
           "gmail",
-          "Gmail provider requires options.userId.",
+          "Gmail provider requires options.orgId (preferred) or options.userId.",
         );
       }
-      result = await sendViaGmail(message, options.userId);
+      result = await sendViaGmail(message, {
+        orgId: options.orgId,
+        userId: options.userId,
+      });
     } else {
       result = await sendViaSendgrid(message, {
         fromEmail: options.fromEmail,

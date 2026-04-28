@@ -22,6 +22,7 @@ const { sendViaGmailMock, sendViaSendgridMock, sendViaTwilioMock, isGmailAvailab
 
 vi.mock("./delivery/gmail", () => ({
   sendViaGmail: sendViaGmailMock,
+  isGmailAvailable: isGmailAvailableMock,
   isGmailAvailableForUser: isGmailAvailableMock,
 }));
 
@@ -101,7 +102,12 @@ describe("delivery — email provider selection", () => {
     );
 
     expect(result.provider).toBe("gmail");
-    expect(sendViaGmailMock).toHaveBeenCalledWith(expect.any(Object), 42);
+    // The Gmail provider now receives a sender object so it can pick
+    // org-scoped credentials when available (multi-tenant safety).
+    expect(sendViaGmailMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ userId: 42 }),
+    );
   });
 
   it("throws NoDeliveryProviderError when neither provider is available", async () => {

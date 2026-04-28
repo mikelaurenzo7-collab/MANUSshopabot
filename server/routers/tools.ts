@@ -347,11 +347,11 @@ export const toolsRouter = router({
     }),
 
   /** Disconnect a tool credential. */
-  disconnect: protectedProcedure
+  disconnect: orgProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const cred = await db.getPlatformCredentialById(input.id);
-      if (!cred || cred.userId !== ctx.user.id) {
+      if (!cred || cred.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
       }
       if (!SUPPORTED_TOOL_CONNECTORS.includes(cred.platform)) {
@@ -369,11 +369,11 @@ export const toolsRouter = router({
     }),
 
   /** Re-run a connector's verifyConnection (used by the Health refresh button). */
-  checkHealth: protectedProcedure
+  checkHealth: orgProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const cred = await db.getPlatformCredentialById(input.id);
-      if (!cred || cred.userId !== ctx.user.id) {
+      if (!cred || cred.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Credential not found" });
       }
       if (!SUPPORTED_TOOL_CONNECTORS.includes(cred.platform)) {

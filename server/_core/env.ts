@@ -113,6 +113,12 @@ const RECOMMENDED_VARS = [
   "SHOPIFY_PARTNER_CLIENT_SECRET",
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
+  // REDIS_URL is required in production deployments — the BullMQ
+  // queue layer is the home of webhook fan-out, scheduled tasks, and
+  // delayed jobs. The default fallback `redis://localhost:6379` only
+  // exists for local-dev convenience and will silently no-op on a
+  // Manus deploy. We escalate to a fatal in production below.
+  "REDIS_URL",
 ] as const;
 
 export function validateRequiredEnv(): void {
@@ -139,6 +145,14 @@ export function validateRequiredEnv(): void {
   // Production CORS hardening — never fall back to localhost in prod.
   if (process.env.NODE_ENV === "production" && !process.env.ALLOWED_ORIGINS) {
     missing.push("ALLOWED_ORIGINS (required in production — comma-separated list)");
+  }
+
+  // Production Redis requirement — the localhost fallback is fine for
+  // dev where the operator runs `redis-server` alongside the app, but
+  // a Manus deploy without REDIS_URL will silently fail to enqueue
+  // webhooks and scheduled jobs. Fail fast at boot.
+  if (process.env.NODE_ENV === "production" && !process.env.REDIS_URL) {
+    missing.push("REDIS_URL (required in production — BullMQ queue backend)");
   }
 
   for (const key of RECOMMENDED_VARS) {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -681,7 +681,7 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
    * to the nearest dollar) — buyers respond better to round numbers
    * than to fractional cents from a midpoint calculation.
    */
-  saveListingAsDraftProduct: protectedProcedure
+  saveListingAsDraftProduct: orgProcedure
     .input(z.object({
       storeId: z.number(),
       listing: z.object({
@@ -705,7 +705,14 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
       // draft product carries the image straight into the listing.
       imageUrl: z.string().url().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Scope check: the storeId must belong to the active org. Without
+      // this, a user in two orgs could craft a request that creates a
+      // draft product on the *other* org's store.
+      const store = await db.getStoreById(input.storeId);
+      if (!store || store.orgId !== ctx.org.id) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Store not found in this org" });
+      }
       const { listing } = input;
 
       // Compose the on-page description: bullet points + the prose
