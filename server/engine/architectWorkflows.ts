@@ -21,6 +21,18 @@ registerWorkflow("niche_research", (input): WorkflowStepDefinition[] => {
       title: "Market Analysis",
       description: `Analyzing market size, trends, and demand for "${keyword}"`,
       input: {
+        // Claude-direct opt-in: this system prompt is ~700 chars frozen,
+        // reused on every niche-research run. cacheSystemPrompt routes
+        // it through the Anthropic SDK with cache_control: ephemeral —
+        // ~90% input-token cost cut on the cached prefix after the
+        // first run. effort: "high" matches the analysis depth this
+        // step needs; adaptive thinking lets the model decide depth
+        // per request rather than the fixed 128-token budget Forge ships.
+        // Falls back to Forge silently when ANTHROPIC_API_KEY is unset.
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
         systemPrompt: `You are a world-class e-commerce market researcher and competitive strategist. You analyze niches with the precision of a McKinsey consultant and the creativity of a top Shopify merchant.
 
 ## MARKETING MOAT DIRECTIVE (Shop_a_Bot CTO Mandate)

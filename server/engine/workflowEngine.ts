@@ -21,6 +21,7 @@ import {
   getProductsByStore, getOrdersByStoreSince, getOpenHeatmapByOrg,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
+import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDirect";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import {
@@ -619,14 +620,35 @@ async function executeLLMStep(context: StepContext): Promise<any> {
   // but if all attempts time out we still want a structured failure
   // marker the next step can react to instead of a thrown exception
   // bubbling up.
+  // ── Claude-direct opt-in ────────────────────────────────────────
+  // When the workflow author tags this step with `useClaudeDirect:
+  // true` AND `ANTHROPIC_API_KEY` is configured, the call routes
+  // through the official SDK with the requested premium features
+  // (prompt caching, adaptive thinking, effort). On any other
+  // condition — flag absent, key absent, ENV in dev — the call falls
+  // back to the existing Forge proxy. Zero breaking change for
+  // Manus deploys without the key.
+  //
+  // Activation guidance:
+  //   • cacheSystemPrompt: true on workflows with long, frozen system
+  //     prompts that are reused across runs (niche_research,
+  //     brand_identity_kit). Caches the first ~90% of input tokens.
+  //   • effort: "xhigh" for coding/agentic; "high" for intelligence-
+  //     sensitive analysis (default); "medium"/"low" for cost-sensitive.
+  //   • adaptiveThinking: true (default) for multi-step reasoning;
+  //     pass false for short classifiers to skip thinking overhead.
   let response: Awaited<ReturnType<typeof invokeLLM>>;
   try {
-    response = await invokeLLM({
+    response = await invokeWithFallback({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt + contextStr },
       ],
       ...(input.responseFormat ? { response_format: input.responseFormat } : {}),
+      ...(input.useClaudeDirect ? { useClaudeDirect: true } : {}),
+      ...(input.cacheSystemPrompt ? { cacheSystemPrompt: true } : {}),
+      ...(input.effort ? { effort: input.effort } : {}),
+      ...(input.adaptiveThinking !== undefined ? { adaptiveThinking: input.adaptiveThinking } : {}),
     });
   } catch (err: any) {
     console.error(`[WorkflowEngine.LLMStep] invokeLLM failed: ${err?.message ?? err}`);

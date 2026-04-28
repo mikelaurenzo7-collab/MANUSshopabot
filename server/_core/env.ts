@@ -10,6 +10,14 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   forgeModel: process.env.FORGE_LLM_MODEL ?? "gemini-2.5-flash",
+  // Direct Anthropic SDK path — opt-in. When set, workflows that
+  // request claudeDirect features (prompt caching, adaptive thinking,
+  // effort, batch) talk to Anthropic directly. When unset, the Forge
+  // proxy at forgeApiUrl is the only path. Setting ANTHROPIC_API_KEY
+  // is additive — it doesn't disable Forge, it just unlocks the
+  // premium features for opt-in workflows.
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-opus-4-7",
 
   // Shopify Partner OAuth
   shopifyPartnerClientId: process.env.SHOPIFY_PARTNER_CLIENT_ID ?? "",
