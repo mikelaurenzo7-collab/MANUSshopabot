@@ -22,6 +22,7 @@ import {
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDirect";
+import { runMemoryAgent, isMemoryAgentAvailable } from "./memoryAgent";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import {
@@ -662,6 +663,58 @@ async function executeLLMStep(context: StepContext): Promise<any> {
   //     sensitive analysis (default); "medium"/"low" for cost-sensitive.
   //   • adaptiveThinking: true (default) for multi-step reasoning;
   //     pass false for short classifiers to skip thinking overhead.
+  // ── Agentic memory write loop (opt-in) ──────────────────────────
+  // When the step opts in via `useMemoryTools: true` AND the direct
+  // Anthropic SDK is wired AND the bot profile exists, route through
+  // the memory agent: a tool-use loop that lets the model call
+  // memory_read/search/write/forget itself during the step. This is
+  // the *write* half of the memory feature (passive recall above is
+  // the read half). Falls back to the regular single-shot path on
+  // any of: flag absent, key absent, no profile.
+  if (
+    input.useMemoryTools &&
+    isMemoryAgentAvailable() &&
+    botProfile?.id &&
+    botProfile.memoryEnabled !== false
+  ) {
+    try {
+      const agentResult = await runMemoryAgent({
+        systemPrompt,
+        userPrompt: userPrompt + contextStr,
+        ctx: { botProfileId: botProfile.id, userId: context.userId },
+        ...(input.effort ? { effort: input.effort as any } : {}),
+      });
+      if (input.responseFormat) {
+        try {
+          return JSON.parse(agentResult.text);
+        } catch {
+          return {
+            text: agentResult.text,
+            __memoryAgent: {
+              iterations: agentResult.iterations,
+              toolCalls: agentResult.toolCallCount,
+              hitCap: agentResult.hitIterationCap,
+            },
+          };
+        }
+      }
+      return {
+        text: agentResult.text,
+        __memoryAgent: {
+          iterations: agentResult.iterations,
+          toolCalls: agentResult.toolCallCount,
+          hitCap: agentResult.hitIterationCap,
+        },
+      };
+    } catch (err: any) {
+      console.error(
+        `[WorkflowEngine.LLMStep] memory agent failed, falling back to single-shot: ${err?.message ?? err}`,
+      );
+      // Fall through to the standard path so a flaky agentic call
+      // doesn't hard-fail the workflow.
+    }
+  }
+
   let response: Awaited<ReturnType<typeof invokeLLM>>;
   try {
     response = await invokeWithFallback({
