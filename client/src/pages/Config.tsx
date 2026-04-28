@@ -27,6 +27,7 @@ import {
   XCircle,
   Activity,
 } from "lucide-react";
+import { CountUp } from "@/components/CountUp";
 
 type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 
@@ -110,17 +111,23 @@ function CredentialDiagnostics() {
           <>
             <div className="flex gap-4 mb-4 p-3 rounded-lg bg-white/[0.03]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">{data.summary.configured}</div>
+                <div className="text-2xl font-bold text-green-400">
+                  <CountUp value={data.summary.configured} />
+                </div>
                 <div className="text-xs text-muted-foreground">Configured</div>
               </div>
               <Separator orientation="vertical" className="h-auto" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-red-400">{data.summary.missing}</div>
+                <div className="text-2xl font-bold text-red-400">
+                  <CountUp value={data.summary.missing} />
+                </div>
                 <div className="text-xs text-muted-foreground">Missing</div>
               </div>
               <Separator orientation="vertical" className="h-auto" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">{data.summary.total}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  <CountUp value={data.summary.total} />
+                </div>
                 <div className="text-xs text-muted-foreground">Total</div>
               </div>
             </div>

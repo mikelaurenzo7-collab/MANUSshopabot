@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { CountUp } from "@/components/CountUp";
 import {
   User,
   Mail,
@@ -28,6 +29,29 @@ import { useLocation } from "wouter";
 function StatCard({ icon: Icon, label, value, color, loading }: {
   icon: any; label: string; value: string | number; color: string; loading?: boolean;
 }) {
+  // Numeric values get the CountUp treatment; strings (e.g. "Healthy")
+  // render as plain text. Strips $/, characters before parsing so
+  // currency strings still animate ($1,234.56 → animates from 0).
+  const numericMatch =
+    typeof value === "string"
+      ? value.match(/^([^\d-]*)(-?[\d,]+(?:\.\d+)?)(.*)$/)
+      : null;
+  const animatedValue =
+    typeof value === "number" ? (
+      <CountUp value={value} />
+    ) : numericMatch ? (
+      <>
+        {numericMatch[1]}
+        <CountUp
+          value={parseFloat(numericMatch[2].replace(/,/g, ""))}
+          decimals={numericMatch[2].includes(".") ? 2 : 0}
+        />
+        {numericMatch[3]}
+      </>
+    ) : (
+      value
+    );
+
   return (
     <div className={`p-4 rounded-xl border transition-colors hover:bg-white/[0.02] ${color}`}>
       <div className="flex items-center gap-2 mb-2">
@@ -37,7 +61,7 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
       {loading ? (
         <Skeleton className="h-7 w-16" />
       ) : (
-        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className="text-2xl font-bold text-foreground">{animatedValue}</p>
       )}
     </div>
   );
