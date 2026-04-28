@@ -93,3 +93,62 @@ describe("Landing copy — pricing tier caps match server-side enforcement", () 
     expect(src).toContain("10 connected stores");
   });
 });
+
+describe("Landing positioning — cofounder one-liners landed", () => {
+  it("hero headline is the three-stab tagline (Hire / Run / Touch)", () => {
+    const src = read(LANDING);
+    // The new tagline structure:
+    //   Hire three bots.
+    //   Run your store.
+    //   Touch nothing.
+    expect(src).toContain("Hire three bots.");
+    expect(src).toContain("Run your store.");
+    expect(src).toContain("Touch nothing.");
+  });
+
+  it("hero subtext reads the handoff narrative (builds → runs → grows)", () => {
+    const src = read(LANDING);
+    // Color-coded role narrative: Builder (sky) builds, Merchant (cyan)
+    // runs, Social (amber) grows. The colors must match the role icons
+    // used elsewhere on the landing.
+    expect(src).toMatch(/text-sky-300">Builder<\/span>\s+builds it/);
+    expect(src).toMatch(/text-cyan-300">Merchant<\/span>\s+runs it/);
+    expect(src).toMatch(/text-amber-300">Social<\/span>\s+grows it/);
+  });
+
+  it("hero subtext spells out the retention compound (the moat)", () => {
+    const src = read(LANDING);
+    // The "bots remember what worked for YOU" line is the strongest
+    // differentiator from copy-only AI tools — and the visible moat.
+    expect(src).toContain("The bots remember what worked for");
+    expect(src).toContain("month over month, the operation gets better while your hours go down");
+  });
+
+  it("announcement pill is honest about platform readiness", () => {
+    const src = read(LANDING);
+    // Pre-rebrand: "Amazon FBA, TikTok Shop, and Shopify automation"
+    // (implied all live). Now: Shopify-live + others rolling out.
+    expect(src).toContain("Shopify-native today · Amazon, Etsy, TikTok Shop rolling out");
+    expect(src).not.toContain("Amazon FBA, TikTok Shop, and Shopify automation in one platform");
+  });
+
+  it("BOTS taglines align with the role narrative", () => {
+    const src = read(LANDING);
+    expect(src).toContain('tagline: "Builds it — Day 1"');
+    expect(src).toContain('tagline: "Runs it — forever"');
+    expect(src).toContain('tagline: "Grows it — while you sleep"');
+  });
+
+  it("final CTA leads with the trial promise + the compound", () => {
+    const src = read(LANDING);
+    expect(src).toContain("Hire your three bots tonight.");
+    expect(src).toContain("7-day free trial. No credit card.");
+    expect(src).toContain("every month, they get better");
+  });
+
+  it("footer brand line uses the canonical role narrative", () => {
+    const src = read(LANDING);
+    expect(src).toContain("Builder builds it. Merchant runs it. Social grows it.");
+    expect(src).toContain("Three bots. One operation. Zero touch.");
+  });
+});

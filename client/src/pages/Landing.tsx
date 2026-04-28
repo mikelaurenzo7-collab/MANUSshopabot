@@ -22,21 +22,21 @@ const BOTS = [
   {
     icon: Bot,
     name: "Builder Bot" as const,
-    tagline: "Day 1 — store live in 30 minutes",
+    tagline: "Builds it — Day 1",
     description: "Researches winning niches, sources products, configures your storefront, and writes all product copy — then hands the keys to the Merchant.",
     features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
   },
   {
     icon: Package,
     name: "Merchant Bot" as const,
-    tagline: "Day 2+ — zero-touch fulfillment",
-    description: "Takes over the moment your store launches. Processes every order, optimizes pricing, syncs inventory, and triages support — forever.",
+    tagline: "Runs it — forever",
+    description: "Takes over the moment your store launches. Processes every order, optimizes pricing, syncs inventory, and triages support — without touching your day.",
     features: ["Automated order fulfillment", "Dynamic pricing engine", "Inventory sync & alerts", "Customer support triage"],
   },
   {
     icon: Megaphone,
     name: "Social Bot" as const,
-    tagline: "From launch — demand on autopilot",
+    tagline: "Grows it — while you sleep",
     description: "Wakes up alongside the Merchant. Creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
     features: ["TikTok & Meta ad campaigns", "Social media scheduling", "Email & SMS recovery flows", "SEO optimization"],
   },
@@ -410,24 +410,32 @@ export default function Landing() {
 
         <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
           <div className="text-center lg:text-left">
-            {/* Announcement pill */}
+            {/* Announcement pill — honest about platform readiness */}
             <div className="mb-6 inline-flex items-center gap-2 announcement-banner">
-              <span className="eyebrow">New</span>
-              <span className="text-white/65 text-xs">Amazon FBA, TikTok Shop, and Shopify automation in one platform</span>
+              <span className="eyebrow">Live</span>
+              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out</span>
               <ArrowRight className="w-3 h-3 text-white/35" />
             </div>
 
-            {/* Headline */}
+            {/* Headline — the cofounder one-liner. Three short stabs;
+                the meaning compounds line-by-line. */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
-              <span className="text-white">Your store</span>
+              <span className="text-white">Hire three bots.</span>
               <br />
-              <span className="hero-title-shine">runs itself.</span>
+              <span className="text-white">Run your store.</span>
+              <br />
+              <span className="hero-title-shine">Touch nothing.</span>
             </h1>
 
-            {/* Subtext */}
-            <p className="text-base md:text-lg text-white/58 max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal">
-              Shop_a_Bot turns e-commerce into an autonomous operating system. The Builder ships your store. The Merchant
-              <span className="text-cyan-300"> takes the keys</span> the day it goes live. The Social Bot manufactures demand while you sleep.
+            {/* Subtext — the handoff narrative + the retention compound,
+                in two crisp sentences. */}
+            <p className="text-base md:text-lg text-white/65 max-w-2xl mx-auto lg:mx-0 mb-3 leading-relaxed font-medium">
+              <span className="text-sky-300">Builder</span> builds it.{" "}
+              <span className="text-cyan-300">Merchant</span> runs it.{" "}
+              <span className="text-amber-300">Social</span> grows it.
+            </p>
+            <p className="text-sm md:text-base text-white/55 max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal">
+              The bots remember what worked for <em className="not-italic text-white/75">you</em> — month over month, the operation gets better while your hours go down.
             </p>
 
             {/* CTAs */}
@@ -600,7 +608,12 @@ export default function Landing() {
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">The Platform</span>
             <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">The Builder ships your store. The Merchant runs it. The Social Bot grows it. Each bot wakes up at the right moment.</p>
+            <p className="mt-4 text-white/55 max-w-2xl mx-auto leading-relaxed">
+              <span className="text-sky-300">Builder</span> ships your store on Day 1.
+              On launch day it hands the keys to the <span className="text-cyan-300">Merchant</span>.
+              The <span className="text-amber-300">Social</span> Bot manufactures demand from the moment you go live.
+              Each bot wakes up at the right moment — and remembers what worked last time.
+            </p>
           </div>
 
           {/* Lifecycle ribbon */}
@@ -789,12 +802,12 @@ export default function Landing() {
             <div className="aurora-mesh opacity-50" />
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
             <div className="relative">
-              <p className="eyebrow mb-4">Ready to automate?</p>
+              <p className="eyebrow mb-4">Ready when you are</p>
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-4">
-                Launch your first autonomous store
+                Hire your three bots tonight.
               </h2>
-              <p className="text-white/40 mb-8 leading-relaxed">
-                No coding. No daily management. Just bots working 24/7 to build and grow your business.
+              <p className="text-white/55 mb-8 leading-relaxed max-w-lg mx-auto">
+                7-day free trial. No credit card. The bots start learning your store the moment you connect it — and every month, they get better.
               </p>
               <Button
                 onClick={() => handlePricingClick("growth")}
@@ -829,8 +842,9 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div>
               <BrandName size="sm" />
-              <p className="text-white/30 text-sm mt-2 max-w-xs">
-                Autonomous e-commerce orchestration. Three bots. Zero management.
+              <p className="text-white/45 text-sm mt-2 max-w-xs leading-relaxed">
+                Builder builds it. Merchant runs it. Social grows it.
+                <span className="block text-white/30 mt-1">Three bots. One operation. Zero touch.</span>
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
