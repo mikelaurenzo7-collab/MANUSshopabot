@@ -123,6 +123,94 @@ const ECOMMERCE_PLATFORMS = {
     requiredFields: ["clientId", "clientSecret"],
     capabilities: ["products", "orders", "inventory", "pricing", "reports"],
   },
+  depop: {
+    name: "Depop",
+    icon: "👗",
+    color: "#00D084",
+    connectionType: "oauth" as const,
+    description: "Manage Depop shop — inventory, orders, and shipping",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://partnerapi.depop.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://partnerapi.depop.com/oauth/token",
+      scopes: "inventory:read inventory:write orders:read orders:write shipping:read shipping:write",
+    },
+    capabilities: ["listings", "orders", "inventory", "shipping"],
+  },
+  bigcommerce: {
+    name: "BigCommerce",
+    icon: "🛒",
+    color: "#003366",
+    connectionType: "oauth" as const,
+    description: "Manage BigCommerce store — products, orders, customers",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://login.bigcommerce.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://login.bigcommerce.com/oauth2/token",
+      scopes: "store_v2_products store_v2_orders store_v2_customers store_v2_inventory",
+    },
+    capabilities: ["products", "orders", "customers", "inventory"],
+  },
+  square: {
+    name: "Square",
+    icon: "⬜",
+    color: "#3E4348",
+    connectionType: "oauth" as const,
+    description: "Manage Square store — catalog, orders, payments",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://connect.squareup.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://connect.squareup.com/oauth2/token",
+      scopes: "MERCHANT_PROFILE_READ CATALOG_READ ORDERS_READ ORDERS_WRITE INVENTORY_READ",
+    },
+    capabilities: ["catalog", "orders", "inventory", "payments"],
+  },
+  faire: {
+    name: "Faire",
+    icon: "🏪",
+    color: "#6B5B95",
+    connectionType: "api_key" as const,
+    description: "Wholesale marketplace — manage orders and inventory",
+    requiredFields: ["apiKey"],
+    capabilities: ["orders", "inventory", "wholesale"],
+  },
+  bonanza: {
+    name: "Bonanza",
+    icon: "🎪",
+    color: "#FF6B35",
+    connectionType: "api_key" as const,
+    description: "Marketplace via Bonapitit API — enter your Developer ID and Certificate",
+    requiredFields: ["devId", "certId"],
+    capabilities: ["listings", "orders", "inventory"],
+  },
+  stockx: {
+    name: "StockX",
+    icon: "📈",
+    color: "#000000",
+    connectionType: "oauth" as const,
+    description: "Resale marketplace — manage listings and orders",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://api.stockx.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://api.stockx.com/oauth/token",
+      scopes: "listings:read listings:write orders:read orders:write",
+    },
+    capabilities: ["listings", "orders", "resale"],
+  },
+  reverb: {
+    name: "Reverb",
+    icon: "🎸",
+    color: "#2E7D32",
+    connectionType: "oauth" as const,
+    description: "Music gear marketplace — manage listings and orders",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://reverb.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://api.reverb.com/oauth/token",
+      scopes: "listings:read listings:write orders:read orders:write",
+    },
+    capabilities: ["listings", "orders", "inventory"],
+  },
 };
 
 /**
@@ -203,20 +291,6 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["pin_creation", "board_management", "analytics"],
   },
-  google_ads: {
-    name: "Google Ads",
-    icon: "📊",
-    color: "#4285F4",
-    connectionType: "oauth" as const,
-    description: "Manage Google Ads campaigns and performance",
-    oauthConfig: {
-      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}&access_type=offline&prompt=consent`,
-      tokenUrl: "https://oauth2.googleapis.com/token",
-      scopes: "https://www.googleapis.com/auth/adwords",
-    },
-    capabilities: ["campaign_management", "reporting", "optimization"],
-  },
   gmail: {
     name: "Gmail",
     icon: "📧",
@@ -253,8 +327,15 @@ export const connectorsRouter = router({
       ebay: !!ENV.ebayAppId && !!ENV.ebayCertId,
       amazon: !!ENV.amazonSpClientId && !!ENV.amazonSpClientSecret,
       tiktok_shop: !!ENV.tiktokAppId && !!ENV.tiktokClientSecret,
-      walmart: false, // adapter scaffolded, no OAuth wired yet
+      walmart: true, // API-key based, no OAuth needed
       woocommerce: true, // API-key based, no shared OAuth required
+      depop: !!ENV.depopAppId && !!ENV.depopAppSecret,
+      bigcommerce: !!ENV.bigcommerceClientId && !!ENV.bigcommerceClientSecret,
+      square: !!ENV.squareClientId && !!ENV.squareClientSecret,
+      faire: true, // API-key based
+      bonanza: true, // API-key based
+      stockx: !!ENV.stockxClientId && !!ENV.stockxClientSecret,
+      reverb: !!ENV.reverbClientId && !!ENV.reverbClientSecret,
     };
     const matrix = getEcommerceCapabilityMatrix();
     return Object.entries(ECOMMERCE_PLATFORMS).map(([id, platform]) => ({
@@ -376,7 +457,7 @@ export const connectorsRouter = router({
   /** Connect a social media account (stores OAuth token after redirect) */
   connectSocialAccount: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail"]),
       accountName: z.string().optional(),
       accountId: z.string().optional(),
       accessToken: z.string(),
@@ -585,7 +666,7 @@ export const connectorsRouter = router({
   /** Generate OAuth URL for a social media platform */
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail"]),
       origin: z.string(),
       returnTo: z.string().optional(),
     }))
@@ -602,7 +683,6 @@ export const connectorsRouter = router({
         tiktok: ENV.tiktokClientKey,
         twitter: ENV.twitterClientId,
         pinterest: ENV.pinterestAppId,
-        google_ads: ENV.googleAdsClientId,
         gmail: ENV.googleClientId,
       };
 
@@ -655,7 +735,6 @@ function getSetupInstructions(platform: string): string {
     tiktok: "1. Go to developers.tiktok.com\n2. Create a new app\n3. Add Login Kit and Content Posting API\n4. Copy Client Key and Client Secret\n5. Add them as TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in Settings > Secrets",
     twitter: "1. Go to developer.twitter.com\n2. Create a new project and app\n3. Enable OAuth 2.0 with PKCE\n4. Copy Client ID and Client Secret\n5. Add them as TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET in Settings > Secrets",
     pinterest: "1. Go to developers.pinterest.com\n2. Create a new app\n3. Request access to Pins and Boards scopes\n4. Copy App ID and App Secret\n5. Add them as PINTEREST_APP_ID and PINTEREST_APP_SECRET in Settings > Secrets",
-    google_ads: "1. Go to console.cloud.google.com\n2. Create OAuth 2.0 credentials\n3. Enable Google Ads API\n4. Copy Client ID and Client Secret\n5. Add them as GOOGLE_ADS_CLIENT_ID and GOOGLE_ADS_CLIENT_SECRET in Settings > Secrets",
   };
   return instructions[platform] || "Contact support for setup instructions.";
 }

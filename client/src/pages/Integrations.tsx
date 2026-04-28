@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
 const ToolsTab = lazy(() => import("@/components/integrations/ToolsTab").then(m => ({ default: m.ToolsTab })));
@@ -30,11 +33,35 @@ const PLATFORM_ICONS: Record<string, string> = {
   pinterest: "📌", youtube: "▶️", gmail: "📧",
 };
 
+/* ─── API-key field definitions per platform ─── */
+const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: string; secret?: boolean }[]> = {
+  woocommerce: [
+    { label: "Store URL", key: "storeUrl", placeholder: "https://your-store.com" },
+    { label: "Consumer Key", key: "consumerKey", placeholder: "ck_xxxxxxxxxxxx", secret: true },
+    { label: "Consumer Secret", key: "consumerSecret", placeholder: "cs_xxxxxxxxxxxx", secret: true },
+  ],
+  walmart: [
+    { label: "Client ID", key: "clientId", placeholder: "Your Walmart Client ID" },
+    { label: "Client Secret", key: "clientSecret", placeholder: "Your Walmart Client Secret", secret: true },
+  ],
+};
+
 export default function IntegrationsPage() {
   const [mainTab, setMainTab] = useState<"stores" | "social" | "tools" | "connect">("stores");
   const [connectTab, setConnectTab] = useState<"ecommerce" | "social" | "tools">("ecommerce");
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
+
+  /* ─── Shopify domain dialog state ─── */
+  const [shopifyDialogOpen, setShopifyDialogOpen] = useState(false);
+  const [shopifyDomain, setShopifyDomain] = useState("");
+  const [shopifyPending, setShopifyPending] = useState(false);
+
+  /* ─── API-key dialog state (WooCommerce, Walmart) ─── */
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+  const [apiKeyPlatform, setApiKeyPlatform] = useState<string | null>(null);
+  const [apiKeyValues, setApiKeyValues] = useState<Record<string, string>>({});
+  const [apiKeyShowSecrets, setApiKeyShowSecrets] = useState<Record<string, boolean>>({});
 
   const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
   const { data: ecommercePlatforms } = trpc.connectors.ecommercePlatforms.useQuery();
@@ -69,13 +96,107 @@ export default function IntegrationsPage() {
     onError: (err) => toast.error(err.message),
   });
   const generateOAuth = trpc.connectors.generateOAuthUrl.useMutation({
-    onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error(data.message || "Failed"); },
+    onSuccess: (data) => {
+      if (data.url) window.location.href = data.url;
+      else toast.error(data.message || "Failed to generate OAuth URL");
+    },
     onError: (err) => toast.error(err.message),
   });
   const generateSocialOAuth = trpc.connectors.generateSocialOAuthUrl.useMutation({
     onSuccess: (data) => { if (data.url) window.location.href = data.url; else toast.error((data as any).message || "Failed"); },
     onError: (err) => toast.error(err.message),
   });
+
+  /* ─── Shopify: create store + start OAuth ─── */
+  const createStore = trpc.stores.create.useMutation();
+  const shopifyOAuthUrl = trpc.stores.shopifyOAuthUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        setShopifyDialogOpen(false);
+        setShopifyDomain("");
+        setShopifyPending(false);
+        window.location.href = data.url;
+      }
+    },
+    onError: (err) => { toast.error(err.message); setShopifyPending(false); },
+  });
+
+  const handleShopifyConnect = async () => {
+    if (!shopifyDomain.trim()) { toast.error("Please enter your Shopify store domain"); return; }
+    setShopifyPending(true);
+    try {
+      let domain = shopifyDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+      if (!domain.includes(".")) domain = `${domain}.myshopify.com`;
+      // Find or create a store for this domain
+      const existingStore = (stores || []).find((s: any) => s.platform === "shopify" && (s.platformDomain === domain || s.name.toLowerCase() === domain.split(".")[0]));
+      let storeId: number;
+      if (existingStore) {
+        storeId = existingStore.id;
+      } else {
+        const newStore = await createStore.mutateAsync({
+          name: domain.split(".")[0],
+          platform: "shopify",
+          platformDomain: domain,
+        });
+        storeId = newStore.id;
+        refetchStores();
+      }
+      shopifyOAuthUrl.mutate({ shopDomain: domain, storeId, origin: window.location.origin });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to connect Shopify");
+      setShopifyPending(false);
+    }
+  };
+
+  /* ─── API-key connect (WooCommerce, Walmart) ─── */
+  const connectApiKey = trpc.connectors.connectWithApiKey.useMutation({
+    onSuccess: () => {
+      toast.success(`${apiKeyPlatform?.toUpperCase()} connected successfully`);
+      setApiKeyDialogOpen(false);
+      setApiKeyPlatform(null);
+      setApiKeyValues({});
+      refetchCreds();
+      refetchStores();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleApiKeyConnect = async () => {
+    if (!apiKeyPlatform) return;
+    const fields = API_KEY_FIELDS[apiKeyPlatform];
+    if (!fields) return;
+    for (const f of fields) {
+      if (!apiKeyValues[f.key]?.trim()) {
+        toast.error(`Please enter ${f.label}`);
+        return;
+      }
+    }
+    // Find or create a store for this platform
+    const existingStore = (stores || []).find((s: any) => s.platform === apiKeyPlatform);
+    let storeId: number;
+    if (existingStore) {
+      storeId = existingStore.id;
+    } else {
+      const storeName = apiKeyPlatform === "woocommerce"
+        ? (apiKeyValues.storeUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, "").split("/")[0] || "WooCommerce Store"
+        : "Walmart Store";
+      const newStore = await createStore.mutateAsync({
+        name: storeName,
+        platform: apiKeyPlatform as any,
+        platformDomain: apiKeyValues.storeUrl || undefined,
+      });
+      storeId = newStore.id;
+      refetchStores();
+    }
+    connectApiKey.mutate({ platform: apiKeyPlatform, storeId, credentials: apiKeyValues });
+  };
+
+  const openApiKeyDialog = (platformId: string) => {
+    setApiKeyPlatform(platformId);
+    setApiKeyValues({});
+    setApiKeyShowSecrets({});
+    setApiKeyDialogOpen(true);
+  };
 
   const connectedPlatformIds = useMemo(() => new Set((credentials || []).map((c: any) => c.platform)), [credentials]);
   const connectedSocialIds = useMemo(() => new Set((socialAccounts || []).map((s: any) => s.platform)), [socialAccounts]);
@@ -84,6 +205,19 @@ export default function IntegrationsPage() {
     if (status === "active" || status === "healthy") return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />;
     if (status === "error" || status === "unhealthy") return <XCircle className="w-3.5 h-3.5 text-red-400" />;
     return <AlertCircle className="w-3.5 h-3.5 text-amber-400" />;
+  };
+
+  /* ─── Handle connect button click ─── */
+  const handleEcommerceConnect = (platform: any) => {
+    if (platform.id === "shopify") {
+      setShopifyDomain("");
+      setShopifyDialogOpen(true);
+    } else if (platform.connectionType === "api_key" && API_KEY_FIELDS[platform.id]) {
+      openApiKeyDialog(platform.id);
+    } else {
+      // OAuth flow for other platforms (Etsy, Amazon, eBay, TikTok Shop)
+      generateOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+    }
   };
 
   const tabs = [
@@ -95,7 +229,7 @@ export default function IntegrationsPage() {
 
   return (
     <div className="flex flex-col h-full bg-transparent text-slate-200 overflow-hidden">
-      {/* Compact summary bar — parent Storefronts shell owns the page header */}
+      {/* Compact summary bar */}
       <div className="px-3 py-2 border-b border-white/8 flex items-center justify-between flex-wrap gap-2">
         <p className="text-[11px] text-slate-400">
           {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
@@ -161,13 +295,10 @@ export default function IntegrationsPage() {
                       onClick={() => setSelectedStoreId(store.id)}
                       className="group text-left bg-white/4 border border-white/8 rounded-2xl p-5 hover:bg-white/7 hover:border-white/15 transition-all duration-200 relative overflow-hidden"
                     >
-                      {/* Platform color accent */}
                       <div
                         className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
                         style={{ background: `linear-gradient(90deg, ${color}80, ${color}20)` }}
                       />
-
-                      {/* Header */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="text-2xl">{icon}</div>
@@ -188,11 +319,7 @@ export default function IntegrationsPage() {
                           )}
                         </div>
                       </div>
-
-                      {/* Mini KPIs — placeholder, will be populated from overview query */}
                       <StoreCardMetrics storeId={store.id} />
-
-                      {/* Footer */}
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/6">
                         <div className="text-xs text-slate-500">{store.niche || store.platform}</div>
                         <div className="flex items-center gap-1 text-xs text-sky-400 group-hover:gap-2 transition-all">
@@ -347,11 +474,6 @@ export default function IntegrationsPage() {
                   ? connectedPlatformIds.has(platform.id)
                   : connectedSocialIds.has(platform.id);
                 const color = PLATFORM_COLORS[platform.id] || "#64748b";
-                // `available` is the server's truth-check that the OAuth credentials
-                // for this platform are actually configured in env. Tiles where it's
-                // false still appear (so users can see the roadmap), but the Connect
-                // button is replaced with a "Coming soon" hint — clicking would send
-                // them through an OAuth flow that has no client_id and 404s.
                 const isAvailable = platform.available !== false;
 
                 return (
@@ -381,13 +503,18 @@ export default function IntegrationsPage() {
                         ))}
                       </div>
                     )}
-                    {/* Top strength from the per-integration capability matrix —
-                        gives users a one-line "why this integration?" without
-                        forcing them to read the docs. */}
                     {platform.capabilityMatrix?.strengths?.[0] && (
                       <p className="text-[10.5px] text-emerald-300/80 mb-3 leading-snug line-clamp-2">
                         ✦ {platform.capabilityMatrix.strengths[0]}
                       </p>
+                    )}
+
+                    {/* Connection type badge */}
+                    {platform.connectionType === "api_key" && (
+                      <div className="flex items-center gap-1 mb-2">
+                        <KeyRound className="w-3 h-3 text-amber-400" />
+                        <span className="text-[10px] text-amber-400">API Key Connection</span>
+                      </div>
                     )}
 
                     {!isAvailable ? (
@@ -404,7 +531,7 @@ export default function IntegrationsPage() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs max-w-[240px]">
-                            {platform.name} OAuth is rolling out. Track progress on the status page or subscribe to launch updates.
+                            {platform.name} integration is rolling out. Track progress on the status page or subscribe to launch updates.
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -419,7 +546,7 @@ export default function IntegrationsPage() {
                         style={!isConnected ? { backgroundColor: color } : {}}
                         onClick={() => {
                           if (connectTab === "ecommerce") {
-                            generateOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                            handleEcommerceConnect(platform);
                           } else {
                             generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
                           }
@@ -441,6 +568,110 @@ export default function IntegrationsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Shopify Domain Dialog ── */}
+      <Dialog open={shopifyDialogOpen} onOpenChange={setShopifyDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">🛍️</span> Connect Shopify Store
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Enter your Shopify store domain to start the OAuth connection. You'll be redirected to Shopify to authorize access.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="shopify-domain" className="text-slate-300">Store Domain</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="shopify-domain"
+                  placeholder="your-store or your-store.myshopify.com"
+                  value={shopifyDomain}
+                  onChange={(e) => setShopifyDomain(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleShopifyConnect()}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <p className="text-xs text-slate-500">
+                Example: <code className="text-sky-400/80">my-store</code> or <code className="text-sky-400/80">my-store.myshopify.com</code>
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShopifyDialogOpen(false)} className="border-white/10 text-slate-300 hover:bg-white/5">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleShopifyConnect}
+              disabled={shopifyPending || !shopifyDomain.trim()}
+              className="bg-[#96BF48] hover:bg-[#7ea33d] text-white"
+            >
+              {shopifyPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Connect to Shopify
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── API Key Dialog (WooCommerce, Walmart) ── */}
+      <Dialog open={apiKeyDialogOpen} onOpenChange={setApiKeyDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">{apiKeyPlatform ? PLATFORM_ICONS[apiKeyPlatform] : "🔌"}</span>
+              Connect {apiKeyPlatform === "woocommerce" ? "WooCommerce" : apiKeyPlatform === "walmart" ? "Walmart" : apiKeyPlatform}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {apiKeyPlatform === "woocommerce"
+                ? "Enter your WooCommerce REST API credentials. You can generate them in WooCommerce > Settings > Advanced > REST API."
+                : apiKeyPlatform === "walmart"
+                ? "Enter your Walmart Marketplace API credentials from the Walmart Developer Portal."
+                : "Enter your API credentials to connect."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {apiKeyPlatform && API_KEY_FIELDS[apiKeyPlatform]?.map((field) => (
+              <div key={field.key} className="space-y-2">
+                <Label htmlFor={`api-${field.key}`} className="text-slate-300">{field.label}</Label>
+                <div className="relative">
+                  <Input
+                    id={`api-${field.key}`}
+                    type={field.secret && !apiKeyShowSecrets[field.key] ? "password" : "text"}
+                    placeholder={field.placeholder}
+                    value={apiKeyValues[field.key] || ""}
+                    onChange={(e) => setApiKeyValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 pr-10"
+                  />
+                  {field.secret && (
+                    <button
+                      type="button"
+                      onClick={() => setApiKeyShowSecrets(prev => ({ ...prev, [field.key]: !prev[field.key] }))}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {apiKeyShowSecrets[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApiKeyDialogOpen(false)} className="border-white/10 text-slate-300 hover:bg-white/5">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApiKeyConnect}
+              disabled={connectApiKey.isPending || createStore.isPending}
+              className="text-white"
+              style={{ backgroundColor: apiKeyPlatform ? PLATFORM_COLORS[apiKeyPlatform] : "#0ea5e9" }}
+            >
+              {(connectApiKey.isPending || createStore.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
+              Save & Connect
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* StoreView Slide-Over */}
       {selectedStoreId !== null && (

@@ -893,3 +893,25 @@
 - [x] Add approval_queue.orgId + backfill (migration 0023)
 - [x] Verify stores are linked to org 1 (3 stores confirmed)
 - [x] TypeScript: 0 errors confirmed post-migration
+
+## Integration Audit & Production-Ready Sprint
+- [x] Make REDIS_URL optional in production (graceful degradation to in-memory)
+- [ ] Audit all OAuth client IDs, secrets, and redirect URIs
+- [ ] Fix Shopify connect flow (shop domain prompt UX)
+- [ ] Fix WooCommerce connect flow (API key input prompt)
+- [ ] Fix Etsy OAuth gray error page
+- [ ] Fix TikTok Shop OAuth gray error page
+- [ ] Fix all "coming soon" integrations — make them functional
+- [ ] Configure redirect URIs in each platform's developer console
+- [ ] Verify all e-commerce connectors work end-to-end
+- [ ] Verify all social connectors work end-to-end
+- [ ] Deploy successfully to production
+- [ ] Move Google Ads from social platforms to tool connectors
+- [ ] Add ecommerce OAuth callback URI to Google Cloud Console
+- [ ] Configure redirect URIs in all remaining developer consoles
+- [ ] Move Google Ads from social platforms to tool connectors
+- [ ] Add Depop as e-commerce platform connector
+- [ ] Research and add other viable platforms (Mercari, Poshmark, BigCommerce, Square, etc.)
+- [ ] Integrate new platforms into existing bot workflows
+- [ ] Update frontend Integrations page for new platforms
+- [ ] Create developer console redirect URI checklist for user

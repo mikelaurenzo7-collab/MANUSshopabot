@@ -159,7 +159,19 @@ const TOOL_CONNECTORS: Record<string, ToolConnectorConfig> = {
       { key: "email", label: "Login Email", placeholder: "you@store.com", required: true },
       { key: "apiKey", label: "API Key", type: "password", required: true },
     ],
+  },  google_ads: {
+    name: "Google Ads",
+    icon: "📊",
+    color: "#4285F4",
+    category: "advertising",
+    bots: ["architect", "merchant"],
+    description: "Manage Google Ads campaigns, monitor performance, and optimize spend",
+    capabilities: ["Campaign management", "Performance reporting", "Bid optimization", "Conversion tracking"],
+    whereToFind: "Click Connect to sign in with the Google account that owns your Google Ads account.",
+    connectionType: "oauth",
+    oauthScopes: "https://www.googleapis.com/auth/adwords",
   },
+
 };
 
 export const TOOL_CONNECTOR_IDS = Object.keys(TOOL_CONNECTORS);

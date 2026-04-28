@@ -72,6 +72,27 @@ export const ENV = {
   googleAdsClientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET ?? "",
   googleAdsDeveloperToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN ?? "",
 
+  
+  // Depop
+  depopAppId: process.env.DEPOP_APP_ID ?? "",
+  depopAppSecret: process.env.DEPOP_APP_SECRET ?? "",
+  // BigCommerce
+  bigcommerceClientId: process.env.BIGCOMMERCE_CLIENT_ID ?? "",
+  bigcommerceClientSecret: process.env.BIGCOMMERCE_CLIENT_SECRET ?? "",
+  // Square
+  squareClientId: process.env.SQUARE_CLIENT_ID ?? "",
+  squareClientSecret: process.env.SQUARE_CLIENT_SECRET ?? "",
+  // Faire
+  faireApiKey: process.env.FAIRE_API_KEY ?? "",
+  // Bonanza
+  bonanzaDevId: process.env.BONANZA_DEV_ID ?? "",
+  bonanzaCertId: process.env.BONANZA_CERT_ID ?? "",
+  // StockX
+  stockxClientId: process.env.STOCKX_CLIENT_ID ?? "",
+  stockxClientSecret: process.env.STOCKX_CLIENT_SECRET ?? "",
+  // Reverb
+  reverbClientId: process.env.REVERB_CLIENT_ID ?? "",
+  reverbClientSecret: process.env.REVERB_CLIENT_SECRET ?? "",
   // Facebook Page ID for bot notifications
   beastbotsPageId: process.env.BEASTBOTS_PAGE_ID ?? "",
 
@@ -147,12 +168,11 @@ export function validateRequiredEnv(): void {
     missing.push("ALLOWED_ORIGINS (required in production — comma-separated list)");
   }
 
-  // Production Redis requirement — the localhost fallback is fine for
-  // dev where the operator runs `redis-server` alongside the app, but
-  // a Manus deploy without REDIS_URL will silently fail to enqueue
-  // webhooks and scheduled jobs. Fail fast at boot.
+  // Redis is optional — when absent, the app falls back to in-memory
+  // job processing. This is fine for single-instance Manus deploys.
+  // Only warn so operators know scheduled jobs won't survive restarts.
   if (process.env.NODE_ENV === "production" && !process.env.REDIS_URL) {
-    missing.push("REDIS_URL (required in production — BullMQ queue backend)");
+    warned.push("REDIS_URL (optional — in-memory queue fallback active)");
   }
 
   for (const key of RECOMMENDED_VARS) {
