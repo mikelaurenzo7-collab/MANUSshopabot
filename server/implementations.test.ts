@@ -89,16 +89,42 @@ describe("Platform Bridge Null Checks", () => {
     const path = await import("path");
     const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
     const content = fs.readFileSync(filePath, "utf-8");
-    
+
     const syncSection = content.substring(
       content.indexOf("export async function syncProductsFromStore"),
       content.indexOf("export async function syncProductsFromStore") + 1500
     );
-    
+
     // Circuit breaker protection
     expect(syncSection).toContain("withResilience");
     // Product data validation
     expect(syncSection).toContain("if (!rp || !rp.platformId)");
+  });
+
+  it("syncProductsFromStore uses bulk-insert + parallel update (no N×N round-trips)", async () => {
+    // Regression guard for the perf rework: pre-fix the sync looped
+    // over remote products, awaiting db.getProductByPlatformId AND
+    // db.createProduct/updateProduct one at a time. A 250-product
+    // Shopify sync was 500 sequential round-trips. Post-fix: 1 SELECT
+    // (getProductsByPlatformIds), 1 bulk INSERT (bulkInsertProducts),
+    // and parallel updates. This test catches a future revert.
+    const fs = await import("fs");
+    const path = await import("path");
+    const filePath = path.join(process.cwd(), "server/engine/platformBridge.ts");
+    const content = fs.readFileSync(filePath, "utf-8");
+    const syncSection = content.substring(
+      content.indexOf("export async function syncProductsFromStore"),
+      content.indexOf("export async function syncProductsFromStore") + 3000,
+    );
+    // Bulk lookup replaces N awaited getProductByPlatformId calls.
+    expect(syncSection).toContain("getProductsByPlatformIds(storeId, platformIds)");
+    // Bulk insert replaces N awaited createProduct calls.
+    expect(syncSection).toContain("bulkInsertProducts");
+    // Parallel updates instead of sequential awaits.
+    expect(syncSection).toContain("Promise.all");
+    // Old patterns must not be back.
+    expect(syncSection).not.toMatch(/await db\.getProductByPlatformId\(storeId, rp\.platformId\)/);
+    expect(syncSection).not.toMatch(/await db\.createProduct\(\{[\s\S]*?platformProductId: rp\.platformId/);
   });
 });
 

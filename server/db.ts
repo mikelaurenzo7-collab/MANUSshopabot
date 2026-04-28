@@ -391,10 +391,59 @@ export async function createProduct(data: InsertProduct) {
   return { id: result[0].insertId };
 }
 
+/**
+ * Bulk-insert products in a single SQL round-trip. Used by the platform
+ * bridge's product sync — replaces the previous "loop calling
+ * createProduct()" pattern that fired one INSERT per product (so a
+ * 250-item Shopify sync was 250 round-trips). One insert per platform
+ * sweep is now the norm. Returns the count of rows inserted.
+ *
+ * Drizzle's mysql `insert(...).values([...])` produces a single
+ * multi-row INSERT statement; the affected-rows count comes back in
+ * `result[0].affectedRows`.
+ */
+export async function bulkInsertProducts(rows: InsertProduct[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(products).values(rows);
+  return Number(result[0]?.affectedRows ?? rows.length);
+}
+
 export async function getProductsByStore(storeId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(products).where(eq(products.storeId, storeId)).orderBy(desc(products.createdAt));
+}
+
+/**
+ * Bulk-lookup products by their platform IDs for a single store. The
+ * platform bridge uses this to batch the "is this remote product
+ * already in our DB?" check that previously fired one SELECT per
+ * incoming product. Returns a Map keyed by platformProductId so the
+ * caller can branch on existing-vs-new in O(1) per row.
+ */
+export async function getProductsByPlatformIds(
+  storeId: number,
+  platformProductIds: string[],
+): Promise<Map<string, typeof products.$inferSelect>> {
+  const map = new Map<string, typeof products.$inferSelect>();
+  if (platformProductIds.length === 0) return map;
+  const db = await getDb();
+  if (!db) return map;
+  const rows = await db
+    .select()
+    .from(products)
+    .where(
+      and(
+        eq(products.storeId, storeId),
+        inArray(products.platformProductId, platformProductIds),
+      ),
+    );
+  for (const row of rows) {
+    if (row.platformProductId) map.set(row.platformProductId, row);
+  }
+  return map;
 }
 
 /**

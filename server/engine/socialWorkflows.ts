@@ -345,6 +345,19 @@ Provide specific copy examples, not just generic advice.`,
 registerWorkflow("email_flow", (input): WorkflowStepDefinition[] => {
   const flowType = input.flowType ?? "welcome"; // welcome, abandoned_cart, win_back, post_purchase
   const brand = input.brand ?? "our store";
+  // Channel awareness: when input.channel === "gmail" the bot has a
+  // sender-side daily cap (~500/day on free Gmail, 2k on Workspace).
+  // When the channel is SendGrid (the default for transactional email
+  // delivery), there's effectively no cap on volume but reputation
+  // matters more — surface different best practices.
+  const channel = (input.channel as string | undefined)?.toLowerCase() ?? "sendgrid";
+  const channelCaps = getSocialCapabilityMatrix()[channel];
+  const channelBrief = channel === "gmail" && channelCaps
+    ? `\n\nDelivery channel: Gmail (1:1 sender). Daily send cap: ~${channelCaps.recommendedPostsPerDay} per account. Bot recommends batching beyond that to SendGrid for high-volume flows.`
+    : channel === "sendgrid"
+      ? `\n\nDelivery channel: SendGrid (transactional). No hard daily cap. Reputation matters — segment carefully and warm the IP for any sequence above 10k/day.`
+      : "";
+
   return [
     {
       stepType: "llm_call",
@@ -352,7 +365,7 @@ registerWorkflow("email_flow", (input): WorkflowStepDefinition[] => {
       description: `Creating a complete ${flowType} email automation sequence`,
       input: {
         promptClass: "email_campaign_expert",
-        systemPrompt: "You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.",
+        systemPrompt: `You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.${channelBrief}`,
         userPrompt: `Create a complete ${flowType} email automation flow for "${brand}":
 
 Generate 5 emails in the sequence. For each email provide:
@@ -419,25 +432,47 @@ Return as JSON.`,
 registerWorkflow("product_creative", (input): WorkflowStepDefinition[] => {
   const product = input.product ?? "product";
   const style = input.style ?? "professional product photography";
-  // Three image generations are completely independent — they used to
-  // run sequentially (~6-9 sec wall-clock each); now they fan out
-  // through parallel_group (~3-4 sec total).
+  // Pull aspect-ratio + format hints from each target platform's
+  // capability matrix so the creative brief tells the image-gen step
+  // exactly what shape to render. Default to a multi-platform set
+  // (square + portrait + landscape) when no target is given.
+  const targetPlatforms: string[] = Array.isArray(input.targetPlatforms)
+    ? (input.targetPlatforms as string[])
+    : [];
+  const matrix = getSocialCapabilityMatrix();
+  const ratiosFromTargets = targetPlatforms
+    .flatMap((p) => matrix[p.toLowerCase()]?.preferredAspectRatios ?? []);
+  const aspectRatios = ratiosFromTargets.length > 0
+    ? Array.from(new Set(ratiosFromTargets))
+    : ["1:1", "4:5", "9:16"]; // default multi-surface set
+
+  const targetBrief = targetPlatforms.length > 0
+    ? `\n\nTarget platforms: ${targetPlatforms.join(", ")}. Render dimensions matching: ${aspectRatios.join(" or ")}.\n` +
+      targetPlatforms
+        .map((p) => {
+          const c = matrix[p.toLowerCase()];
+          if (!c) return null;
+          return `- ${p}: max ad copy ${c.maxAdCopyChars}ch, formats ${c.adFormats.slice(0, 3).join(" / ")}`;
+        })
+        .filter(Boolean).join("\n")
+    : `\n\nNo specific target — generate the standard multi-surface set: ${aspectRatios.join(", ")}.`;
+
   return [
     {
       stepType: "llm_call",
       title: "Creative Brief",
-      description: `Generating creative brief for ${product}`,
+      description: `Generating creative brief for ${product}${targetPlatforms.length > 0 ? ` (${targetPlatforms.join(", ")})` : ""}`,
       input: {
-        systemPrompt: "You are a creative director for e-commerce brands. Generate detailed image prompts that result in scroll-stopping visuals.",
+        systemPrompt: "You are a creative director for e-commerce brands. Generate detailed image prompts that result in scroll-stopping visuals. Match aspect ratios to the target platforms — wrong aspect ratio kills CTR even when the visual is great.",
         userPrompt: `Create a creative brief for "${product}" product images. Generate 3 image concepts:
 
 1. Hero Product Shot: Clean, professional, white/lifestyle background
 2. Lifestyle Shot: Product in use, aspirational setting
-3. Ad Creative: Eye-catching, designed for social media ads
+3. Ad Creative: Eye-catching, designed for social media ads${targetBrief}
 
 For each concept provide:
 - Detailed image generation prompt (50+ words, specific about lighting, composition, mood)
-- Recommended dimensions
+- Recommended dimensions (must match the target aspect ratios above)
 - Use case (product page, social media, ad)
 
 Return as JSON.`,

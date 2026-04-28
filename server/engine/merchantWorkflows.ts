@@ -278,13 +278,31 @@ Return: validation status, any issues found, recommended shipping method, estima
 
 registerWorkflow("competitor_analysis", (input): WorkflowStepDefinition[] => {
   const niche = input.niche ?? "general";
+  // Surface the platform's commercial primitives to the LLM so the
+  // counter-strategy is grounded in what the merchant can actually
+  // do. On a commission-fee marketplace (Amazon ~15%) the
+  // recommendation set is different from a subscription storefront
+  // (Shopify) — the LLM needs to know which surface it's planning for.
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
+  const competitiveBrief = caps
+    ? `\n\nPlatform context: ${platform} (${caps.category}, ${caps.feeStructure} fees).\n` +
+      `Strengths the merchant can leverage: ${caps.strengths.slice(0, 3).join("; ")}.\n` +
+      `Constraints to design counter-strategy around: ${caps.limitations.slice(0, 2).join("; ")}.\n` +
+      `Pricing primitives available: ${caps.compareAtPrice ? "compare-at strikethrough; " : ""}${caps.bulkPriceUpdate ? "bulk price update; " : ""}${caps.scheduledSale ? "native scheduled sales" : "bot-side cron only"}.`
+    : "";
+
   return [
     {
       stepType: "llm_call",
       title: "Competitor Identification",
-      description: `Identifying top competitors in the ${niche} space`,
+      description: caps
+        ? `Identifying top competitors in the ${niche} space (${platform}-aware)`
+        : `Identifying top competitors in the ${niche} space`,
       input: {
-        systemPrompt: "You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis.",
+        systemPrompt: caps
+          ? `You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis. ${platform === "amazon" ? "On Amazon, competition centers on Buy-Box wins and review velocity, not storefront polish." : platform === "etsy" ? "On Etsy, competition centers on tag/section optimization and craftsmanship signals, not paid distribution." : platform ? `On ${platform}, prioritize the platform's distinctive surfaces.` : ""}`
+          : "You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis.",
         userPrompt: `Conduct a competitive analysis for the "${niche}" e-commerce niche:
 
 1. Identify the top 10 competitors (both direct and indirect)
@@ -295,8 +313,8 @@ registerWorkflow("competitor_analysis", (input): WorkflowStepDefinition[] => {
    - Unique selling propositions
    - Strengths and weaknesses
 3. Identify the biggest competitive gaps/opportunities
-4. Recommend a counter-strategy for each major competitor
-5. Suggest pricing positions relative to competitors
+4. Recommend a counter-strategy for each major competitor — only recommend tactics the merchant's platform actually supports per the brief below
+5. Suggest pricing positions relative to competitors${competitiveBrief}
 
 Return as structured JSON.`,
         responseFormat: {

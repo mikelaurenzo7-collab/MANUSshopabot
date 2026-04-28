@@ -293,14 +293,35 @@ registerWorkflow("store_setup", (input): WorkflowStepDefinition[] => {
   const storeName = input.storeName ?? "My Store";
   const niche = input.niche ?? "general";
   const platform = input.platform ?? "shopify";
+  // Pull the platform's capability matrix to decide which steps even
+  // make sense. Marketplaces (Amazon, eBay, Walmart, Etsy) don't have
+  // themes — listings live inside the marketplace's chrome — so theme
+  // / typography / hero copy doesn't apply. Storefronts get the full
+  // brand-identity treatment. Social-commerce (TikTok Shop) gets a
+  // hybrid plan.
+  const caps = getEcommerceCapabilityMatrix()[platform.toLowerCase()];
+  const isStorefront = caps?.category === "storefront";
+  const isMarketplace = caps?.category === "marketplace";
+  const platformPrimitives = caps
+    ? `\nPlatform context: ${platform} (${caps.category}, ${caps.feeStructure} fees).\n` +
+      `- Theme/typography customization: ${isStorefront ? "yes — generate full brand visuals" : isMarketplace ? "NO — marketplace owns chrome; focus on listing copy + brand-voice for product titles/descriptions" : "limited"}\n` +
+      `- Metafields: ${caps.metafields ? "yes — generate SEO key/value pairs for every product" : "no — bake SEO into title + description directly"}\n` +
+      `- Categories: ${caps.categories ? "yes — bot will plug into platform taxonomy" : "no"}\n` +
+      `- Bulk import: ${caps.bulkImport ? "yes — initial catalog can be a single CSV/feed" : "no — products created one-at-a-time"}`
+    : "";
+
   return [
     {
       stepType: "llm_call",
       title: "Brand Identity Generation",
       description: `Creating brand identity for "${storeName}"`,
       input: {
-        systemPrompt: "You are a world-class brand strategist and e-commerce consultant.",
-        userPrompt: `Create a complete brand identity for an e-commerce store called "${storeName}" in the "${niche}" niche on ${platform}. Include:
+        systemPrompt: caps
+          ? `You are a world-class brand strategist and e-commerce consultant. ${isMarketplace ? "When working on marketplace listings, prioritize discoverable product titles + bullet-point benefits over storefront polish — the marketplace owns the page chrome." : "When working on a storefront, the brand visuals carry the conversion."}`
+          : "You are a world-class brand strategist and e-commerce consultant.",
+        userPrompt: `Create a complete brand identity for an e-commerce store called "${storeName}" in the "${niche}" niche on ${platform}.${platformPrimitives}
+
+Include:
 1. Brand Story (2-3 paragraphs)
 2. Tagline (5-8 words)
 3. Color Palette (primary, secondary, accent — hex codes)
