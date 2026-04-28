@@ -828,15 +828,23 @@ function SocialContent({
                     size="sm"
                     className="w-full text-xs"
                     disabled={launchTrendDetector.isPending}
-                    onClick={() =>
+                    onClick={() => {
+                      const activeStore = (stores ?? []).find((s: any) => s.id === storeId) as any;
+                      const niche = activeStore?.niche?.trim() || undefined;
                       launchTrendDetector.mutate({
                         agentType: "social",
                         workflowType: "viral_trend_detector",
-                        title: "Viral Trend Detector",
-                        scope: "global",
-                        input: {},
-                      })
-                    }
+                        title: niche
+                          ? `Viral Trend Detector — ${niche}`
+                          : "Viral Trend Detector",
+                        scope: storeId ? "specific_store" : "global",
+                        ...(storeId ? { storeId } : {}),
+                        input: {
+                          ...(niche ? { niche } : {}),
+                          platforms: ["tiktok", "instagram", "twitter"],
+                        },
+                      });
+                    }}
                   >
                     {launchTrendDetector.isPending ? (
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />

@@ -43,8 +43,15 @@ export interface EmailMessage {
 export interface EmailDeliveryOptions {
   /** Force a specific provider; otherwise auto-selected. */
   provider?: EmailProvider;
-  /** Required when Gmail might be the chosen provider. */
+  /** Required when Gmail might be the chosen provider. Org-scoped via `orgId` is preferred. */
   userId?: number;
+  /**
+   * Active org for the send. When provided, Gmail credentials are
+   * looked up by `orgId` instead of `userId` — this prevents a user
+   * who's a member of two orgs from accidentally sending mail through
+   * Org A's Gmail account while operating in Org B's context.
+   */
+  orgId?: number;
   /**
    * Override the from-address. SendGrid: must be a verified sender.
    * Gmail: ignored (always uses the connected account's address).

@@ -43,7 +43,10 @@ import {
   ShoppingBag,
   AlertCircle,
   PauseCircle,
+  Rocket,
+  Telescope,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
 import { Celebration } from "@/components/Celebration";
 import { trackOnboardingEvent } from "@/lib/onboardingTelemetry";
@@ -250,7 +253,7 @@ function WelcomeStep({
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
-      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set ✨",
+      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set",
       previewTone: "text-amber-200/90",
     },
   ];
@@ -259,11 +262,12 @@ function WelcomeStep({
     id: OnboardingPersona;
     label: string;
     sub: string;
-    emoji: string;
+    icon: LucideIcon;
+    accent: string;
   }> = [
-    { id: "new", label: "Start a new store", sub: "I'm building from scratch", emoji: "🚀" },
-    { id: "existing", label: "Automate an existing store", sub: "I have a Shopify store already", emoji: "🛍️" },
-    { id: "exploring", label: "Just exploring", sub: "Show me what it can do", emoji: "🔭" },
+    { id: "new", label: "Start a new store", sub: "I'm building from scratch", icon: Rocket, accent: "text-fuchsia-400" },
+    { id: "existing", label: "Automate an existing store", sub: "I have a Shopify store already", icon: ShoppingBag, accent: "text-cyan-400" },
+    { id: "exploring", label: "Just exploring", sub: "Show me what it can do", icon: Telescope, accent: "text-amber-400" },
   ];
 
   return (
@@ -304,8 +308,8 @@ function WelcomeStep({
                     : "bg-secondary/30 border-border/50 hover:border-primary/30 hover:bg-secondary/60"
                 }`}
               >
-                <div className="flex items-start gap-2">
-                  <span className="text-lg leading-none mt-0.5" aria-hidden="true">{p.emoji}</span>
+                <div className="flex items-start gap-2.5">
+                  <p.icon className={`h-4 w-4 shrink-0 mt-0.5 ${isActive ? "text-sky-300" : p.accent}`} aria-hidden="true" />
                   <div className="min-w-0">
                     <p className={`text-sm font-medium ${isActive ? "text-sky-100" : "text-foreground"}`}>{p.label}</p>
                     <p className="text-[11px] text-muted-foreground/90 mt-0.5">{p.sub}</p>
@@ -1369,18 +1373,30 @@ export default function OnboardingPage() {
       reason: "finish",
     });
     // Server-truth — survives device switches and storage clears.
-    try {
-      await completeOnboarding.mutateAsync();
-      // Refresh `auth.me` so the OnboardingGuard sees the new
-      // `onboardedAt` immediately and doesn't bounce the user back here.
-      await utils.auth.me.invalidate();
-    } catch {
-      // Non-fatal: localStorage fallback below still lets the user
-      // through; they'll be re-flagged on their next sign-in once the
-      // mutation succeeds.
+    // Try once, retry once on failure (transient timeouts on cold-start
+    // DBs are common). Surface a toast on persistent failure so the
+    // user knows their progress IS saved on this device but won't
+    // sync to other devices until they reconnect.
+    let serverPersisted = false;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await completeOnboarding.mutateAsync();
+        await utils.auth.me.invalidate();
+        serverPersisted = true;
+        break;
+      } catch (err) {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 500));
+          continue;
+        }
+        toast.error(
+          "Saved on this device, but couldn't sync your onboarding state to the server. Refresh later if you switch devices.",
+        );
+      }
     }
     localStorage.setItem("shop_a_bot_onboarded", "true");
     clearPersistedOnboarding(userKey);
+    if (serverPersisted) toast.success("Welcome aboard.");
     setLocation("/");
   };
 

@@ -12,7 +12,7 @@
  * delegates to this module.
  */
 import axios from "axios";
-import { getSocialAccountsByPlatform } from "../db";
+import { getSocialAccountsByPlatform, getSocialAccountsByPlatformForOrg } from "../db";
 import {
   DeliveryFailedError,
   DeliveryResult,
@@ -26,13 +26,29 @@ interface GmailCredentials {
   email: string;
 }
 
-async function loadGmailCredentials(userId: number): Promise<GmailCredentials> {
-  const accounts = await getSocialAccountsByPlatform(userId, "gmail");
-  const account = accounts[0];
+/**
+ * Loads the Gmail OAuth credential for a sender context. Prefers
+ * org-scoped lookup when `orgId` is set — that's the only way to
+ * route a send through the *current org's* Gmail when a user belongs
+ * to multiple orgs. Falls back to userId-scoped lookup for legacy
+ * scheduler code that hasn't been migrated yet (single-org callers).
+ */
+async function loadGmailCredentials(args: {
+  userId?: number;
+  orgId?: number;
+}): Promise<GmailCredentials> {
+  let account;
+  if (args.orgId !== undefined) {
+    const accounts = await getSocialAccountsByPlatformForOrg(args.orgId, "gmail");
+    account = accounts[0];
+  } else if (args.userId !== undefined) {
+    const accounts = await getSocialAccountsByPlatform(args.userId, "gmail");
+    account = accounts[0];
+  }
   if (!account || !account.accessToken) {
     throw new NoDeliveryProviderError(
       "email",
-      "Gmail account not connected for this user. Connect via /integrations or use SendGrid for transactional sends.",
+      "Gmail account not connected for this org. Connect via /integrations or use SendGrid for transactional sends.",
     );
   }
   return {
@@ -100,13 +116,13 @@ function buildMimeMessage(
 
 export async function sendViaGmail(
   message: EmailMessage,
-  userId: number,
+  sender: { userId?: number; orgId?: number },
 ): Promise<DeliveryResult> {
   if (!message.html && !message.text) {
     throw new DeliveryFailedError("gmail", "Message has neither html nor text body.");
   }
 
-  const credentials = await loadGmailCredentials(userId);
+  const credentials = await loadGmailCredentials(sender);
   const fromHeader = credentials.email
     ? `"${credentials.email}" <${credentials.email}>`
     : credentials.email;
@@ -145,14 +161,33 @@ export async function sendViaGmail(
 }
 
 /**
- * True if the given user has a connected Gmail account that we could
- * route a send through. Used by the provider selector.
+ * True if the given user/org has a connected Gmail account that we
+ * could route a send through. Used by the provider selector. Pass
+ * `orgId` when known — falls back to `userId` for legacy callers.
  */
-export async function isGmailAvailableForUser(userId: number): Promise<boolean> {
+export async function isGmailAvailable(args: {
+  userId?: number;
+  orgId?: number;
+}): Promise<boolean> {
   try {
-    const accounts = await getSocialAccountsByPlatform(userId, "gmail");
-    return !!accounts[0]?.accessToken;
+    if (args.orgId !== undefined) {
+      const accounts = await getSocialAccountsByPlatformForOrg(args.orgId, "gmail");
+      return !!accounts[0]?.accessToken;
+    }
+    if (args.userId !== undefined) {
+      const accounts = await getSocialAccountsByPlatform(args.userId, "gmail");
+      return !!accounts[0]?.accessToken;
+    }
+    return false;
   } catch {
     return false;
   }
+}
+
+/**
+ * @deprecated Prefer `isGmailAvailable({ orgId })` so callers in the
+ * multi-tenant world don't accidentally read another org's Gmail.
+ */
+export async function isGmailAvailableForUser(userId: number): Promise<boolean> {
+  return isGmailAvailable({ userId });
 }

@@ -142,6 +142,18 @@ async function startServer() {
     });
   });
 
+  // Lightweight liveness probe at /health and /healthz — doesn't touch
+  // the DB or queue, so it stays fast and stays UP when those layers
+  // hiccup. Manus's load balancer probes one of these by convention;
+  // /api/health (above) is the deep readiness endpoint.
+  app.get(["/health", "/healthz"], (_req, res) => {
+    res.status(200).json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+    });
+  });
+
   // Inject requestId + child logger into every request for distributed tracing
   app.use(correlationMiddleware);
   // Stripe webhook MUST receive raw body for signature verification — register BEFORE express.json()

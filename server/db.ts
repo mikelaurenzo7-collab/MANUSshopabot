@@ -130,6 +130,19 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     else if (user.openId === ENV.ownerOpenId) { values.role = 'admin'; updateSet.role = 'admin'; }
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
+    // First-signup trial seeding. The workflow-launch gate accepts
+    // either "trialing" or "active" — without a seed value here, every
+    // brand-new user hits the paywall before they ever see a bot run,
+    // which contradicts the FAQ promise of a 7-day free trial. The
+    // value lives in `values` (insert path) but is intentionally
+    // omitted from `updateSet` so re-signup doesn't downgrade an
+    // already-active or already-cancelled subscription.
+    if (user.stripeSubscriptionStatus !== undefined) {
+      values.stripeSubscriptionStatus = user.stripeSubscriptionStatus;
+      updateSet.stripeSubscriptionStatus = user.stripeSubscriptionStatus;
+    } else {
+      values.stripeSubscriptionStatus = "trialing";
+    }
     await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
   } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
 }
@@ -1232,6 +1245,23 @@ export async function getSocialAccountsByPlatform(userId: number, platform: stri
   if (!db) return [];
   const results = await db.select().from(socialAccounts)
     .where(and(eq(socialAccounts.userId, userId), eq(socialAccounts.platform, platform as any)));
+  return results.map(account => decryptCredentialTokens(account)!);
+}
+
+/**
+ * Org-scoped variant of `getSocialAccountsByPlatform`. Use this from
+ * any caller that knows the active org — every credential is scoped to
+ * exactly one org, so this is what prevents cross-org leakage when a
+ * single user belongs to multiple orgs (e.g., the Gmail account
+ * connected in Org A must not be reachable from Org B's send-email
+ * flow). The userId-keyed sibling above is preserved for legacy
+ * scheduler code that hasn't been migrated yet.
+ */
+export async function getSocialAccountsByPlatformForOrg(orgId: number, platform: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const results = await db.select().from(socialAccounts)
+    .where(and(eq(socialAccounts.orgId, orgId), eq(socialAccounts.platform, platform as any)));
   return results.map(account => decryptCredentialTokens(account)!);
 }
 
