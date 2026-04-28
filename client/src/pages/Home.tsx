@@ -51,6 +51,7 @@ import {
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 import { ActivationCoach } from "@/components/ActivationCoach";
 import { FirstRunTour } from "@/components/FirstRunTour";
+import { RecommendedWorkflows } from "@/components/RecommendedWorkflows";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -659,6 +660,13 @@ export default function Home() {
       {/* ── Activation Coach ── (auto-dismisses once fully activated) */}
       <div className="shrink-0 px-4 md:px-5 pt-2 z-20">
         <ActivationCoach />
+      </div>
+
+      {/* ── Recommended next workflows ── persona/data-aware. Different
+          users (fresh-start vs existing-store) see different first
+          three actions. The bot picks up the user's actual intent. */}
+      <div className="shrink-0 px-4 md:px-5 pt-3 z-20">
+        <RecommendedWorkflows />
       </div>
 
       {/* ── First-run dashboard tour (item 12) ── */}

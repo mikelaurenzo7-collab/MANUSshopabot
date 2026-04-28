@@ -9,6 +9,7 @@ import {
   getWorkflowsByOrg, getWorkflowById, getWorkflowSteps,
   getActiveWorkflowsByOrg, getWorkflowCountsByOrg, getPendingApprovalStepsByOrg,
   getUserByOpenId,
+  getStoresByOrg, getStoreCountForOrg, getProductCountForOrg,
 } from "../db";
 import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workflowEngine";
 
@@ -201,6 +202,183 @@ export const workflowRouter = router({
 
       return { newWorkflowId };
     }),
+
+  /**
+   * Recommended workflows for the current org's lifecycle stage.
+   *
+   * Two real customer segments hit this app: operators starting fresh
+   * and operators with an existing store. Both deserve a clear "next
+   * three workflows" surface tuned to their actual data, not a flat
+   * 30-item picker. This query reads the org's stores + product
+   * counts, classifies the stage, and returns a curated sequence
+   * with a `reason` string so the UI can explain *why* each one is
+   * recommended.
+   *
+   * Stages:
+   *   • fresh      — 0 stores. Builder leads with discovery.
+   *   • launching  — 1+ stores, ≤4 products. Builder fills the catalog.
+   *   • operating  — stores with 5+ products. Merchant audits + Architect optimization.
+   *   • scaling    — multi-store or 50+ products. Cross-store + competitor.
+   */
+  recommendedForOrg: orgProcedure.query(async ({ ctx }) => {
+    const [storeCount, productCount, orgStores] = await Promise.all([
+      getStoreCountForOrg(ctx.org.id),
+      getProductCountForOrg(ctx.org.id),
+      getStoresByOrg(ctx.org.id),
+    ]);
+
+    type RecStage = "fresh" | "launching" | "operating" | "scaling";
+    const stage: RecStage =
+      storeCount === 0
+        ? "fresh"
+        : productCount < 5
+          ? "launching"
+          : storeCount > 1 || productCount >= 50
+            ? "scaling"
+            : "operating";
+
+    interface Recommendation {
+      type: string;
+      title: string;
+      agentType: "architect" | "merchant" | "social";
+      icon: string;
+      accent: "sky" | "cyan" | "violet" | "emerald" | "fuchsia" | "amber" | "rose";
+      reason: string;
+      scope: "global" | "specific_store" | "all_stores";
+    }
+
+    // Stage → ordered recommendation list. Each one includes a reason
+    // tied to the *actual* org state so the UI can show "Recommended
+    // because you have N products" instead of generic CTAs.
+    const recs: Record<RecStage, Recommendation[]> = {
+      fresh: [
+        {
+          type: "niche_research",
+          title: "Niche research",
+          agentType: "architect",
+          icon: "Search",
+          accent: "sky",
+          reason: "You haven't connected a store yet. Start by validating a niche — Builder Bot scores market demand, competition, and viability.",
+          scope: "global",
+        },
+        {
+          type: "brand_identity_kit",
+          title: "Brand identity kit",
+          agentType: "architect",
+          icon: "Palette",
+          accent: "fuchsia",
+          reason: "Voice, palette, name, and tagline — generated together so you have a coherent brand before the store goes live.",
+          scope: "global",
+        },
+        {
+          type: "competitor_pricing_scan",
+          title: "Competitor pricing scan",
+          agentType: "architect",
+          icon: "DollarSign",
+          accent: "amber",
+          reason: "See what current operators in your target niche charge — Builder Bot reads Shopify, Amazon, Etsy, and TikTok Shop in one pass.",
+          scope: "global",
+        },
+      ],
+      launching: [
+        {
+          type: "product_sourcing",
+          title: "Product sourcing",
+          agentType: "architect",
+          icon: "Package",
+          accent: "sky",
+          reason: `Your store has only ${productCount} ${productCount === 1 ? "product" : "products"}. Builder Bot finds margin-friendly winners with supplier shortlists.`,
+          scope: "specific_store",
+        },
+        {
+          type: "catalog_generation",
+          title: "Catalog generation",
+          agentType: "architect",
+          icon: "LayoutGrid",
+          accent: "fuchsia",
+          reason: "Generate a complete starter catalog — products, descriptions, pricing — from a single keyword.",
+          scope: "specific_store",
+        },
+        {
+          type: "brand_audit",
+          title: "Brand audit",
+          agentType: "architect",
+          icon: "ShieldCheck",
+          accent: "violet",
+          reason: "Pre-launch trust check. Logo, copy consistency, missing legal pages — every conversion blocker before you spend a dollar on traffic.",
+          scope: "specific_store",
+        },
+      ],
+      operating: [
+        {
+          type: "margin_guard_audit",
+          title: "Margin guard audit",
+          agentType: "merchant",
+          icon: "Shield",
+          accent: "emerald",
+          reason: `You have ${productCount} active products. Merchant Bot scans every SKU and flags anything selling below your margin floor — first-day value for an operating store.`,
+          scope: "specific_store",
+        },
+        {
+          type: "inventory_audit",
+          title: "Inventory audit",
+          agentType: "merchant",
+          icon: "ClipboardCheck",
+          accent: "cyan",
+          reason: "Cross-store stock-level sweep with restock recommendations and dead-stock alerts. Tells you what to order today and what to delete.",
+          scope: "all_stores",
+        },
+        {
+          type: "product_optimization",
+          title: "Product optimization",
+          agentType: "architect",
+          icon: "Sparkles",
+          accent: "fuchsia",
+          reason: "Builder Bot rewrites your existing listings — better titles, conversion-optimized descriptions, cross-sell pairings.",
+          scope: "specific_store",
+        },
+      ],
+      scaling: [
+        {
+          type: "competitor_analysis",
+          title: "Competitor analysis",
+          agentType: "merchant",
+          icon: "Target",
+          accent: "amber",
+          reason: `${storeCount > 1 ? `Operating ${storeCount} stores` : `Catalog at ${productCount} SKUs`}. Time to map the competitive landscape with counter-strategies.`,
+          scope: "global",
+        },
+        {
+          type: "profit_loss_analysis",
+          title: "Profit & loss analysis",
+          agentType: "merchant",
+          icon: "TrendingUp",
+          accent: "emerald",
+          reason: "CFO-grade P&L across every store with cash-flow projections. Tells you which products carry the business and which drain it.",
+          scope: "all_stores",
+        },
+        {
+          type: "multi_store_expansion",
+          title: "Multi-store expansion",
+          agentType: "architect",
+          icon: "Globe",
+          accent: "sky",
+          reason: "You're past the operating threshold. Builder Bot maps Etsy, Amazon, TikTok Shop fit and recommends the next channel to launch.",
+          scope: "global",
+        },
+      ],
+    };
+
+    return {
+      stage,
+      storeCount,
+      productCount,
+      // First connected store id for `specific_store`-scoped recs that
+      // need a concrete target. Null when stage === "fresh".
+      defaultStoreId: orgStores[0]?.id ?? null,
+      recommendations: recs[stage],
+    };
+  }),
 
   // ─── Available workflow types ──────────────────────────────────────────
   availableTypes: protectedProcedure.query(() => {
