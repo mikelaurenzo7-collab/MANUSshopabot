@@ -10,6 +10,7 @@
 
 import { registerWorkflow, type WorkflowStepDefinition, type StepContext } from "./workflowEngine";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
+import { composeSystemPrompt } from "./sharedPrompts";
 
 // ─── Inventory Audit Workflow ──────────────────────────────────────────────
 
@@ -133,7 +134,13 @@ registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
         ? `Analyzing pricing for ${platform} with ${targetMargin}% target margin using ${strategy} strategy (platform-tuned)`
         : `Analyzing pricing with ${targetMargin}% target margin using ${strategy} strategy`,
       input: {
-        systemPrompt: "You are a pricing strategist for e-commerce. You maximize revenue while maintaining competitive positioning.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          "You are a pricing strategist for e-commerce. You maximize revenue while maintaining competitive positioning. Apply the FEE-STRUCTURE AWARENESS rule from the platform preamble when recommending margin floors.",
+        ),
         userPrompt: `Analyze the current product pricing and recommend optimizations:
 
 Strategy: ${strategy}
@@ -300,9 +307,19 @@ registerWorkflow("competitor_analysis", (input): WorkflowStepDefinition[] => {
         ? `Identifying top competitors in the ${niche} space (${platform}-aware)`
         : `Identifying top competitors in the ${niche} space`,
       input: {
-        systemPrompt: caps
-          ? `You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis. ${platform === "amazon" ? "On Amazon, competition centers on Buy-Box wins and review velocity, not storefront polish." : platform === "etsy" ? "On Etsy, competition centers on tag/section optimization and craftsmanship signals, not paid distribution." : platform ? `On ${platform}, prioritize the platform's distinctive surfaces.` : ""}`
-          : "You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis.",
+        // Opts into the platform-wide preamble + caching. The
+        // preamble carries the Marketing Moat directive + integration
+        // capability primer; the workflow-specific tail focuses on
+        // the platform-specific competitor angle.
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          caps
+            ? `You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis. ${platform === "amazon" ? "On Amazon, competition centers on Buy-Box wins and review velocity, not storefront polish." : platform === "etsy" ? "On Etsy, competition centers on tag/section optimization and craftsmanship signals, not paid distribution." : platform ? `On ${platform}, prioritize the platform's distinctive surfaces.` : ""}`
+            : "You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis.",
+        ),
         userPrompt: `Conduct a competitive analysis for the "${niche}" e-commerce niche:
 
 1. Identify the top 10 competitors (both direct and indirect)

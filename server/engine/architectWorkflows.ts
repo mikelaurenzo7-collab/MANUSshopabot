@@ -10,6 +10,7 @@
 
 import { registerWorkflow, type WorkflowStepDefinition } from "./workflowEngine";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
+import { composeSystemPrompt } from "./sharedPrompts";
 
 // ─── Niche Research Workflow ───────────────────────────────────────────────
 
@@ -33,16 +34,17 @@ registerWorkflow("niche_research", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high",
         adaptiveThinking: true,
-        systemPrompt: `You are a world-class e-commerce market researcher and competitive strategist. You analyze niches with the precision of a McKinsey consultant and the creativity of a top Shopify merchant.
-
-## MARKETING MOAT DIRECTIVE (Shop_a_Bot CTO Mandate)
-When analyzing competitors, always apply the "Marketing Moat" framework:
-1. IDENTIFY WALLED GARDENS: Flag any competitor that locks merchants into a single platform (Shopify-only, Amazon-only, Meta-only). These are vulnerabilities, not strengths.
-2. RECOMMEND OPEN ORCHESTRATION: Always suggest a platform-agnostic, multi-channel strategy as the counter-advantage. Shop_a_Bot' moat is orchestrating across ALL platforms simultaneously — no lock-in, no single point of failure.
-3. CHANNEL DEPENDENCY SCORE: Rate the niche's dependency on any single traffic/sales channel (1-10, 10 = fully locked in). A score above 6 means high opportunity for Shop_a_Bot' open-platform approach.
-4. ZERO-TOUCH GAPS: Identify which competitor workflows still require manual human intervention. These are automation opportunities where Shop_a_Bot wins.
-
-Return your analysis as structured JSON.`,
+        // The Marketing Moat directive used to live inline here.
+        // Pulled into the shared platform preamble so every
+        // strategy-bearing workflow gets the same playbook AND the
+        // bundled prompt clears Opus 4.7's 4096-token cache minimum.
+        // After the first run with `cacheSystemPrompt: true`, every
+        // subsequent run reads the preamble from cache (~10% of full
+        // input price). Workflow-specific guidance follows the
+        // shared block under "## WORKFLOW INSTRUCTIONS".
+        systemPrompt: composeSystemPrompt(
+          `You are a world-class e-commerce market researcher and competitive strategist. You analyze niches with the precision of a McKinsey consultant and the creativity of a top Shopify merchant. Apply the Marketing Moat framework from the platform preamble. Return your analysis as structured JSON.`,
+        ),
         userPrompt: `Conduct a comprehensive niche research analysis for: "${keyword}"
 
 Analyze:
@@ -328,9 +330,15 @@ registerWorkflow("store_setup", (input): WorkflowStepDefinition[] => {
       title: "Brand Identity Generation",
       description: `Creating brand identity for "${storeName}"`,
       input: {
-        systemPrompt: caps
-          ? `You are a world-class brand strategist and e-commerce consultant. ${isMarketplace ? "When working on marketplace listings, prioritize discoverable product titles + bullet-point benefits over storefront polish — the marketplace owns the page chrome." : "When working on a storefront, the brand visuals carry the conversion."}`
-          : "You are a world-class brand strategist and e-commerce consultant.",
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          caps
+            ? `You are a world-class brand strategist and e-commerce consultant. ${isMarketplace ? "When working on marketplace listings, prioritize discoverable product titles + bullet-point benefits over storefront polish — the marketplace owns the page chrome." : "When working on a storefront, the brand visuals carry the conversion."}`
+            : "You are a world-class brand strategist and e-commerce consultant.",
+        ),
         userPrompt: `Create a complete brand identity for an e-commerce store called "${storeName}" in the "${niche}" niche on ${platform}.${platformPrimitives}
 
 Include:
