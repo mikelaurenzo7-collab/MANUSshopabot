@@ -1308,6 +1308,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
     50%      { transform: translate3d(-6%, 4%, 0) scale(1.08); opacity: 1; }
   }
+  /* Honor user motion preferences. The aurora is decorative — when
+     someone has opted out, we freeze it on the mid-frame so the
+     glow is still visible but doesn't drift. */
+  @media (prefers-reduced-motion: reduce) {
+    .empty-state::before,
+    .empty-state::after {
+      animation: none;
+    }
+  }
   .empty-state-icon {
     width: 3rem;
     height: 3rem;
