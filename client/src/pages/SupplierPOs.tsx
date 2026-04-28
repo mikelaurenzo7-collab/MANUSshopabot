@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   Package,
   Truck,
@@ -15,6 +17,11 @@ import {
   Store,
   DollarSign,
   Hash,
+  Plus,
+  Trash2,
+  Edit,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 
 const statusIcon: Record<string, any> = {
@@ -33,6 +40,10 @@ const statusColor: Record<string, string> = {
 
 export default function SupplierPOs() {
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const [expandedPoId, setExpandedPoId] = useState<number | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingPo, setEditingPo] = useState<any>(null);
+  
   const stores = trpc.stores.list.useQuery();
   const storeId = selectedStoreId ? Number(selectedStoreId) : (stores.data as any)?.[0]?.id;
 
@@ -50,6 +61,7 @@ export default function SupplierPOs() {
   const fulfillMutation = trpc.supplier.markFulfilled.useMutation({
     onSuccess: () => pos.refetch(),
   });
+  // Note: deletePO not yet implemented in backend
 
   if (stores.isLoading) {
     return (
@@ -67,7 +79,7 @@ export default function SupplierPOs() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         {storeList.length > 0 && (
           <div className="flex items-center gap-2">
             <Store className="h-4 w-4 text-muted-foreground" />
@@ -90,6 +102,22 @@ export default function SupplierPOs() {
               </SelectContent>
             </Select>
           </div>
+        )}
+        {storeId && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-3 h-3 mr-1" />
+                New PO
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Purchase Order</DialogTitle>
+              </DialogHeader>
+              <CreatePOForm storeId={storeId} onSuccess={() => setCreateDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -144,11 +172,15 @@ export default function SupplierPOs() {
         <div className="space-y-3">
           {pos.data.map((po: any) => {
             const StatusIcon = statusIcon[po.status] || Clock;
+            const isExpanded = expandedPoId === po.id;
             return (
               <Card key={po.id} className="bg-card border-white/[0.08] hover:border-border transition-all">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setExpandedPoId(isExpanded ? null : po.id)}
+                      className="flex items-center gap-4 flex-1 text-left"
+                    >
                       <div className="h-10 w-10 rounded-lg bg-white/[0.03] flex items-center justify-center">
                         <StatusIcon className="w-5 h-5 text-muted-foreground" />
                       </div>
@@ -163,9 +195,19 @@ export default function SupplierPOs() {
                           <p className="text-xs text-white/40 italic mt-1">{po.notes}</p>
                         )}
                       </div>
-                    </div>
+                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className={statusColor[po.status] || ""}>{po.status}</Badge>
+                      {po.status === "draft" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingPo(po)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      )}
                       {po.status === "draft" && (
                         <Button
                           size="sm"
@@ -181,7 +223,7 @@ export default function SupplierPOs() {
                           onClick={() => submitMutation.mutate({ poId: po.id })}
                           disabled={submitMutation.isPending}
                         >
-                          <Truck className="w-3 h-3 mr-1" /> Submit to Supplier
+                          <Truck className="w-3 h-3 mr-1" /> Submit
                         </Button>
                       )}
                       {po.status === "submitted" && (
@@ -191,11 +233,28 @@ export default function SupplierPOs() {
                           onClick={() => fulfillMutation.mutate({ poId: po.id })}
                           disabled={fulfillMutation.isPending}
                         >
-                          <CheckCircle2 className="w-3 h-3 mr-1" /> Mark Received
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Received
                         </Button>
                       )}
                     </div>
                   </div>
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground">Line Items ({po.lineItems?.length || 0})</p>
+                      {po.lineItems && po.lineItems.length > 0 ? (
+                        <div className="space-y-1">
+                          {po.lineItems.map((item: any, idx: number) => (
+                            <div key={idx} className="text-xs flex justify-between p-2 bg-white/[0.02] rounded">
+                              <span>{item.description}</span>
+                              <span className="text-foreground font-medium">{item.quantity} × ${(item.unitPriceCents / 100).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">No line items</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -203,5 +262,56 @@ export default function SupplierPOs() {
         </div>
       )}
     </div>
+  );
+}
+
+function CreatePOForm({ storeId, onSuccess }: { storeId: number; onSuccess: () => void }) {
+  const [supplierId, setSupplierId] = useState("");
+  const [notes, setNotes] = useState("");
+  const createMutation = trpc.supplier.createDraft.useMutation({
+    onSuccess,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createMutation.mutateAsync({
+      storeId,
+      supplierId: supplierId || undefined,
+      notes,
+      lineItems: [],
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm font-medium">Supplier ID (optional)</label>
+        <Input
+          placeholder="Enter supplier ID or name"
+          value={supplierId}
+          onChange={(e) => setSupplierId(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Notes</label>
+        <Input
+          placeholder="Internal notes or special instructions"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <Button type="submit" disabled={createMutation.isPending} className="w-full">
+        {createMutation.isPending ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Creating...
+          </>
+        ) : (
+          "Create PO"
+        )}
+      </Button>
+    </form>
   );
 }
