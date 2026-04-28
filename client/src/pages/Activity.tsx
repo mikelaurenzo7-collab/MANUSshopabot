@@ -169,7 +169,7 @@ export default function ActivityPage() {
               {tasks.map((task: any) => {
                 const AgentIcon = agentIcons[task.agentType] || Activity;
                 return (
-                  <Card key={task.id} className="bg-card border-white/[0.08] hover:border-primary/10 transition-all">
+                  <Card key={task.id} className="bg-card border-white/[0.08] hover:border-sky-400/25 hover:bg-white/[0.025] transition-all">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5">{statusIcons[task.status] || statusIcons.pending}</div>
@@ -376,7 +376,7 @@ export default function ActivityPage() {
           {allApprovals && allApprovals.length > 0 ? (
             <div className="space-y-2">
               {allApprovals.map((item: any) => (
-                <Card key={item.id} className="bento-card">
+                <Card key={item.id} className="bento-card hover:border-violet-400/25 hover:bg-white/[0.025] transition-all">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
