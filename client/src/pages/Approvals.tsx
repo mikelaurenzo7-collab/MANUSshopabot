@@ -315,12 +315,14 @@ export default function Approvals() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : pending.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-4">
-                <CheckCircle2 className="h-6 w-6 text-green-400/60" />
+            <div className="empty-state">
+              <div className="empty-state-icon" style={{ background: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.25)" }}>
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
               </div>
-              <p className="text-white/50 font-medium">All clear — no pending approvals</p>
-              <p className="text-white/25 text-sm mt-1">Bot decisions waiting for review will appear here</p>
+              <h3 className="text-sm font-semibold text-foreground">All clear — no pending approvals</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                Bot decisions waiting for review land here. The Activity feed shows everything your bots have done autonomously.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -343,12 +345,14 @@ export default function Approvals() {
               {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : reviewed.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
-              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-                <Clock className="h-6 w-6 text-white/20" />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <Clock className="h-5 w-5 text-white/45" />
               </div>
-              <p className="text-white/50 font-medium">No approval history yet</p>
-              <p className="text-white/25 text-sm mt-1">Reviewed decisions will appear here</p>
+              <h3 className="text-sm font-semibold text-foreground">No approval history yet</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                Reviewed decisions land here. Once a bot escalates an action and you approve or reject it, the audit trail starts here.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">

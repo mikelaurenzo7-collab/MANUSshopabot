@@ -241,7 +241,8 @@ describe("Frontend Error Handling", () => {
     const content = fs.readFileSync(filePath, "utf-8");
     
     expect(content).toContain(".length === 0");
-    expect(content).toContain("border-dashed");
+    // Migrated to the shared .empty-state class (aurora drift); accept either.
+    expect(content).toMatch(/border-dashed|className="empty-state"/);
   });
 });
 

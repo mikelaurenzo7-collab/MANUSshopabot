@@ -33,7 +33,9 @@ describe("Frontend Error Handling", () => {
     const content = fs.readFileSync(filePath, "utf-8");
     
     expect(content).toContain(".length === 0");
-    expect(content).toContain("border-dashed");
+    // Empty states moved from inline `border-dashed` divs to the
+    // shared .empty-state class (with aurora drift) — assert either.
+    expect(content).toMatch(/border-dashed|className="empty-state"/);
   });
 });
 

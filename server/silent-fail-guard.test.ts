@@ -53,6 +53,63 @@ describe("Silent-fail guard — every page", () => {
     }
     expect(offenders, `pages with flat 'Loading X...' text: ${offenders.join(", ")}`).toEqual([]);
   });
+
+  it("has no inline empty-state divs (use the .empty-state class for aurora drift)", () => {
+    // The .empty-state CSS class adds the aurora-drift animation +
+    // signature glow. Inline copies of the same border-dashed +
+    // py-16 + text-center pattern miss the animation, breaking
+    // visual consistency. Locked.
+    const offenders: { file: string; matches: number }[] = [];
+    for (const rel of ALL_PAGES) {
+      const src = read(rel);
+      // Match the canonical empty-state shape: py-16 + border-dashed +
+      // bg-white/[0.01] in a flex-col container. Anything that mirrors
+      // this without the .empty-state class is a manual reimplementation.
+      const re = /flex flex-col items-center justify-center py-16 rounded-xl border border-dashed/g;
+      const matches = src.match(re);
+      if (matches && matches.length > 0) {
+        offenders.push({ file: rel, matches: matches.length });
+      }
+    }
+    expect(
+      offenders,
+      `pages with inline empty-state divs (use .empty-state class): ${JSON.stringify(offenders)}`,
+    ).toEqual([]);
+  });
+
+  it("has no client-side console.log left over from debugging", () => {
+    // Server has intentional structured console.log in webhook handlers
+    // (operational logs); the client should never have raw console.log
+    // in production code. console.error stays (real error reporting).
+    const CLIENT_DIR = path.resolve(__dirname, "../client/src");
+    function walk(dir: string): string[] {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      const files: string[] = [];
+      for (const e of entries) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) files.push(...walk(full));
+        else if (/\.(tsx?|jsx?)$/.test(e.name)) files.push(full);
+      }
+      return files;
+    }
+    const offenders: string[] = [];
+    for (const file of walk(CLIENT_DIR)) {
+      const src = fs.readFileSync(file, "utf-8");
+      // Strip comments first so a `// console.log(...)` doesn't trip
+      const stripped = src
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      // console.debug is allowed (intentional dev-only telemetry);
+      // console.error is allowed (genuine error paths)
+      if (/\bconsole\.(log|warn|info)\(/.test(stripped)) {
+        offenders.push(path.relative(path.resolve(__dirname, ".."), file));
+      }
+    }
+    expect(
+      offenders,
+      `client files with console.log/warn/info: ${offenders.join(", ")}`,
+    ).toEqual([]);
+  });
 });
 
 describe("SupplierPOs — polish from this commit", () => {
