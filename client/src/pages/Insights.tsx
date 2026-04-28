@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import AnalyticsPage from "./Analytics";
 import IntelligencePage from "./Intelligence";
 import CampaignFunnel from "./CampaignFunnel";
@@ -57,15 +58,13 @@ export default function InsightsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-5 pt-4 flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.1)]">
-          <BarChart3 className="h-4 w-4 text-emerald-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-heading font-bold tracking-tight text-white leading-tight">Insights</h1>
-          <p className="text-xs text-white/35">Per-store analytics and cross-store / market intelligence</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<BarChart3 className="h-4 w-4" />}
+        title="Insights"
+        subtitle="Per-store analytics and cross-store / market intelligence"
+        accent="emerald"
+        flushBottom
+      />
 
       <div className="px-5 mb-2" />
 

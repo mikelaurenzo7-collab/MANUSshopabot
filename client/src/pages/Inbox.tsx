@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Inbox as InboxIcon } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import ActivityPage from "./Activity";
 import ApprovalsPage from "./Approvals";
@@ -55,15 +56,20 @@ export default function InboxPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-5 pt-4 flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.1)]">
-          <InboxIcon className="h-4 w-4 text-sky-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-heading font-bold tracking-tight text-white leading-tight">Inbox</h1>
-          <p className="text-xs text-white/35">Everything that needs your attention</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<InboxIcon className="h-4 w-4" />}
+        title="Inbox"
+        subtitle="Everything that needs your attention"
+        accent="sky"
+        flushBottom
+        right={
+          pendingCount > 0 ? (
+            <Badge className="h-6 min-w-6 px-1.5 text-[10px] bg-amber-500 text-white border-0">
+              {pendingCount > 99 ? "99+" : pendingCount} pending
+            </Badge>
+          ) : undefined
+        }
+      />
 
       <div className="px-5 mb-2" />
 

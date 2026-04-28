@@ -2087,6 +2087,103 @@ export async function addBotMemory(data: InsertBotMemory) {
   return result[0].insertId;
 }
 
+/**
+ * Lookup a single memory entry by exact key for one bot profile.
+ * Used by the memory tool's `memory_read` handler — exact match,
+ * not a substring search. Returns the most recent if duplicates exist
+ * (shouldn't happen, but the schema doesn't enforce uniqueness on
+ * (botProfileId, key) so callers should treat this as best-effort).
+ */
+export async function getBotMemoryByKey(botProfileId: number, key: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await (db.query as any).botMemory.findMany({
+    where: (t: any, { eq, and }: any) =>
+      and(eq(t.botProfileId, botProfileId), eq(t.key, key)),
+    orderBy: (t: any, { desc }: any) => desc(t.updatedAt),
+    limit: 1,
+  });
+  return rows[0] ?? null;
+}
+
+/**
+ * Substring search across memory keys + values for one profile.
+ * Optional filters: memoryType, tag (must exist in the row's tags
+ * array). Returns up to `limit` rows ordered by most-recently-accessed.
+ */
+export async function searchBotMemory(args: {
+  botProfileId: number;
+  query?: string;
+  memoryType?: "fact" | "pattern" | "decision" | "outcome" | "context";
+  tag?: string;
+  limit?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  const limit = args.limit ?? 20;
+  const rows = await (db.query as any).botMemory.findMany({
+    where: (t: any, { eq, and, or, like }: any) => {
+      const clauses: any[] = [eq(t.botProfileId, args.botProfileId)];
+      if (args.memoryType) clauses.push(eq(t.memoryType, args.memoryType));
+      if (args.query) {
+        clauses.push(or(like(t.key, `%${args.query}%`), like(t.value, `%${args.query}%`)));
+      }
+      return and(...clauses);
+    },
+    orderBy: (t: any, { desc }: any) => desc(t.lastAccessedAt || t.createdAt),
+    limit,
+  });
+  // Tag filter is JSON — Drizzle doesn't have a portable JSON contains,
+  // so filter in-memory after the row fetch.
+  if (!args.tag) return rows;
+  return rows.filter((r: any) => Array.isArray(r.tags) && r.tags.includes(args.tag));
+}
+
+/**
+ * Bump `accessCount` and `lastAccessedAt` for a memory row.
+ * Called on every successful read so the memory tool can later
+ * decay/forget unused entries (`expireOldBotMemory`).
+ */
+export async function touchBotMemory(memoryId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(botMemory)
+    .set({
+      lastAccessedAt: new Date(),
+      accessCount: sql`${botMemory.accessCount} + 1`,
+    })
+    .where(eq(botMemory.id, memoryId));
+}
+
+/**
+ * Delete a memory row by id. Used by `memory_forget`. Returns the
+ * affected row count (1 = deleted, 0 = nothing matched).
+ */
+export async function deleteBotMemoryById(memoryId: number, botProfileId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db
+    .delete(botMemory)
+    .where(and(eq(botMemory.id, memoryId), eq(botMemory.botProfileId, botProfileId)));
+  return (result as any)[0]?.affectedRows ?? 0;
+}
+
+/**
+ * Update a memory row by id. Used by `memory_write` to upsert. Only
+ * the value/tags/confidence fields are updatable; key + type are
+ * immutable once created (preserve referential integrity for
+ * downstream analytics).
+ */
+export async function updateBotMemoryById(
+  memoryId: number,
+  fields: Partial<Pick<InsertBotMemory, "value" | "tags" | "confidence" | "expiresAt">>,
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(botMemory).set(fields).where(eq(botMemory.id, memoryId));
+}
+
 export async function getBotSchedules(botProfileId: number) {
   const db = await getDb();
   if (!db) return [];

@@ -12,7 +12,9 @@ import {
   Package,
   AlertTriangle,
   RefreshCw,
+  BarChart3,
 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import {
   AreaChart,
   Area,
@@ -175,7 +177,14 @@ export default function AnalyticsPage() {
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
 
-      <div className="space-y-6">
+      <PageHeader
+        icon={<BarChart3 className="h-4 w-4" />}
+        title="Analytics"
+        subtitle="Per-store revenue, orders, top products, and inventory health"
+        accent="violet"
+      />
+
+      <div className="space-y-6 px-5">
         {/* Error States */}
         {(storesError || analyticsError) && (
           <Card className="bg-red-500/5 border-red-500/20">

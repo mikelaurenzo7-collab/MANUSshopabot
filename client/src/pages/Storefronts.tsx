@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import IntegrationsPage from "./Integrations";
 import PluginStorePage from "./PluginStore";
 import SupplierPOsPage from "./SupplierPOs";
@@ -43,15 +44,13 @@ export default function StorefrontsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <div className="px-5 pt-4 pb-1.5 flex items-center gap-2.5">
-        <div className="h-8 w-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.1)]">
-          <Globe className="h-4 w-4 text-cyan-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-heading font-bold tracking-tight text-foreground leading-tight">Storefronts &amp; Channels</h1>
-          <p className="text-xs text-muted-foreground">Stores, plugins, suppliers, email, and tools — everything connected to your operation</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<Globe className="h-4 w-4" />}
+        title="Storefronts & Channels"
+        subtitle="Stores, plugins, suppliers, email, and tools — everything connected to your operation"
+        accent="cyan"
+        flushBottom
+      />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
         <TabsList className="bg-secondary/50">

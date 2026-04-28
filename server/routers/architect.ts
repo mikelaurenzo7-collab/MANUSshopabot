@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
@@ -8,6 +9,12 @@ import { getRenderedStoreContext } from "../utils/userContext";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
 import { sanitizeText } from "../utils/sanitize";
+import {
+  uploadFile,
+  visionQuery,
+  deleteFile,
+  isFilesApiAvailable,
+} from "../_core/claudeFiles";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -500,6 +507,260 @@ export const architectRouter = router({
         await db.updateAgentTask(task.id, { status: "failed" });
         throw error;
       }
+    }),
+
+  /**
+   * Vision-driven listing generator.
+   *
+   * Given a product photo, return SEO-optimized listing copy:
+   * title, long description, bullet points, keywords, alt text,
+   * tags, suggested price range, and category breadcrumb.
+   *
+   * Activation: requires ANTHROPIC_API_KEY (Files API + vision). When
+   * unset, throws PRECONDITION_FAILED — there's no graceful fallback
+   * because Forge's OpenAI-shaped proxy doesn't accept arbitrary file
+   * uploads. The UI should hide the button when isFilesApiAvailable()
+   * is false.
+   *
+   * The uploaded image is deleted after extraction. Product photos
+   * are typically already stored in the merchant's CDN, so there's no
+   * benefit to retaining a copy in Anthropic-land.
+   */
+  generateListingFromImage: protectedProcedure
+    .input(z.object({
+      filename: z.string().min(1).max(255),
+      bytesBase64: z.string().min(1),
+      mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+      storeId: z.number().optional(),
+      // Optional hints — when absent, the model infers from the image.
+      niche: z.string().max(120).optional(),
+      targetAudience: z.string().max(160).optional(),
+      priceTier: z.enum(["budget", "mid", "premium", "luxury"]).optional(),
+      tone: z.string().max(80).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (!isFilesApiAvailable()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "Listing generation requires Claude vision via the Files API. Set ANTHROPIC_API_KEY in Manus secrets to enable.",
+        });
+      }
+
+      const bytes = Buffer.from(input.bytesBase64, "base64");
+      // Bound the upload — product photos should be ≤10MB. Anthropic
+      // accepts up to 500MB but we want to bail fast on accidental
+      // 4K-RAW uploads that would just timeout the model.
+      if (bytes.length > 10 * 1024 * 1024) {
+        throw new TRPCError({
+          code: "PAYLOAD_TOO_LARGE",
+          message: "Image exceeds 10MB limit. Compress or resize before re-uploading.",
+        });
+      }
+
+      const storeContext = input.storeId
+        ? await getRenderedStoreContext(input.storeId)
+        : "";
+
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "listing_from_image",
+        title: `Generating listing from image: ${input.filename}`,
+        description: input.niche
+          ? `Niche: ${input.niche}${input.priceTier ? " · " + input.priceTier : ""}`
+          : "Vision-driven SEO copy",
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      const uploaded = await uploadFile({
+        filename: input.filename,
+        bytes,
+        mimeType: input.mimeType,
+      });
+
+      try {
+        const hints: string[] = [];
+        if (input.niche) hints.push(`Niche/category hint: ${input.niche}`);
+        if (input.targetAudience) hints.push(`Target audience: ${input.targetAudience}`);
+        if (input.priceTier) hints.push(`Price tier: ${input.priceTier}`);
+        if (input.tone) hints.push(`Brand tone: ${input.tone}`);
+        const hintBlock = hints.length ? hints.join("\n") + "\n\n" : "";
+
+        const result = await visionQuery({
+          fileId: uploaded.id,
+          mimeType: input.mimeType,
+          prompt: `${storeContext ? storeContext + "\n\n" : ""}${hintBlock}You are a senior e-commerce copywriter. Examine this product photo and produce a complete, conversion-optimized listing.
+
+Return strict JSON with these fields:
+- title (string, 60-80 characters, includes the primary keyword early, no all-caps gimmicks)
+- description (string, 3-5 short paragraphs separated by \\n\\n, benefit-led, scannable)
+- bulletPoints (array of 5-7 strings, each starting with a verb or benefit)
+- seoKeywords (array of 10-15 long-tail keyword strings — natural search phrases buyers actually type)
+- suggestedPriceRange (object: { minCents (integer), maxCents (integer), currency (string ISO-4217, e.g. "USD") })
+- imageAltText (string, 100-125 characters, descriptive for accessibility & image SEO)
+- tags (array of 5-10 lowercase single-word tags for cataloging)
+- categoryBreadcrumb (string, "Home > Category > Subcategory" format)
+- materialOrComposition (string or null — only if clearly visible)
+- estimatedConversionAngle (string, 1-2 sentences explaining the strongest selling angle for this product)
+
+If the image is blurry, contains no product, or appears to be a screenshot/UI rather than a product photo, return all string fields as empty strings, arrays as empty, and set estimatedConversionAngle to "Image quality insufficient — please upload a clearer product photo."`,
+          maxTokens: 4000,
+          jsonSchema: {
+            name: "vision_listing",
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                bulletPoints: { type: "array", items: { type: "string" } },
+                seoKeywords: { type: "array", items: { type: "string" } },
+                suggestedPriceRange: {
+                  type: "object",
+                  properties: {
+                    minCents: { type: "integer" },
+                    maxCents: { type: "integer" },
+                    currency: { type: "string" },
+                  },
+                  required: ["minCents", "maxCents", "currency"],
+                  additionalProperties: false,
+                },
+                imageAltText: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+                categoryBreadcrumb: { type: "string" },
+                materialOrComposition: { type: ["string", "null"] },
+                estimatedConversionAngle: { type: "string" },
+              },
+              required: [
+                "title",
+                "description",
+                "bulletPoints",
+                "seoKeywords",
+                "suggestedPriceRange",
+                "imageAltText",
+                "tags",
+                "categoryBreadcrumb",
+                "estimatedConversionAngle",
+              ],
+              additionalProperties: false,
+            },
+          },
+        });
+
+        await db.updateAgentTask(task.id, { status: "completed", result: result.json });
+
+        return {
+          listing: result.json ?? null,
+          rawText: result.text,
+          cacheReadInputTokens: result.cacheReadInputTokens,
+          taskId: task.id,
+        };
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      } finally {
+        try {
+          await deleteFile(uploaded.id);
+        } catch {
+          // Cleanup-failure is non-fatal; the file ages out.
+        }
+      }
+    }),
+
+  /**
+   * Convert a vision-generated listing into a real draft product row.
+   *
+   * The vision endpoint returns SEO copy + a suggested price range;
+   * this endpoint persists it as a `draft`-status product so the user
+   * can review it on the store's product list and push to the
+   * connected platform when ready. SKU is auto-generated from the
+   * timestamp + a random suffix so there are no collisions across
+   * concurrent saves.
+   *
+   * Price defaults to the midpoint of the suggested range (ceiling
+   * to the nearest dollar) — buyers respond better to round numbers
+   * than to fractional cents from a midpoint calculation.
+   */
+  saveListingAsDraftProduct: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      listing: z.object({
+        title: z.string().min(1).max(500),
+        description: z.string(),
+        bulletPoints: z.array(z.string()),
+        seoKeywords: z.array(z.string()),
+        suggestedPriceRange: z.object({
+          minCents: z.number().min(0),
+          maxCents: z.number().min(0),
+          currency: z.string().min(1).max(8),
+        }),
+        imageAltText: z.string(),
+        tags: z.array(z.string()),
+        categoryBreadcrumb: z.string(),
+        materialOrComposition: z.string().nullable().optional(),
+        estimatedConversionAngle: z.string(),
+      }),
+      // Optional override — when caller already has the CDN-hosted
+      // image URL (e.g. from a prior optimizer run), pass it so the
+      // draft product carries the image straight into the listing.
+      imageUrl: z.string().url().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { listing } = input;
+
+      // Compose the on-page description: bullet points + the prose
+      // body + the conversion angle as a closing pitch. This is the
+      // string the merchant will see in their store editor — it
+      // should look reviewable, not raw model output.
+      const descriptionParts: string[] = [];
+      if (listing.description) descriptionParts.push(listing.description);
+      if (listing.bulletPoints.length > 0) {
+        descriptionParts.push(
+          listing.bulletPoints.map((b) => `• ${b}`).join("\n"),
+        );
+      }
+      if (listing.estimatedConversionAngle) {
+        descriptionParts.push(`Why this resonates:\n${listing.estimatedConversionAngle}`);
+      }
+      const composedDescription = descriptionParts.join("\n\n");
+
+      // Midpoint price → round to nearest whole dollar for psychology.
+      const midCents = Math.round(
+        (listing.suggestedPriceRange.minCents + listing.suggestedPriceRange.maxCents) / 2,
+      );
+      const roundedDollars = Math.max(1, Math.round(midCents / 100));
+      const priceCents = roundedDollars * 100;
+
+      const sku = `DRAFT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+      const result = await db.createProduct({
+        storeId: input.storeId,
+        title: listing.title.slice(0, 500),
+        description: composedDescription,
+        price: priceCents,
+        sku,
+        category: listing.categoryBreadcrumb || null,
+        imageUrl: input.imageUrl ?? null,
+        status: "draft",
+        stockLevel: 0,
+      });
+
+      await db.createAgentTask({
+        agentType: "architect",
+        taskType: "draft_product_created",
+        title: `Draft product created: ${listing.title.slice(0, 80)}`,
+        description: `Vision-generated draft saved to store #${input.storeId} at $${(priceCents / 100).toFixed(2)} ${listing.suggestedPriceRange.currency}`,
+        status: "completed",
+        storeId: input.storeId,
+        result: { productId: result.id, sku, priceCents },
+      });
+
+      return {
+        productId: result.id,
+        sku,
+        priceCents,
+        currency: listing.suggestedPriceRange.currency,
+      };
     }),
 
   // ─── Competitor Price Scanner ────────────────────────────────────────────
