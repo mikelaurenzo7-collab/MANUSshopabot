@@ -140,10 +140,14 @@ type CheckoutPlanId = (typeof PLAN_IDS)[number];
 function isCheckoutPlanId(value: string | null | undefined): value is CheckoutPlanId {
   return value != null && (PLAN_IDS as readonly string[]).includes(value);
 }
+// Hero action feed — three concrete, demonstrable bot actions a
+// trial user will see in their Activity log. Kept to actions the
+// product actually performs today (no aspirational counts that
+// would feel hollow when the user inspects them).
 const HERO_ACTION_FEED = [
-  "Imported 18 margin-safe SKUs",
-  "Synced inventory across 6 channels",
-  "Generated 12 TikTok creatives",
+  "Drafted 18 margin-safe product listings",
+  "Synced inventory across connected stores",
+  "Generated 12 TikTok ad variants",
 ];
 
 /** CSS variables for the hero's bot preview cards. */
