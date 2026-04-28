@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
 
 type AgentType = "architect" | "merchant" | "social";
 
@@ -74,7 +75,14 @@ export default function BotSettings() {
   const BotIcon = bot.icon;
 
   return (
-    <div className="page-enter p-3 space-y-3 max-w-4xl">
+    <div className="page-enter">
+      <PageHeader
+        icon={<Settings className="h-4 w-4" />}
+        title="Bot Settings"
+        subtitle="Tune autonomy, instructions, schedules, and safety guardrails per bot"
+        accent="violet"
+      />
+      <div className="p-3 space-y-3 max-w-4xl">
       {/* Bot Selector */}
       <div className="flex gap-2 flex-wrap">
         {(Object.entries(BOT_CONFIG) as [AgentType, typeof BOT_CONFIG[AgentType]][]).map(([id, cfg]) => {
@@ -332,6 +340,7 @@ export default function BotSettings() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

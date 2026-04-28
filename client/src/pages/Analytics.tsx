@@ -15,6 +15,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { CountUp } from "@/components/CountUp";
 import {
   AreaChart,
   Area,
@@ -262,7 +263,11 @@ export default function AnalyticsPage() {
                   <DollarSign className="h-4 w-4 text-emerald-400" />
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  ${((analytics?.totalRevenue || 0) / 100).toLocaleString()}
+                  <CountUp
+                    value={(analytics?.totalRevenue || 0) / 100}
+                    prefix="$"
+                    decimals={2}
+                  />
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Live aggregate from recorded orders</p>
               </CardContent>
@@ -273,7 +278,9 @@ export default function AnalyticsPage() {
                   <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
                   <ShoppingCart className="h-4 w-4 text-cyan-400" />
                 </div>
-                <p className="text-2xl font-bold text-foreground">{analytics?.totalOrders || 0}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  <CountUp value={analytics?.totalOrders || 0} />
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">Count of recorded orders in the selected scope</p>
               </CardContent>
             </Card>
@@ -284,7 +291,11 @@ export default function AnalyticsPage() {
                   <TrendingUp className="h-4 w-4 text-sky-400" />
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  ${analytics?.totalOrders ? ((analytics.totalRevenue / analytics.totalOrders) / 100).toFixed(2) : "0.00"}
+                  <CountUp
+                    value={analytics?.totalOrders ? (analytics.totalRevenue / analytics.totalOrders) / 100 : 0}
+                    prefix="$"
+                    decimals={2}
+                  />
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Derived from current revenue and order totals</p>
               </CardContent>
@@ -296,7 +307,11 @@ export default function AnalyticsPage() {
                   <Users className="h-4 w-4 text-amber-400" />
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  {analytics?.totalOrders ? ((analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10).toFixed(1) : "0.0"}%
+                  <CountUp
+                    value={analytics?.totalOrders ? (analytics.totalOrders / Math.max(analytics.activeProducts, 1)) * 10 : 0}
+                    suffix="%"
+                    decimals={1}
+                  />
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Heuristic based on recorded orders and active products</p>
               </CardContent>

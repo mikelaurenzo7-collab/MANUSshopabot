@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { CountUp } from "@/components/CountUp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -313,8 +314,10 @@ export default function Workflows() {
           { label: "Failed", value: counts?.failed ?? 0, color: "text-red-400", bg: "bg-red-500/5 border-red-500/15" },
         ].map((stat) => (
           <div key={stat.label} className={`bento-card p-3 ${stat.bg}`}>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 mb-0.5">{stat.label}</p>
-            <p className={`text-xl font-black metric-number ${stat.color}`}>{stat.value}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45 mb-0.5">{stat.label}</p>
+            <p className={`text-xl font-black metric-number ${stat.color}`}>
+              <CountUp value={stat.value} />
+            </p>
           </div>
         ))}
       </div>
