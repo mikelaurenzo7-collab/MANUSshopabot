@@ -32,6 +32,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { trpc } from "@/lib/trpc";
+import { CountUp } from "@/components/CountUp";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
@@ -738,12 +739,29 @@ export default function Home() {
 // ─── KPI helper ───────────────────────────────────────────────────────────────
 
 function Kpi({ icon, label, value, sub, href }: { icon: React.ReactNode; label: string; value: string; sub?: string; href?: string }) {
+  // Try to extract a numeric component for the count-up animation:
+  // "$1,234.56" or "42" both yield a leading number; non-numeric
+  // values (e.g., "Healthy", "Attention") render as plain text.
+  const numericMatch = value.match(/^([^\d-]*)(-?[\d,]+(?:\.\d+)?)(.*)$/);
+  const animatedValue = numericMatch ? (
+    <>
+      {numericMatch[1]}
+      <CountUp
+        value={parseFloat(numericMatch[2].replace(/,/g, ""))}
+        decimals={numericMatch[2].includes(".") ? 2 : 0}
+      />
+      {numericMatch[3]}
+    </>
+  ) : (
+    value
+  );
+
   const body = (
     <div className="kpi-lux">
       <div className="kpi-icon">{icon}</div>
       <div className="min-w-0">
         <p className="kpi-label">{label}</p>
-        <p className="kpi-value mt-0.5">{value}</p>
+        <p className="kpi-value mt-0.5">{animatedValue}</p>
         {sub && <p className="kpi-sub truncate">{sub}</p>}
       </div>
     </div>

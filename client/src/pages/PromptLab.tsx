@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   Sparkles,
 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function PromptLab() {
   const [selectedAgent, setSelectedAgent] = useState<string>("social");
@@ -26,16 +27,15 @@ export default function PromptLab() {
   const agents = ["architect", "merchant", "social"] as const;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Brain className="w-6 h-6 text-pink-500" />
-          Prompt Lab — Reinforcement Learning
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your bots A/B test their own system prompts. The best-performing variant gets promoted network-wide.
-        </p>
-      </div>
+    <div className="page-enter h-full overflow-y-auto">
+      <PageHeader
+        icon={<Brain className="h-4 w-4" />}
+        title="Prompt Lab"
+        subtitle="Bots A/B test their own system prompts; the best variant gets promoted network-wide"
+        accent="fuchsia"
+      />
+
+      <div className="space-y-6 px-5 pb-6">
 
       {/* Agent Selector */}
       <div className="flex gap-2">
@@ -146,6 +146,7 @@ export default function PromptLab() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

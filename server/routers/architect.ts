@@ -667,6 +667,102 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
       }
     }),
 
+  /**
+   * Convert a vision-generated listing into a real draft product row.
+   *
+   * The vision endpoint returns SEO copy + a suggested price range;
+   * this endpoint persists it as a `draft`-status product so the user
+   * can review it on the store's product list and push to the
+   * connected platform when ready. SKU is auto-generated from the
+   * timestamp + a random suffix so there are no collisions across
+   * concurrent saves.
+   *
+   * Price defaults to the midpoint of the suggested range (ceiling
+   * to the nearest dollar) — buyers respond better to round numbers
+   * than to fractional cents from a midpoint calculation.
+   */
+  saveListingAsDraftProduct: protectedProcedure
+    .input(z.object({
+      storeId: z.number(),
+      listing: z.object({
+        title: z.string().min(1).max(500),
+        description: z.string(),
+        bulletPoints: z.array(z.string()),
+        seoKeywords: z.array(z.string()),
+        suggestedPriceRange: z.object({
+          minCents: z.number().min(0),
+          maxCents: z.number().min(0),
+          currency: z.string().min(1).max(8),
+        }),
+        imageAltText: z.string(),
+        tags: z.array(z.string()),
+        categoryBreadcrumb: z.string(),
+        materialOrComposition: z.string().nullable().optional(),
+        estimatedConversionAngle: z.string(),
+      }),
+      // Optional override — when caller already has the CDN-hosted
+      // image URL (e.g. from a prior optimizer run), pass it so the
+      // draft product carries the image straight into the listing.
+      imageUrl: z.string().url().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { listing } = input;
+
+      // Compose the on-page description: bullet points + the prose
+      // body + the conversion angle as a closing pitch. This is the
+      // string the merchant will see in their store editor — it
+      // should look reviewable, not raw model output.
+      const descriptionParts: string[] = [];
+      if (listing.description) descriptionParts.push(listing.description);
+      if (listing.bulletPoints.length > 0) {
+        descriptionParts.push(
+          listing.bulletPoints.map((b) => `• ${b}`).join("\n"),
+        );
+      }
+      if (listing.estimatedConversionAngle) {
+        descriptionParts.push(`Why this resonates:\n${listing.estimatedConversionAngle}`);
+      }
+      const composedDescription = descriptionParts.join("\n\n");
+
+      // Midpoint price → round to nearest whole dollar for psychology.
+      const midCents = Math.round(
+        (listing.suggestedPriceRange.minCents + listing.suggestedPriceRange.maxCents) / 2,
+      );
+      const roundedDollars = Math.max(1, Math.round(midCents / 100));
+      const priceCents = roundedDollars * 100;
+
+      const sku = `DRAFT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+      const result = await db.createProduct({
+        storeId: input.storeId,
+        title: listing.title.slice(0, 500),
+        description: composedDescription,
+        price: priceCents,
+        sku,
+        category: listing.categoryBreadcrumb || null,
+        imageUrl: input.imageUrl ?? null,
+        status: "draft",
+        stockLevel: 0,
+      });
+
+      await db.createAgentTask({
+        agentType: "architect",
+        taskType: "draft_product_created",
+        title: `Draft product created: ${listing.title.slice(0, 80)}`,
+        description: `Vision-generated draft saved to store #${input.storeId} at $${(priceCents / 100).toFixed(2)} ${listing.suggestedPriceRange.currency}`,
+        status: "completed",
+        storeId: input.storeId,
+        result: { productId: result.id, sku, priceCents },
+      });
+
+      return {
+        productId: result.id,
+        sku,
+        priceCents,
+        currency: listing.suggestedPriceRange.currency,
+      };
+    }),
+
   // ─── Competitor Price Scanner ────────────────────────────────────────────
   competitorPriceScan: protectedProcedure
     .input(z.object({

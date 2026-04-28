@@ -6,12 +6,13 @@ import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
   ChevronRight, TrendingUp, Package, ShoppingCart, Activity, Zap,
-  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff, Wrench
+  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff, Wrench, Hourglass
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
 const ToolsTab = lazy(() => import("@/components/integrations/ToolsTab").then(m => ({ default: m.ToolsTab })));
@@ -390,12 +391,23 @@ export default function IntegrationsPage() {
                     )}
 
                     {!isAvailable ? (
-                      <div
-                        className="w-full text-center text-[11px] text-slate-400 border border-dashed border-white/10 bg-white/[0.02] rounded-md py-1.5"
-                        aria-label={`${platform.name} coming soon`}
-                      >
-                        Coming soon
-                      </div>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              disabled
+                              className="w-full flex items-center justify-center gap-1.5 text-[11px] text-slate-400 border border-dashed border-white/10 bg-white/[0.02] rounded-md py-1.5 cursor-not-allowed hover:bg-white/[0.04] transition-colors"
+                              aria-label={`${platform.name} coming soon`}
+                            >
+                              <Hourglass className="w-3 h-3" /> Coming soon
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-[240px]">
+                            {platform.name} OAuth is rolling out. Track progress on the status page or subscribe to launch updates.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ) : (
                       <Button
                         size="sm"

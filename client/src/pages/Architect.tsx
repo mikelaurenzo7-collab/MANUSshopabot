@@ -340,6 +340,15 @@ function VisionListingPanel() {
     },
   });
 
+  const saveDraftMutation = trpc.architect.saveListingAsDraftProduct.useMutation({
+    onSuccess: (data: any) => {
+      toast.success(`Draft saved · ${data.sku} @ $${(data.priceCents / 100).toFixed(2)}`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Save failed");
+    },
+  });
+
   const handleFile = (f: File | null) => {
     if (!f) {
       setFile(null);
@@ -551,6 +560,39 @@ function VisionListingPanel() {
               <p className="font-mono text-[10px] text-white/85 leading-relaxed">{listing.estimatedConversionAngle}</p>
             </div>
           )}
+
+          <div className="flex flex-col sm:flex-row gap-2 items-center justify-between p-3 bg-emerald-500/[0.04] border border-emerald-500/20">
+            <div className="flex-1 min-w-0">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-300 mb-0.5">Persist this listing</p>
+              <p className="font-mono text-[10px] text-white/70 leading-relaxed">
+                {storeId
+                  ? "Saves as a draft product on the selected store. Review and publish from the store editor."
+                  : "Pick a store above to enable save-as-draft."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!storeId) {
+                  toast.error("Select a store before saving");
+                  return;
+                }
+                saveDraftMutation.mutate({
+                  storeId: Number(storeId),
+                  listing,
+                });
+              }}
+              disabled={!storeId || saveDraftMutation.isPending}
+              className="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 font-mono text-[10px] uppercase tracking-widest px-4 py-2 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {saveDraftMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+              {saveDraftMutation.isPending ? "Saving…" : "Save as draft product"}
+            </button>
+          </div>
         </div>
       )}
     </div>

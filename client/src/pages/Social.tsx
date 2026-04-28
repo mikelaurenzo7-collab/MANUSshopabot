@@ -233,6 +233,17 @@ function SocialContent({
     onError: (err) => toast.error(`Social proof failed: ${err.message}`),
   });
 
+  // Trend detector launches the registered viral_trend_detector workflow
+  // via the workflow engine — kicks off the multi-step Claude scan and
+  // surfaces results in the Activity feed.
+  const launchTrendDetector = trpc.workflows.launch.useMutation({
+    onSuccess: () => {
+      toast.success("Trend scan launched — results will appear in Activity");
+      utils.dashboard.invalidate();
+    },
+    onError: (err) => toast.error(`Trend scan failed: ${err.message}`),
+  });
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
@@ -813,8 +824,26 @@ function SocialContent({
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mb-4">Scan TikTok, Instagram, and Twitter for viral trends. Get hashtag strategies and ready-to-film content templates.</p>
-                  <Button size="sm" className="w-full text-xs" onClick={() => toast.info("Trend detection runs via Workflows — go to Workflows tab to launch")}>
-                    <Zap className="h-3 w-3 mr-1" /> Detect Trends (Workflow)
+                  <Button
+                    size="sm"
+                    className="w-full text-xs"
+                    disabled={launchTrendDetector.isPending}
+                    onClick={() =>
+                      launchTrendDetector.mutate({
+                        agentType: "social",
+                        workflowType: "viral_trend_detector",
+                        title: "Viral Trend Detector",
+                        scope: "global",
+                        input: {},
+                      })
+                    }
+                  >
+                    {launchTrendDetector.isPending ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Zap className="h-3 w-3 mr-1" />
+                    )}
+                    {launchTrendDetector.isPending ? "Launching scan..." : "Detect Trends"}
                   </Button>
                 </CardContent>
               </Card>
