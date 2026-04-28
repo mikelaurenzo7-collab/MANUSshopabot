@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { BotMemoryView } from "@/components/BotMemoryView";
 
 type AgentType = "architect" | "merchant" | "social";
 
@@ -44,11 +45,6 @@ export default function BotSettings() {
   const profileQuery = trpc.botProfile.getProfile.useQuery(
     { agentType: selectedBot },
     { enabled: !!selectedBot }
-  );
-
-  const memoryQuery = trpc.botProfile.getMemory.useQuery(
-    { agentType: selectedBot },
-    { enabled: !!selectedBot && selectedTab === "memory" }
   );
 
   const schedulesQuery = trpc.botProfile.getSchedules.useQuery(
@@ -206,42 +202,13 @@ export default function BotSettings() {
         {/* Memory Tab */}
         <TabsContent value="memory" className="mt-4 space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Brain className="w-4 h-4 text-white/40" />
-            <h3 className="font-semibold text-white/70 text-sm">Learned Patterns & Context</h3>
+            <Brain className="w-4 h-4 text-fuchsia-400" />
+            <h3 className="font-semibold text-foreground text-sm">Learned patterns & context</h3>
+            <span className="text-[10px] text-white/35 ml-auto">
+              Bots write here during runs via the memory tool
+            </span>
           </div>
-          {memoryQuery.isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-white/5" />)}
-            </div>
-          ) : !memoryQuery.data || memoryQuery.data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
-              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-                <Brain className="h-6 w-6 text-white/20" />
-              </div>
-              <p className="text-white/50 font-medium">No memories yet</p>
-              <p className="text-white/25 text-sm mt-1">Bot will learn patterns as it operates</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {memoryQuery.data.map((mem: any, idx: number) => (
-                <div key={idx} className="bento-card p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-white text-sm">{mem.key}</p>
-                      <Badge variant="outline" className="mt-1 text-[10px] border-white/10 text-white/40">
-                        {mem.memoryType}
-                      </Badge>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-white/40">Confidence: <span className="text-white/70">{mem.confidence}%</span></p>
-                      <p className="text-[10px] text-white/25 mt-0.5">Accessed {mem.accessCount}×</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-white/50 mt-2 line-clamp-2">{mem.value}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {selectedTab === "memory" && <BotMemoryView agentType={selectedBot} />}
         </TabsContent>
 
         {/* Schedules Tab */}
