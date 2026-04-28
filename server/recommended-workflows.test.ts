@@ -56,14 +56,14 @@ describe("workflows.recommendedForOrg — server query", () => {
     expect(src).toContain('"niche_research"');
     expect(src).toContain('"brand_identity_kit"');
     expect(src).toContain('"competitor_pricing_scan"');
-    // Launching: catalog-fill (Builder)
+    // Launching: end-to-end Builder buildout leads
+    expect(src).toContain('"complete_store_buildout"');
     expect(src).toContain('"product_sourcing"');
-    expect(src).toContain('"catalog_generation"');
     expect(src).toContain('"brand_audit"');
-    // Operating: Merchant audits + Architect optimization
+    // Operating: Merchant sweep leads + standalone audits
+    expect(src).toContain('"store_optimization_sweep"');
     expect(src).toContain('"margin_guard_audit"');
     expect(src).toContain('"inventory_audit"');
-    expect(src).toContain('"product_optimization"');
     // Scaling: cross-store + competitor + P&L
     expect(src).toContain('"competitor_analysis"');
     expect(src).toContain('"profit_loss_analysis"');

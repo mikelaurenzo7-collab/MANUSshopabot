@@ -861,3 +861,166 @@ registerWorkflow("velocity_restock_predictor", (input): WorkflowStepDefinition[]
     },
   ];
 });
+
+/**
+ * store_optimization_sweep — the magnum opus Merchant workflow.
+ *
+ * The "Make my existing store demonstrably better" pipeline. For
+ * operators who already have GMV, products, and orders. Composes
+ * five existing analyses into one workflow that audits, recommends
+ * concrete changes, and routes high-impact actions through the
+ * approval queue before applying them.
+ *
+ * Flow: sync → inventory health → margin guard → pricing change-set
+ *   → approval gate → top-N listing rewrites → summary.
+ *
+ * Activation: connected store with products. Recommended for the
+ * "operating" stage in the recommender.
+ */
+registerWorkflow("store_optimization_sweep", (input): WorkflowStepDefinition[] => {
+  const focusSku = input.focusSku ? String(input.focusSku) : undefined;
+  const topN = Math.max(3, Math.min(10, Number(input.topN ?? 5)));
+
+  return [
+    {
+      stepType: "store_action",
+      title: "Sync products from store",
+      description: "Pulling the current catalog from your connected platform",
+      input: { action: "sync_products" },
+    },
+    {
+      stepType: "analysis",
+      title: "Inventory health",
+      description: "Stock-level sweep — what to restock, what to discontinue",
+      input: {
+        analysisPrompt: `Analyze the synced product list for inventory health. Identify:
+1. SKUs at risk of stockout (current stock below 7-day velocity)
+2. Dead stock (no sales in 30+ days)
+3. Restock recommendations with estimated reorder qty
+4. Margin-weighted priority — focus on the products that move the needle.${focusSku ? `\n\nGive special attention to SKU ${focusSku}.` : ""}
+Return as a structured report.`,
+      },
+    },
+    {
+      stepType: "analysis",
+      title: "Margin guard",
+      description: "Flagging SKUs selling below your margin floor",
+      input: {
+        analysisPrompt: `Run a margin-floor audit on every active SKU. For each at-risk product, return:
+- current price, cost, margin %
+- proposed new price that hits target margin
+- expected weekly revenue change at projected sales velocity
+- confidence (low/medium/high)
+Recommend a clear go/no-go on each.`,
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Pricing optimization",
+      description: "Per-SKU price recommendations with revenue projections",
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          `You are a pricing strategist. You read margin reports and propose specific, actionable price changes that hit a target margin without killing volume. You always show the dollar-impact estimate.`,
+        ),
+        userPrompt: `Based on the prior margin guard + inventory analysis, propose a concrete pricing change-set. For each affected SKU return: { sku, currentPriceCents, proposedPriceCents, reason, weeklyRevenueDeltaCents }. Group changes by impact tier (high / medium / low). Return JSON with { changes: [...], totalEstimatedWeeklyDeltaCents }.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "pricing_changeset",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                changes: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      sku: { type: "string" },
+                      currentPriceCents: { type: "integer" },
+                      proposedPriceCents: { type: "integer" },
+                      reason: { type: "string" },
+                      weeklyRevenueDeltaCents: { type: "integer" },
+                      impactTier: { type: "string" },
+                    },
+                    required: ["sku", "currentPriceCents", "proposedPriceCents", "reason", "weeklyRevenueDeltaCents", "impactTier"],
+                    additionalProperties: false,
+                  },
+                },
+                totalEstimatedWeeklyDeltaCents: { type: "integer" },
+              },
+              required: ["changes", "totalEstimatedWeeklyDeltaCents"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Approve pricing change-set",
+      description: "Review the proposed price changes — dollar-impact estimate is in the prior step's output",
+      requiresApproval: true,
+    },
+    {
+      stepType: "llm_call",
+      title: "Rewrite underperforming listings",
+      description: `Builder Bot rewrites the top ${topN} underperformers — better titles, descriptions, SEO keywords`,
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        systemPrompt: composeSystemPrompt(
+          `You are a senior e-commerce copywriter. You rewrite product listings for conversion — better titles, benefit-led descriptions, natural SEO keyword integration. Match the brand voice you can infer from the existing catalog.`,
+        ),
+        userPrompt: `Rewrite ${topN} underperforming listings from the prior context (products with low view-to-purchase ratio or sub-par titles). Return JSON with { rewrites: [ { sku, originalTitle, optimizedTitle, optimizedDescription, bulletPoints: string[], seoKeywords: string[] } ] }.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "listing_rewrites",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                rewrites: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      sku: { type: "string" },
+                      originalTitle: { type: "string" },
+                      optimizedTitle: { type: "string" },
+                      optimizedDescription: { type: "string" },
+                      bulletPoints: { type: "array", items: { type: "string" } },
+                      seoKeywords: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["sku", "originalTitle", "optimizedTitle", "optimizedDescription", "bulletPoints", "seoKeywords"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["rewrites"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Optimization sweep complete",
+      description: "Inventory audited. Margins flagged. Pricing approved. Top listings rewritten.",
+      input: {
+        title: "Store optimization sweep — complete",
+        message: `Merchant Bot finished a full optimization sweep. Inventory health, margin guard, pricing change-set, and ${topN} listing rewrites are ready in the Activity feed. Approved pricing changes apply on the next sync; listing rewrites land as drafts for review.`,
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

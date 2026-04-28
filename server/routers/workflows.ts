@@ -282,21 +282,21 @@ export const workflowRouter = router({
       ],
       launching: [
         {
+          type: "complete_store_buildout",
+          title: "Complete store buildout",
+          agentType: "architect",
+          icon: "Rocket",
+          accent: "fuchsia",
+          reason: `Your store has only ${productCount} ${productCount === 1 ? "product" : "products"}. One Builder Bot run takes you end-to-end: niche scoring, brand identity, a starter catalog drafted directly on your store, and legal pages.`,
+          scope: "specific_store",
+        },
+        {
           type: "product_sourcing",
           title: "Product sourcing",
           agentType: "architect",
           icon: "Package",
           accent: "sky",
-          reason: `Your store has only ${productCount} ${productCount === 1 ? "product" : "products"}. Builder Bot finds margin-friendly winners with supplier shortlists.`,
-          scope: "specific_store",
-        },
-        {
-          type: "catalog_generation",
-          title: "Catalog generation",
-          agentType: "architect",
-          icon: "LayoutGrid",
-          accent: "fuchsia",
-          reason: "Generate a complete starter catalog — products, descriptions, pricing — from a single keyword.",
+          reason: "Find margin-friendly winners with supplier shortlists — for adding products to a catalog you've already started.",
           scope: "specific_store",
         },
         {
@@ -311,12 +311,21 @@ export const workflowRouter = router({
       ],
       operating: [
         {
+          type: "store_optimization_sweep",
+          title: "Store optimization sweep",
+          agentType: "merchant",
+          icon: "Sparkles",
+          accent: "emerald",
+          reason: `You have ${productCount} active products. One Merchant Bot run audits inventory, flags margin floor breaches, proposes a pricing change-set with dollar-impact estimate, and rewrites your top underperforming listings — all in one pipeline.`,
+          scope: "specific_store",
+        },
+        {
           type: "margin_guard_audit",
           title: "Margin guard audit",
           agentType: "merchant",
           icon: "Shield",
-          accent: "emerald",
-          reason: `You have ${productCount} active products. Merchant Bot scans every SKU and flags anything selling below your margin floor — first-day value for an operating store.`,
+          accent: "amber",
+          reason: "Standalone margin scan — flags every SKU selling below your floor with proposed price-fix actions.",
           scope: "specific_store",
         },
         {
@@ -325,17 +334,8 @@ export const workflowRouter = router({
           agentType: "merchant",
           icon: "ClipboardCheck",
           accent: "cyan",
-          reason: "Cross-store stock-level sweep with restock recommendations and dead-stock alerts. Tells you what to order today and what to delete.",
+          reason: "Cross-store stock-level sweep with restock recommendations and dead-stock alerts.",
           scope: "all_stores",
-        },
-        {
-          type: "product_optimization",
-          title: "Product optimization",
-          agentType: "architect",
-          icon: "Sparkles",
-          accent: "fuchsia",
-          reason: "Builder Bot rewrites your existing listings — better titles, conversion-optimized descriptions, cross-sell pairings.",
-          scope: "specific_store",
         },
       ],
       scaling: [
@@ -384,6 +384,7 @@ export const workflowRouter = router({
   availableTypes: protectedProcedure.query(() => {
     return {
       architect: [
+        { type: "complete_store_buildout", title: "Complete Store Buildout", description: "End-to-end store creation — niche research, brand identity, 10-product starter catalog drafted directly on your store, and legal pages, in one run", icon: "Rocket", scope: "specific_store" },
         { type: "niche_research", title: "Niche Research", description: "Deep market analysis with viability scoring, competitor mapping, and product recommendations", icon: "Search", scope: "global" },
         { type: "product_sourcing", title: "Product Sourcing", description: "Find and curate winning products with margin analysis and supplier recommendations", icon: "Package", scope: "specific_store" },
         { type: "catalog_generation", title: "Catalog Generation", description: "Generate a complete product catalog from a keyword with pricing and descriptions", icon: "LayoutGrid", scope: "specific_store" },
@@ -395,6 +396,7 @@ export const workflowRouter = router({
         { type: "brand_identity_kit", title: "Brand Identity Kit", description: "Complete brand kit — voice + tone profile, color palette, name + tagline shortlist, and a logo concept — generated in one pass", icon: "Palette", scope: "global" },
       ],
       merchant: [
+        { type: "store_optimization_sweep", title: "Store Optimization Sweep", description: "End-to-end existing-store improvement — sync, inventory health, margin guard, pricing change-set with approval gate, and top-N listing rewrites in one pass", icon: "Sparkles", scope: "specific_store" },
         { type: "inventory_audit", title: "Inventory Audit", description: "Cross-store inventory analysis with restock recommendations and dead stock alerts", icon: "ClipboardCheck", scope: "all_stores" },
         { type: "pricing_optimization", title: "Pricing Optimization", description: "Dynamic pricing analysis with margin targets and competitor benchmarking", icon: "DollarSign", scope: "all_stores" },
         { type: "fulfillment_automation", title: "Fulfillment Automation", description: "Automated order validation, processing, and supplier notification", icon: "Truck", scope: "specific_store" },

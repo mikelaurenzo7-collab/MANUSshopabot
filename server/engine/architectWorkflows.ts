@@ -994,3 +994,203 @@ registerWorkflow("brand_identity_kit", (input): WorkflowStepDefinition[] => {
     },
   ];
 });
+
+/**
+ * complete_store_buildout — the magnum opus Builder workflow.
+ *
+ * Most "AI for e-commerce" tools stop at *generating copy*. This
+ * pipeline goes end-to-end: from "I have a niche" to "my store has
+ * draft products live on Shopify." Every step that can actually
+ * push to the connected platform does so.
+ *
+ * Flow: niche research → brand identity → catalog generation →
+ * approval gate → bulk push as drafts → legal pages → summary.
+ *
+ * Activation: requires a connected store (specific_store scope) +
+ * a `niche` in the input.
+ */
+registerWorkflow("complete_store_buildout", (input): WorkflowStepDefinition[] => {
+  const niche = String(input.niche ?? "general").trim();
+  const storeName = String(input.storeName ?? `${niche} store`).trim();
+  const targetProductCount = Math.max(5, Math.min(20, Number(input.productCount ?? 10)));
+
+  return [
+    {
+      stepType: "llm_call",
+      title: "Niche Research",
+      description: `Validating market demand and competition for "${niche}"`,
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          `You are a senior e-commerce niche analyst. Be honest about viability — no upselling.`,
+        ),
+        userPrompt: `Score the niche "${niche}" for a brand-new ${storeName}. Return JSON with: viabilityScore (0-100), keyMargins, topCompetitors, audiencePersona, riskCallouts.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "buildout_niche",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                viabilityScore: { type: "number" },
+                keyMargins: { type: "string" },
+                topCompetitors: { type: "array", items: { type: "string" } },
+                audiencePersona: { type: "string" },
+                riskCallouts: { type: "array", items: { type: "string" } },
+              },
+              required: ["viabilityScore", "keyMargins", "topCompetitors", "audiencePersona", "riskCallouts"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Brand Identity",
+      description: `Generating brand identity for ${storeName}`,
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        systemPrompt: composeSystemPrompt(
+          `You are a brand strategist. Match identity to the niche and audience identified in the prior step.`,
+        ),
+        userPrompt: `Build a brand identity for "${storeName}" in the "${niche}" niche. JSON keys: tagline, brandStory, colorPalette { primary, secondary, accent }, brandVoice, valueProposition.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "buildout_brand",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                tagline: { type: "string" },
+                brandStory: { type: "string" },
+                colorPalette: {
+                  type: "object",
+                  properties: { primary: { type: "string" }, secondary: { type: "string" }, accent: { type: "string" } },
+                  required: ["primary", "secondary", "accent"],
+                  additionalProperties: false,
+                },
+                brandVoice: { type: "string" },
+                valueProposition: { type: "string" },
+              },
+              required: ["tagline", "brandStory", "colorPalette", "brandVoice", "valueProposition"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Generate Starter Catalog",
+      description: `Generating ${targetProductCount} margin-friendly products`,
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "xhigh",
+        adaptiveThinking: true,
+        systemPrompt: composeSystemPrompt(
+          `You are a senior e-commerce merchandiser. Every product you list must be realistic, margin-friendly, and consistent with the brand voice from the prior step. Prices in cents.`,
+        ),
+        userPrompt: `Generate ${targetProductCount} starter products for "${storeName}" in the "${niche}" niche. Match brand voice from the prior context. JSON: { products: [ { title, description, priceCents, costPriceCents, sku, category, tags: string[], seoKeywords: string[] } ] }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "buildout_catalog",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                products: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      description: { type: "string" },
+                      priceCents: { type: "integer" },
+                      costPriceCents: { type: "integer" },
+                      sku: { type: "string" },
+                      category: { type: "string" },
+                      tags: { type: "array", items: { type: "string" } },
+                      seoKeywords: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["title", "description", "priceCents", "costPriceCents", "sku", "category", "tags", "seoKeywords"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["products"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Starter Catalog",
+      description: "Operator reviews proposed products before they land on the store",
+      requiresApproval: true,
+    },
+    {
+      stepType: "store_action",
+      title: "Push Products to Store (drafts)",
+      description: "Creating draft products on your connected store — review them before publishing",
+      input: {
+        action: "bulk_push_products",
+        // The store_action handler pulls the `products` array from
+        // the prior catalog-generation step's output via
+        // previousOutputs. Status: draft so the operator can preview.
+        productsFromPriorStep: true,
+        productStatus: "draft",
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Generate Legal Pages",
+      description: "Privacy, terms, refunds, shipping — GDPR + US-compliant",
+      input: {
+        systemPrompt: "You are a legal copywriter specializing in e-commerce. Generate professional, compliant legal pages.",
+        userPrompt: `Generate legal pages for "${storeName}" (online ${niche} store). Use [COMPANY], [URL], [EMAIL] placeholders. Keys: privacyPolicy, termsOfService, refundPolicy, shippingPolicy.`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "buildout_legal",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                privacyPolicy: { type: "string" },
+                termsOfService: { type: "string" },
+                refundPolicy: { type: "string" },
+                shippingPolicy: { type: "string" },
+              },
+              required: ["privacyPolicy", "termsOfService", "refundPolicy", "shippingPolicy"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Store Buildout Complete",
+      description: "Niche validated. Brand built. Catalog drafted on your store. Legal pages ready.",
+      input: {
+        title: `${storeName} — buildout complete`,
+        message: `Builder Bot finished a full store buildout: niche scoring, brand identity, ${targetProductCount} draft products on your store, and legal pages. Review the drafts and publish when ready.`,
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
