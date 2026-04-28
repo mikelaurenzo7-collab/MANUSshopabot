@@ -199,9 +199,10 @@ export const healthRouter = router({
 
   /**
    * Get a quick summary of connection counts without running live checks.
+   * Org-scoped — a user in two orgs sees only the active org's totals.
    */
-  summary: protectedProcedure.query(async ({ ctx }) => {
-    return db.getConnectedPlatformSummary(ctx.user.id);
+  summary: orgProcedure.query(async ({ ctx }) => {
+    return db.getConnectedPlatformSummaryByOrg(ctx.org.id);
   }),
 
   /**

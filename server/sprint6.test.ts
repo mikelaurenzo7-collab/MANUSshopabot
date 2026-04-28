@@ -72,10 +72,12 @@ describe("Platform Health Router", () => {
     expect(src).toContain("getSocialAdapter");
   });
 
-  it("health router has summary query", () => {
+  it("health router has summary query (org-scoped)", () => {
     const src = readFile("server/routers/health.ts");
-    expect(src).toContain("summary: protectedProcedure.query");
-    expect(src).toContain("getConnectedPlatformSummary");
+    // Migrated to orgProcedure in the launch-readiness pass — a user
+    // in two orgs sees only the active org's connection counts.
+    expect(src).toContain("summary: orgProcedure.query");
+    expect(src).toContain("getConnectedPlatformSummaryByOrg");
   });
 
   it("health router is registered in main routers.ts", () => {

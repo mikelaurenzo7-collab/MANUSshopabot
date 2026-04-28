@@ -40,23 +40,30 @@ export function CountUp({
   separator = true,
   className,
 }: CountUpProps) {
-  const [display, setDisplay] = useState<number>(value);
+  // Start from 0 so the very first mount animates from 0 → value.
+  // Initializing to `value` would skip the count-up on first paint
+  // (which is when this component is most visible — page load).
+  const [display, setDisplay] = useState<number>(0);
   const fromRef = useRef<number>(0);
   const startRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // NaN / Infinity guard — render a literal 0 instead of crashing
+    // the format step. Real callers shouldn't pass these but a parsed
+    // string fallback (parseFloat("foo")) yields NaN.
+    const target = Number.isFinite(value) ? value : 0;
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion || duration <= 0) {
-      setDisplay(value);
+      setDisplay(target);
       return;
     }
 
     fromRef.current = display;
     startRef.current = performance.now();
-    const range = value - fromRef.current;
+    const range = target - fromRef.current;
 
     const tick = (now: number) => {
       const elapsed = now - startRef.current;
