@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
-import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalytics } from "../engine/platformBridge";
+import { publishSocialPost, scheduleSocialPost, launchAdCampaign, getCrossPlatformSocialAnalyticsByOrg } from "../engine/platformBridge";
 import { getRenderedStoreContext } from "../utils/userContext";
 import { sanitizeEmail, sanitizeMultiline, sanitizeText } from "../utils/sanitize";
 import {
@@ -749,9 +749,12 @@ export const socialRouter = router({
       }
     }),
 
-  crossPlatformAnalytics: protectedProcedure
+  crossPlatformAnalytics: orgProcedure
     .query(async ({ ctx }) => {
-      return getCrossPlatformSocialAnalytics(ctx.user.id);
+      // Org-scoped: aggregates only the active org's connected social
+      // accounts. The legacy userId variant spanned every org the user
+      // belonged to.
+      return getCrossPlatformSocialAnalyticsByOrg(ctx.org.id);
     }),
 
   // ─── A/B Test Copy Generator ───────────────────────────────────────────

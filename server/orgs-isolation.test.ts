@@ -257,6 +257,21 @@ describe("Multi-tenancy: cross-org isolation canary", () => {
     expect(health).toContain("getSocialAccountsByOrg(ctx.org.id)");
   });
 
+  it("merchant.crossStoreInventory + social.crossPlatformAnalytics use *ByOrg engine fns", async () => {
+    // Pre-fix both procedures called the userId-based engine fns
+    // (`checkInventoryAcrossStores`, `getCrossPlatformSocialAnalytics`)
+    // — both spanned every org the user is in. The router comment in
+    // merchant.ts even acknowledged the gap. Migrated to *ByOrg variants.
+    const fs = await import("fs");
+    const path = await import("path");
+    const merchSrc = fs.readFileSync(path.resolve(__dirname, "routers/merchant.ts"), "utf-8");
+    const socSrc = fs.readFileSync(path.resolve(__dirname, "routers/social.ts"), "utf-8");
+    expect(merchSrc).toContain("checkInventoryAcrossStoresByOrg(ctx.org.id)");
+    expect(merchSrc).not.toMatch(/checkInventoryAcrossStores\(ctx\.user\.id\)/);
+    expect(socSrc).toContain("getCrossPlatformSocialAnalyticsByOrg(ctx.org.id)");
+    expect(socSrc).toContain("crossPlatformAnalytics: orgProcedure");
+  });
+
   it("shopifyOAuth dupe-check is scoped to the user's personal org, not all stores", async () => {
     // Pre-fix the OAuth callback called `getStoresByUser(userId)` to
     // de-dupe an existing connection — but `getStoresByUser` spans

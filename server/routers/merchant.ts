@@ -8,7 +8,7 @@ import {
   syncProductsFromStore,
   pushProductToStore,
   fulfillOrderOnPlatform,
-  checkInventoryAcrossStores,
+  checkInventoryAcrossStoresByOrg,
 } from "../engine/platformBridge";
 import { getRenderedStoreContext } from "../utils/userContext";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
@@ -163,11 +163,10 @@ export const merchantRouter = router({
 
   crossStoreInventory: orgProcedure
     .query(async ({ ctx }) => {
-      // checkInventoryAcrossStores still walks by userId — the engine
-      // call site is internal and the user's stores in the active org
-      // are the same set we want here. Keep the userId arg for now;
-      // engine-level org migration is a follow-up.
-      return checkInventoryAcrossStores(ctx.user.id);
+      // Org-scoped: returns low-stock products across the active org's
+      // stores only. The legacy userId variant spans every org the user
+      // is in and was a cross-tenant data leak — fixed in the polish pass.
+      return checkInventoryAcrossStoresByOrg(ctx.org.id);
     }),
 
   // ─── Pricing Rules ────────────────────────────────────────────────────

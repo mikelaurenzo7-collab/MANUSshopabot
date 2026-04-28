@@ -219,6 +219,45 @@ export async function fulfillOrderOnPlatform(
 /**
  * Check inventory levels across all stores for a user.
  */
+/**
+ * Check inventory levels across the active org's stores.
+ * Replaces the legacy `checkInventoryAcrossStores(userId)` for any
+ * tenant-facing caller — the userId variant spans every org the user
+ * is in, mixing inventory from sibling tenants into one response.
+ */
+export async function checkInventoryAcrossStoresByOrg(orgId: number): Promise<{
+  storeId: number;
+  storeName: string;
+  platform: string;
+  lowStockProducts: { id: number; title: string; stockLevel: number; threshold: number }[];
+}[]> {
+  const stores = await db.getStoresByOrg(orgId);
+  const results = [];
+
+  for (const store of stores) {
+    if (store.status !== "active") continue;
+    const lowStock = await db.getLowStockProducts(store.id);
+    results.push({
+      storeId: store.id,
+      storeName: store.name,
+      platform: store.platform,
+      lowStockProducts: lowStock.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        stockLevel: p.stockLevel,
+        threshold: p.lowStockThreshold ?? 5,
+      })),
+    });
+  }
+
+  return results;
+}
+
+/**
+ * @deprecated Spans every org the user belongs to. Use
+ * `checkInventoryAcrossStoresByOrg(ctx.org.id)` from any tenant-facing
+ * route. Retained for the merchant scheduler which iterates per-user.
+ */
 export async function checkInventoryAcrossStores(userId: number): Promise<{
   storeId: number;
   storeName: string;
@@ -387,11 +426,27 @@ export async function launchAdCampaign(
 }
 
 /**
- * Get analytics across all connected social accounts for a user.
+ * Cross-platform social analytics for the active org. Replaces the
+ * legacy `getCrossPlatformSocialAnalytics(userId)` for tenant-facing
+ * callers — the userId variant spans every org the user is in.
  * Each platform call is circuit-breaker protected independently.
+ */
+export async function getCrossPlatformSocialAnalyticsByOrg(orgId: number) {
+  const accounts = await db.getSocialAccountsByOrg(orgId);
+  return runSocialAnalyticsForAccounts(accounts);
+}
+
+/**
+ * @deprecated Use `getCrossPlatformSocialAnalyticsByOrg(ctx.org.id)`
+ * from any tenant-facing caller. Retained for the social scheduler
+ * which iterates per-user.
  */
 export async function getCrossPlatformSocialAnalytics(userId: number) {
   const accounts = await db.getSocialAccounts(userId);
+  return runSocialAnalyticsForAccounts(accounts);
+}
+
+async function runSocialAnalyticsForAccounts(accounts: Awaited<ReturnType<typeof db.getSocialAccounts>>) {
   const results: { platform: string; accountName: string; analytics: SocialAnalytics | null; error?: string }[] = [];
 
   for (const account of accounts) {
