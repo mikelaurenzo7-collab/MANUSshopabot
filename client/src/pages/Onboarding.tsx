@@ -35,6 +35,7 @@ import {
   Share2,
   Zap,
   Clock,
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Loader2,
@@ -45,6 +46,14 @@ import {
   PauseCircle,
   Rocket,
   Telescope,
+  ShieldCheck,
+  Check,
+  X,
+  Globe,
+  Heart,
+  Music,
+  Facebook,
+  Pin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BrandName, BRAND_NAME } from "@/components/BrandName";
@@ -234,10 +243,11 @@ function WelcomeStep({
       name: "Builder Bot",
       icon: Bot,
       color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-      description: "Researches niches, sources products, and builds your store in under 30 minutes.",
+      description: "Researches niches, sources products, and stands up your storefront end-to-end.",
       // Item 8 — animated 1-line "live" message previews so the bots
-      // feel alive instead of static product copy.
-      preview: "Builder: I'll have your store live by morning ☕",
+      // feel alive instead of static product copy. Plain text — no
+      // decorative emoji in production UI.
+      preview: "Builder: I'll have your store live by morning.",
       previewTone: "text-sky-200/90",
     },
     {
@@ -245,7 +255,7 @@ function WelcomeStep({
       icon: Package,
       color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
       description: "Monitors inventory, processes orders, and adjusts pricing — all without you.",
-      preview: "Merchant: I just restocked your top SKU before it sold out 📦",
+      preview: "Merchant: Restocked your top SKU before it sold out.",
       previewTone: "text-cyan-200/90",
     },
     {
@@ -253,7 +263,7 @@ function WelcomeStep({
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
-      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set",
+      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set.",
       previewTone: "text-amber-200/90",
     },
   ];
@@ -269,6 +279,23 @@ function WelcomeStep({
     { id: "existing", label: "Automate an existing store", sub: "I have a Shopify store already", icon: ShoppingBag, accent: "text-cyan-400" },
     { id: "exploring", label: "Just exploring", sub: "Show me what it can do", icon: Telescope, accent: "text-amber-400" },
   ];
+
+  // Pressing Enter anywhere on the welcome step advances. Mirrors the
+  // Enter-to-submit affordance every other step has via input fields.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      // Don't trigger when focus is on a button — the button's own click
+      // handler will fire on Space/Enter and we'd advance twice.
+      if (t && t.tagName === "BUTTON") return;
+      e.preventDefault();
+      onNext(persona);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [persona, onNext]);
 
   return (
     <div className="space-y-4">
@@ -509,9 +536,12 @@ function ConnectStoreStep({
         <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 mb-1">
           <Store className="h-5 w-5 text-green-300" aria-hidden="true" />
         </div>
-        <h2 className="text-base font-bold text-foreground leading-tight">Connect Your Store</h2>
+        <h2 className="text-base font-bold text-foreground leading-tight">Connect your store</h2>
         <p className="text-muted-foreground text-xs">
-          Builder Bot needs access to your store to build and manage it.
+          Builder Bot needs access to build, source products for, and operate your store.
+        </p>
+        <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
+          ~30 seconds · Shopify OAuth
         </p>
       </div>
 
@@ -521,30 +551,37 @@ function ConnectStoreStep({
               until the user clicks Continue, even after the toast
               evaporates and the URL is scrubbed of OAuth params. */}
           <div
-            className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-300"
+            className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3.5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-300"
             role="status"
             aria-live="polite"
           >
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5">
               <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {oauthJustConnected
                     ? "Store connected — you're in."
                     : `${activeStores.length} store${activeStores.length > 1 ? "s" : ""} connected`}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {activeStores.map((s: any) => s.name).join(", ")}
+                <p className="text-xs text-emerald-200/85 mt-0.5 font-mono">
+                  {activeStores.map((s: any) => s.name).join(" · ")}
                 </p>
                 {oauthJustConnected && (
-                  <p className="text-[11px] text-emerald-200/80 mt-1.5">
-                    Builder Bot now has read & write access. We&apos;ll keep this confirmation here until you continue so you have a clear record.
-                  </p>
+                  <div className="mt-2.5 space-y-1 text-[11px] text-foreground/70">
+                    <p className="flex items-start gap-1.5">
+                      <Check className="h-3 w-3 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+                      Builder Bot has read &amp; write access on your products and orders.
+                    </p>
+                    <p className="flex items-start gap-1.5">
+                      <Check className="h-3 w-3 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+                      Merchant Bot will start watching inventory the moment onboarding finishes.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-          <Button onClick={onNext} className="w-full gap-2">
+          <Button onClick={onNext} className="w-full gap-2" size="lg">
             Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
@@ -647,22 +684,34 @@ function ConnectStoreStep({
                 <span className="font-mono text-foreground/70">my-store</span>) or full domain (
                 <span className="font-mono text-foreground/70">my-store.myshopify.com</span>)
               </p>
-              <details className="mt-2 text-xs text-muted-foreground/90 group">
-                <summary className="cursor-pointer hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 rounded">
-                  What we&apos;ll access — and what we won&apos;t
-                </summary>
-                <div className="mt-2 space-y-1 pl-3 border-l border-border/50">
-                  <p>
-                    <span className="text-emerald-300">✓</span> Read products, orders, and inventory so the bots can run your store.
-                  </p>
-                  <p>
-                    <span className="text-emerald-300">✓</span> Write product listings, prices, and themes you approve.
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">✗</span> No access to customer payment details or your Shopify password.
-                  </p>
-                </div>
-              </details>
+              {/* Trust callout — always visible, not hidden behind a
+                  disclosure. OAuth consent is the highest-friction step
+                  in the funnel; surfacing the access scope up-front is
+                  worth a few extra pixels. */}
+              <div
+                className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] p-3 space-y-1.5"
+                role="region"
+                aria-label="Permissions granted by this connection"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/90 flex items-center gap-1.5">
+                  <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+                  What we'll access — and what we won't
+                </p>
+                <ul className="space-y-1 text-xs text-foreground/75">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>Read products, orders, and inventory so the bots can run your store.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
+                    <span>Write product listings, prices, and themes you approve.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <X className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                    <span className="text-muted-foreground">No access to customer payment details or your Shopify password.</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -674,11 +723,11 @@ function ConnectStoreStep({
           >
             {isConnecting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin motion-reduce:hidden" aria-hidden="true" /> Connecting to Shopify...
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:hidden" aria-hidden="true" /> Redirecting to Shopify…
               </>
             ) : (
               <>
-                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Connect Shopify Store
+                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Authorize on Shopify
               </>
             )}
           </Button>
@@ -694,10 +743,10 @@ function ConnectStoreStep({
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { name: "WooCommerce", emoji: "🌐" },
-              { name: "Etsy", emoji: "🧡" },
-              { name: "Amazon", emoji: "📦" },
-              { name: "TikTok Shop", emoji: "🎵" },
+              { name: "WooCommerce", icon: Globe, accent: "text-purple-300" },
+              { name: "Etsy", icon: Heart, accent: "text-orange-300" },
+              { name: "Amazon", icon: Package, accent: "text-amber-300" },
+              { name: "TikTok Shop", icon: Music, accent: "text-pink-300" },
             ].map((platform) => (
               <Button
                 key={platform.name}
@@ -707,7 +756,7 @@ function ConnectStoreStep({
                   toast.info(`${platform.name} can be connected after onboarding in the Integrations page.`);
                 }}
               >
-                <span aria-hidden="true">{platform.emoji}</span>
+                <platform.icon className={`h-3.5 w-3.5 ${platform.accent}`} aria-hidden="true" />
                 {platform.name}
                 <Badge variant="outline" className="text-[9px] ml-auto">
                   After Setup
@@ -716,9 +765,13 @@ function ConnectStoreStep({
             ))}
           </div>
 
-          <Button variant="ghost" onClick={onSkip} className="w-full text-muted-foreground text-sm">
-            Skip for now — I&apos;ll connect later
-          </Button>
+          <button
+            type="button"
+            onClick={onSkip}
+            className="w-full text-center text-xs text-muted-foreground/85 hover:text-foreground transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 rounded"
+          >
+            Skip for now — Builder Bot stays paused until a store is connected
+          </button>
         </div>
       )}
     </div>
@@ -732,11 +785,16 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
   );
   const connectedCount = connectedPlatforms.size;
 
-  const platforms = [
-    { name: "Meta (Facebook + Instagram)", key: "meta", color: "text-blue-300", emoji: "📘" },
-    { name: "TikTok", key: "tiktok", color: "text-pink-300", emoji: "🎵" },
-    { name: "Twitter / X", key: "twitter", color: "text-sky-300", emoji: "𝕏" },
-    { name: "Pinterest", key: "pinterest", color: "text-red-300", emoji: "📌" },
+  const platforms: Array<{
+    name: string;
+    key: string;
+    color: string;
+    icon: LucideIcon;
+  }> = [
+    { name: "Meta (Facebook + Instagram)", key: "meta", color: "text-blue-300", icon: Facebook },
+    { name: "TikTok", key: "tiktok", color: "text-pink-300", icon: Music },
+    { name: "Twitter / X", key: "twitter", color: "text-sky-300", icon: Share2 },
+    { name: "Pinterest", key: "pinterest", color: "text-red-300", icon: Pin },
   ];
 
   const generateOAuthUrl = trpc.connectors.generateSocialOAuthUrl.useMutation({
@@ -768,9 +826,12 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 mb-1">
           <Share2 className="h-5 w-5 text-amber-300" aria-hidden="true" />
         </div>
-        <h2 className="text-base font-bold text-foreground leading-tight">Connect Social Platforms</h2>
+        <h2 className="text-base font-bold text-foreground leading-tight">Connect social platforms</h2>
         <p className="text-muted-foreground text-xs">
           Social Bot needs these to publish content and run ads automatically.
+        </p>
+        <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
+          Optional · ~30 seconds each · OAuth
         </p>
       </div>
 
@@ -782,7 +843,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
       )}
 
       <div className="grid grid-cols-1 gap-2">
-        {platforms.map(({ name, key, color, emoji }) => {
+        {platforms.map(({ name, key, color, icon: Icon }) => {
           const isConnected = connectedPlatforms.has(key);
           const isLoading = generateOAuthUrl.isPending && generateOAuthUrl.variables?.platform === key;
           return (
@@ -803,7 +864,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
                   : "bg-secondary/30 border-border/50 hover:border-primary/30 hover:bg-secondary/60 cursor-pointer"
               }`}
             >
-              <span className="text-xl" aria-hidden="true">{emoji}</span>
+              <Icon className={`h-4.5 w-4.5 ${color}`} aria-hidden="true" />
               <span className={`text-sm font-medium flex-1 text-left ${color}`}>{name}</span>
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-muted-foreground shrink-0" aria-hidden="true" />
@@ -832,7 +893,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
 
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onSkip} className="flex-1 text-muted-foreground">
-          Skip for now
+          {connectedCount === 0 ? "Skip — Social Bot stays paused" : "Skip"}
         </Button>
         <Button onClick={onNext} className="flex-1 gap-2">
           Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -1087,13 +1148,16 @@ function LaunchStep({
         <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 mb-1">
           <Zap className="h-5 w-5 text-primary" aria-hidden="true" />
         </div>
-        <h2 className="text-base font-bold text-foreground leading-tight">Launch Your First Bot</h2>
+        <h2 className="text-base font-bold text-foreground leading-tight">Launch your first bot</h2>
         <p className="text-muted-foreground text-xs">
           {persona === "exploring"
             ? "Pick any niche to see Builder Bot run a full research workflow end-to-end."
             : persona === "existing"
               ? "Tell Builder Bot the category your store is in and it will surface margin-friendly product picks."
-              : "Give the Builder Bot a niche and it will research, source products, and build your store."}
+              : "Give Builder Bot a niche and it will research, source products, and build your store."}
+        </p>
+        <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
+          ~5 minutes · runs in the background
         </p>
       </div>
 
@@ -1150,8 +1214,13 @@ function LaunchStep({
       </div>
 
       <div className="flex gap-3">
-        <Button variant="ghost" onClick={onComplete} className="flex-1 text-muted-foreground">
-          Skip — I&apos;ll do this later
+        <Button
+          variant="ghost"
+          onClick={onComplete}
+          className="flex-1 text-muted-foreground"
+          title="You can launch this workflow any time from the Builder Bot page"
+        >
+          Skip — finish onboarding without launching
         </Button>
         <Button
           onClick={handleLaunch}
@@ -1162,11 +1231,11 @@ function LaunchStep({
         >
           {isLaunching ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Launching...
+              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Launching…
             </>
           ) : (
             <>
-              <Zap className="h-4 w-4" aria-hidden="true" /> Launch Bot
+              <Zap className="h-4 w-4" aria-hidden="true" /> Launch Builder Bot
             </>
           )}
         </Button>
@@ -1260,13 +1329,18 @@ export default function OnboardingPage() {
     }
   }, [userKey]);
 
-  const goToStep = (step: number, opts?: { reason?: "next" | "skip" }) => {
-    // PR3 item 18 — fire completion / skip events as the user advances.
+  const goToStep = (step: number, opts?: { reason?: "next" | "skip" | "back" }) => {
+    // PR3 item 18 — fire completion / skip / back events as the user moves.
     if (step !== currentStep) {
       const fromStep = currentStep;
       const fromName = STEPS[fromStep - 1]?.title;
       if (opts?.reason === "skip") {
         trackOnboardingEvent("onboarding_skipped", {
+          step: fromStep,
+          stepName: fromName,
+        });
+      } else if (opts?.reason === "back") {
+        trackOnboardingEvent("onboarding_step_back", {
           step: fromStep,
           stepName: fromName,
         });
@@ -1279,6 +1353,14 @@ export default function OnboardingPage() {
     }
     setCurrentStep(step);
     savePersistedOnboarding(userKey, { currentStep: step });
+  };
+
+  // Back-navigation handler used by every intermediate step. The
+  // welcome step (1) has nothing to go back to. The launch step (4)
+  // can roll back to socials.
+  const goBack = () => {
+    if (currentStep <= 1) return;
+    goToStep(currentStep - 1, { reason: "back" });
   };
 
   const persistDraft = (patch: {
@@ -1420,6 +1502,23 @@ export default function OnboardingPage() {
         </div>
 
         <StepIndicator currentStep={currentStep} />
+
+        {/* Back navigation — appears on steps 2, 3, 4. The welcome step has
+            nothing to step back to. Tucked under the indicator so it's
+            available without competing with the step's own primary CTA. */}
+        {currentStep > 1 && (
+          <div className="flex justify-center -mt-1 mb-2">
+            <button
+              type="button"
+              onClick={goBack}
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/85 hover:text-foreground transition-colors py-1 px-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+              aria-label={`Back to ${STEPS[currentStep - 2]?.title ?? "previous step"}`}
+            >
+              <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+              Back to {STEPS[currentStep - 2]?.title?.replace(`Welcome to ${BRAND_NAME}`, "Welcome").split(" ").slice(0, 3).join(" ")}
+            </button>
+          </div>
+        )}
 
         {/* Polite SR announcement of step changes (item 16). */}
         <div className="sr-only" aria-live="polite" aria-atomic="true">

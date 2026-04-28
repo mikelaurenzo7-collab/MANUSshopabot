@@ -19,6 +19,7 @@
 export type OnboardingEventName =
   | "onboarding_step_viewed"
   | "onboarding_step_completed"
+  | "onboarding_step_back"
   | "onboarding_skipped"
   | "onboarding_abandoned"
   | "onboarding_persona_selected"
