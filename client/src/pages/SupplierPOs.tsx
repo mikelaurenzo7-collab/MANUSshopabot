@@ -22,7 +22,11 @@ import {
   Edit,
   ChevronDown,
   Loader2,
+  Sparkles,
+  ScanLine,
 } from "lucide-react";
+import { ReceiptUploader } from "@/components/supplier/ReceiptUploader";
+import { Link } from "wouter";
 
 const statusIcon: Record<string, any> = {
   draft: Clock,
@@ -42,6 +46,7 @@ export default function SupplierPOs() {
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
   const [expandedPoId, setExpandedPoId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
   const [editingPo, setEditingPo] = useState<any>(null);
   
   const stores = trpc.stores.list.useQuery();
@@ -104,20 +109,50 @@ export default function SupplierPOs() {
           </div>
         )}
         {storeId && (
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-3 h-3 mr-1" />
-                New PO
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Purchase Order</DialogTitle>
-              </DialogHeader>
-              <CreatePOForm storeId={storeId} onSuccess={() => setCreateDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            {/* Scan receipt — Claude vision extracts line items into a draft PO. */}
+            <Dialog open={scanDialogOpen} onOpenChange={setScanDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-violet-500/30 bg-violet-500/[0.06] hover:bg-violet-500/[0.12] text-violet-200 group"
+                >
+                  <ScanLine className="w-3 h-3 mr-1.5 group-hover:rotate-12 transition-transform" />
+                  Scan receipt
+                  <Sparkles className="w-2.5 h-2.5 ml-1.5 text-amber-300" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 text-violet-300" />
+                    Scan supplier receipt
+                  </DialogTitle>
+                </DialogHeader>
+                <ReceiptUploader
+                  storeId={storeId}
+                  onPOCreated={() => { setScanDialogOpen(false); pos.refetch(); }}
+                  onClose={() => setScanDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-3 h-3 mr-1" />
+                  New PO
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Purchase Order</DialogTitle>
+                </DialogHeader>
+                <CreatePOForm storeId={storeId} onSuccess={() => setCreateDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
 
@@ -150,22 +185,58 @@ export default function SupplierPOs() {
 
       {!storeId ? (
         <Card className="bento-card">
-          <CardContent className="p-8 text-center">
-            <AlertTriangle className="w-10 h-10 mx-auto text-yellow-500 mb-3" />
-            <p className="font-medium mb-1">No Store Connected</p>
-            <p className="text-sm text-muted-foreground">
-              Connect a store in the Builder Bot to start managing purchase orders.
+          <CardContent className="p-8 text-center max-w-md mx-auto">
+            <div className="h-12 w-12 rounded-2xl mx-auto mb-4 bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+            </div>
+            <p className="font-semibold mb-1.5 text-foreground">Connect a store first</p>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Purchase orders are scoped to a store. Connect Shopify (or any supported platform) and the Merchant Bot will start drafting POs the moment it spots low inventory.
             </p>
+            <Link href="/storefronts#integrations">
+              <Button size="sm" className="bg-sky-600 hover:bg-sky-500">
+                <Store className="w-3 h-3 mr-1.5" />
+                Connect a store
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : !pos.data?.length ? (
         <Card className="bento-card">
-          <CardContent className="p-8 text-center">
-            <Package className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-            <p className="font-medium mb-1">No Purchase Orders Yet</p>
-            <p className="text-sm text-muted-foreground">
-              When the Merchant Bot detects low inventory, it will automatically draft purchase orders here.
+          <CardContent className="p-8 text-center max-w-lg mx-auto">
+            <div className="h-12 w-12 rounded-2xl mx-auto mb-4 bg-gradient-to-br from-sky-500/15 to-violet-500/10 border border-sky-500/25 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.15)]">
+              <Package className="w-5 h-5 text-sky-300" />
+            </div>
+            <p className="font-semibold mb-1.5 text-foreground">No purchase orders yet</p>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              The Merchant Bot drafts POs automatically when stock dips below threshold. You can also draft one manually or scan an existing supplier receipt.
             </p>
+            {/* Three concrete next-actions instead of a dead-end */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
+              <button
+                onClick={() => setScanDialogOpen(true)}
+                className="group p-3 rounded-lg bg-violet-500/[0.06] border border-violet-500/20 hover:border-violet-400/40 hover:bg-violet-500/[0.10] transition-all text-left"
+              >
+                <ScanLine className="w-4 h-4 text-violet-300 mb-1.5 group-hover:rotate-12 transition-transform" />
+                <p className="text-xs font-semibold text-foreground mb-0.5">Scan a receipt</p>
+                <p className="text-[10.5px] text-muted-foreground leading-tight">Drop a PDF or photo, Claude extracts line items.</p>
+              </button>
+              <button
+                onClick={() => setCreateDialogOpen(true)}
+                className="group p-3 rounded-lg bg-sky-500/[0.06] border border-sky-500/20 hover:border-sky-400/40 hover:bg-sky-500/[0.10] transition-all text-left"
+              >
+                <Plus className="w-4 h-4 text-sky-300 mb-1.5" />
+                <p className="text-xs font-semibold text-foreground mb-0.5">Draft manually</p>
+                <p className="text-[10.5px] text-muted-foreground leading-tight">Pick supplier + line items by hand.</p>
+              </button>
+              <Link href="/merchant">
+                <div className="group p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-all text-left h-full">
+                  <Package className="w-4 h-4 text-emerald-300 mb-1.5" />
+                  <p className="text-xs font-semibold text-foreground mb-0.5">Run inventory check</p>
+                  <p className="text-[10.5px] text-muted-foreground leading-tight">Bot triggers POs for low-stock items.</p>
+                </div>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : (

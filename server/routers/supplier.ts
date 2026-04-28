@@ -174,7 +174,12 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
       supplierId: z.string().optional(),
       notes: z.string().optional(),
       lineItems: z.array(z.object({
-        productId: z.number(),
+        // productId is the FK into products. For receipt-imported items
+        // there's often no matching internal product yet — caller passes
+        // 0 as a sentinel for "untracked, match later". The Merchant Bot
+        // can later resolve untracked items to real products via SKU
+        // lookup (see supplier.matchUntrackedItems — future).
+        productId: z.number().min(0),
         quantity: z.number().min(1),
         unitCostCents: z.number().min(0),
       })).min(1),
