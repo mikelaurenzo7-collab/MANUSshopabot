@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
@@ -8,6 +9,12 @@ import { getRenderedStoreContext } from "../utils/userContext";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
 import { sanitizeText } from "../utils/sanitize";
+import {
+  uploadFile,
+  visionQuery,
+  deleteFile,
+  isFilesApiAvailable,
+} from "../_core/claudeFiles";
 
 export const architectRouter = router({
   nicheResearch: protectedProcedure
@@ -499,6 +506,164 @@ export const architectRouter = router({
       } catch (error) {
         await db.updateAgentTask(task.id, { status: "failed" });
         throw error;
+      }
+    }),
+
+  /**
+   * Vision-driven listing generator.
+   *
+   * Given a product photo, return SEO-optimized listing copy:
+   * title, long description, bullet points, keywords, alt text,
+   * tags, suggested price range, and category breadcrumb.
+   *
+   * Activation: requires ANTHROPIC_API_KEY (Files API + vision). When
+   * unset, throws PRECONDITION_FAILED — there's no graceful fallback
+   * because Forge's OpenAI-shaped proxy doesn't accept arbitrary file
+   * uploads. The UI should hide the button when isFilesApiAvailable()
+   * is false.
+   *
+   * The uploaded image is deleted after extraction. Product photos
+   * are typically already stored in the merchant's CDN, so there's no
+   * benefit to retaining a copy in Anthropic-land.
+   */
+  generateListingFromImage: protectedProcedure
+    .input(z.object({
+      filename: z.string().min(1).max(255),
+      bytesBase64: z.string().min(1),
+      mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+      storeId: z.number().optional(),
+      // Optional hints — when absent, the model infers from the image.
+      niche: z.string().max(120).optional(),
+      targetAudience: z.string().max(160).optional(),
+      priceTier: z.enum(["budget", "mid", "premium", "luxury"]).optional(),
+      tone: z.string().max(80).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      if (!isFilesApiAvailable()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "Listing generation requires Claude vision via the Files API. Set ANTHROPIC_API_KEY in Manus secrets to enable.",
+        });
+      }
+
+      const bytes = Buffer.from(input.bytesBase64, "base64");
+      // Bound the upload — product photos should be ≤10MB. Anthropic
+      // accepts up to 500MB but we want to bail fast on accidental
+      // 4K-RAW uploads that would just timeout the model.
+      if (bytes.length > 10 * 1024 * 1024) {
+        throw new TRPCError({
+          code: "PAYLOAD_TOO_LARGE",
+          message: "Image exceeds 10MB limit. Compress or resize before re-uploading.",
+        });
+      }
+
+      const storeContext = input.storeId
+        ? await getRenderedStoreContext(input.storeId)
+        : "";
+
+      const task = await db.createAgentTask({
+        agentType: "architect",
+        taskType: "listing_from_image",
+        title: `Generating listing from image: ${input.filename}`,
+        description: input.niche
+          ? `Niche: ${input.niche}${input.priceTier ? " · " + input.priceTier : ""}`
+          : "Vision-driven SEO copy",
+        status: "running",
+        storeId: input.storeId,
+      });
+
+      const uploaded = await uploadFile({
+        filename: input.filename,
+        bytes,
+        mimeType: input.mimeType,
+      });
+
+      try {
+        const hints: string[] = [];
+        if (input.niche) hints.push(`Niche/category hint: ${input.niche}`);
+        if (input.targetAudience) hints.push(`Target audience: ${input.targetAudience}`);
+        if (input.priceTier) hints.push(`Price tier: ${input.priceTier}`);
+        if (input.tone) hints.push(`Brand tone: ${input.tone}`);
+        const hintBlock = hints.length ? hints.join("\n") + "\n\n" : "";
+
+        const result = await visionQuery({
+          fileId: uploaded.id,
+          mimeType: input.mimeType,
+          prompt: `${storeContext ? storeContext + "\n\n" : ""}${hintBlock}You are a senior e-commerce copywriter. Examine this product photo and produce a complete, conversion-optimized listing.
+
+Return strict JSON with these fields:
+- title (string, 60-80 characters, includes the primary keyword early, no all-caps gimmicks)
+- description (string, 3-5 short paragraphs separated by \\n\\n, benefit-led, scannable)
+- bulletPoints (array of 5-7 strings, each starting with a verb or benefit)
+- seoKeywords (array of 10-15 long-tail keyword strings — natural search phrases buyers actually type)
+- suggestedPriceRange (object: { minCents (integer), maxCents (integer), currency (string ISO-4217, e.g. "USD") })
+- imageAltText (string, 100-125 characters, descriptive for accessibility & image SEO)
+- tags (array of 5-10 lowercase single-word tags for cataloging)
+- categoryBreadcrumb (string, "Home > Category > Subcategory" format)
+- materialOrComposition (string or null — only if clearly visible)
+- estimatedConversionAngle (string, 1-2 sentences explaining the strongest selling angle for this product)
+
+If the image is blurry, contains no product, or appears to be a screenshot/UI rather than a product photo, return all string fields as empty strings, arrays as empty, and set estimatedConversionAngle to "Image quality insufficient — please upload a clearer product photo."`,
+          maxTokens: 4000,
+          jsonSchema: {
+            name: "vision_listing",
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                bulletPoints: { type: "array", items: { type: "string" } },
+                seoKeywords: { type: "array", items: { type: "string" } },
+                suggestedPriceRange: {
+                  type: "object",
+                  properties: {
+                    minCents: { type: "integer" },
+                    maxCents: { type: "integer" },
+                    currency: { type: "string" },
+                  },
+                  required: ["minCents", "maxCents", "currency"],
+                  additionalProperties: false,
+                },
+                imageAltText: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+                categoryBreadcrumb: { type: "string" },
+                materialOrComposition: { type: ["string", "null"] },
+                estimatedConversionAngle: { type: "string" },
+              },
+              required: [
+                "title",
+                "description",
+                "bulletPoints",
+                "seoKeywords",
+                "suggestedPriceRange",
+                "imageAltText",
+                "tags",
+                "categoryBreadcrumb",
+                "estimatedConversionAngle",
+              ],
+              additionalProperties: false,
+            },
+          },
+        });
+
+        await db.updateAgentTask(task.id, { status: "completed", result: result.json });
+
+        return {
+          listing: result.json ?? null,
+          rawText: result.text,
+          cacheReadInputTokens: result.cacheReadInputTokens,
+          taskId: task.id,
+        };
+      } catch (error) {
+        await db.updateAgentTask(task.id, { status: "failed" });
+        throw error;
+      } finally {
+        try {
+          await deleteFile(uploaded.id);
+        } catch {
+          // Cleanup-failure is non-fatal; the file ages out.
+        }
       }
     }),
 

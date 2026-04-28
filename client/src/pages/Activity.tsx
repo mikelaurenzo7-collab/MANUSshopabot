@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,9 @@ import {
   Megaphone,
   Filter,
   RefreshCw,
+  Sparkles,
+  Store,
+  ArrowRight,
 } from "lucide-react";
 
 const agentIcons: Record<string, any> = {
@@ -207,9 +211,46 @@ export default function ActivityPage() {
             </div>
           ) : (
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No bot activity recorded yet</p>
+              <CardContent className="flex flex-col items-center py-12 px-6">
+                <div className="h-14 w-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(56,189,248,0.15)]">
+                  <Activity className="h-6 w-6 text-sky-400" />
+                </div>
+                <p className="text-sm font-medium text-foreground">No bot activity yet</p>
+                <p className="text-xs text-muted-foreground mt-1 text-center max-w-md">
+                  Activity flows in here once your bots run a workflow, push a listing, or post to a channel.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 w-full max-w-2xl">
+                  <Link href="/architect">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-sky-400/30 hover:bg-sky-500/5">
+                      <Bot className="h-4 w-4 text-sky-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Launch a workflow</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Builder Bot · niche research</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                  <Link href="/storefronts">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-cyan-400/30 hover:bg-cyan-500/5">
+                      <Store className="h-4 w-4 text-cyan-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Connect a store</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Shopify, Amazon, Etsy &amp; more</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                  <Link href="/merchant">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-amber-400/30 hover:bg-amber-500/5">
+                      <Sparkles className="h-4 w-4 text-amber-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Run an inventory check</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Merchant Bot · low-stock scan</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -367,9 +408,28 @@ export default function ActivityPage() {
             </div>
           ) : (
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Activity className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No decisions recorded yet</p>
+              <CardContent className="flex flex-col items-center py-12 px-6">
+                <div className="h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                  <Activity className="h-6 w-6 text-violet-400" />
+                </div>
+                <p className="text-sm font-medium text-foreground">No decisions yet</p>
+                <p className="text-xs text-muted-foreground mt-1 text-center max-w-md">
+                  Once a bot escalates a high-impact action — a price change, a bulk PO, a campaign launch — every approve/reject lands here.
+                </p>
+                <div className="flex gap-2 mt-5">
+                  <Link href="/settings#agents">
+                    <Button variant="outline" size="sm" className="border-white/10 hover:border-violet-400/30 hover:bg-violet-500/5">
+                      <Filter className="h-3.5 w-3.5 mr-1.5 text-violet-400" />
+                      Tune approval thresholds
+                    </Button>
+                  </Link>
+                  <Link href="/architect">
+                    <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white">
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                      Launch a workflow
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}

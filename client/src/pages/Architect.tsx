@@ -5,7 +5,7 @@ import {
   Bot, Search, Loader2, ShieldCheck, AlertTriangle,
   Lightbulb, Package, Plus, Store, Globe, Zap, ExternalLink,
   CheckCircle2, Trash2, Sparkles, X, BarChart3, FileText, Cpu,
-  ImageIcon, Wand2
+  ImageIcon, Wand2, Camera, Copy, Upload, Tag
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 
@@ -144,6 +144,9 @@ export default function Architect() {
                 </button>
               </div>
             </div>
+
+            {/* Vision-driven listing generator */}
+            <VisionListingPanel />
 
             {/* Image Optimizer Module */}
             <ImageOptimizerPanel />
@@ -297,6 +300,285 @@ export default function Architect() {
            )}
         </div>
       </aside>
+    </div>
+  );
+}
+
+type VisionListing = {
+  title: string;
+  description: string;
+  bulletPoints: string[];
+  seoKeywords: string[];
+  suggestedPriceRange: { minCents: number; maxCents: number; currency: string };
+  imageAltText: string;
+  tags: string[];
+  categoryBreadcrumb: string;
+  materialOrComposition?: string | null;
+  estimatedConversionAngle: string;
+};
+
+function VisionListingPanel() {
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [niche, setNiche] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [priceTier, setPriceTier] = useState<"" | "budget" | "mid" | "premium" | "luxury">("");
+  const [tone, setTone] = useState("");
+  const [storeId, setStoreId] = useState<string>("");
+  const [listing, setListing] = useState<VisionListing | null>(null);
+
+  const { data: stores } = trpc.stores.list.useQuery();
+  const storeList = (stores as any[]) || [];
+
+  const generateMutation = trpc.architect.generateListingFromImage.useMutation({
+    onSuccess: (data: any) => {
+      setListing(data.listing as VisionListing);
+      toast.success("LISTING_GENERATED");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Listing generation failed");
+    },
+  });
+
+  const handleFile = (f: File | null) => {
+    if (!f) {
+      setFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+    if (f.size > 10 * 1024 * 1024) {
+      toast.error("Image exceeds 10MB limit");
+      return;
+    }
+    setFile(f);
+    setPreviewUrl(URL.createObjectURL(f));
+    setListing(null);
+  };
+
+  const handleGenerate = async () => {
+    if (!file) {
+      toast.error("Pick a product image first");
+      return;
+    }
+    const buf = await file.arrayBuffer();
+    // base64-encode in chunks to dodge call-stack overflow on big images
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+    }
+    const bytesBase64 = btoa(bin);
+
+    generateMutation.mutate({
+      filename: file.name,
+      bytesBase64,
+      mimeType: file.type as "image/png" | "image/jpeg" | "image/webp",
+      storeId: storeId ? Number(storeId) : undefined,
+      niche: niche.trim() || undefined,
+      targetAudience: targetAudience.trim() || undefined,
+      priceTier: priceTier || undefined,
+      tone: tone.trim() || undefined,
+    });
+  };
+
+  const copy = (text: string, label: string) => {
+    navigator.clipboard?.writeText(text).then(
+      () => toast.success(`${label} copied`),
+      () => toast.error("Clipboard unavailable"),
+    );
+  };
+
+  const fmt = (cents: number, ccy: string) =>
+    `${ccy} ${(cents / 100).toFixed(2)}`;
+
+  return (
+    <div className="border border-white/[0.08] bg-black/40 p-4 relative">
+      <div className="absolute top-0 left-0 w-1 h-full bg-fuchsia-400/50" />
+      <div className="flex items-center gap-2 mb-3">
+        <Camera className="w-4 h-4 text-fuchsia-400" />
+        <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white">Vision Listing Generator</h2>
+        <span className="ml-auto font-mono text-[8px] uppercase tracking-widest text-fuchsia-400/70">Claude Vision</span>
+      </div>
+      <p className="font-mono text-[9px] text-muted-foreground mb-4 leading-relaxed">
+        Drop a product photo. Claude examines the image and returns SEO-optimized title, description, bullets, keywords, alt text, tags, and a suggested price range — ready to paste into any storefront.
+      </p>
+
+      {!file ? (
+        <label
+          className="flex flex-col items-center justify-center gap-2 border border-dashed border-white/[0.12] hover:border-fuchsia-400/50 hover:bg-fuchsia-500/[0.03] cursor-pointer py-10 transition-colors"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            handleFile(e.dataTransfer.files?.[0] ?? null);
+          }}
+        >
+          <Upload className="w-5 h-5 text-fuchsia-400/70" />
+          <p className="font-mono text-[10px] uppercase tracking-widest text-white/70">Drop image · or click to browse</p>
+          <p className="font-mono text-[9px] text-muted-foreground">PNG · JPEG · WebP · ≤10MB</p>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4">
+          {previewUrl && (
+            <img src={previewUrl} alt="Preview" className="w-full h-auto rounded border border-white/[0.08] object-cover aspect-square" />
+          )}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] text-white truncate">{file.name}</span>
+              <button
+                type="button"
+                onClick={() => handleFile(null)}
+                className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground hover:text-red-400 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select
+                value={storeId}
+                onChange={(e) => setStoreId(e.target.value)}
+                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+              >
+                <option value="">No store context</option>
+                {storeList.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+                ))}
+              </select>
+              <select
+                value={priceTier}
+                onChange={(e) => setPriceTier(e.target.value as any)}
+                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+              >
+                <option value="">Any price tier</option>
+                <option value="budget">Budget</option>
+                <option value="mid">Mid</option>
+                <option value="premium">Premium</option>
+                <option value="luxury">Luxury</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Niche / category"
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+              />
+              <input
+                type="text"
+                placeholder="Target audience"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+              />
+              <input
+                type="text"
+                placeholder="Brand tone (e.g., warm, clinical)"
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                className="sm:col-span-2 bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generateMutation.isPending || !file}
+              className="w-full bg-white/[0.06] hover:bg-fuchsia-500/20 border border-white/[0.08] hover:border-fuchsia-400 text-white font-mono text-[10px] uppercase tracking-widest px-4 py-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-fuchsia-400" /> : <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />}
+              {generateMutation.isPending ? "Reading image…" : "Generate Listing"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {listing && (
+        <div className="mt-4 space-y-3">
+          <ListingField label="Title" value={listing.title} onCopy={() => copy(listing.title, "Title")} />
+          <ListingField label="Description" value={listing.description} onCopy={() => copy(listing.description, "Description")} multiline />
+          <div>
+            <ListingLabel label="Bullets" onCopy={() => copy(listing.bulletPoints.map((b) => `• ${b}`).join("\n"), "Bullets")} />
+            <ul className="space-y-1 bg-[#050505] border border-white/[0.08] p-3">
+              {listing.bulletPoints.map((b, i) => (
+                <li key={i} className="font-mono text-[10px] text-white/85 leading-relaxed flex gap-2">
+                  <span className="text-fuchsia-400 mt-0.5">▸</span> {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <ListingLabel label="SEO Keywords" onCopy={() => copy(listing.seoKeywords.join(", "), "Keywords")} />
+            <div className="flex flex-wrap gap-1.5 bg-[#050505] border border-white/[0.08] p-3">
+              {listing.seoKeywords.map((k, i) => (
+                <span key={i} className="font-mono text-[9px] text-fuchsia-300/80 bg-fuchsia-500/[0.06] border border-fuchsia-500/20 px-1.5 py-0.5">
+                  {k}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="bg-[#050505] border border-white/[0.08] p-3">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Suggested Price</p>
+              <p className="font-mono text-sm font-bold text-emerald-400">
+                {fmt(listing.suggestedPriceRange.minCents, listing.suggestedPriceRange.currency)}
+                <span className="text-white/40 mx-1.5">→</span>
+                {fmt(listing.suggestedPriceRange.maxCents, listing.suggestedPriceRange.currency)}
+              </p>
+            </div>
+            <div className="bg-[#050505] border border-white/[0.08] p-3">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Category</p>
+              <p className="font-mono text-[10px] text-white/85">{listing.categoryBreadcrumb || "—"}</p>
+            </div>
+          </div>
+          <ListingField label="Image Alt Text" value={listing.imageAltText} onCopy={() => copy(listing.imageAltText, "Alt text")} />
+          <div>
+            <ListingLabel label="Tags" onCopy={() => copy(listing.tags.join(", "), "Tags")} />
+            <div className="flex flex-wrap gap-1.5 bg-[#050505] border border-white/[0.08] p-3">
+              {listing.tags.map((t, i) => (
+                <span key={i} className="font-mono text-[9px] text-white/70 bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 flex items-center gap-1">
+                  <Tag className="w-2.5 h-2.5 text-fuchsia-400/60" /> {t}
+                </span>
+              ))}
+            </div>
+          </div>
+          {listing.estimatedConversionAngle && (
+            <div className="bg-fuchsia-500/[0.04] border border-fuchsia-500/20 p-3">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-fuchsia-300 mb-1">Conversion Angle</p>
+              <p className="font-mono text-[10px] text-white/85 leading-relaxed">{listing.estimatedConversionAngle}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ListingLabel({ label, onCopy }: { label: string; onCopy: () => void }) {
+  return (
+    <div className="flex items-center justify-between mb-1">
+      <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <button
+        type="button"
+        onClick={onCopy}
+        className="font-mono text-[9px] uppercase tracking-widest text-fuchsia-400/70 hover:text-fuchsia-400 transition-colors flex items-center gap-1"
+      >
+        <Copy className="w-2.5 h-2.5" /> Copy
+      </button>
+    </div>
+  );
+}
+
+function ListingField({ label, value, onCopy, multiline }: { label: string; value: string; onCopy: () => void; multiline?: boolean }) {
+  return (
+    <div>
+      <ListingLabel label={label} onCopy={onCopy} />
+      <div className={`bg-[#050505] border border-white/[0.08] p-3 font-mono text-[10px] text-white/85 leading-relaxed ${multiline ? "whitespace-pre-wrap" : ""}`}>
+        {value || "—"}
+      </div>
     </div>
   );
 }
