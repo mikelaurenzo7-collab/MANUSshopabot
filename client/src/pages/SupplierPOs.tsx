@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { CountUp } from "@/components/CountUp";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -140,7 +141,7 @@ export default function SupplierPOs() {
 
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm">
                   <Plus className="w-3 h-3 mr-1" />
                   New PO
                 </Button>
@@ -164,21 +165,27 @@ export default function SupplierPOs() {
               <Hash className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total POs</span>
             </div>
-            <p className="text-lg font-bold text-foreground">{totalPOs}</p>
+            <p className="text-lg font-bold text-foreground">
+              <CountUp value={totalPOs} />
+            </p>
           </div>
           <div className="p-3 rounded-xl bg-amber-500/8 border border-amber-500/15">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-3.5 w-3.5 text-amber-400" />
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Pending Review</span>
             </div>
-            <p className="text-lg font-bold text-amber-400">{draftCount}</p>
+            <p className="text-lg font-bold text-amber-400">
+              <CountUp value={draftCount} />
+            </p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
               <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total Value</span>
             </div>
-            <p className="text-lg font-bold text-emerald-400">${(totalValue / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+            <p className="text-lg font-bold text-emerald-400">
+              <CountUp value={totalValue / 100} prefix="$" decimals={2} />
+            </p>
           </div>
         </div>
       )}

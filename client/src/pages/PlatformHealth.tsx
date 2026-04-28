@@ -27,7 +27,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   ebay: "border-blue-500/30 bg-blue-500/5",
   tiktok_shop: "border-pink-500/30 bg-pink-500/5",
   walmart: "border-sky-500/30 bg-sky-500/5",
-  meta: "border-blue-600/30 bg-blue-600/5",
+  meta: "border-blue-500/30 bg-blue-500/5",
   instagram: "border-cyan-500/30 bg-cyan-500/5",
   tiktok: "border-pink-500/30 bg-pink-500/5",
   twitter: "border-sky-400/30 bg-sky-400/5",
