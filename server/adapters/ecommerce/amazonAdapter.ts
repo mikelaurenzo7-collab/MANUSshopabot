@@ -107,6 +107,11 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
+    // Default page size pulls from the capability matrix (Amazon: 50)
+    // — keeps bot pagination consistent with what the platform handles
+    // efficiently. Amazon SP-API rate limits are stringent, so we don't
+    // want to over-fetch by default.
+    const defaultPageSize = this.getCapabilities().recommendedBatchSize;
     const result = await this.callApi(credentials, (client) =>
       client.callAPI({
         operation: "searchCatalogItems",
@@ -118,7 +123,7 @@ export class AmazonAdapter implements EcommercePlatformAdapter {
         },
       })
     );
-    return (result?.items || []).slice(0, params?.limit || 50).map((item: any) => this.mapProduct(item));
+    return (result?.items || []).slice(0, params?.limit || defaultPageSize).map((item: any) => this.mapProduct(item));
   }
 
   async getProduct(credentials: AdapterCredentials, productId: string): Promise<PlatformProduct> {

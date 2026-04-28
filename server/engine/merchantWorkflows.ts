@@ -15,21 +15,40 @@ import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 
 registerWorkflow("inventory_audit", (input): WorkflowStepDefinition[] => {
   const scope = input.scope ?? "all_stores";
+  // Platform-aware tuning: when input.platform is supplied, the LLM
+  // sees inventory primitives the platform actually exposes —
+  // realTimeInventory (poll vs. push), recommendedBatchSize for the
+  // sweep, partialFulfillment for restock routing. Without this hint
+  // the bot defaults to "poll every store every 5 min" which is
+  // wasteful on Shopify (real-time webhooks already populate stock)
+  // and insufficient on Amazon (FBA inventory lags ~5–10 min).
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
+  const inventoryBrief = caps
+    ? `\n\nPlatform: ${platform}.\n` +
+      `- Real-time inventory: ${caps.realTimeInventory ? "yes — webhooks push stock changes" : "NO — propagation lags 5-10 min on this platform"}\n` +
+      `- Recommended sweep batch size: ${caps.recommendedBatchSize}\n` +
+      `- Partial fulfillment: ${caps.partialFulfillment ? "yes" : "no — restock orders fulfill all-or-nothing"}\n` +
+      `- Bulk price update: ${caps.bulkPriceUpdate ? "yes — clearance markdowns can run platform-side" : "no — bot must update items one-at-a-time"}`
+    : "";
+
   return [
     {
       stepType: "analysis",
       title: "Stock Level Analysis",
-      description: "Analyzing current inventory levels across all connected stores",
+      description: caps
+        ? `Analyzing inventory for ${platform} (capability-tuned)`
+        : "Analyzing current inventory levels across all connected stores",
       input: {
         analysisPrompt: `Perform a comprehensive inventory audit:
 1. Identify all products below their low-stock threshold
 2. Calculate days-of-stock remaining based on recent sales velocity
 3. Flag products that are overstocked (>90 days supply)
 4. Identify products with zero sales in the last 30 days
-5. Calculate total inventory value at cost and retail
+5. Calculate total inventory value at cost and retail${inventoryBrief}
 
-Provide specific restock quantities for low-stock items and clearance recommendations for dead stock.`,
-        data: { scope, requestedAt: new Date().toISOString() },
+Provide specific restock quantities for low-stock items and clearance recommendations for dead stock. Where the platform supports bulk-price updates, recommend clearance markdowns the bot can apply in one sweep; where it doesn't, recommend a manual ladder.`,
+        data: { scope, platform: platform ?? null, requestedAt: new Date().toISOString() },
       },
     },
     {
@@ -37,7 +56,9 @@ Provide specific restock quantities for low-stock items and clearance recommenda
       title: "Restock Recommendations",
       description: "Generating optimal restock quantities and timing",
       input: {
-        systemPrompt: "You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts.",
+        systemPrompt: caps
+          ? `You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts. Platform context: ${caps.strengths.slice(0, 2).join("; ")}.`
+          : "You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts.",
         userPrompt: `Based on the inventory audit, generate restock recommendations:
 1. Priority restock list (items that will stock out within 7 days)
 2. Standard restock list (items below threshold but not critical)

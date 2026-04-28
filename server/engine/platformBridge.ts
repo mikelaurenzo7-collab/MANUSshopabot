@@ -232,25 +232,26 @@ export async function checkInventoryAcrossStoresByOrg(orgId: number): Promise<{
   lowStockProducts: { id: number; title: string; stockLevel: number; threshold: number }[];
 }[]> {
   const stores = await db.getStoresByOrg(orgId);
-  const results = [];
-
-  for (const store of stores) {
-    if (store.status !== "active") continue;
-    const lowStock = await db.getLowStockProducts(store.id);
-    results.push({
-      storeId: store.id,
-      storeName: store.name,
-      platform: store.platform,
-      lowStockProducts: lowStock.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        stockLevel: p.stockLevel,
-        threshold: p.lowStockThreshold ?? 5,
-      })),
-    });
-  }
-
-  return results;
+  const activeStores = stores.filter((s) => s.status === "active");
+  // N+1 → 1 round-trip-per-store fanned out via Promise.all. The DB
+  // helper `getLowStockProducts` is a single SELECT per store, so 10
+  // stores went from 10 sequential round-trips (~500ms-2s) to 1 parallel
+  // wave (~50-200ms). The Inbox + Merchant dashboard both call this on
+  // every refresh, so the speedup compounds.
+  const lowStockByStore = await Promise.all(
+    activeStores.map((store) => db.getLowStockProducts(store.id)),
+  );
+  return activeStores.map((store, i) => ({
+    storeId: store.id,
+    storeName: store.name,
+    platform: store.platform,
+    lowStockProducts: lowStockByStore[i].map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      stockLevel: p.stockLevel,
+      threshold: p.lowStockThreshold ?? 5,
+    })),
+  }));
 }
 
 /**
@@ -265,25 +266,22 @@ export async function checkInventoryAcrossStores(userId: number): Promise<{
   lowStockProducts: { id: number; title: string; stockLevel: number; threshold: number }[];
 }[]> {
   const stores = await db.getStoresByUser(userId);
-  const results = [];
-
-  for (const store of stores) {
-    if (store.status !== "active") continue;
-    const lowStock = await db.getLowStockProducts(store.id);
-    results.push({
-      storeId: store.id,
-      storeName: store.name,
-      platform: store.platform,
-      lowStockProducts: lowStock.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        stockLevel: p.stockLevel,
-        threshold: p.lowStockThreshold ?? 5,
-      })),
-    });
-  }
-
-  return results;
+  const activeStores = stores.filter((s) => s.status !== "active" ? false : true);
+  // Same N+1 → Promise.all fix as the org-scoped variant above.
+  const lowStockByStore = await Promise.all(
+    activeStores.map((store) => db.getLowStockProducts(store.id)),
+  );
+  return activeStores.map((store, i) => ({
+    storeId: store.id,
+    storeName: store.name,
+    platform: store.platform,
+    lowStockProducts: lowStockByStore[i].map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      stockLevel: p.stockLevel,
+      threshold: p.lowStockThreshold ?? 5,
+    })),
+  }));
 }
 
 // ─── Social Media Bridge ──────────────────────────────────────────────────

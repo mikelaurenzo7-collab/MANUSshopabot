@@ -94,9 +94,12 @@ export class EbayAdapter implements EcommercePlatformAdapter {
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
     const client = await this.getClient(credentials);
+    // eBay: 100 default from the capability matrix — generous because
+    // eBay's daily-quota model rewards a few large pages over many small.
+    const limit = params?.limit ?? this.getCapabilities().recommendedBatchSize;
     const result = await client.sell.inventory.getInventoryItems({
-      limit: params?.limit || 50,
-      offset: ((params?.page || 1) - 1) * (params?.limit || 50),
+      limit,
+      offset: ((params?.page || 1) - 1) * limit,
     });
     return (result.inventoryItems || []).map((item: any) => this.mapProduct(item));
   }

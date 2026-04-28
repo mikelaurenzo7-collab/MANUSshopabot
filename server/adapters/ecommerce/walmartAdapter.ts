@@ -127,10 +127,13 @@ export class WalmartAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
+    // Walmart: 100 default — no real-time webhooks here, so larger
+    // pages reduce the polling overhead on bot-side sweeps.
+    const limit = params?.limit ?? this.getCapabilities().recommendedBatchSize;
     const data = await this.fetch("/items", credentials, {
       query: {
-        limit: String(params?.limit || 50),
-        offset: String(((params?.page || 1) - 1) * (params?.limit || 50)),
+        limit: String(limit),
+        offset: String(((params?.page || 1) - 1) * limit),
       },
     });
     return (data?.ItemResponse || []).map((item: any) => this.mapProduct(item));

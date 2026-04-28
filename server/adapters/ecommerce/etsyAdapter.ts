@@ -113,8 +113,11 @@ export class EtsyAdapter implements EcommercePlatformAdapter {
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
     const shopId = credentials.metadata?.shopId || credentials.platformAccountId;
     if (!shopId) throw new Error("Etsy shopId required in credentials metadata");
+    // Etsy: 25 default — small page size keeps the bot under their
+    // ~10 req/sec budget while still delivering a useful sweep.
+    const limit = params?.limit ?? this.getCapabilities().recommendedBatchSize;
     const data = await this.fetch(
-      `/application/shops/${shopId}/listings/active?limit=${params?.limit || 50}&offset=${((params?.page || 1) - 1) * (params?.limit || 50)}`,
+      `/application/shops/${shopId}/listings/active?limit=${limit}&offset=${((params?.page || 1) - 1) * limit}`,
       credentials
     );
     return (data.results || []).map((l: any) => this.mapProduct(l));

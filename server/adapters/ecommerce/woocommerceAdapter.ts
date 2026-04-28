@@ -104,9 +104,13 @@ export class WooCommerceAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
+    // WooCommerce: 100 default. Self-hosted instances handle
+    // larger pages comfortably; the bot also writes through bulk
+    // endpoints when available, so a 100-item sweep is one round-trip.
+    const perPage = params?.limit ?? this.getCapabilities().recommendedBatchSize;
     const response = await this.callApi(credentials, (api) =>
       api.get("products", {
-        per_page: params?.limit || 50,
+        per_page: perPage,
         page: params?.page || 1,
         status: params?.status || "publish",
       })

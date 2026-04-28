@@ -123,10 +123,13 @@ export class TikTokShopAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
+    // TikTok Shop: 50 default — moderate pages, the platform's product
+    // approval workflow adds metadata that's expensive to ship in bulk.
+    const pageSize = params?.limit ?? this.getCapabilities().recommendedBatchSize;
     const data = await this.fetch("/api/products/search", credentials, {
       method: "POST",
       body: {
-        page_size: params?.limit || 50,
+        page_size: pageSize,
         page_number: params?.page || 1,
       },
     });
