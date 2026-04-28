@@ -394,12 +394,14 @@ export default function Workflows() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : (activeWorkflows?.length ?? 0) === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
-              <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
-                <Bot className="h-6 w-6 text-sky-400/60" />
+            <div className="empty-state">
+              <div className="empty-state-icon" style={{ background: "rgba(14, 165, 233, 0.1)", borderColor: "rgba(14, 165, 233, 0.25)" }}>
+                <Bot className="h-5 w-5 text-sky-400" />
               </div>
-              <p className="text-white/50 font-medium">No active workflows</p>
-              <p className="text-white/25 text-sm mt-1">Launch a workflow to get started</p>
+              <h3 className="text-sm font-semibold text-foreground">No active workflows</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                Launch one above and watch your bots execute the full plan, step by step. Workflows that finish move to the History tab.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -423,12 +425,14 @@ export default function Workflows() {
               {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : historyWorkflows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/[0.08] text-center bg-white/[0.01]">
-              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-                <Clock className="h-6 w-6 text-white/20" />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <Clock className="h-5 w-5 text-white/45" />
               </div>
-              <p className="text-white/50 font-medium">No workflow history yet</p>
-              <p className="text-white/25 text-sm mt-1">Completed workflows will appear here</p>
+              <h3 className="text-sm font-semibold text-foreground">No workflow history yet</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                Completed, failed, and cancelled workflows land here. Completed runs get a one-click <span className="text-emerald-300/85">Rerun</span>; failed ones get <span className="text-amber-300/85">Retry</span>.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">

@@ -328,10 +328,14 @@ export default function Intelligence() {
               ))}
             </div>
           ) : allAnomalies.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-white/40">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500 mb-3" />
-              <p className="font-medium text-foreground/80">All Clear</p>
-              <p className="text-sm mt-1">No anomalies detected across your stores and ad accounts.</p>
+            <div className="empty-state">
+              <div className="empty-state-icon" style={{ background: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.25)" }}>
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">All clear</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                No anomalies detected across your stores and ad accounts. The Builder, Merchant, and Social bots run continuous checks; we'll surface anything off-trend here.
+              </p>
             </div>
           ) : (
             <div className="stagger-list space-y-3">
