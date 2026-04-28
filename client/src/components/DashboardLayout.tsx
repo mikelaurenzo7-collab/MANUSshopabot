@@ -385,7 +385,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 >
                   <Store className="w-3.5 h-3.5 mr-2 opacity-70" />
                   <span className="truncate">{s.name}</span>
-                  <span className="ml-auto text-[10px] text-white/30 uppercase">{s.platform}</span>
+                  <span className="ml-auto text-[10px] text-white/55 uppercase">{s.platform}</span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -665,7 +665,7 @@ function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void })
         <div className="p-4 space-y-3">
           {groups.map((g) => (
             <div key={g.label}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-1.5">{g.label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50 mb-1.5">{g.label}</p>
               <div className="rounded-lg border border-white/[0.05] divide-y divide-white/[0.04]">
                 {g.rows.map((r) => (
                   <div key={r.keys} className="flex items-center justify-between px-3 py-1.5">
