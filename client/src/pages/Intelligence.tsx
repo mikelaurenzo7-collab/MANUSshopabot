@@ -29,6 +29,7 @@ import {
   Clock,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { CountUp } from "@/components/CountUp";
 
 // ─── Scheduler task card ───────────────────────────────────────────────────────
 function SchedulerTask({ name, freq, agent }: { name: string; freq: string; agent: string }) {
@@ -79,13 +80,29 @@ function MetricCard({
   const TrendIcon = trend === "up" ? ChevronUp : trend === "down" ? ChevronDown : Minus;
   const trendColor = trend === "up" ? "text-emerald-400" : trend === "down" ? "text-red-400" : "text-muted-foreground";
 
+  // Numeric values (with optional $ prefix or % suffix) get CountUp;
+  // strings like "Healthy" or "—" render unchanged.
+  const numericMatch = value.match(/^([^\d-]*)(-?[\d,]+(?:\.\d+)?)(.*)$/);
+  const animatedValue = numericMatch ? (
+    <>
+      {numericMatch[1]}
+      <CountUp
+        value={parseFloat(numericMatch[2].replace(/,/g, ""))}
+        decimals={numericMatch[2].includes(".") ? 2 : 0}
+      />
+      {numericMatch[3]}
+    </>
+  ) : (
+    value
+  );
+
   return (
     <Card className="bg-card/60 border-border/40 card-hover">
       <CardContent className="pt-5 pb-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
-            <p className={`text-2xl font-bold ${accent}`}>{value}</p>
+            <p className={`text-2xl font-bold ${accent}`}>{animatedValue}</p>
             {sub && <p className="text-xs text-white/40">{sub}</p>}
           </div>
           <div className="p-2 rounded-lg bg-secondary/40">
@@ -459,7 +476,9 @@ export default function Intelligence() {
                   const labels = { lower_price: "Lower Price", hold: "Hold", raise_price: "Raise Price" };
                   return (
                     <Card key={action} className="bg-card/60 border-border/40 text-center py-3">
-                      <p className={`text-2xl font-bold ${colors[action]}`}>{count}</p>
+                      <p className={`text-2xl font-bold ${colors[action]}`}>
+                        <CountUp value={count as number} />
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5">{labels[action]}</p>
                     </Card>
                   );
@@ -662,12 +681,16 @@ export default function Intelligence() {
                 <div className="space-y-3">
                   <div className="flex gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-yellow-400">{dlq.total}</p>
+                      <p className="text-2xl font-bold text-yellow-400">
+                        <CountUp value={dlq.total} />
+                      </p>
                       <p className="text-xs text-muted-foreground">Total</p>
                     </div>
                     <Separator orientation="vertical" className="h-12 bg-border/40" />
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-orange-400">{dlq.pending}</p>
+                      <p className="text-2xl font-bold text-orange-400">
+                        <CountUp value={dlq.pending} />
+                      </p>
                       <p className="text-xs text-muted-foreground">Pending Retry</p>
                     </div>
                   </div>
