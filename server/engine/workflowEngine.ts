@@ -1029,6 +1029,47 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
       const product = await pushProductToStore(storeId, input.productId);
       return { action, storeId, product };
     }
+    case "bulk_push_products": {
+      // Used by complete_store_buildout: takes a `products` array
+      // (either provided directly via input.products OR pulled from a
+      // prior LLM step's output via productsFromPriorStep:true) and
+      // bulk-inserts them into the local DB as drafts. Drafts get
+      // pushed to the platform later by the Merchant Bot's publish
+      // workflow once the operator approves them.
+      if (!storeId) return { error: "Missing storeId for bulk_push_products" };
+      let productList: Array<Record<string, any>> = [];
+      if (Array.isArray(input.products)) {
+        productList = input.products as Array<Record<string, any>>;
+      } else if (input.productsFromPriorStep) {
+        // Walk the previousOutputs chain looking for the most-recent
+        // step that returned a `products` array.
+        for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+          const out = context.previousOutputs[i];
+          if (out && Array.isArray(out.products)) {
+            productList = out.products as Array<Record<string, any>>;
+            break;
+          }
+        }
+      }
+      if (productList.length === 0) {
+        return { action, storeId, status: "no_products", inserted: 0 };
+      }
+      const dbModule = await import("../db");
+      const status = (input.productStatus === "active" ? "active" : "draft") as "active" | "draft";
+      const rows = productList.map((p) => ({
+        storeId,
+        title: String(p.title ?? "Untitled product").slice(0, 500),
+        description: String(p.description ?? ""),
+        price: Number(p.priceCents ?? 0),
+        costPrice: Number(p.costPriceCents ?? 0),
+        sku: p.sku ? String(p.sku).slice(0, 100) : null,
+        category: p.category ? String(p.category).slice(0, 255) : null,
+        stockLevel: 0,
+        status,
+      }));
+      const inserted = await dbModule.bulkInsertProducts(rows as any);
+      return { action, storeId, inserted, status, total: productList.length };
+    }
     case "fulfill_order": {
       if (!storeId || !input.orderId) return { error: "Missing storeId or orderId" };
       const success = await fulfillOrderOnPlatform(storeId, input.orderId, input.trackingNumber, input.trackingUrl);
