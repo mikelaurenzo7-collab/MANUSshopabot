@@ -14,9 +14,10 @@ import PluginStorePage from "./PluginStore";
 import SupplierPOsPage from "./SupplierPOs";
 import GmailBotPage from "./GmailBot";
 import { ToolsTab } from "@/components/integrations/ToolsTab";
+import { CapabilitiesTab } from "@/components/integrations/CapabilitiesTab";
 
-type StorefrontsTab = "integrations" | "plugins" | "supplier" | "email" | "tools";
-const TAB_VALUES: StorefrontsTab[] = ["integrations", "plugins", "supplier", "email", "tools"];
+type StorefrontsTab = "integrations" | "capabilities" | "plugins" | "supplier" | "email" | "tools";
+const TAB_VALUES: StorefrontsTab[] = ["integrations", "capabilities", "plugins", "supplier", "email", "tools"];
 
 function readTabFromHash(): StorefrontsTab {
   if (typeof window === "undefined") return "integrations";
@@ -55,6 +56,7 @@ export default function StorefrontsPage() {
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="integrations">Connections</TabsTrigger>
+          <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>
           <TabsTrigger value="supplier">Supplier POs</TabsTrigger>
           <TabsTrigger value="email">Email Channel</TabsTrigger>
@@ -63,6 +65,9 @@ export default function StorefrontsPage() {
 
         <TabsContent value="integrations" className="mt-3">
           <IntegrationsPage />
+        </TabsContent>
+        <TabsContent value="capabilities" className="mt-3">
+          <CapabilitiesTab />
         </TabsContent>
         <TabsContent value="plugins" className="mt-3">
           <PluginStorePage />
