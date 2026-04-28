@@ -9,6 +9,7 @@
  */
 
 import { registerWorkflow, type WorkflowStepDefinition, type StepContext } from "./workflowEngine";
+import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 
 // ─── Inventory Audit Workflow ──────────────────────────────────────────────
 
@@ -86,17 +87,36 @@ Return as JSON with keys: criticalRestocks, standardRestocks, totalEstimatedCost
 registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
   const targetMargin = input.targetMargin ?? 40;
   const strategy = input.strategy ?? "margin_target";
+  // Platform-aware tuning. compareAtPrice is the primary "show a strikethrough"
+  // primitive — Shopify, eBay, WooCommerce, TikTok Shop support it. Amazon
+  // and Etsy don't (Amazon owns its strike-through display, Etsy uses sales).
+  // The Merchant Bot uses this to gate which adjustment recipes are even
+  // viable on the target platform — recommending a compareAt strikeout on
+  // Amazon would just generate noise the bot can't act on.
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
+  const platformGuard = caps
+    ? `\n\nPlatform: ${platform}. The Merchant Bot can act on these primitives here:\n` +
+      `- Direct price update: yes\n` +
+      `- Strikethrough / "compare-at" pricing: ${caps.compareAtPrice ? "yes" : "NO — skip strikethrough recipes; use Amazon's automated repricer or Etsy's native sale instead"}\n` +
+      `- Bulk price update API: ${caps.bulkPriceUpdate ? "yes" : "no — recommend manual ladder"}\n` +
+      `- Native scheduled sale primitive: ${caps.scheduledSale ? "yes" : "no — bot's own cron is the path"}\n` +
+      `- Fee structure: ${caps.feeStructure} (${caps.category}). When recommending margin floors, account for ${caps.feeStructure === "commission" ? "platform commission ~10-15% on top of payment processing" : caps.feeStructure === "subscription" ? "subscription cost amortized over volume" : "no platform commission — full margin retained"}.`
+    : "";
+
   return [
     {
       stepType: "llm_call",
       title: "Price Analysis",
-      description: `Analyzing pricing with ${targetMargin}% target margin using ${strategy} strategy`,
+      description: caps
+        ? `Analyzing pricing for ${platform} with ${targetMargin}% target margin using ${strategy} strategy (platform-tuned)`
+        : `Analyzing pricing with ${targetMargin}% target margin using ${strategy} strategy`,
       input: {
         systemPrompt: "You are a pricing strategist for e-commerce. You maximize revenue while maintaining competitive positioning.",
         userPrompt: `Analyze the current product pricing and recommend optimizations:
 
 Strategy: ${strategy}
-Target Margin: ${targetMargin}%
+Target Margin: ${targetMargin}%${platformGuard}
 
 For each product category, provide:
 1. Current average margin
@@ -158,11 +178,28 @@ Return as JSON with keys: categoryAnalysis, priceAdjustments, bundleOpportunitie
 
 registerWorkflow("fulfillment_automation", (input): WorkflowStepDefinition[] => {
   const orderId = input.orderId ?? "batch";
+  // Platform-aware fulfillment guard. The bot's rollback path differs per
+  // platform (Shopify can revert fulfillments via API, Etsy/eBay can't,
+  // Amazon FBA owns the box once it's labeled). Surfacing this lets the
+  // analysis step decide whether the workflow is safe to auto-run vs.
+  // requires an approval gate.
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
+  const fulfillmentBrief = caps
+    ? `\nPlatform: ${platform}.\n` +
+      `- Auto-fulfillment API: ${caps.autoFulfillment ? "supported" : "NOT supported — bot must hand off to manual queue"}\n` +
+      `- Partial fulfillment: ${caps.partialFulfillment ? "supported" : "all-or-nothing — bot fulfills the entire order or none"}\n` +
+      `- Rollback risk: ${caps.autoFulfillment ? "moderate (most platforms accept fulfillment-cancel API)" : "high (manual reversal required)"}\n` +
+      `- Recommended batch size for fulfillment sweeps: ${caps.recommendedBatchSize}`
+    : "";
+
   return [
     {
       stepType: "analysis",
       title: "Order Validation",
-      description: "Validating order details, stock availability, and shipping feasibility",
+      description: caps
+        ? `Validating order for ${platform} fulfillment (capability-aware)`
+        : "Validating order details, stock availability, and shipping feasibility",
       input: {
         analysisPrompt: `Validate the order for fulfillment:
 1. Verify all items are in stock
@@ -170,10 +207,10 @@ registerWorkflow("fulfillment_automation", (input): WorkflowStepDefinition[] => 
 3. Verify payment status
 4. Calculate optimal shipping method and cost
 5. Check for fraud indicators
-6. Determine if any items need special handling
+6. Determine if any items need special handling${fulfillmentBrief}
 
-Return: validation status, any issues found, recommended shipping method, estimated delivery date.`,
-        data: { orderId },
+Return: validation status, any issues found, recommended shipping method, estimated delivery date, and whether this fulfillment can safely auto-execute or requires manual review (based on the platform's auto-fulfillment + rollback capabilities).`,
+        data: { orderId, platform: platform ?? null, capabilities: caps ?? null },
       },
       rollback: async (_ctx: StepContext, _output: unknown) => {
         // Validation is read-only — no side effects to undo

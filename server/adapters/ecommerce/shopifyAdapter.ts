@@ -126,14 +126,19 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
   }
 
   async listProducts(credentials: AdapterCredentials, params?: ListParams): Promise<PlatformProduct[]> {
-    const limit = Math.min(params?.limit || 50, 250); // Shopify max is 250
+    // Default page size pulls from the capability matrix's
+    // `recommendedBatchSize` (250 for Shopify) so paginated catalog
+    // sweeps run in 1 round-trip instead of 5 when the caller didn't
+    // pass an explicit limit. Capped at Shopify's hard ceiling of 250.
+    const defaultPageSize = this.getCapabilities().recommendedBatchSize;
+    const limit = Math.min(params?.limit || defaultPageSize, 250);
     const offset = params?.offset || 0;
     const allProducts: PlatformProduct[] = [];
-    
+
     let cursor: string | undefined;
     let hasMore = true;
     let pageCount = 0;
-    const maxPages = Math.ceil((params?.limit || 50) / 250);
+    const maxPages = Math.ceil((params?.limit || defaultPageSize) / 250);
     
     while (hasMore && pageCount < maxPages) {
       const url = new URL(`${this.baseUrl(credentials)}/products.json`);

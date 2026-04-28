@@ -169,6 +169,24 @@ registerWorkflow("social_content", (input): WorkflowStepDefinition[] => {
   const platforms = input.platforms ?? ["instagram", "tiktok", "twitter"];
   const duration = input.duration ?? "7 days";
   const brand = input.brand ?? "our brand";
+
+  // Build a per-platform brief from the capability matrix so the LLM
+  // schedules platform-appropriate content (TikTok 3 short-form/day,
+  // Pinterest 5 portrait pins/day, Twitter 4 punchy threads/day, Meta
+  // 1 polished carousel/day). Without this the LLM defaults to generic
+  // "post once a day per platform" which under-uses TikTok/Pinterest
+  // and over-posts on platforms with shorter content half-life.
+  const matrix = getSocialCapabilityMatrix();
+  const platformBriefs = platforms
+    .map((p: string) => {
+      const c = matrix[p];
+      if (!c) return `- ${p}: (no capability data)`;
+      const formats = [c.shortFormVideo && "short-form video", c.carousel && "carousel", c.image && "image", c.stories && "story"]
+        .filter(Boolean).join(" / ");
+      return `- ${p}: ${c.recommendedPostsPerDay}/day target, ${formats || "image"}, ${c.preferredAspectRatios.join(" or ")} aspect, caption ≤${c.maxCopyChars}ch, hashtags ${c.hashtagSupport}`;
+    })
+    .join("\n");
+
   return [
     {
       stepType: "llm_call",
@@ -176,15 +194,15 @@ registerWorkflow("social_content", (input): WorkflowStepDefinition[] => {
       description: `Creating ${duration} content strategy for ${platforms.join(", ")}`,
       input: {
         promptClass: "social_content_strategy",
-        systemPrompt: "You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.",
+        systemPrompt: `You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.\n\nPlatform briefs from the live capability matrix:\n${platformBriefs}\n\nRespect each platform's daily-post target + aspect-ratio + caption ceiling when planning the calendar.`,
         userPrompt: `Create a ${duration} social media content calendar for "${brand}" across ${platforms.join(", ")}:
 
 For each day, provide:
 1. Platform
-2. Content type (reel, carousel, story, tweet, etc.)
+2. Content type (reel, carousel, story, tweet, etc.) — must match what the platform actually supports per the brief above
 3. Topic/theme
-4. Caption (platform-optimized)
-5. Hashtags (10-15 relevant hashtags)
+4. Caption (platform-optimized — must fit within the platform's caption ceiling)
+5. Hashtags (only when the platform has 'native' or 'recommended' hashtag support — none for platforms where it's 'ignored')
 6. Best posting time
 7. Engagement strategy (CTA, question, poll, etc.)
 
