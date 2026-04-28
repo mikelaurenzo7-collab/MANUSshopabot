@@ -25,6 +25,11 @@ export default function GmailBot() {
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [autoReplySubject, setAutoReplySubject] = useState("");
   const [autoReplyMessage, setAutoReplyMessage] = useState("");
+  // Compose form state — fields were inert before this commit (no
+  // onChange, no value, Send button had no onClick). Wired now.
+  const [composeTo, setComposeTo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeBody, setComposeBody] = useState("");
 
   // Queries
   const inboxQuery = trpc.gmailBot.getInbox.useQuery(
@@ -43,12 +48,33 @@ export default function GmailBot() {
   // Mutations
   const sendEmailMutation = trpc.gmailBot.sendEmail.useMutation({
     onSuccess: () => {
-      toast.success("Email sent successfully");
+      toast.success("Email sent");
+      // Clear form on success so the same email can't be double-sent
+      setComposeTo("");
+      setComposeSubject("");
+      setComposeBody("");
     },
     onError: (err) => {
       toast.error(err.message || "Failed to send email");
     },
   });
+
+  const handleSendCompose = () => {
+    const to = composeTo.trim();
+    const subject = composeSubject.trim();
+    const body = composeBody.trim();
+    if (!to || !subject || !body) {
+      toast.error("Recipient, subject, and body are all required");
+      return;
+    }
+    // Basic email shape check — server sanitizes properly, this is
+    // just to short-circuit obvious typos before a round-trip.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      toast.error("That doesn't look like a valid email address");
+      return;
+    }
+    sendEmailMutation.mutate({ to, subject, body, isHtml: false });
+  };
 
   const updateAutoReplyMutation = trpc.gmailBot.updateAutoReply.useMutation({
     onSuccess: () => {
@@ -93,11 +119,17 @@ export default function GmailBot() {
         <TabsContent value="inbox" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Unread Messages</CardTitle>
-              <CardDescription>Your recent unread emails</CardDescription>
+              <CardTitle>Unread messages</CardTitle>
+              <CardDescription>Your recent unread emails — pulled from the active org's connected Gmail.</CardDescription>
             </CardHeader>
             <CardContent>
-              {inboxQuery.isLoading && <div className="text-center py-8 text-gray-400">Loading inbox...</div>}
+              {inboxQuery.isLoading && (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 rounded-lg bg-white/[0.03] animate-pulse" />
+                  ))}
+                </div>
+              )}
               {inboxQuery.error && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded p-4 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
@@ -107,19 +139,31 @@ export default function GmailBot() {
                   </div>
                 </div>
               )}
-              {inboxQuery.data?.messages && inboxQuery.data.messages.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No unread messages</div>
+              {!inboxQuery.isLoading && !inboxQuery.error &&
+                inboxQuery.data?.messages && inboxQuery.data.messages.length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <CheckCircle className="h-5 w-5 text-emerald-400/70" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">Inbox zero</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
+                    No unread messages right now. New emails will appear here as they arrive.
+                  </p>
+                </div>
               )}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {inboxQuery.data?.messages?.map((msg) => (
-                  <div key={msg.id} className="border border-gray-700 rounded p-4 hover:bg-gray-900/50 transition">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-white">{msg.subject}</p>
-                        <p className="text-sm text-gray-400 mt-1">From: {msg.from}</p>
-                        <p className="text-sm text-gray-500 mt-2 line-clamp-2">{msg.body}</p>
+                  <div
+                    key={msg.id}
+                    className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3.5 hover:border-cyan-400/25 hover:bg-white/[0.035] transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">{msg.subject}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">From: {msg.from}</p>
+                        <p className="text-xs text-white/55 mt-1.5 line-clamp-2 leading-relaxed">{msg.body}</p>
                       </div>
-                      <Badge variant="outline" className="ml-2 flex-shrink-0">
+                      <Badge variant="outline" className="ml-2 shrink-0 text-[10px] border-white/10 text-white/55">
                         {msg.date}
                       </Badge>
                     </div>
@@ -142,31 +186,46 @@ export default function GmailBot() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">To</label>
+                <label className="block text-sm font-medium mb-2 text-foreground">To</label>
                 <Input
                   type="email"
                   placeholder="recipient@example.com"
-                  className="bg-gray-900 border-gray-700"
+                  value={composeTo}
+                  onChange={(e) => setComposeTo(e.target.value)}
+                  className="bg-input/50 border-white/[0.08]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Subject</label>
+                <label className="block text-sm font-medium mb-2 text-foreground">Subject</label>
                 <Input
                   placeholder="Email subject"
-                  className="bg-gray-900 border-gray-700"
+                  value={composeSubject}
+                  onChange={(e) => setComposeSubject(e.target.value)}
+                  className="bg-input/50 border-white/[0.08]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Message</label>
+                <label className="block text-sm font-medium mb-2 text-foreground">Message</label>
                 <Textarea
-                  placeholder="Write your message here..."
+                  placeholder="Write your message here…"
                   rows={8}
-                  className="bg-gray-900 border-gray-700"
+                  value={composeBody}
+                  onChange={(e) => setComposeBody(e.target.value)}
+                  className="bg-input/50 border-white/[0.08]"
                 />
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button
+                className="w-full"
+                onClick={handleSendCompose}
+                disabled={
+                  sendEmailMutation.isPending ||
+                  !composeTo.trim() ||
+                  !composeSubject.trim() ||
+                  !composeBody.trim()
+                }
+              >
                 <Send className="w-4 h-4 mr-2" />
-                Send Email
+                {sendEmailMutation.isPending ? "Sending…" : "Send Email"}
               </Button>
             </CardContent>
           </Card>
@@ -183,7 +242,7 @@ export default function GmailBot() {
               <CardDescription>Configure automatic responses when you're away</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-900 rounded border border-gray-700">
+              <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg border border-white/[0.06]">
                 <div>
                   <p className="font-semibold">Enable Auto-Reply</p>
                   <p className="text-sm text-gray-400">Automatically respond to incoming emails</p>
@@ -210,7 +269,7 @@ export default function GmailBot() {
                       value={autoReplySubject}
                       onChange={(e) => setAutoReplySubject(e.target.value)}
                       placeholder="Auto-reply subject"
-                      className="bg-gray-900 border-gray-700"
+                      className="bg-input/50 border-white/[0.08]"
                     />
                   </div>
                   <div>
@@ -220,7 +279,7 @@ export default function GmailBot() {
                       onChange={(e) => setAutoReplyMessage(e.target.value)}
                       placeholder="Auto-reply message"
                       rows={6}
-                      className="bg-gray-900 border-gray-700"
+                      className="bg-input/50 border-white/[0.08]"
                     />
                   </div>
                   <Button
@@ -263,7 +322,7 @@ export default function GmailBot() {
               )}
               <div className="grid grid-cols-1 gap-4">
                 {templatesQuery.data?.map((template) => (
-                  <div key={template.id} className="border border-gray-700 rounded p-4 hover:bg-gray-900/50 transition">
+                  <div key={template.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4 hover:border-cyan-400/25 hover:bg-white/[0.035] transition-all">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="font-semibold text-white">{template.name}</p>
