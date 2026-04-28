@@ -879,3 +879,17 @@
 - [x] Add Amazon webhook handler (POST /api/webhooks/amazon) with SNS event logging
 - [x] Add eBay webhook handler (POST /api/webhooks/ebay) with event logging
 - [x] Update platformWebhooks.ts to handle all 4 platforms (Etsy, TikTok Shop, Amazon, eBay)
+
+## Database & Integration Fix Sprint (COMPLETE ✅)
+- [x] Create org_members table (was missing — migration 0020 not fully applied)
+- [x] Create org_invitations table (from migration 0021)
+- [x] Seed organization for user 1 (Michael Laurenzo) as owner
+- [x] Set users.currentOrgId = 1 for user 1
+- [x] Add stores.orgId column + backfill from personal org (migration 0020)
+- [x] Add platform_credentials.orgId + backfill (migration 0023)
+- [x] Add social_accounts.orgId + backfill (migration 0023)
+- [x] Add bot_config.orgId + backfill (migration 0023)
+- [x] Add agent_workflows.orgId + backfill (migration 0023)
+- [x] Add approval_queue.orgId + backfill (migration 0023)
+- [x] Verify stores are linked to org 1 (3 stores confirmed)
+- [x] TypeScript: 0 errors confirmed post-migration
