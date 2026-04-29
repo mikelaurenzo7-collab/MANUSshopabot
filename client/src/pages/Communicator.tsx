@@ -89,29 +89,30 @@ export default function CommunicatorPage() {
   return (
     <div className="flex h-full w-full relative bg-[#050505] text-white flex-col min-h-0">
       {/* Ambient background */}
-      <div className="bot-page-ambient bot-page-ambient--social" aria-hidden="true">
+      <div className="bot-page-ambient bot-page-ambient--communicator" aria-hidden="true">
         <div className="bot-page-ambient-grid" />
         <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />
         <div className="bot-page-ambient-orb bot-page-ambient-orb--bottom" />
       </div>
 
       {/* Header */}
-      <div className="relative z-10 border-b border-white/[0.08] bg-gradient-to-b from-white/[0.02] to-transparent px-6 py-4">
+      <div className="bot-page-header bot-page-header--communicator">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-rose-400" />
+            <div className="bot-page-header-glyph bot-page-header-glyph--communicator">
+              <Mail className="w-5 h-5" strokeWidth={2.2} />
+              <span className="bot-page-header-glyph-pulse" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Communicator</h1>
-              <p className="text-xs text-white/40">Gmail + Outlook email management</p>
+              <div className="bot-page-header-eyebrow">
+                <span className="bot-page-header-eyebrow-dot" />
+                COMMUNICATOR
+              </div>
+              <h1 className="font-heading text-base md:text-lg font-black tracking-tight text-white truncate leading-tight">
+                Email Management
+              </h1>
             </div>
           </div>
-          <PulseStream
-            status={communicatorStatus.status === 'running' ? 'running' : 'ready'}
-            color="#f87171"
-            label="Communicator pulse"
-          />
           <span className={`bot-page-header-status ${communicatorStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
             <span className="bot-page-header-status-dot" />
             {communicatorStatus.status === 'running' ? 'Running' : 'Ready'}

@@ -4237,6 +4237,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .bot-page-header--merchant::after { background: linear-gradient(90deg, rgba(6, 182, 212, 0.7), rgba(6, 182, 212, 0.1) 60%, transparent); }
   .bot-page-header--social::before { background: radial-gradient(circle, rgba(249, 115, 22, 0.32), transparent 65%); }
   .bot-page-header--social::after { background: linear-gradient(90deg, rgba(249, 115, 22, 0.7), rgba(249, 115, 22, 0.1) 60%, transparent); }
+  .bot-page-header--communicator::before { background: radial-gradient(circle, rgba(244, 63, 94, 0.32), transparent 65%); }
+  .bot-page-header--communicator::after { background: linear-gradient(90deg, rgba(244, 63, 94, 0.7), rgba(244, 63, 94, 0.1) 60%, transparent); }
 
   /* Animated glyph plate — squircle backdrop + animated pulse halo */
   .bot-page-header-glyph {
@@ -4272,6 +4274,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
     color: rgb(251, 146, 60);
     box-shadow: 0 8px 22px -10px rgba(249, 115, 22, 0.6), inset 0 0 0 1px rgba(251, 146, 60, 0.25);
+  }
+  .bot-page-header-glyph--communicator {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.22), rgba(244, 63, 94, 0.05));
+    color: rgb(251, 113, 133);
+    box-shadow: 0 8px 22px -10px rgba(244, 63, 94, 0.6), inset 0 0 0 1px rgba(251, 113, 133, 0.25);
   }
   .bot-page-header-glyph-pulse {
     position: absolute;
@@ -4381,6 +4388,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .bot-page-ambient--merchant .bot-page-ambient-orb--bottom { background: rgba(34, 211, 238, 0.4); }
   .bot-page-ambient--social .bot-page-ambient-orb--top { background: rgba(249, 115, 22, 0.5); }
   .bot-page-ambient--social .bot-page-ambient-orb--bottom { background: rgba(251, 146, 60, 0.35); }
+  .bot-page-ambient--communicator .bot-page-ambient-orb--top { background: rgba(244, 63, 94, 0.5); }
+  .bot-page-ambient--communicator .bot-page-ambient-orb--bottom { background: rgba(251, 113, 133, 0.35); }
 
   /* Connected badge — the subtle pulse on the corner */
   .platform-connected-dot {
