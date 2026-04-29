@@ -933,6 +933,21 @@ registerWorkflow("brand_identity_kit", (input): WorkflowStepDefinition[] => {
           {
             stepType: "llm_call",
             input: {
+              // Cookbook recipe — multi-draft + judge. Brand naming is
+              // the canonical "pick the best direction" decision, not
+              // a "fix this draft" iteration. Four personas (clever
+              // coiner / practical descriptor / aspirational mood /
+              // category disruptor) draft in parallel; a judge pass
+              // picks the strongest against memorability + spell-ability
+              // + niche-fit + defensibility. See
+              // server/_core/claudeMultiDraft.ts.
+              multiDraftPersonas: [
+                { label: "clever_coiner", framing: "Approach this as a brand-naming wordsmith who coins original, distinctive names — invented words, smart portmanteaus, repurposed nouns. Avoid generic suffixes (Co, Studio, Lab) and the .com-fill-in-the-blank trap." },
+                { label: "practical_descriptor", framing: "Approach this as a pragmatic merchant who picks names that say exactly what the brand does. Plain English, easy to spell, immediately memorable. SEO-friendly." },
+                { label: "aspirational_mood", framing: "Approach this as a brand strategist who picks names that evoke a feeling — what the customer wants to BE when they buy this product. Names that work as a tattoo. Short, evocative." },
+                { label: "category_disruptor", framing: "Approach this as a category-defining founder who picks names that explicitly reject the niche's defaults. The name signals a different point of view." },
+              ],
+              judgeCriteria: `Pick the strongest name+tagline shortlist for an e-commerce store in "${niche}", target ${target}. Score on: memorability (would a customer recall this 24h later?), spell-ability (could they type it without seeing it?), niche-fit (does it signal the category without locking the brand to it?), .com-likeness (heuristically: 6-12 chars, no awkward digit substitutions), defensibility (uncrowded against competitors). Reject any draft whose nameCandidates default to "Co"/"Studio"/"Lab" suffixes or whose taglines could front 5 different niches.`,
               systemPrompt: `You are a naming + tagline copywriter. Generate brand candidates that are memorable, easy to spell, .com-likely, and defensible. Avoid generic "Co.", "& Co.", "Studio" suffixes unless they're truly the right fit.`,
               userPrompt: `Generate a brand-name + tagline shortlist for an e-commerce store in "${niche}", target: ${target}. Return JSON with:\n- nameCandidates (5 options, each with rationale + .com availability heuristic guess)\n- taglines (5 options, max 7 words each, each with a different angle: emotional, practical, mission-led, witty, bold)\n- recommendedPair (one name + one tagline that go together best, with a 2-sentence why)`,
               responseFormat: {

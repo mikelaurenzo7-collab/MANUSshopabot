@@ -61,6 +61,15 @@ Provide specific restock quantities for low-stock items and clearance recommenda
         cacheSystemPrompt: true,
         effort: "high",
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Restock plans go
+        // straight into the operator's PO queue; first drafts often
+        // recommend round-number reorders that ignore sales velocity
+        // and skip per-SKU urgency. The merchant_quality rubric in
+        // claudeReflect.ts enforces the merchant-facing quality bar:
+        // every claim specific, every action shippable today, every
+        // currency in cents.
+        reflectAndRevise: true,
+        reflectionFocus: "merchant_quality",
         systemPrompt: composeSystemPrompt(
           caps
             ? `You are an inventory management expert. Optimize stock levels to minimize carrying costs while preventing stockouts. Platform context: ${caps.strengths.slice(0, 2).join("; ")}.`

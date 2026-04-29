@@ -2937,6 +2937,42 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border-radius: 4px;
     padding: 0 0.35rem;
   }
+  /*
+   * Cookbook-pattern audit pills. Surface when the workflow engine
+   * has run a step through one of the Anthropic Cookbook recipes —
+   * Reflect = reflect-and-revise three-pass refinement; N-draft =
+   * multi-draft + judge parallel sampling. Styled subtle so they
+   * don't compete with the step title for attention; tooltip carries
+   * the operator-facing detail (issues fixed, persona chosen).
+   */
+  .live-workflow-runner-cookbook {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .live-workflow-runner-cookbook-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+    line-height: 1.5;
+    cursor: help;
+  }
+  .live-workflow-runner-cookbook-pill.is-reflect {
+    color: rgb(125, 211, 252);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+  }
+  .live-workflow-runner-cookbook-pill.is-multi {
+    color: rgb(196, 181, 253);
+    background: rgba(167, 139, 250, 0.1);
+    border: 1px solid rgba(167, 139, 250, 0.28);
+  }
   .live-workflow-runner-step-desc {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.55);

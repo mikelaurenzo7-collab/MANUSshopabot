@@ -30,6 +30,8 @@ import {
   Megaphone,
   AlertTriangle,
   ArrowUpRight,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 
 type StepType =
@@ -197,6 +199,7 @@ export function LiveWorkflowRunner({ workflowId }: { workflowId: number }) {
                   {s.requiresApproval && (
                     <span className="live-workflow-runner-step-gate">approval-gated</span>
                   )}
+                  <CookbookBadges output={s.output} />
                 </div>
                 {s.description && (
                   <p className="live-workflow-runner-step-desc">{s.description}</p>
@@ -228,6 +231,57 @@ function RunnerStatusPill({ status }: { status: RunnerStatus }) {
     <span className={`live-workflow-runner-pill ${v.className}`}>
       <span className="live-workflow-runner-pill-dot" />
       {v.label}
+    </span>
+  );
+}
+
+/**
+ * Cookbook-pattern badges. The workflow engine attaches __reflect /
+ * __multiDraft audit fields to step outputs when the step opted into
+ * those Anthropic Cookbook recipes. We surface them as small pills so
+ * operators can see the quality lift on the step rail without opening
+ * the full result panel.
+ *
+ * Only renders when the underlying flag is true — when the path fell
+ * back to single-shot (ANTHROPIC_API_KEY unset), the badges stay quiet
+ * so the rail doesn't lie about what the bot actually did.
+ */
+function CookbookBadges({ output }: { output: any }) {
+  if (!output || typeof output !== "object") return null;
+  const reflect = output.__reflect as { reflectedAndRevised?: boolean; critique?: any[] } | undefined;
+  const multi = output.__multiDraft as { multiDrafted?: boolean; chosenPersona?: string; personaCount?: number } | undefined;
+  const reflected = reflect?.reflectedAndRevised === true;
+  const multiDrafted = multi?.multiDrafted === true;
+  if (!reflected && !multiDrafted) return null;
+  const issueCount = Array.isArray(reflect?.critique) ? reflect!.critique.length : 0;
+  return (
+    <span className="live-workflow-runner-cookbook">
+      {reflected && (
+        <span
+          className="live-workflow-runner-cookbook-pill is-reflect"
+          title={
+            issueCount > 0
+              ? `Reflected & revised — ${issueCount} issue${issueCount === 1 ? "" : "s"} addressed in the second pass`
+              : `Reflected & revised — first draft cleared the rubric`
+          }
+        >
+          <Sparkles className="w-2.5 h-2.5" strokeWidth={2.4} aria-hidden="true" />
+          <span>Reflected</span>
+        </span>
+      )}
+      {multiDrafted && (
+        <span
+          className="live-workflow-runner-cookbook-pill is-multi"
+          title={
+            multi?.chosenPersona
+              ? `Multi-drafted across ${multi?.personaCount ?? "N"} personas — judge picked “${multi.chosenPersona}”`
+              : "Multi-drafted across personas"
+          }
+        >
+          <Layers className="w-2.5 h-2.5" strokeWidth={2.4} aria-hidden="true" />
+          <span>{multi?.personaCount ?? ""}-draft</span>
+        </span>
+      )}
     </span>
   );
 }

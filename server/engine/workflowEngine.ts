@@ -23,6 +23,7 @@ import {
 import { invokeLLM } from "../_core/llm";
 import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDirect";
 import { reflectAndRevise, type ReflectionFocus } from "../_core/claudeReflect";
+import { multiDraftAndJudge, type DraftPersona } from "../_core/claudeMultiDraft";
 import { runMemoryAgent, isMemoryAgentAvailable } from "./memoryAgent";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -722,6 +723,57 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       );
       // Fall through to the standard path so a flaky agentic call
       // doesn't hard-fail the workflow.
+    }
+  }
+
+  // ── Multi-draft + judge opt-in (Anthropic Cookbook recipe) ──────
+  // Generate N drafts in parallel from divergent personas, then run
+  // a judge pass that picks the best against named criteria. Used
+  // for outputs where the right answer isn't iterative refinement
+  // but choosing among meaningfully different directions (brand
+  // names, ad-hook angles, niche pivot strategies). Caller passes
+  // `multiDraftPersonas: DraftPersona[]` + `judgeCriteria: string`.
+  // Falls back to single-shot when ANTHROPIC_API_KEY is unset.
+  if (
+    Array.isArray(input.multiDraftPersonas) &&
+    input.multiDraftPersonas.length >= 2 &&
+    typeof input.judgeCriteria === "string" &&
+    input.judgeCriteria.length > 0
+  ) {
+    try {
+      const multi = await multiDraftAndJudge({
+        systemPrompt,
+        userPrompt: userPrompt + contextStr,
+        personas: input.multiDraftPersonas as DraftPersona[],
+        judgeCriteria: input.judgeCriteria,
+        ...(input.responseFormat ? { responseFormat: input.responseFormat } : {}),
+        ...(input.maxTokens ? { maxTokensPerDraft: input.maxTokens } : {}),
+        ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
+      });
+      if (input.responseFormat && multi.json && typeof multi.json === "object") {
+        return {
+          ...multi.json as Record<string, unknown>,
+          __multiDraft: {
+            chosenPersona: multi.chosenPersona,
+            judgeReasoning: multi.judgeReasoning,
+            multiDrafted: multi.multiDrafted,
+            personaCount: multi.allDrafts.length,
+          },
+        };
+      }
+      return {
+        text: multi.text,
+        __multiDraft: {
+          chosenPersona: multi.chosenPersona,
+          judgeReasoning: multi.judgeReasoning,
+          multiDrafted: multi.multiDrafted,
+          personaCount: multi.allDrafts.length,
+        },
+      };
+    } catch (err: any) {
+      console.error(
+        `[WorkflowEngine.LLMStep] multiDraftAndJudge failed, falling back: ${err?.message ?? err}`,
+      );
     }
   }
 

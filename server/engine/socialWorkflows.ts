@@ -219,6 +219,14 @@ registerWorkflow("social_content", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high" as const,
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Content calendars are
+        // the highest-volume bot output; first drafts default to
+        // identical "daily on every platform" cadences and copy-pasted
+        // captions across surfaces. The "content_calendar" rubric in
+        // claudeReflect.ts force-rejects platform-flat cadences and
+        // copy-pasted captions before they ship to the operator.
+        reflectAndRevise: true,
+        reflectionFocus: "content_calendar",
         systemPrompt: composeSystemPrompt(
           `You are a social media strategist who has grown brands from 0 to 1M+ followers. You understand virality, engagement, and platform-specific best practices.\n\nPlatform briefs from the live capability matrix:\n${platformBriefs}\n\nRespect each platform's daily-post target + aspect-ratio + caption ceiling when planning the calendar.`,
         ),
@@ -402,6 +410,14 @@ registerWorkflow("email_flow", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high" as const,
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Email flows live or
+        // die on the subject line + first sentence of body copy. The
+        // ad_creative rubric in claudeReflect.ts forces a critique
+        // pass that checks each email for a real hook in line 1, a
+        // clear single CTA, and personalization that goes beyond
+        // {first_name}.
+        reflectAndRevise: true,
+        reflectionFocus: "ad_creative",
         systemPrompt: composeSystemPrompt(
           `You are an email marketing expert specializing in e-commerce. You write emails that drive revenue with 40%+ open rates and 5%+ click rates.${channelBrief}`,
         ),

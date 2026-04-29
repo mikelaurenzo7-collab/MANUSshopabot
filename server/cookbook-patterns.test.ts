@@ -135,4 +135,110 @@ describe("Cookbook patterns — workflow opt-ins", () => {
     expect(upToNext).toContain("reflectAndRevise: true");
     expect(upToNext).toContain('reflectionFocus: "pricing_decision"');
   });
+
+  it("social_content opts in to the content_calendar rubric", () => {
+    const src = read("engine/socialWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("social_content"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("seo_audit"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "content_calendar"');
+  });
+
+  it("inventory_audit opts in to the merchant_quality rubric", () => {
+    const src = read("engine/merchantWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("inventory_audit"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("pricing_optimization"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "merchant_quality"');
+  });
+
+  it("email_flow opts in to the ad_creative rubric", () => {
+    const src = read("engine/socialWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("email_flow"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("product_creative"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "ad_creative"');
+  });
+});
+
+describe("Cookbook recipe — multi-draft + judge", () => {
+  it("claudeMultiDraft.ts exports the expected helper surface", async () => {
+    const mod = await import("./_core/claudeMultiDraft");
+    expect(typeof mod.multiDraftAndJudge).toBe("function");
+    expect(typeof mod.isMultiDraftAvailable).toBe("function");
+    expect(mod.isMultiDraftAvailable()).toBe(false);
+    // The pre-built brand-naming persona set ships with the helper —
+    // four divergent angles so the judge gets a real choice.
+    expect(Array.isArray(mod.BRAND_NAMING_PERSONAS)).toBe(true);
+    expect(mod.BRAND_NAMING_PERSONAS.length).toBeGreaterThanOrEqual(3);
+    for (const p of mod.BRAND_NAMING_PERSONAS) {
+      expect(typeof p.label).toBe("string");
+      expect(typeof p.framing).toBe("string");
+      expect(p.framing.length).toBeGreaterThan(50);
+    }
+  });
+
+  it("rejects multi-draft requests with fewer than 2 personas", async () => {
+    const { multiDraftAndJudge } = await import("./_core/claudeMultiDraft");
+    await expect(
+      multiDraftAndJudge({
+        systemPrompt: "x",
+        userPrompt: "x",
+        personas: [{ label: "only", framing: "x" }],
+        judgeCriteria: "x",
+      }),
+    ).rejects.toThrow(/at least 2 personas/);
+  });
+
+  it("falls back to single-shot when ANTHROPIC_API_KEY is unset", () => {
+    const src = read("_core/claudeMultiDraft.ts");
+    expect(src).toContain("if (!isClaudeDirectAvailable())");
+    expect(src).toContain("multiDrafted: false");
+    // Must use Promise.all for parallel drafting — sequential drafting
+    // would defeat the latency advantage that's half the point.
+    expect(src).toContain("Promise.all(draftPromises)");
+  });
+
+  it("workflow engine wires multi-draft ahead of the standard path", () => {
+    const src = read("engine/workflowEngine.ts");
+    expect(src).toContain("import { multiDraftAndJudge");
+    expect(src).toContain("input.multiDraftPersonas");
+    expect(src).toContain("input.judgeCriteria");
+    expect(src).toContain("__multiDraft");
+  });
+
+  it("brand-naming substep in brand_identity_kit opts into multi-draft", () => {
+    const src = read("engine/architectWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("brand_identity_kit"'));
+    expect(block).toContain("multiDraftPersonas:");
+    expect(block).toContain("judgeCriteria:");
+    // The four canonical brand-naming angles must all be present.
+    expect(block).toContain('"clever_coiner"');
+    expect(block).toContain('"practical_descriptor"');
+    expect(block).toContain('"aspirational_mood"');
+    expect(block).toContain('"category_disruptor"');
+  });
+});
+
+describe("Cookbook badges — operator-facing surface", () => {
+  it("LiveWorkflowRunner renders CookbookBadges from step.output.__reflect / __multiDraft", () => {
+    const src = read("../client/src/components/LiveWorkflowRunner.tsx");
+    expect(src).toContain("CookbookBadges");
+    // Badges only render when the underlying flag actually fired —
+    // we don't want the UI to lie about what the bot did when the
+    // path fell back to single-shot.
+    expect(src).toMatch(/reflectedAndRevised === true/);
+    expect(src).toMatch(/multiDrafted === true/);
+    // Tooltip must surface the cookbook detail so operators
+    // understand what changed without opening the full panel.
+    expect(src).toContain("Reflected & revised");
+    expect(src).toContain("Multi-drafted");
+  });
+
+  it("index.css carries the cookbook-pill styles", () => {
+    const src = read("../client/src/index.css");
+    expect(src).toContain("live-workflow-runner-cookbook-pill");
+    expect(src).toContain(".is-reflect");
+    expect(src).toContain(".is-multi");
+  });
 });
