@@ -186,6 +186,14 @@ export async function launchWorkflow(
 }
 
 /**
+ * Resume a stuck workflow from its current step.
+ * Exported for use by the /api/workflows/resume-stuck endpoint.
+ */
+export function launchWorkflowResume(workflowId: number, userId: number, stepDefinitions: WorkflowStepDefinition[]): Promise<void> {
+  return executeWorkflow(workflowId, userId, stepDefinitions);
+}
+
+/**
  * Execute a workflow step by step.
  */
 async function executeWorkflow(workflowId: number, userId: number, stepDefinitions: WorkflowStepDefinition[]) {
