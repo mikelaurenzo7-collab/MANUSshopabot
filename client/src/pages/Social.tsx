@@ -358,7 +358,10 @@ function SocialContent({
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="text-sm font-medium text-foreground">{c.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <span className="text-sm leading-none">{getBrand(c.platform).icon}</span>
+                            {getBrand(c.platform).name} · {new Date(c.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy ad copy" onClick={() => c.adCopy && copyToClipboard(typeof c.adCopy === "string" ? c.adCopy : JSON.stringify(c.adCopy))}>
                           <Copy className="h-3.5 w-3.5" />
@@ -536,7 +539,10 @@ function SocialContent({
                   <Card key={p.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="text-[10px] capitalize">{p.platform}</Badge>
+                        <Badge variant="outline" className="text-[10px] inline-flex items-center gap-1">
+                          <span className="text-xs leading-none">{getBrand(p.platform).icon}</span>
+                          {getBrand(p.platform).name}
+                        </Badge>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy post content" onClick={() => copyToClipboard(p.content || "")}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>

@@ -95,7 +95,12 @@ export default function IntegrationsPage() {
   useEffect(() => {
     const params = new URLSearchParams(searchString);
     if (params.get("connected") && params.get("account")) {
-      toast.success(`${(params.get("name") || params.get("account"))?.toUpperCase()} connected successfully`);
+      const platformId = (params.get("account") || "").toLowerCase();
+      const brand = getBrand(platformId);
+      const customName = params.get("name");
+      toast.success(`${brand.icon} ${customName || brand.name} connected`, {
+        description: brand.tagline,
+      });
       history.replaceState(null, "", window.location.pathname);
       refetchCreds();
       refetchSocial();
@@ -167,10 +172,13 @@ export default function IntegrationsPage() {
     }
   };
 
-  /* ─── API-key connect (WooCommerce, Walmart) ─── */
+  /* ─── API-key connect (WooCommerce, Walmart, Faire, Bonanza) ─── */
   const connectApiKey = trpc.connectors.connectWithApiKey.useMutation({
     onSuccess: () => {
-      toast.success(`${apiKeyPlatform?.toUpperCase()} connected successfully`);
+      const brand = apiKeyPlatform ? getBrand(apiKeyPlatform) : null;
+      toast.success(brand ? `${brand.icon} ${brand.name} connected` : "Connected", {
+        description: brand?.tagline,
+      });
       setApiKeyDialogOpen(false);
       setApiKeyPlatform(null);
       setApiKeyValues({});
@@ -495,8 +503,8 @@ export default function IntegrationsPage() {
                     <div className="platform-tile-icon-halo text-2xl" style={tileVars(accBrand)}>{accBrand.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">{acc.accountName || acc.platform}</span>
-                        <Badge className="text-[10px] border border-white/10 text-slate-400">{acc.platform}</Badge>
+                        <span className="text-sm font-semibold text-white">{acc.accountName || accBrand.name}</span>
+                        <Badge className="text-[10px] border border-white/10 text-slate-300">{accBrand.name}</Badge>
                       </div>
                       <div className="text-xs text-slate-400 mt-0.5">
                         {acc.followersCount ? `${acc.followersCount.toLocaleString()} followers` : ""}

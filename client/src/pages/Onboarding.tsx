@@ -10,6 +10,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { getBrand } from "@/lib/platformBrand";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -434,7 +435,11 @@ function ConnectStoreStep({
       // Item 15 — keep the toast for at-a-glance feedback, but also
       // show a persistent inline card on the step until the user moves
       // on. The toast disappears; the card doesn't.
-      toast.success("Store connected successfully!");
+      const platformParam = (params.get("platform") || params.get("account") || "").toLowerCase();
+      const brand = platformParam ? getBrand(platformParam) : null;
+      toast.success(brand ? `${brand.icon} ${brand.name} store connected` : "Store connected successfully!", {
+        description: brand?.tagline,
+      });
       setOauthJustConnected(true);
       refetchStores();
       // Clean URL
@@ -814,7 +819,11 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("social_connected")) {
-      toast.success(`${params.get("social_connected")} connected successfully!`);
+      const platformId = (params.get("social_connected") || "").toLowerCase();
+      const brand = getBrand(platformId);
+      toast.success(`${brand.icon} ${brand.name} connected`, {
+        description: brand.tagline,
+      });
       refetchSocial();
       window.history.replaceState({}, "", "/onboarding");
     }
