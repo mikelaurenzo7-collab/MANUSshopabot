@@ -25,6 +25,7 @@ import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDire
 import { reflectAndRevise, type ReflectionFocus } from "../_core/claudeReflect";
 import { multiDraftAndJudge, type DraftPersona } from "../_core/claudeMultiDraft";
 import { runAgentLoop, isAgentLoopAvailable } from "../_core/claudeAgentLoop";
+import { recordCookbookEvent } from "../_core/cookbookStats";
 import { getAgentToolset } from "./agentToolsets";
 import { runMemoryAgent, isMemoryAgentAvailable } from "./memoryAgent";
 import { generateImage } from "../_core/imageGeneration";
@@ -758,6 +759,14 @@ async function executeLLMStep(context: StepContext): Promise<any> {
           ...(input.effort ? { effort: input.effort as any } : {}),
           ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
         });
+        // Cookbook telemetry — record the activation so operators
+        // can answer "is the agent loop actually running and doing
+        // work?" without hand-counting workflow rows.
+        recordCookbookEvent({
+          recipe: "agent_loop",
+          success: true,
+          signal: agent.toolCallCount,
+        });
         return {
           text: agent.text,
           __agentLoop: {
@@ -773,6 +782,7 @@ async function executeLLMStep(context: StepContext): Promise<any> {
           },
         };
       } catch (err: any) {
+        recordCookbookEvent({ recipe: "agent_loop", success: false });
         console.error(
           `[WorkflowEngine.LLMStep] agent loop failed, falling back to single-shot: ${err?.message ?? err}`,
         );
@@ -804,6 +814,15 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         ...(input.maxTokens ? { maxTokensPerDraft: input.maxTokens } : {}),
         ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
       });
+      // Cookbook telemetry — signal is 1 when the judge picked a
+      // non-default (non-first) persona, 0 otherwise. Tells operators
+      // whether the divergent thinking is paying off.
+      const firstPersona = (input.multiDraftPersonas as DraftPersona[])[0]?.label;
+      recordCookbookEvent({
+        recipe: "multi_draft",
+        success: multi.multiDrafted,
+        signal: multi.chosenPersona !== firstPersona ? 1 : 0,
+      });
       if (input.responseFormat && multi.json && typeof multi.json === "object") {
         return {
           ...multi.json as Record<string, unknown>,
@@ -825,6 +844,7 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         },
       };
     } catch (err: any) {
+      recordCookbookEvent({ recipe: "multi_draft", success: false });
       console.error(
         `[WorkflowEngine.LLMStep] multiDraftAndJudge failed, falling back: ${err?.message ?? err}`,
       );
@@ -851,6 +871,15 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
         ...(input.effort ? { effort: input.effort as any } : {}),
       });
+      // Cookbook telemetry — signal is the count of issues addressed
+      // in the revise pass. signalSum / successes ≈ avg issues per
+      // run, the headline number for "is the critique catching real
+      // problems or just running for show?"
+      recordCookbookEvent({
+        recipe: "reflect",
+        success: reflected.reflectedAndRevised,
+        signal: Array.isArray(reflected.critique) ? reflected.critique.length : 0,
+      });
       // When the caller asked for JSON, hand back the parsed object so
       // downstream steps see the same shape they would from a single-
       // shot llm_call. Stash the critique on a non-conflicting key so
@@ -872,6 +901,7 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         },
       };
     } catch (err: any) {
+      recordCookbookEvent({ recipe: "reflect", success: false });
       console.error(
         `[WorkflowEngine.LLMStep] reflectAndRevise failed, falling back to single-shot: ${err?.message ?? err}`,
       );

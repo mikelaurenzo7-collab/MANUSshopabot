@@ -32,7 +32,7 @@ const TOOLS = [
         properties: {
           workflowType: {
             type: "string",
-            description: "The workflow type to launch. Use exact names: niche_research, product_sourcing, catalog_generation, store_setup, complete_store_buildout, brand_identity_kit, brand_audit, product_optimization, competitor_pricing_scan, multi_store_expansion, inventory_audit, pricing_optimization, fulfillment_automation, competitor_analysis, supply_chain_intelligence, profit_loss_analysis, customer_segmentation, margin_guard_audit, velocity_restock_predictor, store_optimization_sweep, ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content, viral_trend_detector",
+            description: "The workflow type to launch. Use exact names: niche_research, product_sourcing, catalog_generation, store_setup, complete_store_buildout, brand_identity_kit, brand_audit, product_optimization, competitor_pricing_scan, autonomous_competitor_stalker, multi_store_expansion, inventory_audit, pricing_optimization, fulfillment_automation, competitor_analysis, supply_chain_intelligence, profit_loss_analysis, customer_segmentation, margin_guard_audit, velocity_restock_predictor, store_optimization_sweep, autonomous_repricer, ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content, viral_trend_detector, autonomous_trend_hunter",
             enum: [
               // Architect workflows
               "niche_research",
@@ -44,6 +44,7 @@ const TOOLS = [
               "brand_audit",
               "product_optimization",
               "competitor_pricing_scan",
+              "autonomous_competitor_stalker",
               "multi_store_expansion",
               // Merchant workflows
               "inventory_audit",
@@ -56,6 +57,7 @@ const TOOLS = [
               "margin_guard_audit",
               "velocity_restock_predictor",
               "store_optimization_sweep",
+              "autonomous_repricer",
               // Social workflows
               "ad_campaign",
               "social_content",
@@ -64,6 +66,7 @@ const TOOLS = [
               "product_creative",
               "brand_content",
               "viral_trend_detector",
+              "autonomous_trend_hunter",
             ],
           },
           title: {
@@ -182,6 +185,7 @@ const AGENT_WORKFLOW_SCOPE: Record<string, "specific_store" | "all_stores" | "gl
   brand_audit: "specific_store",
   product_optimization: "specific_store",
   competitor_pricing_scan: "global",
+  autonomous_competitor_stalker: "global",
   multi_store_expansion: "global",
   // Merchant
   inventory_audit: "all_stores",
@@ -194,6 +198,7 @@ const AGENT_WORKFLOW_SCOPE: Record<string, "specific_store" | "all_stores" | "gl
   margin_guard_audit: "all_stores",
   velocity_restock_predictor: "all_stores",
   store_optimization_sweep: "all_stores",
+  autonomous_repricer: "all_stores",
   // Social
   ad_campaign: "global",
   social_content: "global",
@@ -202,6 +207,7 @@ const AGENT_WORKFLOW_SCOPE: Record<string, "specific_store" | "all_stores" | "gl
   product_creative: "global",
   brand_content: "global",
   viral_trend_detector: "global",
+  autonomous_trend_hunter: "global",
 };
 
 const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
@@ -215,6 +221,7 @@ const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
   brand_audit: "architect",
   product_optimization: "architect",
   competitor_pricing_scan: "architect",
+  autonomous_competitor_stalker: "architect",
   multi_store_expansion: "architect",
   // Merchant
   inventory_audit: "merchant",
@@ -227,6 +234,7 @@ const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
   margin_guard_audit: "merchant",
   velocity_restock_predictor: "merchant",
   store_optimization_sweep: "merchant",
+  autonomous_repricer: "merchant",
   // Social
   ad_campaign: "social",
   social_content: "social",
@@ -235,6 +243,7 @@ const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
   product_creative: "social",
   brand_content: "social",
   viral_trend_detector: "social",
+  autonomous_trend_hunter: "social",
 };
 
 // ─── System prompts ─────────────────────────────────────────────────────────

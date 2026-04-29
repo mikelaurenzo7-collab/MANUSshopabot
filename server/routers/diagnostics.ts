@@ -1,5 +1,6 @@
 import { adminProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
+import { getCookbookStats } from "../_core/cookbookStats";
 
 /**
  * Diagnostics router — admin-only endpoint to verify all platform credentials
@@ -63,5 +64,17 @@ export const diagnosticsRouter = router({
       summary: { total: results.length, configured, missing },
       results,
     };
+  }),
+
+  /**
+   * Cookbook recipe activation snapshot. Process-local in-memory
+   * counters that reset on restart — good enough for "is the recipe
+   * actually firing and catching real issues?" but not a substitute
+   * for persistent telemetry. The headline numbers operators care
+   * about: avgIssuesPerSuccess (reflect), nonDefaultPersonaPickRate
+   * (multi-draft), avgToolCallsPerSuccess (agent-loop).
+   */
+  cookbookStats: adminProcedure.query(() => {
+    return getCookbookStats();
   }),
 });

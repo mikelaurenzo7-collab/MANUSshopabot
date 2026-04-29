@@ -401,6 +401,9 @@ export const workflowRouter = router({
         { type: "product_optimization", title: "Product Optimization", description: "Optimize listings — titles, descriptions, pricing psychology, cross-sells, and dead product cleanup", icon: "Sparkles", scope: "specific_store" },
         { type: "competitor_pricing_scan", title: "Competitor Pricing Scan", description: "Cross-platform pricing intelligence — Shopify + Amazon + Etsy + TikTok Shop in one report, with a recommended price band", icon: "DollarSign", scope: "global" },
         { type: "brand_identity_kit", title: "Brand Identity Kit", description: "Complete brand kit — voice + tone profile, color palette, name + tagline shortlist, and a logo concept — generated in one pass", icon: "Palette", scope: "global" },
+        // Cookbook recipe — autonomous tool-use loop. Agent decides
+        // which competitors to inspect and when it has enough data.
+        { type: "autonomous_competitor_stalker", title: "Autonomous Competitor Stalker", description: "Agentic competitor research — agent autonomously searches the field, fetches pricing snapshots, and recommends a positioning. Audit trail shows every competitor it actually inspected.", icon: "Wrench", scope: "global", autonomous: true },
       ],
       merchant: [
         { type: "store_optimization_sweep", title: "Store Optimization Sweep", description: "End-to-end existing-store improvement — sync, inventory health, margin guard, pricing change-set with approval gate, and top-N listing rewrites in one pass", icon: "Sparkles", scope: "specific_store" },
@@ -427,6 +430,9 @@ export const workflowRouter = router({
         { type: "bonanza_syndication_optimizer", title: "Bonanza Syndication Tier Optimizer", description: "Tune Google Shopping syndication tier per listing based on margin × velocity to maximize contribution margin", icon: "Layers", scope: "specific_store" },
         { type: "stockx_ask_repricer", title: "StockX Ask Repricer", description: "Read the live StockX order book per ask and undercut/hold/raise within a margin floor", icon: "TrendingDown", scope: "specific_store" },
         { type: "reverb_offer_responder", title: "Reverb Offer Auto-Responder", description: "Auto-handle open Reverb offers: accept strong, counter mid-range, decline lowballs — within margin guardrails", icon: "MessageSquare", scope: "specific_store" },
+        // Cookbook recipe — autonomous tool-use loop. Walks SKUs one
+        // at a time; >25% moves auto-promote to flag_for_approval.
+        { type: "autonomous_repricer", title: "Autonomous Repricer", description: "Agent walks your SKU list one at a time — snapshot, triangulate, propose. Moves >25% auto-promote to your approval queue per platform policy. Audit trail shows every SKU and decision.", icon: "Wrench", scope: "all_stores", autonomous: true },
       ],
       social: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
@@ -451,6 +457,10 @@ export const workflowRouter = router({
         { type: "outlook_b2b_outreach", title: "Outlook B2B Outreach", description: "Personalized B2B outreach via Outlook — pulls leads from CRM/Sheets, drafts plain-text emails (no template smell), and books follow-up meetings on the same Microsoft Graph token", icon: "Send", scope: "global" },
         { type: "slack_drop_announcement", title: "Slack Drop Announcement", description: "Schedule a product drop blast to a VIP Slack channel — Block Kit cards with image + buy link + reaction tracking for engagement signal", icon: "MessageSquare", scope: "specific_store" },
         { type: "youtube_shorts_publisher", title: "YouTube Shorts Publisher", description: "Generate hook + caption + tags from a product, then upload as a YouTube Short with native scheduled-publish via publishAt", icon: "Video", scope: "specific_store" },
+        // Cookbook recipe — autonomous tool-use loop. Crawls cross-
+        // platform trends and commits creative briefs for the trends
+        // worth hijacking.
+        { type: "autonomous_trend_hunter", title: "Autonomous Trend Hunter", description: "Agent crawls TikTok / Instagram / Twitter for trends in your niche, scores them on niche-fit (0-100), and commits creative briefs for the ones worth hijacking. Plug into the next content_calendar run.", icon: "Wrench", scope: "global", autonomous: true },
       ],
     };
   }),

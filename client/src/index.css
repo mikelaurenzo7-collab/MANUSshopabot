@@ -3107,6 +3107,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     margin: 2px 0 0 0;
     font-size: 11px;
   }
+  /* Reflect empty-state — the critic ran and found nothing; positive
+   * signal to operators rather than a confusing empty list. */
+  .live-workflow-runner-cookbook-empty {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 0;
+    font-style: italic;
+  }
 
   /* Multi-draft personas */
   .live-workflow-runner-cookbook-judge {

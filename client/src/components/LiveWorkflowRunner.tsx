@@ -306,7 +306,11 @@ function stepHasCookbookDetail(output: any): boolean {
   const reflect = output.__reflect;
   const multi = output.__multiDraft;
   const agent = output.__agentLoop;
-  if (reflect && Array.isArray(reflect.critique) && reflect.critique.length > 0) return true;
+  // Reflect renders even on the empty-critique path so operators see
+  // the positive "first draft cleared the rubric" signal — without it
+  // the badge says "Reflected" but the detail panel skips the block,
+  // which reads as "the toggle is broken."
+  if (reflect && reflect.reflectedAndRevised === true) return true;
   if (multi && (multi.judgeReasoning || (Array.isArray(multi?.allDrafts) && multi.allDrafts.length > 0))) return true;
   if (agent && Array.isArray(agent.toolCalls) && agent.toolCalls.length > 0) return true;
   return false;
@@ -417,10 +421,15 @@ function CookbookDetail({ output }: { output: any }) {
   const reflect = output?.__reflect;
   const multi = output?.__multiDraft;
   const agent = output?.__agentLoop;
+  // Reflect renders whenever the recipe actually fired (reflectedAndRevised
+  // === true) so we can surface either the issues addressed or the
+  // positive "first draft cleared the rubric" signal — see
+  // ReflectCritiqueBlock for the empty-state branch.
+  const showReflect = reflect && reflect.reflectedAndRevised === true;
   return (
     <div className="live-workflow-runner-cookbook-detail">
-      {reflect && Array.isArray(reflect.critique) && reflect.critique.length > 0 && (
-        <ReflectCritiqueBlock critique={reflect.critique} />
+      {showReflect && (
+        <ReflectCritiqueBlock critique={Array.isArray(reflect.critique) ? reflect.critique : []} />
       )}
       {multi && (multi.chosenPersona || (Array.isArray(multi.allDrafts) && multi.allDrafts.length > 0)) && (
         <MultiDraftBlock multi={multi} />
@@ -433,6 +442,24 @@ function CookbookDetail({ output }: { output: any }) {
 }
 
 function ReflectCritiqueBlock({ critique }: { critique: any[] }) {
+  // Empty-state — first draft cleared the rubric. The reflect recipe
+  // skips the revise pass when the critic finds no actionable issues,
+  // so we surface that as a positive signal rather than letting the
+  // panel render an empty list.
+  if (critique.length === 0) {
+    return (
+      <section className="live-workflow-runner-cookbook-block is-reflect">
+        <header className="live-workflow-runner-cookbook-block-head">
+          <Sparkles className="w-3 h-3" strokeWidth={2.4} aria-hidden="true" />
+          <span>Reflect critique — first draft cleared the rubric</span>
+        </header>
+        <p className="live-workflow-runner-cookbook-empty">
+          The critique pass ran and found no blocker or major issues — the
+          revise pass was skipped to save tokens.
+        </p>
+      </section>
+    );
+  }
   // Group by severity so blockers float to the top — operators care
   // most about the things the critique pass forced changed.
   const bySeverity: Record<string, any[]> = { blocker: [], major: [], minor: [] };

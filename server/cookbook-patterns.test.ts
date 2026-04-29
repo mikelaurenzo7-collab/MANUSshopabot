@@ -467,6 +467,102 @@ describe("Cookbook recipe — agent-loop engine wiring", () => {
   });
 });
 
+describe("Cookbook telemetry — recipe activation counters", () => {
+  it("cookbookStats module exposes record / get / reset", async () => {
+    const mod = await import("./_core/cookbookStats");
+    expect(typeof mod.recordCookbookEvent).toBe("function");
+    expect(typeof mod.getCookbookStats).toBe("function");
+    expect(typeof mod.resetCookbookStats).toBe("function");
+  });
+
+  it("counts activations + successes + signal sums per recipe", async () => {
+    const { recordCookbookEvent, getCookbookStats, resetCookbookStats } = await import("./_core/cookbookStats");
+    resetCookbookStats();
+    // Two reflect successes addressing 3 + 5 issues, one fallback.
+    recordCookbookEvent({ recipe: "reflect", success: true, signal: 3 });
+    recordCookbookEvent({ recipe: "reflect", success: true, signal: 5 });
+    recordCookbookEvent({ recipe: "reflect", success: false });
+    // One multi_draft success picking a non-default persona.
+    recordCookbookEvent({ recipe: "multi_draft", success: true, signal: 1 });
+    // Two agent_loop successes with 4 + 6 tool calls.
+    recordCookbookEvent({ recipe: "agent_loop", success: true, signal: 4 });
+    recordCookbookEvent({ recipe: "agent_loop", success: true, signal: 6 });
+
+    const snap = getCookbookStats();
+    expect(snap.reflect.activations).toBe(3);
+    expect(snap.reflect.successes).toBe(2);
+    expect(snap.reflect.signalSum).toBe(8);
+    expect(snap.reflect.avgIssuesPerSuccess).toBe(4);
+    expect(snap.multi_draft.activations).toBe(1);
+    expect(snap.multi_draft.nonDefaultPersonaPickRate).toBe(1);
+    expect(snap.agent_loop.activations).toBe(2);
+    expect(snap.agent_loop.signalSum).toBe(10);
+    expect(snap.agent_loop.avgToolCallsPerSuccess).toBe(5);
+    expect(snap.totalActivations).toBe(6);
+    expect(snap.totalSuccesses).toBe(5);
+  });
+
+  it("ignores invalid signal values (negative, NaN, undefined)", async () => {
+    const { recordCookbookEvent, getCookbookStats, resetCookbookStats } = await import("./_core/cookbookStats");
+    resetCookbookStats();
+    recordCookbookEvent({ recipe: "reflect", success: true });
+    recordCookbookEvent({ recipe: "reflect", success: true, signal: -1 });
+    recordCookbookEvent({ recipe: "reflect", success: true, signal: NaN });
+    recordCookbookEvent({ recipe: "reflect", success: true, signal: 5 });
+    expect(getCookbookStats().reflect.signalSum).toBe(5);
+  });
+
+  it("workflow engine wires recordCookbookEvent on all three recipe paths", () => {
+    const src = read("engine/workflowEngine.ts");
+    expect(src).toContain('import { recordCookbookEvent }');
+    expect(src).toMatch(/recipe: "agent_loop"/);
+    expect(src).toMatch(/recipe: "multi_draft"/);
+    expect(src).toMatch(/recipe: "reflect"/);
+    // Failure paths must record a fallback so the activation/success
+    // ratio reflects reality, not just happy-path runs.
+    expect(src.match(/recordCookbookEvent\({ recipe: "[a-z_]+", success: false }\)/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+  });
+
+  it("diagnostics router exposes cookbookStats as an admin query", () => {
+    const src = read("routers/diagnostics.ts");
+    expect(src).toContain("cookbookStats:");
+    expect(src).toContain("getCookbookStats()");
+    // Must be admin-only — recipe stats expose the bot's reasoning
+    // patterns and shouldn't leak to non-admin users.
+    expect(src).toMatch(/cookbookStats: adminProcedure\.query/);
+  });
+});
+
+describe("Cookbook autonomous workflows — surfaced everywhere a launcher exists", () => {
+  it("chat router enum includes all three autonomous workflows", () => {
+    const src = read("routers/chat.ts");
+    expect(src).toContain('"autonomous_competitor_stalker"');
+    expect(src).toContain('"autonomous_repricer"');
+    expect(src).toContain('"autonomous_trend_hunter"');
+  });
+
+  it("chat router scope + agent maps cover the autonomous workflows", () => {
+    const src = read("routers/chat.ts");
+    expect(src).toMatch(/autonomous_competitor_stalker:\s*"global"/);
+    expect(src).toMatch(/autonomous_repricer:\s*"all_stores"/);
+    expect(src).toMatch(/autonomous_trend_hunter:\s*"global"/);
+    expect(src).toMatch(/autonomous_competitor_stalker:\s*"architect"/);
+    expect(src).toMatch(/autonomous_repricer:\s*"merchant"/);
+    expect(src).toMatch(/autonomous_trend_hunter:\s*"social"/);
+  });
+
+  it("availableTypes endpoint includes all three with the autonomous flag", () => {
+    const src = read("routers/workflows.ts");
+    expect(src).toContain('"autonomous_competitor_stalker"');
+    expect(src).toContain('"autonomous_repricer"');
+    expect(src).toContain('"autonomous_trend_hunter"');
+    // The autonomous: true flag lets launcher UIs visually distinguish
+    // agent-loop workflows from static ones — operators see "this one
+    // decides on its own" before launching.
+    expect(src.match(/autonomous: true/g)?.length ?? 0).toBe(3);
+  });
+});
+
 describe("Cookbook detail panel — expandable audit surface", () => {
   it("LiveWorkflowRunner exposes a CookbookDetail block for each recipe payload", () => {
     const src = read("../client/src/components/LiveWorkflowRunner.tsx");
@@ -483,6 +579,18 @@ describe("Cookbook detail panel — expandable audit surface", () => {
     expect(src).toContain("Show details");
     expect(src).toContain("Hide details");
     expect(src).toContain("function stepHasCookbookDetail");
+  });
+
+  it("ReflectCritiqueBlock surfaces a positive empty-state when first draft cleared the rubric", () => {
+    const src = read("../client/src/components/LiveWorkflowRunner.tsx");
+    // The empty-state matters because the badge says "Reflected" even
+    // when the critic found nothing — without this branch, opening the
+    // detail panel would render an empty list and read as a bug.
+    expect(src).toContain("first draft cleared the rubric");
+    expect(src).toContain("revise pass was skipped");
+    // The detail toggle must include reflected-and-revised regardless
+    // of critique length so the empty-state can render at all.
+    expect(src).toMatch(/reflectedAndRevised === true/);
   });
 
   it("ReflectCritiqueBlock groups by severity so blockers float up", () => {

@@ -23,6 +23,7 @@ const ARCHITECT_WORKFLOWS = [
   "brand_audit",
   "product_optimization",
   "competitor_pricing_scan",
+  "autonomous_competitor_stalker",
   "multi_store_expansion",
 ];
 
@@ -37,6 +38,7 @@ const MERCHANT_WORKFLOWS = [
   "margin_guard_audit",
   "velocity_restock_predictor",
   "store_optimization_sweep",
+  "autonomous_repricer",
 ];
 
 const SOCIAL_WORKFLOWS = [
@@ -47,6 +49,7 @@ const SOCIAL_WORKFLOWS = [
   "product_creative",
   "brand_content",
   "viral_trend_detector",
+  "autonomous_trend_hunter",
 ];
 
 const ALL_WORKFLOWS = [...ARCHITECT_WORKFLOWS, ...MERCHANT_WORKFLOWS, ...SOCIAL_WORKFLOWS];
@@ -61,6 +64,7 @@ const AGENT_TYPE_MAP: Record<string, string> = {
   brand_audit: "architect",
   product_optimization: "architect",
   competitor_pricing_scan: "architect",
+  autonomous_competitor_stalker: "architect",
   multi_store_expansion: "architect",
   inventory_audit: "merchant",
   pricing_optimization: "merchant",
@@ -72,6 +76,7 @@ const AGENT_TYPE_MAP: Record<string, string> = {
   margin_guard_audit: "merchant",
   velocity_restock_predictor: "merchant",
   store_optimization_sweep: "merchant",
+  autonomous_repricer: "merchant",
   ad_campaign: "social",
   social_content: "social",
   seo_audit: "social",
@@ -79,6 +84,7 @@ const AGENT_TYPE_MAP: Record<string, string> = {
   product_creative: "social",
   brand_content: "social",
   viral_trend_detector: "social",
+  autonomous_trend_hunter: "social",
 };
 
 const AGENT_WORKFLOW_SCOPE: Record<string, string> = {
@@ -91,6 +97,7 @@ const AGENT_WORKFLOW_SCOPE: Record<string, string> = {
   brand_audit: "specific_store",
   product_optimization: "specific_store",
   competitor_pricing_scan: "global",
+  autonomous_competitor_stalker: "global",
   multi_store_expansion: "global",
   inventory_audit: "all_stores",
   pricing_optimization: "all_stores",
@@ -102,6 +109,7 @@ const AGENT_WORKFLOW_SCOPE: Record<string, string> = {
   margin_guard_audit: "all_stores",
   velocity_restock_predictor: "all_stores",
   store_optimization_sweep: "all_stores",
+  autonomous_repricer: "all_stores",
   ad_campaign: "global",
   social_content: "global",
   seo_audit: "global",
@@ -109,23 +117,24 @@ const AGENT_WORKFLOW_SCOPE: Record<string, string> = {
   product_creative: "global",
   brand_content: "global",
   viral_trend_detector: "global",
+  autonomous_trend_hunter: "global",
 };
 
 describe("Chat Router Workflow Registry", () => {
-  it("has 27 total workflow types", () => {
-    expect(ALL_WORKFLOWS.length).toBe(27);
+  it("has 30 total workflow types (27 base + 3 autonomous cookbook recipes)", () => {
+    expect(ALL_WORKFLOWS.length).toBe(30);
   });
 
-  it("has 10 architect workflows", () => {
-    expect(ARCHITECT_WORKFLOWS.length).toBe(10);
+  it("has 11 architect workflows (10 + autonomous_competitor_stalker)", () => {
+    expect(ARCHITECT_WORKFLOWS.length).toBe(11);
   });
 
-  it("has 10 merchant workflows", () => {
-    expect(MERCHANT_WORKFLOWS.length).toBe(10);
+  it("has 11 merchant workflows (10 + autonomous_repricer)", () => {
+    expect(MERCHANT_WORKFLOWS.length).toBe(11);
   });
 
-  it("has 7 social workflows", () => {
-    expect(SOCIAL_WORKFLOWS.length).toBe(7);
+  it("has 8 social workflows (7 + autonomous_trend_hunter)", () => {
+    expect(SOCIAL_WORKFLOWS.length).toBe(8);
   });
 
   it("does NOT contain old broken workflow names (ad_campaign_creation, social_posting)", () => {
