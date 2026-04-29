@@ -33,3 +33,6 @@ pnpm-lock.yaml
 # OS files
 .DS_Store
 Thumbs.db
+
+# Archived one-off scripts (see scripts/legacy/README.md)
+scripts/legacy/
