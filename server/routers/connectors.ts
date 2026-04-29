@@ -217,6 +217,29 @@ const ECOMMERCE_PLATFORMS = {
     },
     capabilities: ["listings", "orders", "inventory"],
   },
+  printful: {
+    name: "Printful",
+    icon: "🖨️",
+    color: "#FFD700",
+    connectionType: "oauth" as const,
+    description: "Print-on-demand fulfillment — create and sell custom products",
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://www.printful.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: () => "https://www.printful.com/oauth/token",
+      scopes: "catalog_read orders_read orders_write products_read products_write shops_read",
+    },
+    capabilities: ["listings", "orders", "fulfillment", "print_on_demand"],
+  },
+  cjdropshipping: {
+    name: "CJ Dropshipping",
+    icon: "📦",
+    color: "#FF6B00",
+    connectionType: "api_key" as const,
+    description: "Dropshipping supplier — source products and auto-fulfill orders",
+    requiredFields: ["email", "apiKey"],
+    capabilities: ["sourcing", "orders", "fulfillment", "inventory"],
+  },
 };
 
 /**

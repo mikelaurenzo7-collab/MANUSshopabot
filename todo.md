@@ -1064,3 +1064,17 @@
 - [x] Add Snapchat to social capability matrix
 - [x] Add Snapchat token exchange in socialOAuth.ts
 - [x] Verify TypeScript compiles and server restarts
+
+## Real Supplier API Integrations
+- [ ] Research Printful API v2 endpoints (product catalog, search, pricing)
+- [ ] Research CJ Dropshipping API endpoints (product search, categories, pricing)
+- [ ] Build SupplierAdapter interface and base types
+- [ ] Build PrintfulAdapter (product catalog, search, variants, pricing)
+- [ ] Build CJDropshippingAdapter (product search, categories, pricing)
+- [ ] Build AliExpressAdapter via RapidAPI (product search, pricing)
+- [ ] Wire supplier adapters into product_sourcing workflow (replace LLM hallucination)
+- [ ] Wire supplier adapters into catalog_generation workflow
+- [ ] Wire supplier adapters into store_buildout workflow
+- [ ] Add supplier management UI (configure preferred suppliers per store)
+- [ ] Add supplier credentials to secrets management
+- [ ] Test end-to-end product sourcing with real API data
