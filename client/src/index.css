@@ -2506,6 +2506,245 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
   /* ════════════════════════════════════════════════════════════════════
+     OPERATION NODE — Home dashboard constellation
+     Replaces the postage-stamp-sized node cards with a real card
+     surface (≈300×120) so the dashboard graph reads as the
+     centerpiece. Each node has a brand-tinted halo, a metric footer,
+     and a status pulse on the edge handle.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .op-node {
+    position: relative;
+    min-width: 300px;
+    max-width: 340px;
+    border-radius: 1rem;
+    padding: 0.85rem 1rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow:
+      0 12px 28px -16px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    isolation: isolate;
+  }
+
+  /* Per-kind brand-tinted accent — drives both the icon plate ring
+     and the soft halo behind the card. */
+  .op-node[data-kind="user"] {
+    --node-color: 14, 165, 233;     /* sky */
+    --node-accent: 56, 189, 248;
+  }
+  .op-node[data-kind="store"] {
+    --node-color: 16, 185, 129;     /* emerald */
+    --node-accent: 110, 231, 183;
+  }
+  .op-node[data-kind="bot"] {
+    --node-color: 168, 85, 247;     /* violet */
+    --node-accent: 196, 181, 253;
+  }
+  .op-node[data-kind="channel"] {
+    --node-color: 236, 72, 153;     /* pink */
+    --node-accent: 244, 114, 182;
+  }
+  .op-node[data-kind^="ghost"] {
+    --node-color: 255, 255, 255;
+    --node-accent: 255, 255, 255;
+  }
+
+  .op-node--ghost {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.18);
+    opacity: 0.78;
+  }
+  .op-node--ghost .op-node-icon { color: rgba(255, 255, 255, 0.6); }
+
+  .op-node--user {
+    min-width: 320px;
+    border: 1px solid rgba(var(--node-color), 0.45);
+    background:
+      linear-gradient(135deg, rgba(var(--node-color), 0.18), rgba(var(--node-accent), 0.04) 60%);
+    box-shadow:
+      0 16px 40px -16px rgba(var(--node-color), 0.6),
+      inset 0 0 0 1px rgba(var(--node-color), 0.25);
+  }
+
+  .op-node-halo {
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at 0% 0%,
+      rgba(var(--node-color), 0.25) 0%,
+      transparent 65%
+    );
+    opacity: 0.7;
+    filter: blur(8px);
+    z-index: -1;
+    transition: opacity 320ms ease;
+  }
+  .op-node[data-status="running"] .op-node-halo {
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(245, 158, 11, 0.4) 0%,
+      transparent 70%
+    );
+    animation: op-node-running-halo 2.4s ease-in-out infinite;
+  }
+  @keyframes op-node-running-halo {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  .op-node:hover {
+    border-color: rgba(var(--node-color), 0.45);
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 44px -12px rgba(var(--node-color), 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .op-node:hover .op-node-halo {
+    opacity: 1;
+  }
+
+  .op-node--selected {
+    border-color: rgba(var(--node-color), 0.85);
+    box-shadow:
+      0 24px 60px -16px rgba(var(--node-color), 0.7),
+      0 0 0 1px rgba(var(--node-color), 0.6) inset,
+      0 0 24px rgba(var(--node-color), 0.35);
+  }
+
+  .op-node-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .op-node-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(var(--node-color), 0.2), rgba(var(--node-accent), 0.05));
+    color: rgb(var(--node-accent));
+    box-shadow:
+      inset 0 0 0 1px rgba(var(--node-color), 0.35),
+      0 8px 18px -8px rgba(var(--node-color), 0.5);
+  }
+  .op-node-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .op-node-eyebrow {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(var(--node-color), 0.95);
+    margin-bottom: 2px;
+  }
+  .op-node-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: rgb(255, 255, 255);
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .op-node-sublabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .op-node-status {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .op-node-status[data-status="ok"] { color: rgb(16, 185, 129); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.12); }
+  .op-node-status[data-status="running"] { color: rgb(245, 158, 11); border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.15); }
+  .op-node-status[data-status="error"] { color: rgb(239, 68, 68); border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.15); }
+  .op-node-status[data-status="idle"] { color: rgba(255, 255, 255, 0.4); }
+  .op-node-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .op-node-status[data-status="running"] .op-node-status-dot {
+    animation: bot-page-status-blink 1s ease-in-out infinite;
+  }
+
+  .op-node-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 0.7rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .op-node-metric-key {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+  }
+  .op-node-metric-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--node-accent));
+  }
+
+  /* React Flow edge polish — fatter strokes + a flowing dash on
+     animated edges, plus a glow on running connections. The dash
+     velocity is tuned to read as "data flowing right" without
+     becoming visually noisy. */
+  .react-flow__edge-path {
+    transition: stroke-width 200ms ease;
+  }
+  .react-flow__edge:hover .react-flow__edge-path {
+    stroke-width: 3.2;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  .react-flow__edge.animated .react-flow__edge-path {
+    stroke-dasharray: 8 6;
+    animation: op-edge-dash-flow 0.9s linear infinite;
+  }
+  @keyframes op-edge-dash-flow {
+    to { stroke-dashoffset: -28; }
+  }
+
+  /* React Flow handle dots — invisible by default but pick up the
+     node's brand color on hover so connection points are obvious. */
+  .react-flow__handle {
+    background: rgba(var(--node-color), 0.45) !important;
+    border: 1px solid rgba(var(--node-color), 0.7) !important;
+    width: 9px !important;
+    height: 9px !important;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .op-node:hover .react-flow__handle { opacity: 1; }
+
+  /* ════════════════════════════════════════════════════════════════════
      BOT PAGE HEADER — cinematic edition
      Replaces the spartan ID bar that used to sit at the top of
      /architect, /merchant, /social. Each bot gets its own brand
