@@ -94,8 +94,11 @@ export const ENV = {
     process.env.SQUARE_CLIENT_SECRET
     ?? process.env.SQUARE_OAUTH_APPLICATION_SECRET
     ?? "",
+  squareProductionAccessToken: process.env.SQUARE_PRODUCTION_ACCESS_TOKEN ?? "",
+  squareProductionApplicationId: process.env.SQUARE_PRODUCTION_APPLICATION_ID ?? "",
   // Faire
-  faireApiKey: process.env.FAIRE_API_KEY ?? "",
+  faireClientId: process.env.FAIRE_CLIENT_ID ?? "",
+  faireClientSecret: process.env.FAIRE_CLIENT_SECRET ?? "",
   // Bonanza
   bonanzaDevId: process.env.BONANZA_DEV_ID ?? "",
   bonanzaCertId: process.env.BONANZA_CERT_ID ?? "",
