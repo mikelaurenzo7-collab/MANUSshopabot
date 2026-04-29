@@ -531,6 +531,39 @@ describe("Cookbook telemetry — recipe activation counters", () => {
     // patterns and shouldn't leak to non-admin users.
     expect(src).toMatch(/cookbookStats: adminProcedure\.query/);
   });
+
+  it("Config page renders ReasoningLiftStats admin panel", () => {
+    const src = read("../client/src/pages/Config.tsx");
+    expect(src).toContain("function ReasoningLiftStats");
+    // Must be admin-gated — same gate as CredentialDiagnostics.
+    expect(src).toMatch(/role === "admin".*ReasoningLiftStats/s);
+    // Three rows for the three lifts; each surfaces the recipe-specific
+    // headline number (avgIssuesPerSuccess / nonDefaultPersonaPickRate /
+    // avgToolCallsPerSuccess) — matches the cookbookStats endpoint.
+    expect(src).toContain("avgIssuesPerSuccess");
+    expect(src).toContain("nonDefaultPersonaPickRate");
+    expect(src).toContain("avgToolCallsPerSuccess");
+    // Operator-facing copy must NOT use the internal "cookbook" word —
+    // the Config page is admin-facing but operators see it too.
+    expect(src.match(/Cookbook/g)?.length ?? 0).toBe(0);
+  });
+});
+
+describe("CookbookDetail polish — max-height scroll on long trails", () => {
+  it("agent-loop trail gets a capped max-height with scroll", () => {
+    const css = read("../client/src/index.css");
+    // The DB stores up to 24 tool calls; without a cap the trail can
+    // push everything else off-screen on tall workflows.
+    expect(css).toMatch(/\.live-workflow-runner-cookbook-trail\s*\{[^}]*max-height/s);
+    expect(css).toMatch(/\.live-workflow-runner-cookbook-trail\s*\{[^}]*overflow-y:\s*auto/s);
+  });
+
+  it("reflect critique list gets the same capped max-height + scroll", () => {
+    const css = read("../client/src/index.css");
+    // A 15-issue critique on a long draft would otherwise dominate.
+    expect(css).toMatch(/\.live-workflow-runner-cookbook-issues\s*\{[^}]*max-height/s);
+    expect(css).toMatch(/\.live-workflow-runner-cookbook-issues\s*\{[^}]*overflow-y:\s*auto/s);
+  });
 });
 
 describe("Cookbook autonomous workflows — surfaced everywhere a launcher exists", () => {

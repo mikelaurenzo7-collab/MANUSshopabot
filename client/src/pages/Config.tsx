@@ -26,6 +26,9 @@ import {
   CheckCircle2,
   XCircle,
   Activity,
+  Sparkles,
+  Layers,
+  Wrench,
 } from "lucide-react";
 import { CountUp } from "@/components/CountUp";
 import { PageHeader } from "@/components/PageHeader";
@@ -155,6 +158,196 @@ function CredentialDiagnostics() {
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * ReasoningLiftStats — admin-only telemetry for the three reasoning
+ * lifts wired into the workflow engine. The counters live in
+ * server/_core/cookbookStats.ts (process-local in-memory, reset on
+ * restart) and surface here via the diagnostics.cookbookStats query.
+ *
+ * The headline numbers operators care about:
+ *   • avgIssuesPerSuccess (self-critique) — "is the critique catching
+ *     real problems or just running for show?"
+ *   • nonDefaultPersonaPickRate (parallel drafting) — "is divergent
+ *     thinking paying off, or does the first persona always win?"
+ *   • avgToolCallsPerSuccess (autonomous workflows) — "is the agent
+ *     actually using tools or short-circuiting?"
+ */
+function ReasoningLiftStats() {
+  const { data, isLoading } = trpc.diagnostics.cookbookStats.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
+
+  return (
+    <Card className="bento-card">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-violet-400" />
+          <CardTitle className="text-base font-semibold">Reasoning Lift Activations</CardTitle>
+        </div>
+        <CardDescription>
+          Live counters for the three reasoning lifts — self-critique,
+          parallel drafting, autonomous workflows. Process-local; resets
+          on engine restart.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+          </div>
+        ) : data ? (
+          <>
+            <div className="flex gap-4 mb-4 p-3 rounded-lg bg-white/[0.03]">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-violet-300">
+                  <CountUp value={data.totalActivations} />
+                </div>
+                <div className="text-xs text-muted-foreground">Total activations</div>
+              </div>
+              <Separator orientation="vertical" className="h-auto" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-400">
+                  <CountUp value={data.totalSuccesses} />
+                </div>
+                <div className="text-xs text-muted-foreground">End-to-end (vs fallback)</div>
+              </div>
+              <Separator orientation="vertical" className="h-auto" />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">
+                  {data.totalActivations > 0
+                    ? `${Math.round((data.totalSuccesses / data.totalActivations) * 100)}%`
+                    : "—"}
+                </div>
+                <div className="text-xs text-muted-foreground">Success rate</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <ReasoningLiftRow
+                Icon={Sparkles}
+                color="rgb(125, 211, 252)"
+                bg="rgba(56, 189, 248, 0.06)"
+                border="rgba(56, 189, 248, 0.25)"
+                label="Self-critique"
+                activations={data.reflect.activations}
+                successes={data.reflect.successes}
+                signalLabel="avg issues addressed"
+                signalValue={data.reflect.avgIssuesPerSuccess}
+                lastActivatedAt={data.reflect.lastActivatedAt}
+              />
+              <ReasoningLiftRow
+                Icon={Layers}
+                color="rgb(196, 181, 253)"
+                bg="rgba(167, 139, 250, 0.06)"
+                border="rgba(167, 139, 250, 0.25)"
+                label="Parallel drafting"
+                activations={data.multi_draft.activations}
+                successes={data.multi_draft.successes}
+                signalLabel="non-default winner rate"
+                signalValue={data.multi_draft.nonDefaultPersonaPickRate}
+                lastActivatedAt={data.multi_draft.lastActivatedAt}
+              />
+              <ReasoningLiftRow
+                Icon={Wrench}
+                color="rgb(110, 231, 183)"
+                bg="rgba(52, 211, 153, 0.06)"
+                border="rgba(52, 211, 153, 0.25)"
+                label="Autonomous workflows"
+                activations={data.agent_loop.activations}
+                successes={data.agent_loop.successes}
+                signalLabel="avg tool calls"
+                signalValue={data.agent_loop.avgToolCallsPerSuccess}
+                lastActivatedAt={data.agent_loop.lastActivatedAt}
+              />
+            </div>
+
+            {data.totalActivations === 0 && (
+              <p className="text-xs text-muted-foreground mt-4 italic">
+                No activations recorded yet — the lifts haven't fired since
+                the engine started, or ANTHROPIC_API_KEY isn't configured
+                (lifts gracefully fall back to single-shot when the key is
+                missing, but the activation still counts).
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">Failed to load reasoning-lift stats.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReasoningLiftRow({
+  Icon, color, bg, border, label, activations, successes, signalLabel, signalValue, lastActivatedAt,
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bg: string;
+  border: string;
+  label: string;
+  activations: number;
+  successes: number;
+  signalLabel: string;
+  signalValue: number;
+  lastActivatedAt: number | null;
+}) {
+  const successRate = activations > 0 ? Math.round((successes / activations) * 100) : 0;
+  const lastSeen = lastActivatedAt
+    ? formatRelativeTime(Date.now() - lastActivatedAt)
+    : "never";
+  return (
+    <div
+      className="rounded-lg border p-3"
+      style={{ background: bg, borderColor: border }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className="h-3.5 w-3.5" />
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>
+          {label}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div className="text-lg font-bold tabular-nums" style={{ color }}>
+            <CountUp value={activations} />
+          </div>
+          <div className="text-[10px] text-muted-foreground">activations</div>
+        </div>
+        <div>
+          <div className="text-lg font-bold tabular-nums text-foreground">
+            {successRate}%
+          </div>
+          <div className="text-[10px] text-muted-foreground">end-to-end</div>
+        </div>
+      </div>
+      <div className="mt-2 pt-2 border-t border-white/[0.06]">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10px] text-muted-foreground">{signalLabel}</span>
+          <span className="text-xs font-bold tabular-nums text-foreground">
+            {signalValue}
+          </span>
+        </div>
+        <div className="text-[10px] text-muted-foreground/60 mt-0.5">
+          last fired {lastSeen}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatRelativeTime(deltaMs: number): string {
+  if (!Number.isFinite(deltaMs) || deltaMs < 0) return "just now";
+  const sec = Math.floor(deltaMs / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  return `${day}d ago`;
 }
 
 export default function ConfigPage() {
@@ -467,6 +660,12 @@ export default function ConfigPage() {
 
           {/* Credential Diagnostics — admin only */}
           {user?.role === "admin" && <CredentialDiagnostics />}
+
+          {/* Reasoning Lift Activations — admin only. Tells operators
+              whether the self-critique / parallel drafting / autonomous
+              workflows are actually firing end-to-end vs. silently
+              falling back to single-shot. */}
+          {user?.role === "admin" && <ReasoningLiftStats />}
 
           {/* Global Safety & Approvals */}
           <Card className="bento-card">

@@ -3188,7 +3188,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     font-weight: 700;
   }
 
-  /* Reflect critique list */
+  /* Reflect critique list — capped height with scroll so a 15-issue
+   * critique on a long draft can't push everything else off-screen. */
   .live-workflow-runner-cookbook-issues {
     display: flex;
     flex-direction: column;
@@ -3196,6 +3197,17 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 14rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+  .live-workflow-runner-cookbook-issues::-webkit-scrollbar {
+    width: 6px;
+  }
+  .live-workflow-runner-cookbook-issues::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
   }
   .live-workflow-runner-cookbook-issue {
     display: flex;
@@ -3287,7 +3299,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     color: rgba(255, 255, 255, 0.85);
   }
 
-  /* Agent-loop trail */
+  /* Agent-loop trail — capped height with scroll once the audit gets
+   * long. The DB stores up to 24 calls; with 8-iter loops + 3 calls
+   * each that's full. Without the cap the panel can push everything
+   * else off-screen. */
   .live-workflow-runner-cookbook-trail {
     display: flex;
     flex-direction: column;
@@ -3295,6 +3310,20 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 14rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+  .live-workflow-runner-cookbook-trail::-webkit-scrollbar {
+    width: 6px;
+  }
+  .live-workflow-runner-cookbook-trail::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+  }
+  .live-workflow-runner-cookbook-trail::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
   }
   .live-workflow-runner-cookbook-trail-row {
     display: grid;
