@@ -305,7 +305,7 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail"]).default("meta").notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail", "snapchat"]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -392,7 +392,7 @@ export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   // Expanded enum: google_ads is first-class value
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads"]).notNull(),
+  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "snapchat"]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),
@@ -500,7 +500,7 @@ export const socialAccounts = mysqlTable("social_accounts", {
   /** Owning org. See platformCredentials for rationale. */
   orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]).notNull(),
+  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat"]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accountId: varchar("accountId", { length: 255 }), // platform-specific account/page ID
   accessToken: text("accessToken"),

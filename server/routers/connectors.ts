@@ -310,6 +310,20 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["email_sending", "customer_support", "abandoned_cart_recovery", "order_notifications"],
   },
+  snapchat: {
+    name: "Snapchat",
+    icon: "👻",
+    color: "#FFFC00",
+    connectionType: "oauth" as const,
+    description: "Run Snap Ads, Dynamic Product Ads, and manage Snapchat marketing",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://accounts.snapchat.com/login/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: "https://accounts.snapchat.com/login/oauth2/access_token",
+      scopes: "snapchat-marketing-api",
+    },
+    capabilities: ["snap_ads", "dynamic_product_ads", "story_ads", "analytics", "audience_targeting"],
+  },
 };
 
 export const connectorsRouter = router({
@@ -369,6 +383,7 @@ export const connectorsRouter = router({
       twitter: !!ENV.twitterClientId && !!ENV.twitterClientSecret,
       pinterest: !!ENV.pinterestAppId && !!ENV.pinterestAppSecret,
       gmail: !!ENV.googleClientId && !!ENV.googleClientSecret,
+      snapchat: !!ENV.snapchatClientId && !!ENV.snapchatClientSecret,
     };
     const matrix = getSocialCapabilityMatrix();
     return Object.entries(SOCIAL_PLATFORMS).map(([id, platform]) => ({
@@ -462,7 +477,7 @@ export const connectorsRouter = router({
   /** Connect a social media account (stores OAuth token after redirect) */
   connectSocialAccount: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat"]),
       accountName: z.string().optional(),
       accountId: z.string().optional(),
       accessToken: z.string(),
@@ -677,7 +692,7 @@ export const connectorsRouter = router({
   /** Generate OAuth URL for a social media platform */
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail"]),
+      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat"]),
       origin: z.string(),
       returnTo: z.string().optional(),
     }))
@@ -695,6 +710,7 @@ export const connectorsRouter = router({
         twitter: ENV.twitterClientId,
         pinterest: ENV.pinterestAppId,
         gmail: ENV.googleClientId,
+        snapchat: ENV.snapchatClientId,
       };
 
       const clientId = clientIdMap[input.platform];

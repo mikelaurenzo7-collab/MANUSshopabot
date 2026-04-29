@@ -188,6 +188,38 @@ async function fetchGmailProfile(accessToken: string): Promise<UserProfile> {
   };
 }
 
+
+// ─── Snapchat ──────────────────────────────────────────────────────────
+async function exchangeSnapchatCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const credentials = Buffer.from(`${ENV.snapchatClientId}:${ENV.snapchatClientSecret}`).toString("base64");
+  const res = await axios.post("https://accounts.snapchat.com/login/oauth2/access_token", new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${credentials}`,
+    },
+  });
+  return res.data;
+}
+
+async function fetchSnapchatProfile(accessToken: string): Promise<UserProfile> {
+  const { default: axios } = await import("axios");
+  const res = await axios.get("https://adsapi.snapchat.com/v1/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const me = res.data?.me || res.data;
+  return {
+    accountId: me.id || me.organization_id || "unknown",
+    accountName: me.display_name || me.email || "Snapchat User",
+    profileUrl: undefined,
+    profileImageUrl: undefined,
+  };
+}
+
 // ─── State Parsing ──────────────────────────────────────────────────────
 
 interface ParsedState {
@@ -290,6 +322,10 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       case "gmail":
         tokenData = await exchangeGmailCode(code, redirectUri);
         profile = await fetchGmailProfile(tokenData.access_token);
+        break;
+      case "snapchat":
+        tokenData = await exchangeSnapchatCode(code, redirectUri);
+        profile = await fetchSnapchatProfile(tokenData.access_token);
         break;
       default:
         return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);

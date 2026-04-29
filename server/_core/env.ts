@@ -52,6 +52,11 @@ export const ENV = {
   pinterestAppSecret: process.env.PINTEREST_APP_SECRET ?? "",
   pinterestAccessToken: process.env.PINTEREST_ACCESS_TOKEN ?? "",
 
+  // Snapchat
+  snapchatClientId: process.env.SNAPCHAT_CLIENT_ID ?? "",
+  snapchatClientSecret: process.env.SNAPCHAT_CLIENT_SECRET ?? "",
+  snapchatApiToken: process.env.SNAPCHAT_API_TOKEN ?? "",
+
   // Etsy
   etsyApiKey: process.env.ETSY_API_KEY ?? "",
   etsySharedSecret: process.env.ETSY_SHARED_SECRET ?? "",

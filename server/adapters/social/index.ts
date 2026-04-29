@@ -18,6 +18,7 @@ export { TwitterAdapter } from "./twitterAdapter";
 export { PinterestAdapter } from "./pinterestAdapter";
 export { GoogleAdsAdapter } from "./googleAdsAdapter";
 export { GmailAdapter } from "./gmailAdapter";
+export { SnapchatAdapter } from "./snapchatAdapter";
 
 import type { SocialPlatformAdapter } from "./types";
 import { MetaAdapter } from "./metaAdapter";
@@ -27,6 +28,7 @@ import { TwitterAdapter } from "./twitterAdapter";
 import { PinterestAdapter } from "./pinterestAdapter";
 import { GoogleAdsAdapter } from "./googleAdsAdapter";
 import { GmailAdapter } from "./gmailAdapter";
+import { SnapchatAdapter } from "./snapchatAdapter";
 
 // Singleton instances per platform (adapters are stateless)
 const adapters: Record<string, SocialPlatformAdapter> = {
@@ -39,6 +41,7 @@ const adapters: Record<string, SocialPlatformAdapter> = {
   pinterest: new PinterestAdapter(),
   google_ads: new GoogleAdsAdapter(),
   gmail: new GmailAdapter(),
+  snapchat: new SnapchatAdapter(),
 };
 
 /**
@@ -59,7 +62,7 @@ export function getSocialAdapter(platform: string): SocialPlatformAdapter {
 /**
  * List all supported social platform identifiers (no aliases).
  */
-export const SUPPORTED_SOCIAL_PLATFORMS = ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"];
+export const SUPPORTED_SOCIAL_PLATFORMS = ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat"];
 
 export function getSupportedSocialPlatforms(): string[] {
   return SUPPORTED_SOCIAL_PLATFORMS;

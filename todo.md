@@ -1054,3 +1054,13 @@
 - [x] Update Faire platform config from api_key to oauth connection type
 - [x] Add SQUARE_PRODUCTION_ACCESS_TOKEN + SQUARE_PRODUCTION_APPLICATION_ID to env.ts
 - [x] Audit all remaining platform env var names against actual Manus secrets
+
+## Snapchat Social Integration
+- [x] Add Snapchat secrets (API token, OAuth client ID, OAuth client secret)
+- [x] Add Snapchat env vars to env.ts
+- [x] Add Snapchat to SOCIAL_PLATFORMS config in connectors.ts
+- [x] Add Snapchat to socialAvailability map
+- [x] Add Snapchat to social OAuth URL generation (clientIdMap + generateSocialOAuthUrl)
+- [x] Add Snapchat to social capability matrix
+- [x] Add Snapchat token exchange in socialOAuth.ts
+- [x] Verify TypeScript compiles and server restarts
