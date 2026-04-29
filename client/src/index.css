@@ -631,7 +631,9 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .page-compact { @apply p-3; }
   .page-standard { @apply p-5; }
   .page-spacious { @apply p-6; }
-  .section-spacing { @apply mb-4 space-y-4; }
+  .section-spacing { @apply mb-5 space-y-5; }
+  .grid-spacing { @apply gap-4; }
+  .flex-spacing { @apply gap-3; }
 
   /* ── Enhanced card hover effects ──────────────────────────────────────── */
   .card-hover {
