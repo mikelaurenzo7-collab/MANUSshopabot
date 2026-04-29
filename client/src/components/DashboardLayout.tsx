@@ -31,6 +31,7 @@ import {
   Zap,
   Search,
   Store,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -59,6 +60,8 @@ interface NavItem {
   dot?: "ok" | "running" | "error" | null;
   /** Bot brand dot (purely visual). */
   brand?: "sky" | "cyan" | "amber";
+  /** Sub-item: indented under parent, smaller style */
+  sub?: boolean;
 }
 
 function statusDotClass(status: NavItem["dot"]): string | null {
@@ -207,12 +210,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
     // ── divider before operate ──
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
+    { title: "Build", path: "/workflow-builder", icon: Zap, sub: true },
     { title: "Storefronts", path: "/storefronts", icon: Globe },
     { title: "Insights", path: "/insights", icon: BarChart3 },
     { title: "Settings", path: "/settings", icon: SettingsIcon },
   ];
 
   // Index in navItems where a thin divider sits ABOVE the row.
+  // Workflows=5, Build=6(sub), Storefronts=7 → divider before index 5 and 7
   const dividerIndices = new Set<number>([2, 5]);
 
   const handleLogout = () => {
@@ -299,6 +304,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {item.badge > 9 ? "9+" : item.badge}
             </span>
           ) : null}
+        </Link>
+      );
+    }
+    // Sub-item style (e.g. Build under Workflows)
+    if (item.sub) {
+      return (
+        <Link
+          key={item.title}
+          href={item.path}
+          onClick={() => isMobile && setMobileMenuOpen(false)}
+          className={`flex items-center h-6 pl-7 pr-2.5 rounded-md transition-all duration-200 group relative ${
+            isActive
+              ? "bg-gradient-to-r from-violet-500/[0.18] via-violet-500/[0.07] to-transparent text-violet-200 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.22)]"
+              : "text-white/30 hover:text-white/75 hover:bg-white/[0.025]"
+          }`}
+        >
+          {isActive && <span className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-violet-400" aria-hidden="true" />}
+          <item.icon
+            aria-hidden="true"
+            className={`w-3 h-3 mr-2 transition-all duration-200 ${
+              isActive ? "text-violet-400" : "opacity-35 group-hover:opacity-65"
+            }`}
+          />
+          <span className={`text-[12px] truncate flex-1 ${
+            isActive ? "font-semibold text-violet-200" : "font-medium"
+          }`}>
+            {item.title}
+          </span>
+          {!isActive && (
+            <span className="text-[9px] font-mono text-white/20 group-hover:text-violet-400/60 transition-colors tracking-widest uppercase">new</span>
+          )}
         </Link>
       );
     }

@@ -1156,3 +1156,20 @@
 - [x] Workflows page: already solid — stats row, live runner, retry/rerun, empty states
 - [x] Inbox/Storefronts/Insights/Settings: all use PageHeader consistently, no gaps found
 - [x] Global: consistent spacing, typography, card styles confirmed across all pages
+
+## Sprint 15: Workflow Builder + Nav Consolidation
+
+- [x] Audit DashboardLayout sidebar nav — nav is already lean (9 items), no redundant entries
+- [x] Add "Build" as violet sub-item under Workflows with NEW badge — discoverable without cluttering top nav
+- [x] Build WorkflowBuilder page with ReactFlow drag-and-drop canvas
+- [x] Node palette sidebar: LLM Analysis, API Call, Approval Gate, Store Action, Notification, Condition branch
+- [x] Drop-to-canvas with snap-to-grid (16px) and connection handles
+- [x] Node config panel (right slide-over): kind-specific fields per step type
+- [x] Custom animated edges with arrow markers
+- [x] Save draft to localStorage + Launch via trpc.workflows.launch
+- [x] Register /workflow-builder route in App.tsx with lazy loading
+- [x] Empty canvas state with guided prompt and step count badge
+- [x] Mobile graceful degradation message
+- [x] Delete/Backspace keyboard shortcut to remove selected node
+- [x] 3 starter templates (Product Drop, Pricing Sweep, Campaign Launch)
+- [x] 16/16 vitest tests passing for step registry, templates, and sort logic

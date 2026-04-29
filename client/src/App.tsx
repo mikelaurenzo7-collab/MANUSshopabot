@@ -33,6 +33,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PromptLabPage = lazy(() => import("./pages/PromptLab"));
 const WorkflowsPage = lazy(() => import("./pages/Workflows"));
+const WorkflowBuilderPage = lazy(() => import("./pages/WorkflowBuilder"));
 const ChatPage = lazy(() => import("./pages/Chat"));
 const InboxPage = lazy(() => import("./pages/Inbox"));
 const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
@@ -126,6 +127,7 @@ function Router() {
                     <Route path="/config" component={ConfigPage} />
                     <Route path="/prompt-lab" component={PromptLabPage} />
                     <Route path="/workflows">{() => <ErrorBoundary inline label="Workflows"><WorkflowsPage /></ErrorBoundary>}</Route>
+                    <Route path="/workflow-builder">{() => <ErrorBoundary inline label="Workflow Builder"><WorkflowBuilderPage /></ErrorBoundary>}</Route>
                     <Route path="/chat">{() => <ErrorBoundary inline label="Bot Chat"><ChatPage /></ErrorBoundary>}</Route>
                     <Route path="/inbox">{() => <ErrorBoundary inline label="Inbox"><InboxPage /></ErrorBoundary>}</Route>
                     <Route path="/storefronts">{() => <ErrorBoundary inline label="Storefronts"><StorefrontsPage /></ErrorBoundary>}</Route>
