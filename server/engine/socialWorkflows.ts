@@ -101,6 +101,14 @@ Return as JSON.`,
     cacheSystemPrompt: true,
     effort: "high" as const,
     adaptiveThinking: true,
+    // Cookbook recipe — reflect-and-revise. Ad copy is the single
+    // operator-facing output most likely to look "good enough" on the
+    // first pass while burying the actual hook in line 2. The
+    // "ad_creative" rubric in claudeReflect.ts forces a critique pass
+    // that checks each variation for a real hook in line 1, audience
+    // fit, justified format choice, and a clear CTA.
+    reflectAndRevise: true,
+    reflectionFocus: "ad_creative",
     systemPrompt: composeSystemPrompt(
       `You are an elite direct-response copywriter. Your ads have generated millions in revenue. Write scroll-stopping copy. ${platformBrief}`,
     ),

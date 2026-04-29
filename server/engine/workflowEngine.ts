@@ -22,6 +22,7 @@ import {
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDirect";
+import { reflectAndRevise, type ReflectionFocus } from "../_core/claudeReflect";
 import { runMemoryAgent, isMemoryAgentAvailable } from "./memoryAgent";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -721,6 +722,54 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       );
       // Fall through to the standard path so a flaky agentic call
       // doesn't hard-fail the workflow.
+    }
+  }
+
+  // ── Reflect-and-revise opt-in (Anthropic Cookbook recipe) ───────
+  // Three-pass quality lift on high-stakes outputs: draft → critique
+  // → revise. Caller picks the rubric via `reflectionFocus` (one of
+  // the named ReflectionFocus values). Falls back to single-shot
+  // when ANTHROPIC_API_KEY is unset; the contract holds either way.
+  // See server/_core/claudeReflect.ts for cost/latency notes — this
+  // is ~2.5× the single-pass time and pays off most on operator-
+  // facing outputs (niche reports, brand kits, ad campaigns,
+  // pricing decisions).
+  if (input.reflectAndRevise && input.reflectionFocus) {
+    try {
+      const reflected = await reflectAndRevise({
+        systemPrompt,
+        userPrompt: userPrompt + contextStr,
+        reflectionFocus: input.reflectionFocus as ReflectionFocus,
+        ...(input.responseFormat ? { responseFormat: input.responseFormat } : {}),
+        ...(input.maxTokens ? { maxTokens: input.maxTokens } : {}),
+        ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
+        ...(input.effort ? { effort: input.effort as any } : {}),
+      });
+      // When the caller asked for JSON, hand back the parsed object so
+      // downstream steps see the same shape they would from a single-
+      // shot llm_call. Stash the critique on a non-conflicting key so
+      // the audit panel can render "what changed in the revise pass".
+      if (input.responseFormat && reflected.json && typeof reflected.json === "object") {
+        return {
+          ...reflected.json as Record<string, unknown>,
+          __reflect: {
+            critique: reflected.critique,
+            reflectedAndRevised: reflected.reflectedAndRevised,
+          },
+        };
+      }
+      return {
+        text: reflected.text,
+        __reflect: {
+          critique: reflected.critique,
+          reflectedAndRevised: reflected.reflectedAndRevised,
+        },
+      };
+    } catch (err: any) {
+      console.error(
+        `[WorkflowEngine.LLMStep] reflectAndRevise failed, falling back to single-shot: ${err?.message ?? err}`,
+      );
+      // Fall through — a flaky reflect pass shouldn't kill the workflow.
     }
   }
 

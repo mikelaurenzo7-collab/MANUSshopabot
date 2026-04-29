@@ -34,6 +34,15 @@ registerWorkflow("niche_research", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high",
         adaptiveThinking: true,
+        // Anthropic Cookbook recipe — reflect-and-revise. Niche research
+        // is the merchant's first impression of the bot's judgment; a
+        // single-pass draft tends to overstate viability scores and
+        // skip risk mitigations. The "niche_research" rubric in
+        // claudeReflect.ts forces a critique pass that checks for
+        // ungrounded scores and missing risks before the revise pass.
+        // Falls back to single-shot when ANTHROPIC_API_KEY is unset.
+        reflectAndRevise: true,
+        reflectionFocus: "niche_research",
         // The Marketing Moat directive used to live inline here.
         // Pulled into the shared platform preamble so every
         // strategy-bearing workflow gets the same playbook AND the
@@ -1057,6 +1066,14 @@ registerWorkflow("complete_store_buildout", (input): WorkflowStepDefinition[] =>
         useClaudeDirect: true,
         cacheSystemPrompt: true,
         effort: "high",
+        // Cookbook recipe — reflect-and-revise. Brand identity is the
+        // hardest output to get right on a single pass: the model
+        // defaults to safe-but-bland palettes and "friendly +
+        // professional + trustworthy" voice. The "brand_identity"
+        // rubric in claudeReflect.ts force-rejects fill-in-the-blank
+        // names, generic taglines, and palettes the doc can't justify.
+        reflectAndRevise: true,
+        reflectionFocus: "brand_identity",
         systemPrompt: composeSystemPrompt(
           `You are a brand strategist. Match identity to the niche and audience identified in the prior step.`,
         ),

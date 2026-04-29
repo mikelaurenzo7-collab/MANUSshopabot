@@ -144,6 +144,15 @@ registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high",
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Pricing is the highest-
+        // stakes financial decision the bot makes; first drafts often
+        // forget to net against marketplace commission and miss the
+        // [REQUIRES_APPROVAL] tag on >25% moves. The "pricing_decision"
+        // rubric in claudeReflect.ts checks fee math, platform-
+        // constraint respect, and approval-gate compliance before
+        // shipping recommendations to the operator's queue.
+        reflectAndRevise: true,
+        reflectionFocus: "pricing_decision",
         systemPrompt: composeSystemPrompt(
           "You are a pricing strategist for e-commerce. You maximize revenue while maintaining competitive positioning. Apply the FEE-STRUCTURE AWARENESS rule from the platform preamble when recommending margin floors.",
         ),
