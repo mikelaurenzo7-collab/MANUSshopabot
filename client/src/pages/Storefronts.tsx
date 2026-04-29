@@ -1,8 +1,9 @@
 /**
  * Storefronts.tsx — Unified "external systems you've connected" surface.
  *
- * Merges Integrations + Plugin Store + Supplier POs + Email Channel + Tools as tabs.
- * Legacy /integrations, /plugins, /supplier, /gmail-bot deep-links still resolve.
+ * Merges Integrations + Plugin Store + Supplier POs + Tools as tabs.
+ * Legacy /integrations, /plugins, /supplier deep-links still resolve.
+ * Email Channel moved to Communicator bot (/communicator).
  */
 
 import { useEffect, useState } from "react";
@@ -13,12 +14,12 @@ import { trpc } from "@/lib/trpc";
 import IntegrationsPage from "./Integrations";
 import PluginStorePage from "./PluginStore";
 import SupplierPOsPage from "./SupplierPOs";
-import GmailBotPage from "./GmailBot";
+
 import { ToolsTab } from "@/components/integrations/ToolsTab";
 import { CapabilitiesTab } from "@/components/integrations/CapabilitiesTab";
 
-type StorefrontsTab = "integrations" | "capabilities" | "plugins" | "supplier" | "email" | "tools";
-const TAB_VALUES: StorefrontsTab[] = ["integrations", "capabilities", "plugins", "supplier", "email", "tools"];
+type StorefrontsTab = "integrations" | "capabilities" | "plugins" | "supplier" | "tools";
+const TAB_VALUES: StorefrontsTab[] = ["integrations", "capabilities", "plugins", "supplier", "tools"];
 
 function readTabFromHash(): StorefrontsTab {
   if (typeof window === "undefined") return "integrations";
@@ -65,7 +66,7 @@ export default function StorefrontsPage() {
     { id: "capabilities", label: "Capabilities", icon: Layers },
     { id: "plugins", label: "Plugins", icon: Puzzle },
     { id: "supplier", label: "Supplier POs", icon: Truck },
-    { id: "email", label: "Email Channel", icon: Mail },
+
     { id: "tools", label: "Tools", icon: Wrench, count: connectedTools?.length ?? 0 },
   ];
 
@@ -74,7 +75,7 @@ export default function StorefrontsPage() {
       <PageHeader
         icon={<Globe className="h-4 w-4" />}
         title="Storefronts & Channels"
-        subtitle="Stores, plugins, suppliers, email, and tools — everything connected to your operation"
+        subtitle="Stores, plugins, suppliers, and tools — everything connected to your operation"
         accent="cyan"
         flushBottom
       />
@@ -118,9 +119,7 @@ export default function StorefrontsPage() {
         <TabsContent value="supplier" className="mt-3">
           <SupplierPOsPage />
         </TabsContent>
-        <TabsContent value="email" className="mt-3">
-          <GmailBotPage />
-        </TabsContent>
+
         <TabsContent value="tools" className="mt-3">
           <ToolsTab />
         </TabsContent>

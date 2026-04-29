@@ -1319,3 +1319,21 @@
 - [x] DashboardLayout nav item transitions
 - [x] PageHeader icon plate transitions
 
+
+
+## Sprint 22: Communicator Bot (4th Main Bot)
+- [x] Create Communicator.tsx page with Gmail + Outlook support
+- [x] Add email credential management UI (Gmail OAuth, Outlook OAuth)
+- [x] Create email inbox display component
+- [x] Add email compose/send functionality
+- [x] Integrate with existing email connectors
+- [x] Update DashboardLayout sidebar to show Communicator bot
+- [x] Update App.tsx routing for /communicator path
+- [x] Add Communicator status dot to dashboard
+- [x] Remove email tab from Storefronts page
+- [x] Update Storefronts to only show: Integrations, Capabilities, Plugins, Supplier, Tools
+- [ ] Test email OAuth flows (Gmail + Outlook)
+- [ ] Test email sending from Communicator bot
+- [ ] Add connection status indicators for email accounts
+- [ ] Save checkpoint with new bot architecture
+

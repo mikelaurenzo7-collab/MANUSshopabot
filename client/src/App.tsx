@@ -22,6 +22,7 @@ const Home = lazy(() => import("./pages/Home"));
 const ArchitectPage = lazy(() => import("./pages/Architect"));
 const MerchantPage = lazy(() => import("./pages/Merchant"));
 const SocialPage = lazy(() => import("./pages/Social"));
+const CommunicatorPage = lazy(() => import("./pages/Communicator"));
 const ConfigPage = lazy(() => import("./pages/Config"));
 
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
@@ -109,6 +110,7 @@ function Router() {
                     <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
                     <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/communicator">{() => <ErrorBoundary inline label="Communicator Bot"><BotPageShell agentType="social"><CommunicatorPage /></BotPageShell></ErrorBoundary>}</Route>
                     {/* Legacy direct routes redirect to their consolidated hub tab.
                         Old bookmarks resolve cleanly into the new layout instead of
                         rendering naked, header-less pages. */}

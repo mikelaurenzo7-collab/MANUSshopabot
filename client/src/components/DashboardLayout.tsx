@@ -32,6 +32,7 @@ import {
   Search,
   Store,
   Workflow,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -208,6 +209,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
     { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
     { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
+    { title: "Communicator", path: "/communicator", icon: Mail, brand: "amber", dot: statusByAgent.social ?? "ok" },
     // ── divider before operate ──
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
     { title: "Build", path: "/workflow-builder", icon: Zap, sub: true },
@@ -217,8 +219,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   ];
 
   // Index in navItems where a thin divider sits ABOVE the row.
-  // Workflows=5, Build=6(sub), Storefronts=7 → divider before index 5 and 7
-  const dividerIndices = new Set<number>([2, 5]);
+  // Workflows=6, Build=7(sub), Storefronts=8 → divider before index 2 and 6
+  const dividerIndices = new Set<number>([2, 6]);
 
   const handleLogout = () => {
     window.location.href = getLoginUrl() + "?action=logout";
@@ -240,8 +242,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         location.startsWith("/storefronts") ||
         location.startsWith("/integrations") ||
         location.startsWith("/plugins") ||
-        location.startsWith("/supplier") ||
-        location.startsWith("/gmail-bot")
+        location.startsWith("/supplier")
       );
     }
     if (path === "/insights") {
