@@ -121,7 +121,7 @@ function Router() {
                     <Route path="/integrations">{() => <Redirect to="/storefronts#integrations" />}</Route>
                     <Route path="/plugins">{() => <Redirect to="/storefronts#plugins" />}</Route>
                     <Route path="/supplier">{() => <Redirect to="/storefronts#supplier" />}</Route>
-                    <Route path="/gmail-bot">{() => <Redirect to="/storefronts#email" />}</Route>
+                    <Route path="/gmail-bot">{() => <Redirect to="/communicator" />}</Route>
                     <Route path="/profile">{() => <Redirect to="/settings#profile" />}</Route>
                     <Route path="/bot-settings">{() => <Redirect to="/settings#bots" />}</Route>
                     <Route path="/health">{() => <Redirect to="/settings#platform" />}</Route>

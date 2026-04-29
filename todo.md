@@ -1407,16 +1407,16 @@
 
 
 ## Sprint 27: Comprehensive Routing & OAuth Fix
-- [ ] Audit all pages for "Connect Store" buttons and OAuth entry points
-- [ ] Find where OAuth flow is initiated from (Architect, Merchant, etc.)
-- [ ] Fix OAuth returnTo parameter to return to original page
-- [ ] Consolidate Shopify OAuth flow with proper redirect handling
-- [ ] Update all OAuth flows to include returnTo parameter
-- [ ] Fix Storefronts/Integrations routing and naming confusion
-- [ ] Remove stale redirects (/gmail-bot -> #email)
-- [ ] Reorganize Integrations page with stores at top
-- [ ] Add success state after OAuth completion
-- [ ] Test OAuth flows from all entry points
-- [ ] Test returnTo redirects work correctly
-- [ ] Perfect design and visual hierarchy
-- [ ] Save checkpoint with perfected routing and design
+- [x] Audit all pages for "Connect Store" buttons and OAuth entry points
+- [x] Find where OAuth flow is initiated from (Architect, Merchant, etc.)
+- [x] Fix OAuth returnTo parameter to return to original page
+- [x] Consolidate Shopify OAuth flow with proper redirect handling
+- [x] Update all OAuth flows to include returnTo parameter
+- [x] Fix Storefronts/Integrations routing and naming confusion
+- [x] Remove stale redirects (/gmail-bot -> #email)
+- [x] Reorganize Integrations page with stores at top
+- [x] Add success state after OAuth completion
+- [x] Test OAuth flows from all entry points
+- [x] Test returnTo redirects work correctly
+- [x] Perfect design and visual hierarchy
+- [x] Save checkpoint with perfected routing and design
