@@ -35,7 +35,7 @@ const STOPS = [
     id: 1,
     title: "This is your Command Center",
     description:
-      "A live map of your stores, bots, and channels. Click any node to inspect it, or right-click to chat with the responsible bot.",
+      "Your live operations hub. See revenue, active workflows, and bot health at a glance — everything you need to run your business right now.",
     Icon: Compass,
     accent: "text-sky-300",
     accentBg: "bg-sky-500/15 border-sky-500/30",
@@ -44,7 +44,7 @@ const STOPS = [
     id: 2,
     title: "Watch your bots work",
     description:
-      "Each bot's ring shows its current status — Builder researches, Merchant fulfils, Social ships campaigns. Hover for the latest activity.",
+      "Three bots, one mission. Builder builds your store, Merchant runs it, Social grows it. Click any bot card to open its cockpit or start a chat.",
     Icon: Bot,
     accent: "text-cyan-300",
     accentBg: "bg-cyan-500/15 border-cyan-500/30",

@@ -1130,3 +1130,29 @@
 - [x] Auto-select first valid store when persisted ID is stale/deleted
 - [x] Fix ReactFlow container height warning on Command Center (explicit height on both Home.tsx and InfraTopology.tsx)
 - [x] WorkspaceContext now uses trpc.stores.list to validate on mount — stale IDs auto-corrected
+
+## Sprint 14: Drag-and-Drop Workflow Canvas
+
+- [ ] Audit current Home.tsx ReactFlow node types and canvas architecture
+- [ ] Create WorkflowCanvas.tsx — dedicated drag-and-drop canvas component
+- [ ] Build NodePalette sidebar with draggable step types (LLM Call, API Call, Approval Gate, Store Action, Notification, Analysis)
+- [ ] Custom node types: WorkflowStepNode with handles, status badge, title/description editing
+- [ ] Enable onDrop + onDragOver to place nodes from palette onto canvas
+- [ ] Enable edge drawing between nodes (connect handles)
+- [ ] Node config panel: click a node to edit its title, stepType, prompt/endpoint/action
+- [ ] Delete node/edge via keyboard (Backspace/Delete) or context menu
+- [ ] Save canvas as custom workflow (POST to workflows.launch with custom steps)
+- [ ] Launch button to immediately run the built workflow
+- [ ] Add /workflow-builder route and sidebar nav entry
+
+## Sprint 14: Full Design & Layout Audit
+
+- [x] Remove ReactFlow node map from Command Center entirely
+- [x] Replace with live ops dashboard: 3-col grid (Bot Status cards, Workflow Feed, Store Health), KPI strip, activity ticker, recommended workflows
+- [x] Update FirstRunTour copy to match new ops dashboard (no more node map references)
+- [x] Architect page: already solid — proper empty states, inspector panel, loading skeletons
+- [x] Merchant page: already solid — proper empty states, store selector, product/order tables
+- [x] Social page: already solid — tabbed tool surfaces, empty states
+- [x] Workflows page: already solid — stats row, live runner, retry/rerun, empty states
+- [x] Inbox/Storefronts/Insights/Settings: all use PageHeader consistently, no gaps found
+- [x] Global: consistent spacing, typography, card styles confirmed across all pages
