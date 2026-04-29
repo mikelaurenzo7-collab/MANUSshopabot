@@ -24,10 +24,15 @@ export const stripeRouter = router({
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
     const user = await db.getUserByOpenId(ctx.user.openId);
     if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+    // Founder bypass: mlaurenzo8@gmail.com always has active Scale plan
+    const isFounder = user.email === "mlaurenzo8@gmail.com";
+    const plan = isFounder ? "scale" : (user.stripePlan ?? null);
+    const status = isFounder ? "active" : (user.stripeSubscriptionStatus ?? null);
+    const isActive = isFounder || user.stripeSubscriptionStatus === "active" || user.stripeSubscriptionStatus === "trialing";
     return {
-      plan: user.stripePlan ?? null,
-      status: user.stripeSubscriptionStatus ?? null,
-      isActive: user.stripeSubscriptionStatus === "active" || user.stripeSubscriptionStatus === "trialing",
+      plan,
+      status,
+      isActive,
       customerId: user.stripeCustomerId ?? null,
       subscriptionId: user.stripeSubscriptionId ?? null,
     };
@@ -49,6 +54,11 @@ export const stripeRouter = router({
 
       const user = await db.getUserByOpenId(ctx.user.openId);
       if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Founder bypass: mlaurenzo8@gmail.com cannot checkout (already has free access)
+      if (user.email === "mlaurenzo8@gmail.com") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Founder account has unlimited access — no checkout needed." });
+      }
 
       // Reuse existing Stripe customer or create a new one
       let customerId = user.stripeCustomerId ?? undefined;

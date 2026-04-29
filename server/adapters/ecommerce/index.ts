@@ -18,6 +18,13 @@ export { EtsyAdapter } from "./etsyAdapter";
 export { EbayAdapter } from "./ebayAdapter";
 export { TikTokShopAdapter } from "./tiktokShopAdapter";
 export { WalmartAdapter } from "./walmartAdapter";
+export { DepopAdapter } from "./depopAdapter";
+export { BigCommerceAdapter } from "./bigcommerceAdapter";
+export { SquareAdapter } from "./squareAdapter";
+export { FaireAdapter } from "./faireAdapter";
+export { BonanzaAdapter } from "./bonanzaAdapter";
+export { StockXAdapter } from "./stockxAdapter";
+export { ReverbAdapter } from "./reverbAdapter";
 
 import type { EcommercePlatformAdapter } from "./types";
 import { ShopifyAdapter } from "./shopifyAdapter";
@@ -27,6 +34,13 @@ import { EtsyAdapter } from "./etsyAdapter";
 import { EbayAdapter } from "./ebayAdapter";
 import { TikTokShopAdapter } from "./tiktokShopAdapter";
 import { WalmartAdapter } from "./walmartAdapter";
+import { DepopAdapter } from "./depopAdapter";
+import { BigCommerceAdapter } from "./bigcommerceAdapter";
+import { SquareAdapter } from "./squareAdapter";
+import { FaireAdapter } from "./faireAdapter";
+import { BonanzaAdapter } from "./bonanzaAdapter";
+import { StockXAdapter } from "./stockxAdapter";
+import { ReverbAdapter } from "./reverbAdapter";
 
 // Singleton instances per platform (adapters are stateless)
 const adapters: Record<string, EcommercePlatformAdapter> = {
@@ -37,6 +51,13 @@ const adapters: Record<string, EcommercePlatformAdapter> = {
   ebay: new EbayAdapter(),
   tiktok_shop: new TikTokShopAdapter(),
   walmart: new WalmartAdapter(),
+  depop: new DepopAdapter(),
+  bigcommerce: new BigCommerceAdapter(),
+  square: new SquareAdapter(),
+  faire: new FaireAdapter(),
+  bonanza: new BonanzaAdapter(),
+  stockx: new StockXAdapter(),
+  reverb: new ReverbAdapter(),
 };
 
 /**

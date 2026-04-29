@@ -947,3 +947,20 @@
 - [ ] Fix any gaps, missing handlers, or error paths
 - [ ] Create polished production-ready OAuth setup guide
 - [ ] Final end-to-end testing
+
+## Sprint 27: Platform Adapter Implementation & Shopify OAuth Fix
+- [x] Fix Shopify OAuth redirect_uri mismatch (Cloud Run internal URL vs custom domain)
+- [x] Create Depop adapter (server/adapters/ecommerce/depopAdapter.ts)
+- [x] Create BigCommerce adapter (server/adapters/ecommerce/bigcommerceAdapter.ts)
+- [x] Create Square adapter (server/adapters/ecommerce/squareAdapter.ts)
+- [x] Create Faire adapter (server/adapters/ecommerce/faireAdapter.ts)
+- [x] Create Bonanza adapter (server/adapters/ecommerce/bonanzaAdapter.ts)
+- [x] Create StockX adapter (server/adapters/ecommerce/stockxAdapter.ts)
+- [x] Create Reverb adapter (server/adapters/ecommerce/reverbAdapter.ts)
+- [x] Register all 7 new adapters in ecommerce/index.ts
+- [ ] Update setup guide with Shopify redirect URI fix
+- [x] Verify TypeScript compiles cleanly with all new adapters
+- [x] Clean up duplicate store connections (keep only 1 per store)
+- [x] Clear all existing workflows from founder account
+- [x] Add founder account subscription bypass (all tiers free for dogfood testing)
+- [ ] Update setup guide with Shopify redirect URI fix info

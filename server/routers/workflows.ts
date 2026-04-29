@@ -37,8 +37,10 @@ export const workflowRouter = router({
       // The Revenue Moat: hard enforcement when a real DB user exists.
       // `trialing` is honored — Phase 1.2 wired Stripe trials so new
       // signups get 7 days before this gate fires.
+      // Founder bypass: mlaurenzo8@gmail.com always passes
       if (dbUser) {
-        const isSubscribed = dbUser.stripeSubscriptionStatus === "active" || dbUser.stripeSubscriptionStatus === "trialing";
+        const isFounder = dbUser.email === "mlaurenzo8@gmail.com";
+        const isSubscribed = isFounder || dbUser.stripeSubscriptionStatus === "active" || dbUser.stripeSubscriptionStatus === "trialing";
         if (!isSubscribed) {
           throw new TRPCError({
             code: "FORBIDDEN",
