@@ -70,11 +70,11 @@ export default function SettingsPage() {
       />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5 relative">
-        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Profile</TabsTrigger>
-          <TabsTrigger value="members" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Members</TabsTrigger>
-          <TabsTrigger value="bots" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Bot Settings</TabsTrigger>
-          {isAdmin && <TabsTrigger value="platform" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Platform Health</TabsTrigger>}
+        <TabsList>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="bots">Bot Settings</TabsTrigger>
+          {isAdmin && <TabsTrigger value="platform">Platform Health</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="profile" className="mt-3">

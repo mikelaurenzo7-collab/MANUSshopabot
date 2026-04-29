@@ -375,16 +375,16 @@ export default function Workflows() {
 
       {/* Tabs */}
       <Tabs defaultValue="active">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="active" className="data-[state=active]:bg-white/10">
+        <TabsList>
+          <TabsTrigger value="active" className="data-[state=active]:bg-violet-500/[0.12] data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/[0.18] data-[state=active]:shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_0_12px_rgba(139,92,246,0.06)]">
             Active
             {(activeWorkflows?.length ?? 0) > 0 && (
-              <Badge className="ml-1.5 bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0">
+              <Badge className="ml-1.5 bg-violet-500/20 text-violet-300 text-[10px] px-1.5 py-0">
                 {activeWorkflows?.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-white/10">
+          <TabsTrigger value="history" className="data-[state=active]:bg-violet-500/[0.12] data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/[0.18] data-[state=active]:shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_0_12px_rgba(139,92,246,0.06)]">
             History
           </TabsTrigger>
         </TabsList>

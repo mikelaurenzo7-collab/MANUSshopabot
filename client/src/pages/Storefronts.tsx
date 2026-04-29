@@ -54,7 +54,7 @@ export default function StorefrontsPage() {
       />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
-        <TabsList className="bg-secondary/50">
+        <TabsList>
           <TabsTrigger value="integrations">Connections</TabsTrigger>
           <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
           <TabsTrigger value="plugins">Plugins</TabsTrigger>

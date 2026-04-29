@@ -301,7 +301,6 @@ export default function Intelligence() {
 
       <Tabs defaultValue="anomalies" className="space-y-4">
         <TabsList
-          className="bg-secondary/40 border border-border/40"
           role="tablist"
           aria-label="Intelligence sections"
         >
@@ -309,14 +308,13 @@ export default function Intelligence() {
             value="anomalies"
             role="tab"
             aria-selected={true}
-            className="data-[state=active]:bg-sky-600"
           >
             Anomalies {allAnomalies.length > 0 && <Badge className="ml-1.5 bg-red-500/30 text-red-300 text-[10px]">{allAnomalies.length}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="platforms" role="tab" className="data-[state=active]:bg-sky-600">Platform Breakdown</TabsTrigger>
-          <TabsTrigger value="buybox" role="tab" className="data-[state=active]:bg-sky-600">Buy Box Monitor</TabsTrigger>
-          <TabsTrigger value="controls" role="tab" className="data-[state=active]:bg-sky-600">Automation Controls</TabsTrigger>
-          <TabsTrigger value="dlq" role="tab" className="data-[state=active]:bg-sky-600">Dead-Letter Queue</TabsTrigger>
+          <TabsTrigger value="platforms" role="tab">Platform Breakdown</TabsTrigger>
+          <TabsTrigger value="buybox" role="tab">Buy Box Monitor</TabsTrigger>
+          <TabsTrigger value="controls" role="tab">Automation Controls</TabsTrigger>
+          <TabsTrigger value="dlq" role="tab">Dead-Letter Queue</TabsTrigger>
         </TabsList>
 
         {/* Anomalies Tab */}
