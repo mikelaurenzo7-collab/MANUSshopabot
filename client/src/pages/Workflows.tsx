@@ -284,6 +284,9 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const VIOLET_TAB =
+  "data-[state=active]:bg-violet-500/[0.12] data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/[0.18] data-[state=active]:shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_0_12px_rgba(139,92,246,0.06)]";
+
 export default function Workflows() {
   const utils = trpc.useUtils();
 
@@ -376,7 +379,7 @@ export default function Workflows() {
       {/* Tabs */}
       <Tabs defaultValue="active">
         <TabsList>
-          <TabsTrigger value="active" className="data-[state=active]:bg-violet-500/[0.12] data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/[0.18] data-[state=active]:shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_0_12px_rgba(139,92,246,0.06)]">
+          <TabsTrigger value="active" className={VIOLET_TAB}>
             Active
             {(activeWorkflows?.length ?? 0) > 0 && (
               <Badge className="ml-1.5 bg-violet-500/20 text-violet-300 text-[10px] px-1.5 py-0">
@@ -384,7 +387,7 @@ export default function Workflows() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-violet-500/[0.12] data-[state=active]:text-violet-200 data-[state=active]:border-violet-500/[0.18] data-[state=active]:shadow-[0_0_0_1px_rgba(139,92,246,0.15),0_0_12px_rgba(139,92,246,0.06)]">
+          <TabsTrigger value="history" className={VIOLET_TAB}>
             History
           </TabsTrigger>
         </TabsList>
