@@ -652,9 +652,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505]/80 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 main-ambient-animate" />
-        {children}
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505] overflow-hidden">
+        {/* Ambient decorative layer — must stay behind content with z-index: -1 */}
+        <div className="pointer-events-none absolute inset-0 z-[-1] main-ambient-animate" aria-hidden="true" />
+        {/* Scrollable content wrapper */}
+        <div className="relative z-[1] flex-1 flex flex-col min-h-0 overflow-y-auto">
+          {children}
+        </div>
       </main>
 
       {/* Keyboard shortcut help overlay (toggled by `?`) */}

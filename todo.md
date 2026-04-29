@@ -1450,3 +1450,19 @@
 - [x] TypeScript clean — 0 errors
 - [x] Full test suite passing — 1147 tests, 73 files
 - [x] Save checkpoint with precision cohesion fixes
+
+## Sprint 29: Black Overlay Bug Fix + Full Redesign Pass
+- [ ] Diagnose and fix black half-screen overlay bug
+- [ ] Audit all pages for similar layout/z-index issues
+- [ ] Fix scroll content going under overlay
+- [ ] Full redesign pass: typography, spacing, color, hierarchy
+- [ ] Polish sidebar navigation visual hierarchy
+- [ ] Polish all cards with consistent border, shadow, hover
+- [ ] Polish all buttons with consistent states
+- [ ] Polish all inputs and form elements
+- [ ] Polish modals and dialogs
+- [ ] Audit and fix all z-index stacking issues
+- [ ] Ensure no content is clipped or hidden
+- [ ] Test all pages end-to-end
+- [ ] TypeScript clean
+- [ ] Save checkpoint

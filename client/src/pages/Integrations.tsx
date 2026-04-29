@@ -270,7 +270,7 @@ export default function IntegrationsPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-transparent text-slate-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-transparent text-slate-200 min-h-0">
       {/* Compact summary bar */}
       <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between flex-wrap gap-3 bg-white/[0.02]">
         <div>

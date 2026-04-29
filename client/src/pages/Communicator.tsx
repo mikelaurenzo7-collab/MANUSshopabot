@@ -87,7 +87,7 @@ export default function CommunicatorPage() {
   }, [selectedEmailId]);
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-[#050505] text-white flex-col min-h-0">
       {/* Ambient background */}
       <div className="bot-page-ambient bot-page-ambient--social" aria-hidden="true">
         <div className="bot-page-ambient-grid" />

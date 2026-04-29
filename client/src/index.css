@@ -619,12 +619,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     animation: page-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-  .page-enter > * {
-    overflow-y: auto;
+    min-height: 0;
     flex: 1;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Standardized padding system ──────────────────────────────────────── */
@@ -4429,7 +4428,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
       radial-gradient(ellipse 65% 50% at 14% 8%, rgba(14, 165, 233, 0.09), transparent 55%),
       radial-gradient(ellipse 55% 45% at 88% 14%, rgba(6, 182, 212, 0.06), transparent 55%),
       radial-gradient(ellipse 45% 40% at 52% 92%, rgba(249, 115, 22, 0.06), transparent 55%);
-    z-index: 0;
+    z-index: -1;
     will-change: transform, opacity;
     animation: app-aurora-drift 32s ease-in-out infinite alternate;
   }

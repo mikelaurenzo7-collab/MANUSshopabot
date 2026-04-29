@@ -168,7 +168,7 @@ export default function Home() {
   ].slice(0, 8);
 
   return (
-    <div className="page-enter flex flex-col h-full w-full bg-[#050505]/70 overflow-hidden relative">
+    <div className="page-enter flex flex-col w-full bg-[#050505]/70 relative">
       {/* Builder→Merchant handoff celebration */}
       {handoffStore && (
         <HandoffMoment

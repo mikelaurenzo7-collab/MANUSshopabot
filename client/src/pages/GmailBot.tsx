@@ -105,7 +105,7 @@ export default function GmailBot() {
   }, [autoReplyQuery.data, selectedTab]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full min-h-0">
       <div className="space-y-3 overflow-y-auto flex-1 p-3">
       {/* Inner tabs — parent shell renders the page header */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
