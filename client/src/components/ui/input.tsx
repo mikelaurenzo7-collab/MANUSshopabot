@@ -54,9 +54,9 @@ function Input({
       type={type}
       data-slot="input"
       className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-8 w-full min-w-0 rounded-md border bg-transparent px-2.5 py-1 text-[13px] shadow-xs transition-all duration-[var(--duration-base)] ease-[var(--ease-standard)] outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-[13px]",
-        "hover:border-white/20 hover:bg-white/[0.02]",
-        "focus-visible:border-sky-500/50 focus-visible:ring-sky-500/20 focus-visible:ring-[3px] focus-visible:bg-white/[0.05]",
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-8 w-full min-w-0 rounded-md border bg-white/[0.01] px-2.5 py-1 text-[13px] shadow-xs transition-all duration-[var(--duration-base)] ease-[var(--ease-standard)] outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-xs file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-white/[0.01] md:text-[13px]",
+        "hover:border-white/25 hover:bg-white/[0.04] hover:shadow-sm",
+        "focus-visible:border-sky-500/60 focus-visible:ring-sky-500/25 focus-visible:ring-[3px] focus-visible:bg-white/[0.08] focus-visible:shadow-md",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
