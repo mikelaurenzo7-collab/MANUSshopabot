@@ -10,7 +10,7 @@
  * Reads `workflows.detail` and polls every 3s while running.
  * Auto-stops polling once the workflow lands in a terminal state.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
@@ -35,6 +35,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Wrench,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -240,40 +241,75 @@ export function LiveWorkflowRunner({ workflowId }: { workflowId: number }) {
 
       {/* Step rail */}
       <ol className="live-workflow-runner-rail">
-        {stepStates.map((s: any, i: number) => {
-          const Glyph = STEP_GLYPH[s.stepType as StepType] || Cpu;
-          return (
-            <li key={s.id} className={`live-workflow-runner-step live-workflow-runner-step--${s.phase}`}>
-              <div className="live-workflow-runner-step-glyph" aria-hidden="true">
-                {s.phase === "done" && <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.4} />}
-                {s.phase === "running" && <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2.4} />}
-                {s.phase === "awaiting" && <Pause className="w-3.5 h-3.5" strokeWidth={2.4} />}
-                {s.phase === "failed" && <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.4} />}
-                {s.phase === "upcoming" && <Glyph className="w-3.5 h-3.5" strokeWidth={2} />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="live-workflow-runner-step-title">{s.title}</span>
-                  <span className="live-workflow-runner-step-type">{prettyStepType(s.stepType)}</span>
-                  {s.requiresApproval && (
-                    <span className="live-workflow-runner-step-gate">approval-gated</span>
-                  )}
-                  <CookbookBadges output={s.output} />
-                </div>
-                {s.description && (
-                  <p className="live-workflow-runner-step-desc">{s.description}</p>
-                )}
-              </div>
-              {/* Vertical edge connecting to the next step. The CSS
-                  paints it as a flowing dash when the next step is
-                  running so the eye follows execution. */}
-              {i < stepStates.length - 1 && <span className="live-workflow-runner-step-edge" aria-hidden="true" />}
-            </li>
-          );
-        })}
+        {stepStates.map((s: any, i: number) => (
+          <RunnerStep
+            key={s.id}
+            step={s}
+            isLast={i === stepStates.length - 1}
+          />
+        ))}
       </ol>
     </div>
   );
+}
+
+function RunnerStep({ step: s, isLast }: { step: any; isLast: boolean }) {
+  const Glyph = STEP_GLYPH[s.stepType as StepType] || Cpu;
+  const hasCookbookDetail = stepHasCookbookDetail(s.output);
+  const [expanded, setExpanded] = useState(false);
+  const toggle = useCallback(() => setExpanded((v) => !v), []);
+  return (
+    <li className={`live-workflow-runner-step live-workflow-runner-step--${s.phase}`}>
+      <div className="live-workflow-runner-step-glyph" aria-hidden="true">
+        {s.phase === "done" && <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.4} />}
+        {s.phase === "running" && <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2.4} />}
+        {s.phase === "awaiting" && <Pause className="w-3.5 h-3.5" strokeWidth={2.4} />}
+        {s.phase === "failed" && <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.4} />}
+        {s.phase === "upcoming" && <Glyph className="w-3.5 h-3.5" strokeWidth={2} />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="live-workflow-runner-step-title">{s.title}</span>
+          <span className="live-workflow-runner-step-type">{prettyStepType(s.stepType)}</span>
+          {s.requiresApproval && (
+            <span className="live-workflow-runner-step-gate">approval-gated</span>
+          )}
+          <CookbookBadges output={s.output} />
+          {hasCookbookDetail && (
+            <button
+              type="button"
+              onClick={toggle}
+              className={`live-workflow-runner-cookbook-toggle ${expanded ? "is-open" : ""}`}
+              aria-expanded={expanded}
+              aria-label={expanded ? "Hide cookbook details" : "Show cookbook details"}
+            >
+              <ChevronDown className="w-3 h-3" strokeWidth={2.4} aria-hidden="true" />
+              <span>{expanded ? "Hide details" : "Show details"}</span>
+            </button>
+          )}
+        </div>
+        {s.description && (
+          <p className="live-workflow-runner-step-desc">{s.description}</p>
+        )}
+        {expanded && hasCookbookDetail && <CookbookDetail output={s.output} />}
+      </div>
+      {/* Vertical edge connecting to the next step. The CSS paints it
+          as a flowing dash when the next step is running so the eye
+          follows execution. */}
+      {!isLast && <span className="live-workflow-runner-step-edge" aria-hidden="true" />}
+    </li>
+  );
+}
+
+function stepHasCookbookDetail(output: any): boolean {
+  if (!output || typeof output !== "object") return false;
+  const reflect = output.__reflect;
+  const multi = output.__multiDraft;
+  const agent = output.__agentLoop;
+  if (reflect && Array.isArray(reflect.critique) && reflect.critique.length > 0) return true;
+  if (multi && (multi.judgeReasoning || (Array.isArray(multi?.allDrafts) && multi.allDrafts.length > 0))) return true;
+  if (agent && Array.isArray(agent.toolCalls) && agent.toolCalls.length > 0) return true;
+  return false;
 }
 
 function RunnerStatusPill({ status }: { status: RunnerStatus }) {
@@ -357,6 +393,153 @@ function CookbookBadges({ output }: { output: any }) {
         </span>
       )}
     </span>
+  );
+}
+
+/**
+ * Cookbook detail panel — the operator-facing surface for the audit
+ * data the recipes attach to step outputs. Renders only the sections
+ * that have content; an output with no recipe payload renders nothing.
+ *
+ * Three independently-rendering blocks:
+ *   • Reflect critique — list of {issue, severity, fix} objects, with
+ *     severity-driven coloring so blockers stand out.
+ *   • Multi-draft personas — chosen persona + judge reasoning, plus a
+ *     compact list of all drafts the judge considered.
+ *   • Agent-loop trail — per-iteration tool-call timeline so operators
+ *     see exactly which tools the agent dispatched and what came back.
+ *
+ * Defensive against partial / malformed payloads — the workflow's
+ * step.output is JSON from the DB, and shape can drift across
+ * cookbook recipe versions. Each block guards its inputs.
+ */
+function CookbookDetail({ output }: { output: any }) {
+  const reflect = output?.__reflect;
+  const multi = output?.__multiDraft;
+  const agent = output?.__agentLoop;
+  return (
+    <div className="live-workflow-runner-cookbook-detail">
+      {reflect && Array.isArray(reflect.critique) && reflect.critique.length > 0 && (
+        <ReflectCritiqueBlock critique={reflect.critique} />
+      )}
+      {multi && (multi.chosenPersona || (Array.isArray(multi.allDrafts) && multi.allDrafts.length > 0)) && (
+        <MultiDraftBlock multi={multi} />
+      )}
+      {agent && Array.isArray(agent.toolCalls) && agent.toolCalls.length > 0 && (
+        <AgentTrailBlock agent={agent} />
+      )}
+    </div>
+  );
+}
+
+function ReflectCritiqueBlock({ critique }: { critique: any[] }) {
+  // Group by severity so blockers float to the top — operators care
+  // most about the things the critique pass forced changed.
+  const bySeverity: Record<string, any[]> = { blocker: [], major: [], minor: [] };
+  for (const c of critique) {
+    const sev = String(c?.severity ?? "minor").toLowerCase();
+    (bySeverity[sev] ?? bySeverity.minor).push(c);
+  }
+  const order: Array<["blocker" | "major" | "minor", string]> = [
+    ["blocker", "Blocker"],
+    ["major", "Major"],
+    ["minor", "Minor"],
+  ];
+  return (
+    <section className="live-workflow-runner-cookbook-block is-reflect">
+      <header className="live-workflow-runner-cookbook-block-head">
+        <Sparkles className="w-3 h-3" strokeWidth={2.4} aria-hidden="true" />
+        <span>Reflect critique — {critique.length} issue{critique.length === 1 ? "" : "s"} addressed</span>
+      </header>
+      <ul className="live-workflow-runner-cookbook-issues">
+        {order.flatMap(([sev, label]) =>
+          bySeverity[sev].map((c, i) => (
+            <li key={`${sev}-${i}`} className={`live-workflow-runner-cookbook-issue is-${sev}`}>
+              <span className="live-workflow-runner-cookbook-issue-sev">{label}</span>
+              <div className="min-w-0">
+                <p className="live-workflow-runner-cookbook-issue-text">{String(c?.issue ?? "")}</p>
+                {c?.fix && (
+                  <p className="live-workflow-runner-cookbook-issue-fix">→ {String(c.fix)}</p>
+                )}
+              </div>
+            </li>
+          )),
+        )}
+      </ul>
+    </section>
+  );
+}
+
+function MultiDraftBlock({ multi }: { multi: any }) {
+  const drafts = Array.isArray(multi?.allDrafts) ? multi.allDrafts : [];
+  return (
+    <section className="live-workflow-runner-cookbook-block is-multi">
+      <header className="live-workflow-runner-cookbook-block-head">
+        <Layers className="w-3 h-3" strokeWidth={2.4} aria-hidden="true" />
+        <span>
+          Multi-draft — judge picked
+          {multi?.chosenPersona ? (
+            <> <strong>{String(multi.chosenPersona)}</strong></>
+          ) : (
+            " a draft"
+          )}
+          {drafts.length > 0 && <> from {drafts.length}</>}
+        </span>
+      </header>
+      {multi?.judgeReasoning && (
+        <p className="live-workflow-runner-cookbook-judge">{String(multi.judgeReasoning)}</p>
+      )}
+      {drafts.length > 0 && (
+        <ul className="live-workflow-runner-cookbook-personas">
+          {drafts.map((d: any, i: number) => {
+            const isWinner = d?.persona && d.persona === multi?.chosenPersona;
+            return (
+              <li
+                key={`${d?.persona ?? i}-${i}`}
+                className={`live-workflow-runner-cookbook-persona ${isWinner ? "is-winner" : ""}`}
+              >
+                <span className="live-workflow-runner-cookbook-persona-label">{String(d?.persona ?? `draft ${i + 1}`)}</span>
+                {isWinner && <span className="live-workflow-runner-cookbook-persona-tag">winner</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function AgentTrailBlock({ agent }: { agent: any }) {
+  const calls = Array.isArray(agent?.toolCalls) ? agent.toolCalls : [];
+  return (
+    <section className="live-workflow-runner-cookbook-block is-agent">
+      <header className="live-workflow-runner-cookbook-block-head">
+        <Wrench className="w-3 h-3" strokeWidth={2.4} aria-hidden="true" />
+        <span>
+          Agent trail — {agent?.iterations ?? "?"} iteration{agent?.iterations === 1 ? "" : "s"}, {calls.length} tool call{calls.length === 1 ? "" : "s"}
+          {agent?.hitIterationCap && <span className="live-workflow-runner-cookbook-cap"> · hit cap</span>}
+        </span>
+      </header>
+      <ol className="live-workflow-runner-cookbook-trail">
+        {calls.map((c: any, i: number) => (
+          <li
+            key={i}
+            className={`live-workflow-runner-cookbook-trail-row ${c?.isError ? "is-error" : ""}`}
+          >
+            <span className="live-workflow-runner-cookbook-trail-iter">#{c?.iteration ?? "?"}</span>
+            <span className="live-workflow-runner-cookbook-trail-name">{String(c?.toolName ?? "tool")}</span>
+            {c?.category && (
+              <span className="live-workflow-runner-cookbook-trail-cat">{String(c.category)}</span>
+            )}
+            <span className="live-workflow-runner-cookbook-trail-snippet">
+              {c?.isError ? "✗ " : ""}
+              {String(c?.resultSnippet ?? "").slice(0, 120)}
+              {String(c?.resultSnippet ?? "").length > 120 ? "…" : ""}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

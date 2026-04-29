@@ -1072,3 +1072,78 @@ Recommend a clear go/no-go on each.`,
     },
   ];
 });
+
+// ─── Autonomous Repricer ───────────────────────────────────────────────────
+//
+// Cookbook recipe — autonomous tool-use agent. Hands the agent a SKU
+// list + competitor band + target margin and lets it walk the catalog
+// one SKU at a time: snapshot → triangulate → propose. Moves >25%
+// auto-promote to flag_for_approval per platform policy (the toolset's
+// dispatcher enforces this even if the agent's reasoning would
+// otherwise paper over the gate).
+//
+// The audit trail (__agentLoop on the step output) shows every SKU
+// the agent touched and the action it proposed for each — perfect
+// for the operator's "what did the bot actually decide?" review.
+//
+// Followed by an approval_gate so flag_for_approval recommendations
+// hit the merchant's Inbox before any price actually changes.
+
+registerWorkflow("autonomous_repricer", (input): WorkflowStepDefinition[] => {
+  const skus = Array.isArray(input.skus) ? (input.skus as string[]) : [];
+  const targetMarginPct = Number(input.targetMarginPct ?? 40);
+  const platform = (input.platform as string | undefined)?.toLowerCase() ?? "shopify";
+  const skuList = skus.length > 0 ? skus.slice(0, 25).join(", ") : "the merchant's top-velocity SKUs (use the catalog you have access to)";
+
+  return [
+    {
+      stepType: "llm_call",
+      title: "Autonomous Repricing Pass",
+      description: `Agent walks ${skus.length || "top-velocity"} SKUs and proposes a repricing decision for each.`,
+      input: {
+        useAgentLoop: true,
+        agentToolset: "merchant.repricer_v0",
+        cacheSystemPrompt: true,
+        effort: "high",
+        // 18 iterations covers ~5 SKUs × 3 tools each, with slack for
+        // the agent to revisit a SKU if the first triangulation came
+        // back ambiguous. Anything beyond is the agent thrashing.
+        maxIterations: 18,
+        systemPrompt: composeSystemPrompt(
+          `You are an autonomous repricer. For each SKU in the operator's list:
+1. Call get_sku_snapshot to read current price, cost, velocity, days-of-stock.
+2. Call get_competitor_band on the SKU's category + platform.
+3. Decide the action:
+   - hold: SKU is at-band and margin is healthy.
+   - raise: SKU is below the band median AND velocity is healthy AND raise stays within target margin.
+   - drop: SKU is above band max AND velocity is weak.
+   - flag_for_approval: any move >25%, or any change on a regulated category. Always pick this when in doubt.
+4. Call propose_repricing once per SKU with the decision + a one-sentence justification.
+
+Apply the FEE-STRUCTURE AWARENESS rule from the platform preamble — net any margin claim against marketplace commission on commission-fee platforms.`,
+        ),
+        userPrompt: `Reprice these SKUs on ${platform} with a ${targetMarginPct}% target margin: ${skuList}.
+
+Walk the catalog one SKU at a time. Show your work — for each SKU, briefly note the snapshot, the competitor band, and the action chosen. End with a one-paragraph summary of what changed and what hit the approval queue.`,
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Approve flagged repricing decisions",
+      description: "Review SKU repricing decisions the agent flagged for approval before they apply.",
+      requiresApproval: true,
+    },
+    {
+      stepType: "notification",
+      title: "Autonomous repricing complete",
+      description: "Repricing decisions emitted. Flagged moves are in your approval queue.",
+      input: {
+        title: `Autonomous repricer pass — ${platform}`,
+        message: `Merchant Bot autonomously walked your SKUs and emitted a repricing decision for each. Hold/raise/drop decisions auto-applied; moves flagged for approval are in your Inbox.`,
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

@@ -210,3 +210,285 @@ registerAgentToolset("architect.competitor_stalker_v0", {
   tools: COMPETITOR_STALKER_TOOLS,
   dispatch: competitorStalkerDispatch,
 });
+
+// ─── Toolset: merchant.repricer_v0 ─────────────────────────────────────────
+//
+// Autonomous repricer agent. Walks the merchant's catalog one SKU at
+// a time: fetches current price + cost + recent velocity, checks where
+// the SKU sits vs. the live competitor band, and emits a structured
+// repricing decision (hold / raise / drop / flag-for-approval). The
+// "flag-for-approval" branch hits the workflow's approval gate
+// downstream rather than auto-applying — moves >25% always require
+// human sign-off per platform policy.
+//
+// Three tools, each independently useful:
+//   • get_sku_snapshot — current price, cost, days-of-stock, recent
+//     velocity. The base data the decision is grounded in.
+//   • get_competitor_band — typical price range for the SKU's
+//     category on the merchant's primary platform. Drives whether
+//     "hold" is the right call.
+//   • propose_repricing — writes the decision into a structured
+//     {action, newPriceUsd, justification, requiresApproval} blob
+//     the workflow's downstream approval gate consumes.
+//
+// V0 dispatcher returns deterministic synthesized data. V1 swaps to
+// live store + competitor adapters.
+
+const REPRICER_TOOLS: AgentTool[] = [
+  {
+    name: "get_sku_snapshot",
+    description:
+      "Fetch the merchant's current snapshot for a SKU — current price (USD), cost (USD), days-of-stock, and last-30-day velocity (units/day). Use this first, once per SKU.",
+    category: "lookup",
+    input_schema: {
+      type: "object",
+      properties: {
+        sku: { type: "string" },
+      },
+      required: ["sku"],
+    },
+  },
+  {
+    name: "get_competitor_band",
+    description:
+      "Fetch the typical competitor price band (USD min / median / max) for a SKU's category on the merchant's primary platform. Use after get_sku_snapshot to triangulate where the SKU sits vs. the market.",
+    category: "research",
+    input_schema: {
+      type: "object",
+      properties: {
+        sku: { type: "string" },
+        category: { type: "string" },
+        platform: { type: "string" },
+      },
+      required: ["sku", "category"],
+    },
+  },
+  {
+    name: "propose_repricing",
+    description:
+      "Emit a structured repricing decision for a SKU. action ∈ {hold, raise, drop, flag_for_approval}. Moves >25% must use flag_for_approval per platform policy. Use this once per SKU at the end of the loop.",
+    category: "action",
+    input_schema: {
+      type: "object",
+      properties: {
+        sku: { type: "string" },
+        action: { type: "string", enum: ["hold", "raise", "drop", "flag_for_approval"] },
+        currentPriceUsd: { type: "number" },
+        newPriceUsd: { type: "number" },
+        justification: { type: "string" },
+      },
+      required: ["sku", "action", "currentPriceUsd", "newPriceUsd", "justification"],
+    },
+  },
+];
+
+const repricerDispatch: AgentToolDispatcher = async (toolName, input) => {
+  // Hash SKU into deterministic snapshot + band so tests can assert
+  // on stable shapes without coupling to randomness.
+  const sku = String(input.sku ?? "SKU-0");
+  let h = 0;
+  for (let i = 0; i < sku.length; i++) h = ((h << 5) - h + sku.charCodeAt(i)) | 0;
+  const baseCost = 8 + Math.abs(h % 22);
+  const basePrice = baseCost * (2 + (Math.abs(h) % 100) / 100);
+
+  if (toolName === "get_sku_snapshot") {
+    return {
+      ok: true,
+      sku,
+      currentPriceUsd: Number(basePrice.toFixed(2)),
+      costUsd: Number(baseCost.toFixed(2)),
+      daysOfStock: 14 + Math.abs(h % 30),
+      velocityPerDay: Number((1 + (Math.abs(h) % 50) / 10).toFixed(1)),
+    };
+  }
+
+  if (toolName === "get_competitor_band") {
+    const min = basePrice * 0.85;
+    const max = basePrice * 1.18;
+    return {
+      ok: true,
+      sku,
+      category: String(input.category ?? "general"),
+      platform: String(input.platform ?? "shopify"),
+      bandUsd: {
+        min: Number(min.toFixed(2)),
+        median: Number(((min + max) / 2).toFixed(2)),
+        max: Number(max.toFixed(2)),
+      },
+    };
+  }
+
+  if (toolName === "propose_repricing") {
+    const current = Number(input.currentPriceUsd);
+    const proposed = Number(input.newPriceUsd);
+    const action = String(input.action);
+    const deltaPct = current > 0 ? ((proposed - current) / current) * 100 : 0;
+    // Platform policy: >25% moves require approval. Helper rejects
+    // any "raise" or "drop" that crosses the line — keeps the agent
+    // honest even if its reasoning would otherwise paper over the gate.
+    const violatesPolicy =
+      (action === "raise" || action === "drop") && Math.abs(deltaPct) > 25;
+    return {
+      ok: true,
+      sku,
+      acceptedAction: violatesPolicy ? "flag_for_approval" : action,
+      proposed: {
+        action,
+        currentPriceUsd: current,
+        newPriceUsd: proposed,
+        justification: String(input.justification ?? ""),
+        deltaPct: Number(deltaPct.toFixed(1)),
+      },
+      requiresApproval: violatesPolicy || action === "flag_for_approval",
+      policyNote: violatesPolicy
+        ? "Move > 25% — auto-promoted to flag_for_approval per platform policy."
+        : action === "flag_for_approval"
+          ? "Agent flagged for approval explicitly."
+          : "Within auto-apply policy.",
+    };
+  }
+
+  throw new Error(`Unknown tool: ${toolName}`);
+};
+
+registerAgentToolset("merchant.repricer_v0", {
+  tools: REPRICER_TOOLS,
+  dispatch: repricerDispatch,
+});
+
+// ─── Toolset: social.trend_hunter_v0 ───────────────────────────────────────
+//
+// Autonomous trend hunter. Crawls cross-platform trend signals,
+// scores them against the brand's niche, and shortlists the trends
+// the Social Bot should jump on. Three tools:
+//   • fetch_platform_trends(platform, niche) — top-N rising sounds /
+//     hashtags / formats on a single platform.
+//   • score_trend_relevance(trendName, niche) — niche-fit score 0-100.
+//   • commit_trend_brief(trend) — emits a structured creative brief
+//     the Social Bot's downstream content_calendar workflow can
+//     consume directly.
+//
+// V0 dispatcher returns deterministic synthesized data; v1 reads
+// from live platform analytics adapters.
+
+const TREND_HUNTER_TOOLS: AgentTool[] = [
+  {
+    name: "fetch_platform_trends",
+    description:
+      "Fetch top rising trends (sounds / hashtags / formats) on one platform for a given niche. Call once per platform — TikTok, Instagram, and Twitter typically; Pinterest if the niche is visual-shopping-heavy.",
+    category: "research",
+    input_schema: {
+      type: "object",
+      properties: {
+        platform: { type: "string", enum: ["tiktok", "instagram", "twitter", "pinterest", "youtube"] },
+        niche: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 15, default: 8 },
+      },
+      required: ["platform", "niche"],
+    },
+  },
+  {
+    name: "score_trend_relevance",
+    description:
+      "Score how well a single trend fits the brand's niche on a 0-100 scale. Reject trends below 40 — under that the production cost outweighs the lift. Call once per candidate trend you actually want to evaluate.",
+    category: "analysis",
+    input_schema: {
+      type: "object",
+      properties: {
+        trendName: { type: "string" },
+        niche: { type: "string" },
+      },
+      required: ["trendName", "niche"],
+    },
+  },
+  {
+    name: "commit_trend_brief",
+    description:
+      "Emit a structured creative brief for one trend the Social Bot should hijack. Use only for trends scoring ≥40. The brief feeds the content_calendar workflow downstream.",
+    category: "action",
+    input_schema: {
+      type: "object",
+      properties: {
+        trendName: { type: "string" },
+        platform: { type: "string" },
+        niche: { type: "string" },
+        format: { type: "string", description: "e.g. 'duet', 'remix', 'POV', 'static carousel'" },
+        hookCopy: { type: "string", description: "First-line hook (≤80 chars) tuned to the platform." },
+        ctaCopy: { type: "string" },
+        urgencyHours: { type: "integer", description: "How many hours of relevance the trend has left." },
+      },
+      required: ["trendName", "platform", "niche", "format", "hookCopy", "urgencyHours"],
+    },
+  },
+];
+
+const trendHunterDispatch: AgentToolDispatcher = async (toolName, input) => {
+  const niche = String(input.niche ?? "general");
+
+  if (toolName === "fetch_platform_trends") {
+    const platform = String(input.platform ?? "tiktok");
+    const limit = Math.min(15, Math.max(1, Number(input.limit ?? 8)));
+    // Per-platform deterministic trend names so tests can assert
+    // exactly what came back without snapshot drift.
+    const seedFor: Record<string, string[]> = {
+      tiktok: ["GRWMfor", "softlaunch", "thatGirl", "deinfluencing", "POV", "duet", "transition", "haul", "comfortwatch", "underratedfind"],
+      instagram: ["dumpgrid", "carouselcomeback", "reelcover", "softboard", "asmrunbox", "behindscenes", "ootd", "studyflats", "outfittime", "linkup"],
+      twitter: ["thread", "ratiowatch", "quoteit", "hottakes", "screenshotmoment", "explainer", "context", "receiptthread", "pollcheck", "bookmarkbait"],
+      pinterest: ["moodboard", "outfitstack", "weddingplanning", "homerefresh", "vintageaesthetic", "DIYsimple", "kitchenstaple", "sustainableswap", "neutralpalette", "softlifecore"],
+      youtube: ["shortsdaily", "vlogweek", "sitdownreview", "studyalongsilent", "tutorialminimal", "challenge30day", "essayreact", "podcastclip", "productdeepdive", "asmrproductive"],
+    };
+    const seeds = seedFor[platform] ?? seedFor.tiktok;
+    const trends = seeds.slice(0, limit).map((name, i) => ({
+      name: `${name}_${niche.replace(/\s+/g, "")}`.slice(0, 40),
+      platform,
+      risingPct: 35 + ((i * 17) % 50),
+      sampleCreators: [`@creator_${platform}_${i}`, `@brand_${platform}_${i}`],
+    }));
+    return { ok: true, platform, niche, trends };
+  }
+
+  if (toolName === "score_trend_relevance") {
+    const trendName = String(input.trendName ?? "");
+    let h = 0;
+    for (let i = 0; i < (trendName + niche).length; i++) {
+      h = ((h << 5) - h + (trendName + niche).charCodeAt(i)) | 0;
+    }
+    const score = 30 + Math.abs(h % 70); // 30-99
+    return {
+      ok: true,
+      trendName,
+      niche,
+      score,
+      verdict: score >= 70 ? "high-fit" : score >= 40 ? "worth-testing" : "skip",
+      rationale:
+        score >= 70
+          ? `Trend "${trendName}" maps cleanly to "${niche}" — same audience, same emotional terrain.`
+          : score >= 40
+            ? `Trend "${trendName}" has tangential overlap with "${niche}" — worth a single test post.`
+            : `Trend "${trendName}" doesn't align with "${niche}" — skip; production cost outweighs lift.`,
+    };
+  }
+
+  if (toolName === "commit_trend_brief") {
+    return {
+      ok: true,
+      brief: {
+        trendName: String(input.trendName ?? ""),
+        platform: String(input.platform ?? ""),
+        niche: String(input.niche ?? ""),
+        format: String(input.format ?? "POV"),
+        hookCopy: String(input.hookCopy ?? "").slice(0, 80),
+        ctaCopy: input.ctaCopy ? String(input.ctaCopy).slice(0, 80) : null,
+        urgencyHours: Number(input.urgencyHours ?? 24),
+      },
+      committedAt: new Date().toISOString(),
+    };
+  }
+
+  throw new Error(`Unknown tool: ${toolName}`);
+};
+
+registerAgentToolset("social.trend_hunter_v0", {
+  tools: TREND_HUNTER_TOOLS,
+  dispatch: trendHunterDispatch,
+});

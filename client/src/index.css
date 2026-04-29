@@ -2980,6 +2980,221 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     background: rgba(52, 211, 153, 0.1);
     border: 1px solid rgba(52, 211, 153, 0.3);
   }
+
+  /* Show-details toggle — sits inline with the cookbook pills. The
+   * caret rotates 180° when the panel is open so the affordance is
+   * obvious without doubling the icon weight. */
+  .live-workflow-runner-cookbook-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    padding: 0.05rem 0.4rem;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .live-workflow-runner-cookbook-toggle:hover {
+    color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  .live-workflow-runner-cookbook-toggle svg {
+    transition: transform 180ms ease;
+  }
+  .live-workflow-runner-cookbook-toggle.is-open svg {
+    transform: rotate(180deg);
+  }
+
+  /*
+   * Cookbook detail panel — operator-facing audit surface. Renders below
+   * the step's title block when the toggle is open. Three tinted blocks
+   * matching the pill colors: Reflect = sky, Multi-draft = violet,
+   * Agent = emerald.
+   */
+  .live-workflow-runner-cookbook-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+  }
+  .live-workflow-runner-cookbook-block {
+    border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid;
+  }
+  .live-workflow-runner-cookbook-block.is-reflect {
+    background: rgba(56, 189, 248, 0.05);
+    border-color: rgba(56, 189, 248, 0.2);
+  }
+  .live-workflow-runner-cookbook-block.is-multi {
+    background: rgba(167, 139, 250, 0.05);
+    border-color: rgba(167, 139, 250, 0.2);
+  }
+  .live-workflow-runner-cookbook-block.is-agent {
+    background: rgba(52, 211, 153, 0.05);
+    border-color: rgba(52, 211, 153, 0.2);
+  }
+  .live-workflow-runner-cookbook-block-head {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.35rem;
+  }
+  .live-workflow-runner-cookbook-cap {
+    color: rgb(251, 191, 36);
+    font-weight: 700;
+  }
+
+  /* Reflect critique list */
+  .live-workflow-runner-cookbook-issues {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .live-workflow-runner-cookbook-issue {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .live-workflow-runner-cookbook-issue-sev {
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 0.05rem 0.35rem;
+    margin-top: 1px;
+  }
+  .live-workflow-runner-cookbook-issue.is-blocker .live-workflow-runner-cookbook-issue-sev {
+    color: rgb(252, 165, 165);
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+  }
+  .live-workflow-runner-cookbook-issue.is-major .live-workflow-runner-cookbook-issue-sev {
+    color: rgb(253, 186, 116);
+    background: rgba(251, 146, 60, 0.15);
+    border: 1px solid rgba(251, 146, 60, 0.35);
+  }
+  .live-workflow-runner-cookbook-issue.is-minor .live-workflow-runner-cookbook-issue-sev {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .live-workflow-runner-cookbook-issue-text {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+  }
+  .live-workflow-runner-cookbook-issue-fix {
+    color: rgba(255, 255, 255, 0.55);
+    margin: 2px 0 0 0;
+    font-size: 11px;
+  }
+
+  /* Multi-draft personas */
+  .live-workflow-runner-cookbook-judge {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 0 0 0.4rem 0;
+  }
+  .live-workflow-runner-cookbook-personas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .live-workflow-runner-cookbook-persona {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+  }
+  .live-workflow-runner-cookbook-persona.is-winner {
+    color: rgb(196, 181, 253);
+    background: rgba(167, 139, 250, 0.15);
+    border-color: rgba(167, 139, 250, 0.4);
+  }
+  .live-workflow-runner-cookbook-persona-tag {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* Agent-loop trail */
+  .live-workflow-runner-cookbook-trail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .live-workflow-runner-cookbook-trail-row {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr;
+    gap: 0.5rem;
+    align-items: baseline;
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .live-workflow-runner-cookbook-trail-row.is-error {
+    color: rgb(252, 165, 165);
+  }
+  .live-workflow-runner-cookbook-trail-iter {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: rgba(255, 255, 255, 0.4);
+    min-width: 1.5rem;
+  }
+  .live-workflow-runner-cookbook-trail-name {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .live-workflow-runner-cookbook-trail-cat {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 3px;
+    padding: 0 0.3rem;
+  }
+  .live-workflow-runner-cookbook-trail-snippet {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .live-workflow-runner-step-desc {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.55);

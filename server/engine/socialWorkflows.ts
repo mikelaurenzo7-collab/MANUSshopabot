@@ -1134,3 +1134,65 @@ registerWorkflow("send_time_optimizer", (input): WorkflowStepDefinition[] => {
     },
   ];
 });
+
+// ─── Autonomous Trend Hunter ───────────────────────────────────────────────
+//
+// Cookbook recipe — autonomous tool-use agent. Crawls cross-platform
+// trend signals and shortlists the trends the Social Bot should
+// hijack. Three-tool loop:
+//   1. fetch_platform_trends per platform (1× each).
+//   2. score_trend_relevance on the most promising candidates.
+//   3. commit_trend_brief on every trend scoring ≥40 (worth-testing
+//      threshold from the rubric).
+//
+// Followed by a content_calendar pass that consumes the briefs as
+// the next 7 days of posting plan.
+
+registerWorkflow("autonomous_trend_hunter", (input): WorkflowStepDefinition[] => {
+  const niche = String(input.niche ?? "general").trim();
+  const platforms = Array.isArray(input.platforms) && input.platforms.length > 0
+    ? (input.platforms as string[]).slice(0, 5)
+    : ["tiktok", "instagram", "twitter"];
+
+  return [
+    {
+      stepType: "llm_call",
+      title: "Autonomous Trend Hunt",
+      description: `Agent crawls ${platforms.join(", ")} for "${niche}" trends and commits a hijack shortlist.`,
+      input: {
+        useAgentLoop: true,
+        agentToolset: "social.trend_hunter_v0",
+        cacheSystemPrompt: true,
+        effort: "high",
+        // 12 iterations covers fetch (≤5) + score (~4) + commit (~3)
+        // with one or two retry slots.
+        maxIterations: 12,
+        systemPrompt: composeSystemPrompt(
+          `You are an autonomous social-trend hunter. For the operator's niche:
+1. Call fetch_platform_trends once per platform in their list — get a top-N rising shortlist.
+2. From the union of returned trends, pick the 3-5 most promising and call score_trend_relevance on each.
+3. For every trend scoring ≥40 (worth-testing or higher), call commit_trend_brief with a platform-tuned hook (≤80 chars), a creative format ("duet" / "remix" / "POV" / "static carousel" / etc.), and an urgencyHours estimate (most trends decay within 72h on TikTok, longer on Pinterest).
+
+Skip trends scoring <40 — production cost outweighs lift. Do NOT commit a brief for a trend you didn't score.
+
+Apply the OUTPUT CONVENTIONS — hooks must be platform-specific (TikTok ≤80ch, Twitter punchier, Pinterest evocative).`,
+        ),
+        userPrompt: `Hunt trends for the "${niche}" niche on these platforms: ${platforms.join(", ")}.
+
+Decide which trends to hijack and commit a brief for each. End with a one-paragraph summary naming the trends you committed and why those vs. the ones you skipped.`,
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Trend hijack briefs ready",
+      description: "Hunter has committed a shortlist of platform-tuned trend briefs.",
+      input: {
+        title: `Autonomous trend hunt for "${niche}" — complete`,
+        message: `Social Bot autonomously crawled ${platforms.join(", ")} and committed creative briefs for the trends most likely to hit. Each brief includes a platform-tuned hook + format + urgency window. Plug them into the next content_calendar run.`,
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

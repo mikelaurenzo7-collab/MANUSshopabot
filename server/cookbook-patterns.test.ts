@@ -366,6 +366,154 @@ describe("Cookbook recipe — agent-loop engine wiring", () => {
     const src = read("routers/workflows.ts");
     expect(src).toContain('import "../engine/agentToolsets"');
   });
+
+  it("registers all three bot toolsets at module load", async () => {
+    const { listAgentToolsetNames } = await import("./engine/agentToolsets");
+    const names = listAgentToolsetNames();
+    expect(names).toContain("architect.competitor_stalker_v0");
+    expect(names).toContain("merchant.repricer_v0");
+    expect(names).toContain("social.trend_hunter_v0");
+  });
+
+  it("merchant.repricer_v0 dispatcher returns documented shapes + enforces the 25% policy", async () => {
+    const { getAgentToolset } = await import("./engine/agentToolsets");
+    const set = getAgentToolset("merchant.repricer_v0");
+    expect(set).toBeDefined();
+    expect(set!.tools.map((t) => t.name).sort()).toEqual(["get_competitor_band", "get_sku_snapshot", "propose_repricing"]);
+
+    const snapshot = (await set!.dispatch("get_sku_snapshot", { sku: "ABC-100" })) as any;
+    expect(snapshot.ok).toBe(true);
+    expect(snapshot.sku).toBe("ABC-100");
+    expect(snapshot.currentPriceUsd).toBeGreaterThan(0);
+    expect(snapshot.costUsd).toBeGreaterThan(0);
+    expect(snapshot.currentPriceUsd).toBeGreaterThan(snapshot.costUsd);
+
+    const band = (await set!.dispatch("get_competitor_band", { sku: "ABC-100", category: "watches", platform: "shopify" })) as any;
+    expect(band.ok).toBe(true);
+    expect(band.bandUsd.min).toBeGreaterThan(0);
+    expect(band.bandUsd.max).toBeGreaterThanOrEqual(band.bandUsd.min);
+
+    // Auto-apply path: ≤25% move with explicit raise/drop action stays as proposed.
+    const auto = (await set!.dispatch("propose_repricing", {
+      sku: "ABC-100", action: "raise",
+      currentPriceUsd: 50, newPriceUsd: 55,
+      justification: "below band median",
+    })) as any;
+    expect(auto.acceptedAction).toBe("raise");
+    expect(auto.requiresApproval).toBe(false);
+
+    // Policy gate: a >25% raise must auto-promote to flag_for_approval
+    // even when the agent picks "raise" — this is the platform-policy
+    // enforcement happening in the dispatcher, not optional.
+    const flagged = (await set!.dispatch("propose_repricing", {
+      sku: "ABC-100", action: "raise",
+      currentPriceUsd: 50, newPriceUsd: 80,
+      justification: "competitors moved up sharply",
+    })) as any;
+    expect(flagged.acceptedAction).toBe("flag_for_approval");
+    expect(flagged.requiresApproval).toBe(true);
+    expect(flagged.policyNote).toMatch(/policy/i);
+  });
+
+  it("social.trend_hunter_v0 dispatcher returns per-platform trends + scoring + briefs", async () => {
+    const { getAgentToolset } = await import("./engine/agentToolsets");
+    const set = getAgentToolset("social.trend_hunter_v0");
+    expect(set).toBeDefined();
+    expect(set!.tools.map((t) => t.name).sort()).toEqual(["commit_trend_brief", "fetch_platform_trends", "score_trend_relevance"]);
+
+    const trends = (await set!.dispatch("fetch_platform_trends", { platform: "tiktok", niche: "minimalist watches", limit: 3 })) as any;
+    expect(trends.ok).toBe(true);
+    expect(trends.platform).toBe("tiktok");
+    expect(Array.isArray(trends.trends)).toBe(true);
+    expect(trends.trends.length).toBe(3);
+    for (const t of trends.trends) {
+      expect(typeof t.name).toBe("string");
+      expect(typeof t.risingPct).toBe("number");
+    }
+
+    const score = (await set!.dispatch("score_trend_relevance", { trendName: "POVcheck", niche: "minimalist watches" })) as any;
+    expect(score.ok).toBe(true);
+    expect(score.score).toBeGreaterThanOrEqual(30);
+    expect(score.score).toBeLessThanOrEqual(99);
+    expect(["high-fit", "worth-testing", "skip"]).toContain(score.verdict);
+
+    const brief = (await set!.dispatch("commit_trend_brief", {
+      trendName: "POVcheck", platform: "tiktok", niche: "minimalist watches",
+      format: "POV", hookCopy: "the watch every minimalist obsesses over", urgencyHours: 48,
+    })) as any;
+    expect(brief.ok).toBe(true);
+    expect(brief.brief.urgencyHours).toBe(48);
+    expect(typeof brief.committedAt).toBe("string");
+  });
+
+  it("autonomous_repricer (Merchant) opts into merchant.repricer_v0 + an approval gate", () => {
+    const src = read("engine/merchantWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("autonomous_repricer"'));
+    expect(block).toContain("useAgentLoop: true");
+    expect(block).toContain('agentToolset: "merchant.repricer_v0"');
+    expect(block).toContain("maxIterations:");
+    // The downstream approval gate is what makes the flag_for_approval
+    // policy actually do something — without it, flagged moves
+    // would just be data on the floor.
+    expect(block).toContain('stepType: "approval_gate"');
+  });
+
+  it("autonomous_trend_hunter (Social) opts into social.trend_hunter_v0", () => {
+    const src = read("engine/socialWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("autonomous_trend_hunter"'));
+    expect(block).toContain("useAgentLoop: true");
+    expect(block).toContain('agentToolset: "social.trend_hunter_v0"');
+    expect(block).toContain("maxIterations:");
+  });
+});
+
+describe("Cookbook detail panel — expandable audit surface", () => {
+  it("LiveWorkflowRunner exposes a CookbookDetail block for each recipe payload", () => {
+    const src = read("../client/src/components/LiveWorkflowRunner.tsx");
+    expect(src).toContain("function CookbookDetail");
+    // Three independently-rendering blocks — one per recipe. Each one
+    // must guard its own input so a partial step.output renders the
+    // pieces it has and skips the pieces it doesn't.
+    expect(src).toContain("ReflectCritiqueBlock");
+    expect(src).toContain("MultiDraftBlock");
+    expect(src).toContain("AgentTrailBlock");
+    // The toggle controls expand/collapse — must be wired to per-step
+    // local state so multiple steps can be open at once without
+    // fighting each other.
+    expect(src).toContain("Show details");
+    expect(src).toContain("Hide details");
+    expect(src).toContain("function stepHasCookbookDetail");
+  });
+
+  it("ReflectCritiqueBlock groups by severity so blockers float up", () => {
+    const src = read("../client/src/components/LiveWorkflowRunner.tsx");
+    expect(src).toContain("bySeverity");
+    // The severity order is fixed — blockers first, then majors, then
+    // minors. Operators care most about the things the critique pass
+    // forced changed.
+    expect(src).toMatch(/\["blocker", "Blocker"\]/);
+    expect(src).toMatch(/\["major", "Major"\]/);
+    expect(src).toMatch(/\["minor", "Minor"\]/);
+  });
+
+  it("AgentTrailBlock surfaces iteration + tool name + result snippet per call", () => {
+    const src = read("../client/src/components/LiveWorkflowRunner.tsx");
+    expect(src).toContain("live-workflow-runner-cookbook-trail-iter");
+    expect(src).toContain("live-workflow-runner-cookbook-trail-name");
+    expect(src).toContain("live-workflow-runner-cookbook-trail-snippet");
+    // Errored tool calls must paint visibly different so operators
+    // can scan the timeline and spot failures fast.
+    expect(src).toContain("is-error");
+  });
+
+  it("index.css carries the detail-panel block styles", () => {
+    const css = read("../client/src/index.css");
+    expect(css).toContain("live-workflow-runner-cookbook-detail");
+    expect(css).toContain("live-workflow-runner-cookbook-block.is-reflect");
+    expect(css).toContain("live-workflow-runner-cookbook-block.is-multi");
+    expect(css).toContain("live-workflow-runner-cookbook-block.is-agent");
+    expect(css).toContain("live-workflow-runner-cookbook-issue.is-blocker");
+  });
 });
 
 describe("Cookbook badges — operator-facing surface", () => {
