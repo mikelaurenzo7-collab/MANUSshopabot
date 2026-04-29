@@ -355,6 +355,11 @@ export async function publishSocialPost(
     const platformMap: Record<string, string> = {
       meta: "facebook", twitter: "twitter", instagram: "instagram",
       tiktok: "tiktok", pinterest: "pinterest", google_ads: "facebook",
+      // Sprint 27.5 — Slack drops + YouTube Shorts persist as first-class
+      // social-post rows. Outlook + Gmail + Slack-DM are inbox-shaped and
+      // skip the social_posts table entirely (they're stored as agent
+      // tasks instead, since they're 1:1 messages, not posts).
+      slack: "slack", youtube: "youtube",
     };
     await db.createSocialPost({
       storeId,
@@ -395,6 +400,11 @@ export async function scheduleSocialPost(
     const platformMap: Record<string, string> = {
       meta: "facebook", twitter: "twitter", instagram: "instagram",
       tiktok: "tiktok", pinterest: "pinterest", google_ads: "facebook",
+      // Sprint 27.5 — Slack drops + YouTube Shorts persist as first-class
+      // social-post rows. Outlook + Gmail + Slack-DM are inbox-shaped and
+      // skip the social_posts table entirely (they're stored as agent
+      // tasks instead, since they're 1:1 messages, not posts).
+      slack: "slack", youtube: "youtube",
     };
     await db.createSocialPost({
       storeId,

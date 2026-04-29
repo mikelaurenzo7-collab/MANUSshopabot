@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { getBrand } from "@/lib/platformBrand";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -401,13 +402,26 @@ export default function Intelligence() {
                     metrics.ecommerce.platformBreakdown.map((p) => {
                       const pct = metrics.ecommerce.totalRevenue > 0
                         ? (p.revenue / metrics.ecommerce.totalRevenue) * 100 : 0;
+                      const brand = getBrand(p.platform);
                       return (
                         <div key={p.platform} className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-foreground/80 capitalize">{p.platform}</span>
+                            <span className="text-foreground/85 inline-flex items-center gap-1.5">
+                              <span className="text-sm leading-none">{brand.icon}</span>
+                              {brand.name}
+                            </span>
                             <span className="text-emerald-400 font-medium">${p.revenue.toLocaleString()}</span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-white/[0.03]" />
+                          <div className="h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${pct}%`,
+                                background: `linear-gradient(90deg, ${brand.color}, ${brand.accent})`,
+                                boxShadow: `0 0 8px ${brand.color}80`,
+                              }}
+                            />
+                          </div>
                           <p className="text-[10px] text-white/40">{p.orders} orders · {pct.toFixed(1)}% of total</p>
                         </div>
                       );
@@ -430,15 +444,28 @@ export default function Intelligence() {
                     metrics.advertising.platformBreakdown.map((p) => {
                       const maxROAS = Math.max(...metrics.advertising.platformBreakdown.map(x => x.roas), 1);
                       const pct = (p.roas / maxROAS) * 100;
+                      const brand = getBrand(p.platform);
                       return (
                         <div key={p.platform} className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-foreground/80 capitalize">{p.platform}</span>
+                            <span className="text-foreground/85 inline-flex items-center gap-1.5">
+                              <span className="text-sm leading-none">{brand.icon}</span>
+                              {brand.name}
+                            </span>
                             <span className={`font-medium ${p.roas >= 3 ? "text-emerald-400" : p.roas >= 2 ? "text-yellow-400" : "text-red-400"}`}>
                               {p.roas}x ROAS
                             </span>
                           </div>
-                          <Progress value={pct} className="h-1.5 bg-white/[0.03]" />
+                          <div className="h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${pct}%`,
+                                background: `linear-gradient(90deg, ${brand.color}, ${brand.accent})`,
+                                boxShadow: `0 0 8px ${brand.color}80`,
+                              }}
+                            />
+                          </div>
                           <p className="text-[10px] text-white/40">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
                         </div>
                       );

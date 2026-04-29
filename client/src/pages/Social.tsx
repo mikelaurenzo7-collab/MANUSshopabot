@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getBrand } from "@/lib/platformBrand";
+import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import {
   Megaphone,
   Loader2,
@@ -257,8 +259,13 @@ function SocialContent({
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-3">
+      {/* Operating-across strip — every social channel + commerce
+          surface Social Bot is currently driving for this org. */}
+      <div className="px-3 md:px-5 pt-3">
+        <BotOperatingAcross botId="social" />
+      </div>
       {/* Store selector + tabs */}
-      <div className="px-3 md:px-5 pt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+      <div className="px-3 md:px-5 pt-2 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
@@ -266,11 +273,17 @@ function SocialContent({
               <SelectValue placeholder="SELECT_TARGET_STORE" />
             </SelectTrigger>
             <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
-              {storeOptions.map((s: any) => (
-                <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
-                  {s.name} [{s.platform}]
-                </SelectItem>
-              ))}
+              {storeOptions.map((s: any) => {
+                const brand = getBrand(s.platform);
+                return (
+                  <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-sm leading-none">{brand.icon}</span>
+                      {s.name} <span className="text-white/40">[{brand.name}]</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -351,7 +364,10 @@ function SocialContent({
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="text-sm font-medium text-foreground">{c.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <span className="text-sm leading-none">{getBrand(c.platform).icon}</span>
+                            {getBrand(c.platform).name} · {new Date(c.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy ad copy" onClick={() => c.adCopy && copyToClipboard(typeof c.adCopy === "string" ? c.adCopy : JSON.stringify(c.adCopy))}>
                           <Copy className="h-3.5 w-3.5" />
@@ -529,7 +545,10 @@ function SocialContent({
                   <Card key={p.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="text-[10px] capitalize">{p.platform}</Badge>
+                        <Badge variant="outline" className="text-[10px] inline-flex items-center gap-1">
+                          <span className="text-xs leading-none">{getBrand(p.platform).icon}</span>
+                          {getBrand(p.platform).name}
+                        </Badge>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy post content" onClick={() => copyToClipboard(p.content || "")}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>

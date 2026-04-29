@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { getBrand } from "@/lib/platformBrand";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,14 +204,22 @@ export default function Profile() {
             </div>
           ) : storeList.length > 0 ? (
             <div className="space-y-2">
-              {storeList.map((store: any) => (
+              {storeList.map((store: any) => {
+                const brand = getBrand(store.platform);
+                return (
                 <div key={store.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.03] transition-colors">
-                  <div className="h-10 w-10 rounded-lg bg-white/[0.03] flex items-center justify-center border border-white/[0.05]">
-                    <Store className="h-4 w-4 text-muted-foreground" />
+                  <div
+                    className="h-10 w-10 rounded-lg flex items-center justify-center text-lg"
+                    style={{
+                      background: `linear-gradient(135deg, ${brand.color}20, ${brand.accent}10)`,
+                      border: `1px solid ${brand.color}30`,
+                    }}
+                  >
+                    {brand.icon}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{store.name}</p>
-                    <p className="text-xs text-muted-foreground">{store.platform} · {store.domain || "No domain"}</p>
+                    <p className="text-xs text-muted-foreground">{brand.name} · {store.domain || "No domain"}</p>
                   </div>
                   <Badge
                     variant="outline"
@@ -222,7 +231,8 @@ export default function Profile() {
                     {store.status}
                   </Badge>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8">

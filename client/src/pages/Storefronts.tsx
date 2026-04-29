@@ -7,8 +7,9 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe } from "lucide-react";
+import { Globe, Plug, Layers, Puzzle, Truck, Mail, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { trpc } from "@/lib/trpc";
 import IntegrationsPage from "./Integrations";
 import PluginStorePage from "./PluginStore";
 import SupplierPOsPage from "./SupplierPOs";
@@ -28,6 +29,17 @@ function readTabFromHash(): StorefrontsTab {
 export default function StorefrontsPage() {
   const [tab, setTab] = useState<StorefrontsTab>(() => readTabFromHash());
 
+  // Live counts surface in tab pills so the user sees their footprint
+  // before clicking. tRPC handles caching — these queries are also fired
+  // by the inner pages, so the React Query cache gives us the data for
+  // free without an extra round-trip.
+  const { data: stores } = trpc.stores.list.useQuery();
+  const { data: credentials } = trpc.connectors.listCredentials.useQuery();
+  const { data: socialAccounts } = trpc.connectors.listSocialAccounts.useQuery();
+  const { data: connectedTools } = trpc.tools.listConnected.useQuery();
+
+  const connectionCount = (stores?.length ?? 0) + (credentials?.length ?? 0) + (socialAccounts?.length ?? 0);
+
   useEffect(() => {
     const onHash = () => setTab(readTabFromHash());
     window.addEventListener("hashchange", onHash);
@@ -43,6 +55,20 @@ export default function StorefrontsPage() {
     }
   };
 
+  const tabConfig: Array<{
+    id: StorefrontsTab;
+    label: string;
+    icon: typeof Globe;
+    count?: number;
+  }> = [
+    { id: "integrations", label: "Connections", icon: Plug, count: connectionCount },
+    { id: "capabilities", label: "Capabilities", icon: Layers },
+    { id: "plugins", label: "Plugins", icon: Puzzle },
+    { id: "supplier", label: "Supplier POs", icon: Truck },
+    { id: "email", label: "Email Channel", icon: Mail },
+    { id: "tools", label: "Tools", icon: Wrench, count: connectedTools?.length ?? 0 },
+  ];
+
   return (
     <div className="page-enter h-full overflow-y-auto">
       <PageHeader
@@ -54,13 +80,30 @@ export default function StorefrontsPage() {
       />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
-        <TabsList className="bg-secondary/50">
-          <TabsTrigger value="integrations">Connections</TabsTrigger>
-          <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
-          <TabsTrigger value="plugins">Plugins</TabsTrigger>
-          <TabsTrigger value="supplier">Supplier POs</TabsTrigger>
-          <TabsTrigger value="email">Email Channel</TabsTrigger>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
+        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 h-auto flex-wrap gap-1">
+          {tabConfig.map((t) => {
+            const Icon = t.icon;
+            const isActive = tab === t.id;
+            return (
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all
+                  data-[state=active]:bg-cyan-500/15 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/25
+                  border border-transparent text-white/55 hover:text-white/85`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "" : "text-white/40 group-hover:text-white/70"}`} />
+                {t.label}
+                {typeof t.count === "number" && t.count > 0 && (
+                  <span className={`ml-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    isActive ? "bg-cyan-400/20 text-cyan-200" : "bg-white/[0.06] text-white/55"
+                  }`}>
+                    {t.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         <TabsContent value="integrations" className="mt-3">

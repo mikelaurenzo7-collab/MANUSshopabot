@@ -3,11 +3,23 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   CheckCircle2, Loader2, KeyRound, ExternalLink, Sparkles, Bot as BotIcon, Wrench, Eye, EyeOff, RefreshCw, Trash2,
-  Package, Megaphone, LayoutGrid, Boxes,
+  Package, Megaphone, LayoutGrid, Boxes, Plug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getBrand, type PlatformBrand } from "@/lib/platformBrand";
+
+function hexToRgbTriple(hex: string): string {
+  const h = hex.replace("#", "");
+  return `${parseInt(h.substring(0, 2), 16)}, ${parseInt(h.substring(2, 4), 16)}, ${parseInt(h.substring(4, 6), 16)}`;
+}
+function tileVars(brand: PlatformBrand): React.CSSProperties {
+  return {
+    ["--tile-color" as any]: hexToRgbTriple(brand.color),
+    ["--tile-accent" as any]: hexToRgbTriple(brand.accent),
+  };
+}
 
 const BOT_LABEL: Record<string, string> = {
   architect: "Builder",
@@ -117,34 +129,49 @@ export function ToolsTab() {
           {byBot.map((b) => {
             const Icon = BOT_ICONS[b.bot.id] || BotIcon;
             const ratio = b.toolCount === 0 ? 0 : b.connectedCount / b.toolCount;
+            const botBrand: PlatformBrand = {
+              id: b.bot.id, name: b.bot.name, icon: "", color: b.bot.color, accent: b.bot.color,
+              category: "data", tagline: b.bot.tagline,
+            };
             return (
               <div
                 key={b.bot.id}
-                className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
-                style={{ borderTop: `2px solid ${b.bot.color}80` }}
+                className="platform-tile p-4 group"
+                style={tileVars(botBrand)}
               >
-                <div className="flex items-center gap-2 mb-2">
+                <span className="platform-tile-ribbon" />
+                <span className="platform-tile-seam" />
+                <div className="flex items-center gap-2.5 mb-3">
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${b.bot.color}20`, color: b.bot.color }}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                    style={{
+                      background: `linear-gradient(135deg, ${b.bot.color}30, ${b.bot.color}10)`,
+                      border: `1px solid ${b.bot.color}40`,
+                      color: b.bot.color,
+                      boxShadow: `0 4px 14px -4px ${b.bot.color}55`,
+                    }}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">{b.bot.name}</div>
-                    <div className="text-[11px] text-slate-500">{b.bot.tagline}</div>
+                    <div className="text-sm font-heading font-semibold tracking-tight text-white">{b.bot.name}</div>
+                    <div className="text-[11px] text-slate-400/90">{b.bot.tagline}</div>
                   </div>
                 </div>
-                <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-3">{b.bot.description}</p>
+                <p className="text-xs text-slate-300/80 line-clamp-2 leading-relaxed mb-3">{b.bot.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-300">
-                    <span className="font-semibold text-white">{b.connectedCount}</span>
+                    <span className="font-mono font-semibold text-white">{b.connectedCount}</span>
                     <span className="text-slate-500"> / {b.toolCount} tools</span>
                   </span>
-                  <div className="w-20 h-1 bg-white/8 rounded-full overflow-hidden">
+                  <div className="w-24 h-1.5 bg-white/8 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${ratio * 100}%`, backgroundColor: b.bot.color }}
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${ratio * 100}%`,
+                        background: `linear-gradient(90deg, ${b.bot.color}, ${b.bot.color}aa)`,
+                        boxShadow: `0 0 8px ${b.bot.color}80`,
+                      }}
                     />
                   </div>
                 </div>
@@ -317,32 +344,39 @@ function ToolCard({
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  const brand = getBrand(tool.id);
   return (
     <div
-      className="bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors flex flex-col gap-3"
-      style={{ borderTop: `2px solid ${tool.color}80` }}
+      className="platform-tile p-4 flex flex-col gap-3"
+      style={tileVars(brand)}
     >
+      <span className="platform-tile-ribbon" />
+      <span className="platform-tile-seam" />
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-2xl flex-shrink-0">{tool.icon}</span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="platform-tile-icon-halo text-2xl leading-none flex-shrink-0">{tool.icon}</div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate">{tool.name}</div>
-            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+            <div className="text-sm font-semibold text-white tracking-tight truncate">{tool.name}</div>
+            <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
               <Boxes className="w-2.5 h-2.5" />
               {tool.bots.map((b) => BOT_LABEL[b]).join(" · ")}
             </div>
           </div>
         </div>
-        {isConnected && <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+        {isConnected && (
+          <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full">
+            <CheckCircle2 className="w-2.5 h-2.5" /> Live
+          </span>
+        )}
       </div>
 
-      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">{tool.description}</p>
+      <p className="text-xs text-slate-300/80 leading-relaxed line-clamp-3">{tool.description}</p>
 
       <div className="flex flex-wrap gap-1">
         {tool.capabilities.slice(0, 3).map((cap) => (
           <span
             key={cap}
-            className="text-[10px] bg-white/6 text-slate-400 px-1.5 py-0.5 rounded flex items-center gap-1"
+            className="platform-cap-chip text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 font-medium"
           >
             <Sparkles className="w-2 h-2" />
             {cap}
@@ -351,26 +385,24 @@ function ToolCard({
       </div>
 
       {tool.connectionType === "oauth" ? (
-        <Button
-          size="sm"
-          className="w-full text-xs text-white hover:opacity-90"
-          style={{ backgroundColor: tool.color }}
+        <button
+          type="button"
+          className="platform-tile-cta w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-md text-white"
           onClick={onOAuth}
           disabled={oauthPending}
         >
-          {oauthPending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+          {oauthPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plug className="w-3 h-3" />}
           {isConnected ? "Reconnect with Google" : "Connect with Google"}
-        </Button>
+        </button>
       ) : !expanded ? (
-        <Button
-          size="sm"
-          className="w-full text-xs text-white hover:opacity-90"
-          style={{ backgroundColor: tool.color }}
+        <button
+          type="button"
+          className="platform-tile-cta w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-md text-white"
           onClick={() => setExpanded(true)}
         >
-          <KeyRound className="w-3 h-3 mr-1" />
+          <KeyRound className="w-3 h-3" />
           {isConnected ? "Update API Key" : "Add API Key"}
-        </Button>
+        </button>
       ) : (
         <ApiKeyForm
           tool={tool}

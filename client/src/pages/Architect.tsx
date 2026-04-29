@@ -8,6 +8,8 @@ import {
   ImageIcon, Wand2, Camera, Copy, Upload, Tag
 } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { getBrand } from "@/lib/platformBrand";
+import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 
 export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
@@ -102,7 +104,11 @@ export default function Architect() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
           <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
-            
+
+            {/* Operating-across strip — surfaces every connected platform
+                so the operator sees where Builder's reach extends. */}
+            <BotOperatingAcross botId="architect" />
+
             {/* Error Banner */}
             {error && (
               <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -456,7 +462,7 @@ function VisionListingPanel() {
               >
                 <option value="">No store context</option>
                 {storeList.map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+                  <option key={s.id} value={s.id}>{getBrand(s.platform).icon} {s.name} ({getBrand(s.platform).name})</option>
                 ))}
               </select>
               <select
@@ -671,7 +677,7 @@ function ImageOptimizerPanel() {
         >
           <option value="">SELECT STORE TARGET</option>
           {storeList.map((s: any) => (
-            <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+            <option key={s.id} value={s.id}>{getBrand(s.platform).icon} {s.name} ({getBrand(s.platform).name})</option>
           ))}
         </select>
         <button

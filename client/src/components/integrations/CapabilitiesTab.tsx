@@ -39,6 +39,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getBrand, type PlatformBrand } from "@/lib/platformBrand";
+
+function hexToRgbTriple(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+function tileVars(brand: PlatformBrand): React.CSSProperties {
+  return {
+    ["--tile-color" as any]: hexToRgbTriple(brand.color),
+    ["--tile-accent" as any]: hexToRgbTriple(brand.accent),
+  };
+}
 
 type CapabilityRow = {
   label: string;
@@ -65,16 +81,16 @@ function CapabilityCard({
   platform,
   label,
   caps,
-  icon: HeaderIcon,
   isConnected,
 }: {
   platform: string;
   label: string;
   caps: any;
-  icon: typeof Check;
+  icon?: typeof Check;
   isConnected: boolean;
 }) {
   if (!caps) return null;
+  const brand = getBrand(platform);
 
   const rows: CapabilityRow[] = [
     { label: "Variants", description: "Multi-variant products (size, color, etc.)", icon: Package, value: caps.variants },
@@ -94,81 +110,82 @@ function CapabilityCard({
   ];
 
   return (
-    <Card className="bg-card border-white/[0.08]">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <HeaderIcon className="h-4 w-4 text-cyan-400" aria-hidden="true" />
-            <span className="font-heading font-semibold tracking-tight">{label}</span>
-          </CardTitle>
-          {isConnected ? (
-            <Badge className="bg-emerald-500/12 text-emerald-300 border-emerald-500/30 text-[10px]">
-              Connected
-            </Badge>
-          ) : (
-            <Badge className="bg-white/[0.04] text-white/45 border-white/10 text-[10px]">
-              Available
-            </Badge>
-          )}
+    <div className="platform-tile p-4 flex flex-col gap-3" style={tileVars(brand)}>
+      <span className="platform-tile-ribbon" />
+      <span className="platform-tile-seam" />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="platform-tile-icon-halo text-2xl leading-none">{brand.icon}</div>
+          <div className="min-w-0">
+            <div className="text-sm font-heading font-semibold tracking-tight text-white truncate">{label}</div>
+            {caps.category && (
+              <div className="text-[10px] text-white/40 capitalize">
+                {caps.category.replace(/_/g, " ")} · {caps.feeStructure}
+              </div>
+            )}
+          </div>
         </div>
-        {caps.category && (
-          <p className="text-[10px] text-white/35 capitalize">
-            {caps.category.replace(/_/g, " ")} · {caps.feeStructure}
+        {isConnected ? (
+          <Badge className="platform-connected-dot text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+            Connected
+          </Badge>
+        ) : (
+          <Badge className="bg-white/[0.04] text-white/45 border-white/10 text-[10px]">
+            Available
+          </Badge>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        {rows.map((row) => (
+          <TooltipProvider key={row.label} delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 text-[11px] cursor-help">
+                  <CapabilityIndicator value={row.value} />
+                  <span className="text-white/60 truncate">{row.label}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                {row.description}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ))}
+      </div>
+
+      {caps.strengths && caps.strengths.length > 0 && (
+        <div className="border-t border-white/5 pt-2">
+          <p className="text-[9px] uppercase tracking-widest text-emerald-400/80 font-bold mb-1">
+            Strengths
           </p>
-        )}
-      </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-          {rows.map((row) => (
-            <TooltipProvider key={row.label} delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 text-[11px] cursor-help">
-                    <CapabilityIndicator value={row.value} />
-                    <span className="text-white/60 truncate">{row.label}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs max-w-[220px]">
-                  {row.description}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
+          <ul className="space-y-0.5">
+            {caps.strengths.slice(0, 3).map((s: string, i: number) => (
+              <li key={i} className="text-[10px] text-white/65 flex gap-1.5">
+                <span className="text-emerald-400 mt-0.5">▸</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        {caps.strengths && caps.strengths.length > 0 && (
-          <div className="border-t border-white/5 pt-2">
-            <p className="text-[9px] uppercase tracking-widest text-emerald-400/80 font-bold mb-1">
-              Strengths
-            </p>
-            <ul className="space-y-0.5">
-              {caps.strengths.slice(0, 3).map((s: string, i: number) => (
-                <li key={i} className="text-[10px] text-white/60 flex gap-1.5">
-                  <span className="text-emerald-400 mt-0.5">▸</span>
-                  <span>{s}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {caps.limitations && caps.limitations.length > 0 && (
-          <div>
-            <p className="text-[9px] uppercase tracking-widest text-amber-400/80 font-bold mb-1 flex items-center gap-1">
-              <AlertTriangle className="h-2.5 w-2.5" /> Limitations
-            </p>
-            <ul className="space-y-0.5">
-              {caps.limitations.slice(0, 3).map((l: string, i: number) => (
-                <li key={i} className="text-[10px] text-white/55 flex gap-1.5">
-                  <span className="text-amber-400/70 mt-0.5">▸</span>
-                  <span>{l}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {caps.limitations && caps.limitations.length > 0 && (
+        <div>
+          <p className="text-[9px] uppercase tracking-widest text-amber-400/80 font-bold mb-1 flex items-center gap-1">
+            <AlertTriangle className="h-2.5 w-2.5" /> Limitations
+          </p>
+          <ul className="space-y-0.5">
+            {caps.limitations.slice(0, 3).map((l: string, i: number) => (
+              <li key={i} className="text-[10px] text-white/55 flex gap-1.5">
+                <span className="text-amber-400/70 mt-0.5">▸</span>
+                <span>{l}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -180,6 +197,14 @@ const ECOMMERCE_LABELS: Record<string, string> = {
   ebay: "eBay",
   tiktok_shop: "TikTok Shop",
   walmart: "Walmart",
+  // Sprint 27 expansion — keep the alphabetical order for the sorted view.
+  depop: "Depop",
+  bigcommerce: "BigCommerce",
+  square: "Square",
+  faire: "Faire",
+  bonanza: "Bonanza",
+  stockx: "StockX",
+  reverb: "Reverb",
 };
 
 const SOCIAL_LABELS: Record<string, string> = {

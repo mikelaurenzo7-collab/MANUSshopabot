@@ -190,12 +190,13 @@ describe("Shop_a_Bot Routers", () => {
 
   // ─── Stores Supported Platforms ───────────────────────────────────────
   describe("stores.supportedPlatforms", () => {
-    it("returns all 7 supported platforms", async () => {
+    it("returns all 14 supported platforms", async () => {
       const { ctx } = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       const platforms = await caller.stores.supportedPlatforms();
-      expect(platforms).toHaveLength(7);
+      expect(platforms).toHaveLength(14);
       const platformIds = platforms.map((p: any) => p.id);
+      // Original 7
       expect(platformIds).toContain("shopify");
       expect(platformIds).toContain("woocommerce");
       expect(platformIds).toContain("amazon");
@@ -203,6 +204,14 @@ describe("Shop_a_Bot Routers", () => {
       expect(platformIds).toContain("ebay");
       expect(platformIds).toContain("tiktok_shop");
       expect(platformIds).toContain("walmart");
+      // Sprint 27 expansion
+      expect(platformIds).toContain("depop");
+      expect(platformIds).toContain("bigcommerce");
+      expect(platformIds).toContain("square");
+      expect(platformIds).toContain("faire");
+      expect(platformIds).toContain("bonanza");
+      expect(platformIds).toContain("stockx");
+      expect(platformIds).toContain("reverb");
     });
 
     it("each platform has required fields", async () => {

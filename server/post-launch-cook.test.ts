@@ -63,10 +63,16 @@ describe("Capabilities tab — Storefronts hub integration", () => {
 
   it("Storefronts hub registers Capabilities as a routable tab", () => {
     const src = read("client/src/pages/Storefronts.tsx");
+    // Imported, named in the tab list, and rendered. The exact JSX
+    // shape is implementation-detail (the tab triggers were
+    // refactored into a config-driven map for the brand-aware tab
+    // pills); what matters is the route is registered.
     expect(src).toContain('import { CapabilitiesTab }');
-    expect(src).toContain('<TabsTrigger value="capabilities">');
     expect(src).toContain('"capabilities"');
     expect(src).toContain("<CapabilitiesTab />");
+    // The tab list must surface a "Capabilities" label so users can
+    // navigate to it without typing the hash by hand.
+    expect(src).toContain('label: "Capabilities"');
   });
 });
 

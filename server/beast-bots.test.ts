@@ -280,23 +280,53 @@ describe("stores", () => {
     const { ctx } = makeCtx(makeUser());
     const caller = appRouter.createCaller(ctx);
     const platforms = await caller.stores.supportedPlatforms();
-    expect(platforms).toHaveLength(7);
-    expect(platforms.map((p) => p.id)).toContain("shopify");
-    expect(platforms.map((p) => p.id)).toContain("woocommerce");
-    expect(platforms.map((p) => p.id)).toContain("amazon");
-    expect(platforms.map((p) => p.id)).toContain("etsy");
-    expect(platforms.map((p) => p.id)).toContain("ebay");
-    expect(platforms.map((p) => p.id)).toContain("tiktok_shop");
-    expect(platforms.map((p) => p.id)).toContain("walmart");
+    expect(platforms).toHaveLength(14);
+    const ids = platforms.map((p) => p.id);
+    // Original 7
+    expect(ids).toContain("shopify");
+    expect(ids).toContain("woocommerce");
+    expect(ids).toContain("amazon");
+    expect(ids).toContain("etsy");
+    expect(ids).toContain("ebay");
+    expect(ids).toContain("tiktok_shop");
+    expect(ids).toContain("walmart");
+    // Sprint 27 expansion
+    expect(ids).toContain("depop");
+    expect(ids).toContain("bigcommerce");
+    expect(ids).toContain("square");
+    expect(ids).toContain("faire");
+    expect(ids).toContain("bonanza");
+    expect(ids).toContain("stockx");
+    expect(ids).toContain("reverb");
   });
 
-  it("Shopify is the only platform with oauthSupported = true", async () => {
+  it("declares OAuth support honestly per platform", async () => {
     const { ctx } = makeCtx(makeUser());
     const caller = appRouter.createCaller(ctx);
     const platforms = await caller.stores.supportedPlatforms();
-    const oauthPlatforms = platforms.filter((p) => p.oauthSupported);
-    expect(oauthPlatforms).toHaveLength(1);
-    expect(oauthPlatforms[0]?.id).toBe("shopify");
+    const oauthIds = platforms.filter((p) => p.oauthSupported).map((p) => p.id);
+    // OAuth-capable storefronts/marketplaces. WooCommerce / Walmart /
+    // Faire / Bonanza are API-key only — explicitly excluded so the UI
+    // can route them to the credential-input dialog instead of an
+    // OAuth redirect.
+    expect(oauthIds).toContain("shopify");
+    expect(oauthIds).toContain("etsy");
+    expect(oauthIds).toContain("ebay");
+    expect(oauthIds).toContain("tiktok_shop");
+    expect(oauthIds).toContain("depop");
+    expect(oauthIds).toContain("bigcommerce");
+    expect(oauthIds).toContain("square");
+    expect(oauthIds).toContain("stockx");
+    expect(oauthIds).toContain("reverb");
+    // API-key only — must not advertise OAuth.
+    expect(oauthIds).not.toContain("woocommerce");
+    expect(oauthIds).not.toContain("walmart");
+    expect(oauthIds).not.toContain("faire");
+    expect(oauthIds).not.toContain("bonanza");
+    // Amazon SP-API uses LWA but our store-create flow treats it as
+    // API-key (we ask for SP refresh-token + role ARN), so it stays off
+    // this list intentionally.
+    expect(oauthIds).not.toContain("amazon");
   });
 });
 

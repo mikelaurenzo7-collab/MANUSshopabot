@@ -86,6 +86,15 @@ export function registerWorkflow(workflowType: string, stepFactory: (input: Reco
   workflowRegistry.set(workflowType, stepFactory);
 }
 
+/**
+ * List every workflow type currently registered. Used by tests and the
+ * workflow-catalog router to verify the registry covers every public
+ * recipe surfaced in the UI.
+ */
+export function listWorkflowTypes(): string[] {
+  return Array.from(workflowRegistry.keys());
+}
+
 // ─── Engine Core ───────────────────────────────────────────────────────────
 
 /**
@@ -1014,6 +1023,26 @@ async function executeDataTransformStep(context: StepContext): Promise<any> {
   }
 }
 
+/**
+ * Walk the previousOutputs chain in reverse looking for the most-recent
+ * step whose result has the given key, and return that array. Used by
+ * the Sprint-27 elite store actions to consume the LLM's structured
+ * decisions without hard-coding the step index.
+ *
+ * Returns undefined when no prior output carries the key, which lets
+ * the caller short-circuit to a "no decisions, no-op" branch instead
+ * of crashing the workflow.
+ */
+function pluckPriorOutput<T>(context: StepContext, key: string): T | undefined {
+  for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+    const out = context.previousOutputs[i];
+    if (out && Array.isArray((out as any)[key])) {
+      return (out as any)[key] as T;
+    }
+  }
+  return undefined;
+}
+
 async function executeStoreActionStep(context: StepContext): Promise<any> {
   const { input, storeId, userId } = context;
   const action = input.action ?? "unknown";
@@ -1097,6 +1126,244 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
     case "social_analytics": {
       const analytics = await getCrossPlatformSocialAnalytics(userId);
       return { action, analytics };
+    }
+    // ─── Sprint 27 platform-elite actions ──────────────────────────────────
+    //
+    // Each pairs with a workflow registered in
+    // server/engine/platformEliteWorkflows.ts. The pattern is:
+    //  1. Walk previousOutputs for the LLM step's decisions array
+    //  2. Resolve the store's adapter + elite extension
+    //  3. Call the extension method per item; aggregate results.
+    case "depop_update_hashtags": {
+      if (!storeId) return { error: "Missing storeId" };
+      const updates = pluckPriorOutput<{ listingId: string; hashtags: string[] }[]>(context, "updates");
+      if (!updates || updates.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getDepopEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getDepopEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const u of updates) {
+        try {
+          await ext.updateHashtags(credentials, u.listingId, u.hashtags);
+          await ext.refreshListing(credentials, u.listingId);
+        } catch (err: any) {
+          errors.push(`${u.listingId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied: updates.length - errors.length, errors };
+    }
+    case "bigcommerce_subscribe_webhooks": {
+      if (!storeId) return { error: "Missing storeId" };
+      const scopes: string[] = Array.isArray(input.scopes) ? input.scopes : [];
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getBigCommerceEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getBigCommerceEliteExtensions(credentials);
+      const destination = `${process.env.PUBLIC_URL || ""}/api/webhooks/bigcommerce/${storeId}`;
+      const subscribed: string[] = [];
+      const errors: string[] = [];
+      for (const scope of scopes) {
+        try {
+          const r = await ext.subscribeWebhook(credentials, scope, destination);
+          if (r.webhookId) subscribed.push(scope);
+        } catch (err: any) {
+          errors.push(`${scope}: ${err.message}`);
+        }
+      }
+      return { action, storeId, subscribed, errors };
+    }
+    case "square_apply_transfers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const transfers = pluckPriorOutput<{ sku: string; fromLocationId: string; toLocationId: string; quantity: number; reason: string }[]>(context, "transfers");
+      if (!transfers || transfers.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getSquareEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getSquareEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const t of transfers) {
+        try {
+          // Simple model: decrement at source, increment at destination.
+          await ext.adjustInventory(credentials, t.sku, t.fromLocationId, -t.quantity, t.reason);
+          await ext.adjustInventory(credentials, t.sku, t.toLocationId, +t.quantity, t.reason);
+        } catch (err: any) {
+          errors.push(`${t.sku}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied: transfers.length - errors.length, errors };
+    }
+    case "faire_acknowledge_orders": {
+      if (!storeId) return { error: "Missing storeId" };
+      const acks = pluckPriorOutput<{ orderId: string; expectedShipDate: string }[]>(context, "acks");
+      if (!acks || acks.length === 0) return { action, storeId, acknowledged: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getFaireEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getFaireEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const a of acks) {
+        try {
+          await ext.acknowledgeOrder(credentials, a.orderId, a.expectedShipDate);
+        } catch (err: any) {
+          errors.push(`${a.orderId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, acknowledged: acks.length - errors.length, errors };
+    }
+    case "bonanza_set_tiers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const decisions = pluckPriorOutput<{ productId: string; tier: string }[]>(context, "decisions");
+      if (!decisions || decisions.length === 0) return { action, storeId, updated: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getBonanzaEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getBonanzaEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const d of decisions) {
+        try {
+          await ext.setSyndicationTier(credentials, d.productId, d.tier as any);
+        } catch (err: any) {
+          errors.push(`${d.productId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, updated: decisions.length - errors.length, errors };
+    }
+    case "stockx_apply_repricing": {
+      if (!storeId) return { error: "Missing storeId" };
+      const decisions = pluckPriorOutput<{ listingId: string; action: string; newAskCents?: number }[]>(context, "decisions");
+      if (!decisions || decisions.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { credentials } = await getStoreAdapter(storeId);
+      const { getEcommerceAdapter } = await import("../adapters/ecommerce");
+      const adapter = getEcommerceAdapter("stockx");
+      const errors: string[] = [];
+      let applied = 0;
+      for (const d of decisions) {
+        try {
+          if (d.action === "cancel") {
+            await adapter.deleteProduct(credentials, d.listingId);
+          } else if ((d.action === "undercut" || d.action === "raise") && d.newAskCents != null) {
+            await adapter.updateProduct(credentials, d.listingId, { priceCents: d.newAskCents });
+          }
+          // "hold" is intentionally a no-op.
+          applied++;
+        } catch (err: any) {
+          errors.push(`${d.listingId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied, errors };
+    }
+    case "reverb_respond_offers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const responses = pluckPriorOutput<{ offerId: string; action: "accept" | "decline" | "counter"; counterCents?: number }[]>(context, "responses");
+      if (!responses || responses.length === 0) return { action, storeId, sent: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getReverbEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getReverbEliteExtensions(credentials);
+      const errors: string[] = [];
+      let sent = 0;
+      for (const r of responses) {
+        try {
+          await ext.respondToOffer(credentials, r.offerId, r.action, r.counterCents != null ? r.counterCents / 100 : undefined);
+          sent++;
+        } catch (err: any) {
+          errors.push(`${r.offerId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, sent, errors };
+    }
+    // ─── Sprint 27.5: Outlook + Slack + YouTube ──────────────────────────
+    //
+    // These are social-account actions (no commerce store). The engine
+    // resolves the right account by walking the active org's social
+    // accounts and matching the platform. If the operator hasn't
+    // connected the channel yet, the action returns a clear error
+    // instead of crashing.
+    case "outlook_send_drafts": {
+      const drafts = pluckPriorOutput<{ email: string; subject: string; body: string }[]>(context, "drafts");
+      if (!drafts || drafts.length === 0) return { action, sent: 0 };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "outlook" && a.status === "active");
+      if (!account) return { action, error: "No active Outlook account connected for this org" };
+      const { getSocialAccountAdapter, publishSocialPost } = await import("./platformBridge");
+      const { account: acc } = await getSocialAccountAdapter(account.id);
+      const errors: string[] = [];
+      let sent = 0;
+      for (const d of drafts) {
+        try {
+          await publishSocialPost(acc.id, {
+            content: d.body,
+            metadata: { to: d.email, subject: d.subject },
+          });
+          sent++;
+        } catch (err: any) {
+          errors.push(`${d.email}: ${err.message}`);
+        }
+      }
+      return { action, sent, total: drafts.length, errors };
+    }
+    case "slack_post_drop": {
+      // The LLM step returns `{ blocks }` (plus headline/body); we
+      // forward the Block Kit payload via createPost's metadata.blocks
+      // hook so the SlackAdapter renders the rich card natively.
+      const drop = (() => {
+        for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+          const out = context.previousOutputs[i];
+          if (out && Array.isArray((out as any).blocks)) return out as { headline?: string; body?: string; blocks: any[] };
+        }
+        return null;
+      })();
+      if (!drop) return { action, posted: 0, error: "Slack drop payload missing from prior step" };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "slack" && a.status === "active");
+      if (!account) return { action, error: "No active Slack account connected for this org" };
+      const channel = (input.channel as string) || "#announcements";
+      const { publishSocialPost } = await import("./platformBridge");
+      try {
+        const post = await publishSocialPost(account.id, {
+          content: drop.body || drop.headline || "",
+          metadata: { channel, blocks: drop.blocks, subject: drop.headline },
+        }, storeId);
+        return { action, posted: 1, channel, ts: post.platformId };
+      } catch (err: any) {
+        return { action, posted: 0, error: err.message };
+      }
+    }
+    case "youtube_publish_short": {
+      const meta = (() => {
+        for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+          const out = context.previousOutputs[i];
+          if (out && typeof (out as any).title === "string" && Array.isArray((out as any).tags)) {
+            return out as { title: string; description: string; tags: string[] };
+          }
+        }
+        return null;
+      })();
+      if (!meta) return { action, error: "YouTube Shorts metadata missing from prior step" };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "youtube" && a.status === "active");
+      if (!account) return { action, error: "No active YouTube account connected for this org" };
+      const videoUrl = input.videoUrl as string | undefined;
+      const scheduleAt = input.scheduleAt as string | undefined;
+      if (!videoUrl) return { action, error: "Missing input.videoUrl for YouTube upload" };
+      const { publishSocialPost, scheduleSocialPost } = await import("./platformBridge");
+      try {
+        const postInput = {
+          content: meta.description,
+          metadata: { title: meta.title, tags: meta.tags, videoUrl, privacy: scheduleAt ? "private" : "public" },
+        };
+        const post = scheduleAt
+          ? await scheduleSocialPost(account.id, postInput, new Date(scheduleAt), storeId)
+          : await publishSocialPost(account.id, postInput, storeId);
+        return { action, videoId: post.platformId, scheduled: !!scheduleAt };
+      } catch (err: any) {
+        return { action, error: err.message };
+      }
     }
     default:
       return {
