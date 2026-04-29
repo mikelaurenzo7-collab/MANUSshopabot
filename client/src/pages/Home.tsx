@@ -742,8 +742,8 @@ export default function Home() {
       <FirstRunTour />
 
       {/* ── Canvas (full width) + slide-over Inspector ── */}
-      <div className="flex flex-1 min-h-0 relative">
-        <div className="flex-1 h-full relative">
+      <div className="flex flex-1 min-h-0 relative" style={{ minHeight: 0 }}>
+        <div className="flex-1 relative" style={{ height: "100%", minHeight: 400 }}>
           {storesLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <Loader2 className="w-5 h-5 animate-spin text-white/30" />

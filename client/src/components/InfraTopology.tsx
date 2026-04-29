@@ -228,8 +228,8 @@ export default function InfraTopology() {
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-0">
-        <div className="flex-1 h-full relative">
+      <div className="flex flex-1 min-h-0" style={{ minHeight: 0 }}>
+        <div className="flex-1 relative" style={{ height: "100%" }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}

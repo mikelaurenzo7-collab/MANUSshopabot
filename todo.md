@@ -1123,3 +1123,10 @@
 - [x] Bot now calls launch_workflow tool when user says "build my store" or similar — executes autonomously
 - [x] Bot reports workflow ID and what it launched, not generic instructions
 - [x] All 6 agentic chat tests passing
+
+## Sprint 13: Shopify Connection Fixes
+
+- [x] Fix WorkspaceContext: validate persisted storeId against real stores on mount, clear stale IDs
+- [x] Auto-select first valid store when persisted ID is stale/deleted
+- [x] Fix ReactFlow container height warning on Command Center (explicit height on both Home.tsx and InfraTopology.tsx)
+- [x] WorkspaceContext now uses trpc.stores.list to validate on mount — stale IDs auto-corrected
