@@ -9,9 +9,12 @@ import { toast } from "sonner";
 import {
   CheckCircle2, XCircle, Loader2, RefreshCw, Activity,
   ShoppingBag, Share2, Zap, Clock, AlertTriangle, Wifi, WifiOff,
-  Radio, SkipForward, AlertOctagon, ShieldAlert, Network, ChevronDown, ChevronRight
+  Radio, SkipForward, AlertOctagon, ShieldAlert, Network, ChevronDown, ChevronRight,
+  Grid3x3, Search, ShieldCheck, ShieldQuestion, RotateCw, Ban
 } from "lucide-react";
 import InfraTopology from "@/components/InfraTopology";
+import { Input } from "@/components/ui/input";
+import type { CapabilityRow } from "../../../server/adapters/capabilityMatrix";
 
 const PLATFORM_ICONS: Record<string, string> = {
   shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
@@ -277,6 +280,197 @@ function QueueFailuresLog() {
   );
 }
 
+/**
+ * Capability matrix — Phase 3 PR 1.
+ *
+ * Renders the flat, machine-readable matrix
+ *   { platform, capability, supported, requires_auth, rate_limit, idempotent }
+ * projected from the live adapter registries by
+ * `server/adapters/capabilityMatrix.ts`.
+ *
+ * Operators use this to answer "is the bot allowed to attempt X on
+ * platform Y?" — the same question the orchestrator's gate answers
+ * programmatically. Showing it here keeps the UI and the runtime
+ * decision honest about the same data.
+ */
+function CapabilityMatrixCard() {
+  const [open, setOpen] = useState(false);
+  const [filter, setFilter] = useState("");
+  const { data, isLoading, isError } = trpc.connectors.capabilityMatrix.useQuery(
+    undefined,
+    { staleTime: 60_000 },
+  );
+
+  // tRPC's inferred type for the legacy `capabilityMatrix` query may not
+  // yet reflect the new `flat` field on every consumer's generated client
+  // (it is added by this PR). Read it through a narrow CapabilityRow[]
+  // assertion rather than `any` so the table cells are still strongly
+  // typed against the same shape the server projects.
+  const flat = (data as { flat?: CapabilityRow[] } | undefined)?.flat;
+
+  const filtered = (flat ?? []).filter((row) => {
+    if (!filter.trim()) return true;
+    const q = filter.trim().toLowerCase();
+    return (
+      row.platform.toLowerCase().includes(q) ||
+      row.capability.toLowerCase().includes(q) ||
+      row.family.toLowerCase().includes(q) ||
+      row.requires_auth.toLowerCase().includes(q)
+    );
+  });
+
+  const totals = {
+    rows: flat?.length ?? 0,
+    supported: flat?.filter((r) => r.supported).length ?? 0,
+    platforms: new Set(flat?.map((r) => r.platform) ?? []).size,
+  };
+
+  const authBadgeClass = (auth: string) => {
+    switch (auth) {
+      case "oauth":
+        return "bg-sky-500/10 text-sky-300 border-sky-500/30";
+      case "api_key":
+        return "bg-amber-500/10 text-amber-300 border-amber-500/30";
+      case "hybrid":
+        return "bg-violet-500/10 text-violet-300 border-violet-500/30";
+      default:
+        return "bg-zinc-500/10 text-zinc-300 border-zinc-500/30";
+    }
+  };
+
+  return (
+    <Card className="border-zinc-800">
+      <CardHeader className="pb-3">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex w-full items-center justify-between text-left"
+          aria-expanded={open}
+        >
+          <div>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Grid3x3 className="w-4 h-4 text-cyan-400" />
+              Capability Matrix
+              {totals.rows > 0 && (
+                <span className="ml-1 text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 rounded-full px-1.5 py-0.5">
+                  {totals.supported}/{totals.rows}
+                </span>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs mt-1">
+              Machine-readable matrix of what every connected platform can do · projected live from the adapter registries · drives orchestrator dispatch
+            </CardDescription>
+          </div>
+          {open ? (
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
+      </CardHeader>
+      {open && (
+        <CardContent className="space-y-3">
+          {isLoading && (
+            <div className="space-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-9 bg-white/5 rounded-md animate-pulse" />
+              ))}
+            </div>
+          )}
+          {isError && (
+            <div className="text-sm text-red-400 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Couldn't load the capability matrix.
+            </div>
+          )}
+          {flat && (
+            <>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Search className="w-3.5 h-3.5" />
+                  <Input
+                    aria-label="Filter capability matrix"
+                    placeholder="Filter by platform, capability, family, or auth model"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="h-7 w-72 text-xs"
+                  />
+                </span>
+                <span>{totals.platforms} platforms · {totals.rows} rows</span>
+                <span className="ml-auto flex items-center gap-3">
+                  <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-sky-300" /> oauth</span>
+                  <span className="flex items-center gap-1"><ShieldQuestion className="w-3 h-3 text-amber-300" /> api_key</span>
+                  <span className="flex items-center gap-1"><RotateCw className="w-3 h-3 text-emerald-300" /> idempotent</span>
+                  <span className="flex items-center gap-1"><Ban className="w-3 h-3 text-red-300" /> not idempotent</span>
+                </span>
+              </div>
+              <div className="max-h-[420px] overflow-y-auto pr-1 rounded-lg border border-white/5">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-zinc-950/80 backdrop-blur text-muted-foreground">
+                    <tr className="border-b border-white/5">
+                      <th className="text-left px-3 py-2 font-medium">Platform</th>
+                      <th className="text-left px-3 py-2 font-medium">Family</th>
+                      <th className="text-left px-3 py-2 font-medium">Capability</th>
+                      <th className="text-left px-3 py-2 font-medium">Supported</th>
+                      <th className="text-left px-3 py-2 font-medium">Auth</th>
+                      <th className="text-left px-3 py-2 font-medium">Rate / s</th>
+                      <th className="text-left px-3 py-2 font-medium">Retry-safe</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
+                          No matching rows.
+                        </td>
+                      </tr>
+                    )}
+                    {filtered.map((row, i) => (
+                      <tr
+                        key={`${row.platform}::${row.capability}::${i}`}
+                        className="border-b border-white/[0.04] hover:bg-white/[0.02]"
+                      >
+                        <td className="px-3 py-1.5 font-mono">
+                          <span className="mr-1.5">{PLATFORM_ICONS[row.platform] ?? "🔌"}</span>
+                          {row.platform}
+                        </td>
+                        <td className="px-3 py-1.5 capitalize text-muted-foreground">{row.family}</td>
+                        <td className="px-3 py-1.5 font-mono text-white/80">{row.capability}</td>
+                        <td className="px-3 py-1.5">
+                          {row.supported ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" aria-label="supported" />
+                          ) : (
+                            <XCircle className="w-3.5 h-3.5 text-zinc-500" aria-label="not supported" />
+                          )}
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Badge variant="outline" className={`text-[10px] ${authBadgeClass(row.requires_auth)}`}>
+                            {row.requires_auth}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-1.5 text-muted-foreground">
+                          {row.rate_limit ?? "—"}
+                        </td>
+                        <td className="px-3 py-1.5">
+                          {row.idempotent ? (
+                            <RotateCw className="w-3.5 h-3.5 text-emerald-300" aria-label="idempotent — safe to retry" />
+                          ) : (
+                            <Ban className="w-3.5 h-3.5 text-red-300" aria-label="not idempotent — duplicate side-effects on retry" />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 export default function PlatformHealth() {
   const { user } = useAuth();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
@@ -446,6 +640,12 @@ export default function PlatformHealth() {
           </CardContent>
         </Card>
       )}
+
+      {/* Phase 3 PR 1 — Capability Matrix.
+          Always visible (independent of healthData) because operators
+          want to see "what is the bot allowed to attempt?" before they
+          run any check. */}
+      <CapabilityMatrixCard />
 
       {/* No Platforms State */}
       {!healthData && totalConnected === 0 && (
