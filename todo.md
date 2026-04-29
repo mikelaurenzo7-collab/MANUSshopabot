@@ -964,3 +964,86 @@
 - [x] Clear all existing workflows from founder account
 - [x] Add founder account subscription bypass (all tiers free for dogfood testing)
 - [ ] Update setup guide with Shopify redirect URI fix info
+
+
+## Sprint 27: Platform Adapter Implementation & OAuth Setup (COMPLETED ✅)
+
+### Account Cleanup & Founder Setup
+- [x] Clean up duplicate store connections (5,235 duplicate users removed, kept only 1 per store)
+- [x] Clear all existing workflows from founder account (2,253 workflows + 7,370 steps + 2,256 tasks cleared)
+- [x] Add founder account subscription bypass (mlaurenzo8@gmail.com now has free access to all tiers)
+- [x] Fix user upsert logic to prevent duplicate creation (added unique constraint on openId)
+
+### Platform Adapters (7 New Platforms)
+- [x] Create Depop adapter (server/adapters/ecommerce/depopAdapter.ts)
+- [x] Create BigCommerce adapter (server/adapters/ecommerce/bigcommerceAdapter.ts)
+- [x] Create Square adapter (server/adapters/ecommerce/squareAdapter.ts)
+- [x] Create Faire adapter (server/adapters/ecommerce/faireAdapter.ts)
+- [x] Create Bonanza adapter (server/adapters/ecommerce/bonanzaAdapter.ts)
+- [x] Create StockX adapter (server/adapters/ecommerce/stockxAdapter.ts)
+- [x] Create Reverb adapter (server/adapters/ecommerce/reverbAdapter.ts)
+- [x] Register all 7 new adapters in ecommerce/index.ts
+- [x] Verify TypeScript compiles cleanly with all new adapters
+
+### OAuth Configuration & Credentials
+- [x] Fix Shopify OAuth redirect_uri mismatch (now uses custom domain instead of Cloud Run internal URL)
+- [x] Add BigCommerce OAuth credentials to Manus secrets (store-level + account-level)
+- [x] Add Google Ads Client ID to Manus secrets
+- [x] Add Pinterest domain verification meta tag to site
+- [x] Verify all Google OAuth redirect URIs are configured in Google Cloud Console
+
+### Documentation & Status
+- [x] Create comprehensive OAuth setup guide (9/21 platforms ready, 2 nearly ready, 10 pending)
+- [x] Verify Shopify OAuth fully configured (no additional URI setup needed)
+- [x] Verify Twitter/X OAuth fully configured (URIs already set in Google Cloud)
+- [x] Verify Gmail OAuth ready to use (uses Google credentials)
+- [x] Verify Google Ads ready to use (uses Google credentials)
+- [x] Verify YouTube ready to use (uses Google credentials)
+
+### Platforms Fully Ready (9 Total)
+- [x] Shopify — OAuth configured, credentials set, URIs configured
+- [x] BigCommerce — OAuth configured, credentials set, URIs configured
+- [x] TikTok Shop — OAuth configured, credentials set, URIs configured
+- [x] Etsy — OAuth configured, credentials set, URIs configured
+- [x] Bonanza — API Key configured, credentials set
+- [x] Meta (Facebook) — OAuth configured, credentials set, URIs configured
+- [x] Instagram — OAuth configured, credentials set, URIs configured
+- [x] TikTok for Business — OAuth configured, credentials set, URIs configured
+- [x] Twitter/X — OAuth configured, credentials set, URIs configured
+
+### Nearly Ready (2 Platforms)
+- [x] Gmail — Uses Google OAuth (ready to use immediately)
+- [x] Google Ads — Uses Google OAuth (ready to use immediately)
+- [ ] Pinterest — Missing PINTEREST_APP_SECRET (have App ID + Access Token, need secret)
+
+### Pending Setup (10 Platforms)
+- [ ] Amazon SP-API — Needs developer account setup
+- [ ] eBay — Needs developer account setup
+- [ ] Square — Needs developer account setup
+- [ ] Reverb — Needs developer account setup
+- [ ] StockX — Needs developer account setup
+- [ ] LinkedIn — Needs developer account setup
+- [ ] Slack — Needs developer account setup
+- [ ] Discord — Needs developer account setup
+- [ ] WooCommerce — User-provided API keys
+- [ ] Walmart — User-provided API keys
+
+### Invite-Only (1 Platform)
+- [ ] Depop — Requires partnership email to business@depop.com
+
+### Checkpoints
+- [x] Checkpoint b6af77d0 — Shopify OAuth redirect URI fix
+- [x] Checkpoint b915879a — Account cleanup + 7 new adapters + founder bypass
+- [ ] Next checkpoint — After adding more OAuth credentials
+
+
+## Azure/Microsoft Graph Setup Reminders
+- [ ] **IMPORTANT:** Add API permissions in Azure Portal for Outlook integration:
+  - [ ] Mail.Read
+  - [ ] Mail.Send
+  - [ ] Calendars.Read
+  - [ ] Calendars.Read.Shared
+  - [ ] Contacts.Read
+  - [ ] User.Read
+  - [ ] Grant admin consent after adding permissions
+  - Location: Azure Portal → App Registration → API permissions → Add a permission → Microsoft Graph → Delegated permissions
