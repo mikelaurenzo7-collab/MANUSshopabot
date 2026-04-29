@@ -1035,3 +1035,15 @@
 - [x] Checkpoint b6af77d0 — Shopify OAuth redirect URI fix
 - [x] Checkpoint b915879a — Account cleanup + 7 new adapters + founder bypass
 - [ ] Next checkpoint — After adding more OAuth credentials
+
+
+## Azure/Microsoft Graph Setup Reminders
+- [ ] **IMPORTANT:** Add API permissions in Azure Portal for Outlook integration:
+  - [ ] Mail.Read
+  - [ ] Mail.Send
+  - [ ] Calendars.Read
+  - [ ] Calendars.Read.Shared
+  - [ ] Contacts.Read
+  - [ ] User.Read
+  - [ ] Grant admin consent after adding permissions
+  - Location: Azure Portal → App Registration → API permissions → Add a permission → Microsoft Graph → Delegated permissions
