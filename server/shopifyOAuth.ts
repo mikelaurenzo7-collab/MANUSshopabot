@@ -117,10 +117,18 @@ export function registerShopifyOAuthRoutes(app: Express) {
       const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
       const returnTo = (req.query.returnTo as string) || undefined;
 
-      // Determine the redirect URI based on the request origin
-      const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-      const host = req.headers["x-forwarded-host"] || req.headers.host;
-      const origin = `${protocol}://${host}`;
+      // Determine the redirect URI.
+      // In production, Cloud Run proxies may expose the internal host
+      // (e.g. xbuklnljnf-vx74qihq7a-uk.a.run.app) instead of the
+      // custom domain. Since Shopify requires the redirect_uri to
+      // match exactly what's whitelisted in Partner Dashboard, we
+      // prefer the explicit origin passed from the frontend (which
+      // knows the real domain), then fall back to ALLOWED_ORIGINS,
+      // then to the request headers.
+      const queryOrigin = req.query.origin as string | undefined;
+      const envOrigin = process.env.ALLOWED_ORIGINS?.split(",")[0]?.trim();
+      const headerOrigin = `${req.headers["x-forwarded-proto"] || req.protocol}://${req.headers["x-forwarded-host"] || req.headers.host}`;
+      const origin = queryOrigin || envOrigin || headerOrigin;
       const redirectUri = `${origin}/api/shopify/callback`;
 
       // Persist state in DB for durability across restarts (Manus compatibility)

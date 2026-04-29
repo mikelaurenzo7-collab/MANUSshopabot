@@ -935,3 +935,15 @@
 - [x] Test all integrations end-to-end
 - [x] Verify bot workflows work with each platform
 - [ ] Deploy to production (awaiting user OAuth key configuration in developer consoles)
+
+
+## Deep Audit & Supreme Bot Expertise Sprint
+
+- [ ] Audit all bot engines (Builder, Merchant, Social) for platform-specific expertise
+- [ ] Ensure user-level-aware workflows (new store builder vs existing store takeover)
+- [ ] Verify all 28 platform adapters have complete API method coverage
+- [ ] Enhance bot system prompts with supreme platform-specific knowledge
+- [ ] Audit all OAuth flows for production readiness
+- [ ] Fix any gaps, missing handlers, or error paths
+- [ ] Create polished production-ready OAuth setup guide
+- [ ] Final end-to-end testing

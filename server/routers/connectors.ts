@@ -538,7 +538,7 @@ export const connectorsRouter = router({
       if (!account || account.orgId !== ctx.org.id) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Social account not found" });
       }
-      const platformName = SOCIAL_PLATFORMS[account.platform]?.name || account.platform;
+      const platformName = (SOCIAL_PLATFORMS as Record<string, { name: string }>)[account.platform]?.name || account.platform;
       await db.withTransaction(async (tx) => {
         await db.deleteSocialAccount(input.id, tx);
         await db.createAgentTask({
@@ -596,7 +596,7 @@ export const connectorsRouter = router({
         let shop = input.shopDomain.trim().toLowerCase();
         if (!shop.includes(".")) shop = `${shop}.myshopify.com`;
         shop = shop.replace(/^https?:\/\//, "").replace(/\/$/, "");
-        const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}`;
+        const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}&origin=${encodeURIComponent(input.origin)}`;
         return { url: installUrl, platform: "shopify" };
       }
 
