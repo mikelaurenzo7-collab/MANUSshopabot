@@ -102,6 +102,14 @@ export const ENV = {
   // Faire
   faireClientId: process.env.FAIRE_CLIENT_ID ?? "",
   faireClientSecret: process.env.FAIRE_CLIENT_SECRET ?? "",
+  // Printful
+  printfulClientId: process.env.PRINTFUL_CLIENT_ID ?? "",
+  printfulClientSecret: process.env.PRINTFUL_CLIENT_SECRET ?? "",
+  printfulApiToken: process.env.PRINTFUL_API_TOKEN ?? "",
+  // CJ Dropshipping
+  cjEmail: process.env.CJ_EMAIL ?? "",
+  cjPassword: process.env.CJ_PASSWORD ?? "",
+  cjApiKey: process.env.CJ_API_KEY ?? "",
   // Bonanza
   bonanzaDevId: process.env.BONANZA_DEV_ID ?? "",
   bonanzaCertId: process.env.BONANZA_CERT_ID ?? "",
