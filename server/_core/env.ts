@@ -80,10 +80,13 @@ export const ENV = {
   bigcommerceClientId: process.env.BIGCOMMERCE_CLIENT_ID ?? "",
   bigcommerceClientSecret: process.env.BIGCOMMERCE_CLIENT_SECRET ?? "",
   // Square
-  squareClientId: process.env.SQUARE_CLIENT_ID ?? "",
-  squareClientSecret: process.env.SQUARE_CLIENT_SECRET ?? "",
+  squareClientId: process.env.SQUARE_OAUTH_APPLICATION_ID ?? "",
+  squareClientSecret: process.env.SQUARE_OAUTH_APPLICATION_SECRET ?? "",
+  squareProductionAccessToken: process.env.SQUARE_PRODUCTION_ACCESS_TOKEN ?? "",
+  squareProductionApplicationId: process.env.SQUARE_PRODUCTION_APPLICATION_ID ?? "",
   // Faire
-  faireApiKey: process.env.FAIRE_API_KEY ?? "",
+  faireClientId: process.env.FAIRE_CLIENT_ID ?? "",
+  faireClientSecret: process.env.FAIRE_CLIENT_SECRET ?? "",
   // Bonanza
   bonanzaDevId: process.env.BONANZA_DEV_ID ?? "",
   bonanzaCertId: process.env.BONANZA_CERT_ID ?? "",

@@ -169,9 +169,14 @@ const ECOMMERCE_PLATFORMS = {
     name: "Faire",
     icon: "🏪",
     color: "#6B5B95",
-    connectionType: "api_key" as const,
+    connectionType: "oauth" as const,
     description: "Wholesale marketplace — manage orders and inventory",
-    requiredFields: ["apiKey"],
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://faire.com/oauth2/authorize?applicationId=${clientId}&redirectUrl=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scopes)}`,
+      tokenUrl: () => "https://www.faire.com/api/external-api-oauth2/token",
+      scopes: "READ_ORDERS WRITE_ORDERS READ_PRODUCTS WRITE_PRODUCTS READ_INVENTORIES WRITE_INVENTORIES READ_BRAND",
+    },
     capabilities: ["orders", "inventory", "wholesale"],
   },
   bonanza: {
@@ -332,7 +337,7 @@ export const connectorsRouter = router({
       depop: !!ENV.depopAppId && !!ENV.depopAppSecret,
       bigcommerce: !!ENV.bigcommerceClientId && !!ENV.bigcommerceClientSecret,
       square: !!ENV.squareClientId && !!ENV.squareClientSecret,
-      faire: true, // API-key based
+      faire: !!ENV.faireClientId && !!ENV.faireClientSecret,
       bonanza: true, // API-key based
       stockx: !!ENV.stockxClientId && !!ENV.stockxClientSecret,
       reverb: !!ENV.reverbClientId && !!ENV.reverbClientSecret,
@@ -616,6 +621,12 @@ export const connectorsRouter = router({
         amazon: ENV.amazonSpClientId,
         ebay: ENV.ebayAppId,
         tiktok_shop: ENV.tiktokAppId || ENV.tiktokClientKey,
+        square: ENV.squareClientId,
+        faire: ENV.faireClientId,
+        bigcommerce: ENV.bigcommerceClientId,
+        depop: ENV.depopAppId,
+        stockx: ENV.stockxClientId,
+        reverb: ENV.reverbClientId,
       };
       const ecomClientId = ecomClientIdMap[input.platform];
       if (!ecomClientId) {

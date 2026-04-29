@@ -96,6 +96,92 @@ async function exchangeTikTokShopCode(code: string): Promise<TokenResponse> {
   };
 }
 
+
+async function exchangeSquareCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://connect.squareup.com/oauth2/token", {
+    client_id: ENV.squareClientId,
+    client_secret: ENV.squareClientSecret,
+    code,
+    redirect_uri: redirectUri,
+    grant_type: "authorization_code",
+  }, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.data;
+}
+
+async function exchangeFaireCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://www.faire.com/api/external-api-oauth2/token", new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: ENV.faireClientId,
+    client_secret: ENV.faireClientSecret,
+    code,
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return res.data;
+}
+
+async function exchangeBigCommerceCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://login.bigcommerce.com/oauth2/token", new URLSearchParams({
+    client_id: ENV.bigcommerceClientId,
+    client_secret: ENV.bigcommerceClientSecret,
+    code,
+    redirect_uri: redirectUri,
+    grant_type: "authorization_code",
+    scope: "store_v2_products store_v2_orders store_v2_content",
+    context: "stores/{store_hash}",
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return res.data;
+}
+
+async function exchangeDepopCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://api.depop.com/oauth2/token", new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: ENV.depopAppId,
+    client_secret: ENV.depopAppSecret,
+    code,
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return res.data;
+}
+
+async function exchangeStockXCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://accounts.stockx.com/oauth/token", new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: ENV.stockxClientId,
+    client_secret: ENV.stockxClientSecret,
+    code,
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return res.data;
+}
+
+async function exchangeReverbCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post("https://api.reverb.com/oauth/token", new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: ENV.reverbClientId,
+    client_secret: ENV.reverbClientSecret,
+    code,
+    redirect_uri: redirectUri,
+  }).toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return res.data;
+}
 // ─── Main Callback Handler ─────────────────────────────────────────────────
 
 async function handleEcommerceOAuthCallback(req: Request, res: Response) {
@@ -168,6 +254,24 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
         break;
       case "tiktok_shop":
         tokenData = await exchangeTikTokShopCode(code);
+        break;
+      case "square":
+        tokenData = await exchangeSquareCode(code, redirectUri);
+        break;
+      case "faire":
+        tokenData = await exchangeFaireCode(code, redirectUri);
+        break;
+      case "bigcommerce":
+        tokenData = await exchangeBigCommerceCode(code, redirectUri);
+        break;
+      case "depop":
+        tokenData = await exchangeDepopCode(code, redirectUri);
+        break;
+      case "stockx":
+        tokenData = await exchangeStockXCode(code, redirectUri);
+        break;
+      case "reverb":
+        tokenData = await exchangeReverbCode(code, redirectUri);
         break;
       default:
         return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);
@@ -242,6 +346,12 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       amazon: "Amazon Seller",
       ebay: "eBay",
       tiktok_shop: "TikTok Shop",
+      square: "Square",
+      faire: "Faire",
+      bigcommerce: "BigCommerce",
+      depop: "Depop",
+      stockx: "StockX",
+      reverb: "Reverb",
     };
 
     console.log(`[EcomOAuth] Connected ${platform} for user ${userId}`);
@@ -334,6 +444,39 @@ export async function refreshPlatformToken(
         refresh_token: data.refresh_token,
         expires_in: data.access_token_expire_in,
       };
+    }
+    case "square": {
+      const res = await axios.post("https://connect.squareup.com/oauth2/token", {
+        client_id: ENV.squareClientId,
+        client_secret: ENV.squareClientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }, {
+        headers: { "Content-Type": "application/json" },
+      });
+      return res.data;
+    }
+    case "faire": {
+      const res = await axios.post("https://www.faire.com/api/external-api-oauth2/token", new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: ENV.faireClientId,
+        client_secret: ENV.faireClientSecret,
+        refresh_token: refreshToken,
+      }).toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      return res.data;
+    }
+    case "bigcommerce": {
+      const res = await axios.post("https://login.bigcommerce.com/oauth2/token", new URLSearchParams({
+        client_id: ENV.bigcommerceClientId,
+        client_secret: ENV.bigcommerceClientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }).toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      return res.data;
     }
     default:
       return null;
