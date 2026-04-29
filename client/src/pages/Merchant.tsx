@@ -18,6 +18,7 @@ import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
 import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
 import { BotRecentWins } from "@/components/BotRecentWins";
+import { BotCookbookSpotlight } from "@/components/BotCookbookSpotlight";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -143,6 +144,11 @@ export default function MerchantPage() {
                 audits, fulfillment-automation runs all surface here in
                 real-time without leaving the cockpit. */}
             <ActiveBotWorkflows agentType="merchant" />
+
+            {/* Autonomous workflow spotlight — one-click launch for
+                Merchant's autonomous repricer. >25% moves auto-promote
+                to the operator's approval queue per platform policy. */}
+            <BotCookbookSpotlight agentType="merchant" />
 
             {/* Recent wins — operator sees last three completions
                 with one-click rerun. */}

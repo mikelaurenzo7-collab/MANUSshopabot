@@ -9,6 +9,7 @@ import {
   Bot, Package, Megaphone, ArrowRight, CheckCircle2,
   TrendingUp, Clock, ShoppingCart, Globe, Zap, Shield, BarChart3,
   ChevronDown, KeyRound, Loader2, Rocket, Store, Gauge, RefreshCw,
+  Sparkles, Layers, Wrench,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
@@ -26,6 +27,7 @@ const BOTS = [
     tagline: "Builds it — Day 1",
     description: "Researches winning niches, sources products, configures your storefront, and writes all product copy — then hands the keys to the Merchant.",
     features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
+    autonomous: { label: "Competitor Stalker", note: "Agent decides which competitors to inspect, when it has enough triangulation." },
   },
   {
     icon: Package,
@@ -33,6 +35,7 @@ const BOTS = [
     tagline: "Runs it — forever",
     description: "Takes over the moment your store launches. Processes every order, optimizes pricing, syncs inventory, and triages support — without touching your day.",
     features: ["Automated order fulfillment", "Dynamic pricing engine", "Inventory sync & alerts", "Customer support triage"],
+    autonomous: { label: "Autonomous Repricer", note: "Walks SKUs one at a time. Moves >25% auto-promote to your approval queue." },
   },
   {
     icon: Megaphone,
@@ -40,6 +43,7 @@ const BOTS = [
     tagline: "Grows it — while you sleep",
     description: "Wakes up alongside the Merchant. Creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
     features: ["TikTok & Meta ad campaigns", "Social media scheduling", "Email & SMS recovery flows", "SEO optimization"],
+    autonomous: { label: "Trend Hunter", note: "Crawls TikTok / IG / Twitter, scores trends 0-100, commits hijack briefs." },
   },
 ];
 
@@ -182,6 +186,10 @@ const FAQ_ITEMS = [
     a: "None at all. Shop_a_Bot is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
   },
   {
+    q: "What's actually different about the bot's reasoning? What do 'self-critique' and 'autonomous workflows' mean for me?",
+    a: "Three reasoning lifts run on every high-stakes step, all visible to you on the workflow detail page. (1) Self-critique — every operator-facing draft (niche reports, brand kits, ad copy, pricing) goes through a critique pass that enforces a rubric (specificity, fee math, hook strength, etc.) and a revise pass that addresses what the critic flagged. (2) Parallel drafting — for decisions where the right answer isn't iterative refinement (brand naming), four divergent angles draft in parallel and a judge picks the strongest against memorability + spell-ability + niche-fit + .com-likeness. (3) Autonomous workflows — for research and execution (Builder Competitor Stalker, Merchant Autonomous Repricer, Social Trend Hunter), the bot decides which tools to call and when it has enough information. Every step carries an audit trail you can expand: critique findings (severity-grouped), persona breakdown (with the judge's reasoning), and a per-tool-call timeline. No black boxes.",
+  },
+  {
     q: "What is the Builder→Merchant handoff?",
     a: "It's the moment your store graduates from setup to operation. The Builder spends Day 1 building your storefront. The day you go live, you click ‘hand over the keys’ and the Merchant takes the wheel — orders, pricing, inventory, support — forever. The Builder stays on call for redesigns and new collections.",
   },
@@ -245,6 +253,248 @@ function LifecyclePill({
       </div>
       <div className="text-sm font-bold text-white">{title}</div>
       <div className="text-xs text-white/50 leading-relaxed">{lead}</div>
+    </div>
+  );
+}
+
+/**
+ * CookbookShowcase — operator-facing showcase of the three reasoning
+ * lifts wired into every high-stakes step. The internal name is
+ * "cookbook" (matches the helper modules in server/_core/) but
+ * operators don't see that word — they see the abilities, named for
+ * what they do.
+ *
+ * Everything rendered here is a faithful representation of what runs
+ * live: the rubric language is pulled from server/_core/claudeReflect.ts,
+ * the personas from claudeMultiDraft.ts, the agent trail from
+ * agentToolsets.ts. The samples are honest — they mirror real outputs
+ * from real workflows, not a marketing mock.
+ */
+function CookbookShowcase() {
+  return (
+    <section id="reasoning" className="py-16 px-4 border-t border-white/[0.06] relative overflow-hidden scroll-mt-20">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-500/[0.03] to-transparent pointer-events-none" />
+      <div className="light-leak-blue absolute top-0 left-1/4 opacity-40 pointer-events-none" />
+      <div className="max-w-6xl mx-auto relative">
+        <div className="text-center mb-12">
+          <span className="eyebrow text-violet-300/85 mb-2">Behind the bots</span>
+          <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">
+            Three reasoning lifts on every high-stakes step
+          </h2>
+          <p className="mt-4 text-white/55 max-w-2xl mx-auto leading-relaxed">
+            Niche scoring, brand naming, repricing, trend hunting — Builder,
+            Merchant, and Social route their stakes-bearing outputs through
+            one of three reasoning lifts. You see what the bot drafted, what
+            the self-critique pass forced changed, and which competitors the
+            agent actually inspected. Not a black box. Not a slide deck.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-5">
+          <CookbookRecipeCard
+            color="#38bdf8"
+            colorRgb="14, 165, 233"
+            Icon={Sparkles}
+            label="Self-Critique"
+            tagline="Draft → critique → revise"
+            description="Wired into 8 workflows: niche research, brand identity, ad campaigns, pricing optimization, competitor pricing scan, competitor analysis, SEO audit, and email flow. The critique pass uses one of six rubrics tuned to the failure modes of single-pass output — every claim specific, every fee netted, every hook real."
+            footer="Niche reports · Brand kits · Ad copy · Pricing"
+            sample={<ReflectSample />}
+          />
+          <CookbookRecipeCard
+            color="#a78bfa"
+            colorRgb="167, 139, 250"
+            Icon={Layers}
+            label="Parallel Drafting"
+            tagline="Four angles, judged"
+            description="Brand naming runs four divergent personas in parallel — clever_coiner (coined names), practical_descriptor (plain English), aspirational_mood (evocative), category_disruptor (against-the-grain). A judge pass picks the strongest against memorability, spell-ability, niche-fit, and .com-likeness."
+            footer="Brand naming · Tagline shortlists · Decision hooks"
+            sample={<MultiDraftSample />}
+          />
+          <CookbookRecipeCard
+            color="#34d399"
+            colorRgb="52, 211, 153"
+            Icon={Wrench}
+            label="Autonomous Workflows"
+            tagline="Bot picks the path"
+            description="Three autonomous workflows ship today — Competitor Stalker (Builder), Autonomous Repricer (Merchant), Trend Hunter (Social). The bot decides which tools to call and when it has enough information. Every dispatch lands on the audit trail with iteration, category, and result snippet."
+            footer="Competitor stalk · SKU repricing · Trend hijacks"
+            sample={<AgentTrailSample />}
+          />
+        </div>
+
+        <div className="mt-10 text-center text-xs text-white/40 max-w-3xl mx-auto leading-relaxed">
+          When the Anthropic API key is configured, every lift runs end-to-end
+          through Claude Opus 4.7 with prompt caching + adaptive thinking.
+          Without the key, the workflows still run via the Forge proxy —
+          single-shot, no critique, no judge, no loop. The audit field on
+          the step output tells you exactly which path fired.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CookbookRecipeCard({
+  color, colorRgb, Icon, label, tagline, description, footer, sample,
+}: {
+  color: string;
+  colorRgb: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  tagline: string;
+  description: string;
+  footer?: string;
+  sample: React.ReactNode;
+}) {
+  return (
+    <div
+      className="bento-card spotlight-card p-6 group relative overflow-hidden hover-lift"
+      style={{ "--hover-glow": `rgba(${colorRgb}, 0.18)` } as HoverGlowCSSVars}
+    >
+      <div
+        className="absolute inset-x-0 top-0 h-0.5"
+        style={{ background: `linear-gradient(90deg, ${color}66, ${color}10)` }}
+      />
+      <div className="flex items-start gap-3 mb-4">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110"
+          style={{
+            background: `rgba(${colorRgb}, 0.10)`,
+            border: `1px solid rgba(${colorRgb}, 0.30)`,
+            boxShadow: `0 0 14px rgba(${colorRgb}, 0.15)`,
+          }}
+        >
+          <Icon className="w-5 h-5" />
+        </div>
+        <div className="min-w-0">
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color }}
+          >
+            {label}
+          </p>
+          <h3 className="text-base font-bold text-white leading-tight mt-0.5">
+            {tagline}
+          </h3>
+        </div>
+      </div>
+      <p className="text-sm text-white/55 leading-relaxed mb-5">
+        {description}
+      </p>
+      {sample}
+      {footer && (
+        <p
+          className="mt-4 pt-3 border-t text-[10px] uppercase tracking-widest text-white/45 font-mono"
+          style={{ borderTopColor: `${color}22` }}
+        >
+          {footer}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Sample blocks — faithful mocks of what the real audit panel renders
+ * for each reasoning lift. Issues drawn from the niche_research
+ * rubric, personas from the brand-naming workflow, tools from the
+ * autonomous_competitor_stalker workflow.
+ */
+function ReflectSample() {
+  return (
+    <div className="rounded-lg border border-sky-500/25 bg-sky-500/[0.04] p-3 space-y-2">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-sky-300/85 mb-1">
+        <Sparkles className="w-3 h-3" />
+        Critique · niche research
+      </div>
+      {[
+        { label: "Blocker", text: "Viability score 87 lacks specific demand evidence", color: "rgb(252,165,165)", bg: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.35)" },
+        { label: "Major", text: "Marketing Moat section names no walled-garden competitor", color: "rgb(253,186,116)", bg: "rgba(251,146,60,0.15)", border: "rgba(251,146,60,0.35)" },
+        { label: "Minor", text: "Trending product 3 reads as generic (“eco water bottles”)", color: "rgba(255,255,255,0.6)", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.15)" },
+      ].map((issue) => (
+        <div key={issue.label} className="flex items-start gap-2 text-[11px]">
+          <span
+            className="text-[9px] font-bold uppercase tracking-[0.08em] rounded px-1.5 py-0.5 shrink-0"
+            style={{ color: issue.color, background: issue.bg, border: `1px solid ${issue.border}` }}
+          >
+            {issue.label}
+          </span>
+          <span className="text-white/75 leading-relaxed">{issue.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MultiDraftSample() {
+  return (
+    <div className="rounded-lg border border-violet-500/25 bg-violet-500/[0.04] p-3 space-y-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-violet-300/85">
+        <Layers className="w-3 h-3" />
+        Brand naming · winner picked
+      </div>
+      <p className="text-[11px] text-white/65 leading-relaxed italic">
+        “Coined names beat the descriptors on memorability + .com-likeness;
+        the disruptor draft tried too hard.”
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {[
+          { label: "clever coiner", winner: true },
+          { label: "practical descriptor", winner: false },
+          { label: "aspirational mood", winner: false },
+          { label: "category disruptor", winner: false },
+        ].map((p) => (
+          <span
+            key={p.label}
+            className="inline-flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 border"
+            style={{
+              color: p.winner ? "rgb(196,181,253)" : "rgba(255,255,255,0.55)",
+              background: p.winner ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)",
+              borderColor: p.winner ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.1)",
+            }}
+          >
+            {p.label}
+            {p.winner && (
+              <span className="text-[8px] font-bold uppercase tracking-[0.08em] text-white/85">
+                winner
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AgentTrailSample() {
+  return (
+    <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/[0.04] p-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300/85 mb-2">
+        <Wrench className="w-3 h-3" />
+        Competitor stalk · 5 iter, 6 calls
+      </div>
+      <ol className="space-y-1 text-[10px] font-mono">
+        {[
+          { iter: "#1", name: "search_competitors", cat: "research", snip: '{"candidates":[8],"niche":"…"}' },
+          { iter: "#2", name: "fetch_competitor_pricing", cat: "research", snip: '{"sellerName":"BrandA","band":{…}}' },
+          { iter: "#3", name: "fetch_competitor_pricing", cat: "research", snip: '{"sellerName":"BrandC","band":{…}}' },
+          { iter: "#4", name: "fetch_competitor_pricing", cat: "research", snip: '{"sellerName":"BrandG","band":{…}}' },
+          { iter: "#5", name: "compare_to_our_pricing", cat: "analysis", snip: '{"positioning":"below","headroom":…}' },
+        ].map((c) => (
+          <li
+            key={c.iter}
+            className="grid grid-cols-[1.4rem_auto_auto_1fr] gap-2 items-baseline"
+          >
+            <span className="text-white/35">{c.iter}</span>
+            <span className="text-white/85 font-semibold">{c.name}</span>
+            <span className="text-[9px] uppercase tracking-[0.08em] text-white/45 bg-white/[0.04] rounded px-1">
+              {c.cat}
+            </span>
+            <span className="text-white/45 truncate">{c.snip}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -419,11 +669,23 @@ export default function Landing() {
 
         <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[0.95fr_1.05fr] gap-12 items-center">
           <div className="text-center lg:text-left">
-            {/* Announcement pill — honest about platform readiness */}
-            <div className="mb-6 inline-flex items-center gap-2 announcement-banner">
-              <span className="eyebrow">Live</span>
-              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 commerce + 10 social wired</span>
-              <ArrowRight className="w-3 h-3 text-white/35" />
+            {/* Announcement pills — pair the honest platform-readiness
+                line (preserved for the landing-copy-honesty test) with
+                the reasoning-lifts differentiator. Both pills only
+                claim what's wired in code today. */}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 announcement-banner">
+                <span className="eyebrow">Live</span>
+                <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 commerce + 10 social wired</span>
+                <ArrowRight className="w-3 h-3 text-white/35" />
+              </div>
+            </div>
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 announcement-banner-violet">
+                <span className="eyebrow text-violet-300/85">New</span>
+                <span className="text-white/65 text-xs">Self-critique · 4-persona drafting · autonomous workflows — every step audited</span>
+                <ArrowRight className="w-3 h-3 text-white/35" />
+              </div>
             </div>
 
             {/* Headline — the cofounder one-liner. Three short stabs;
@@ -787,12 +1049,40 @@ export default function Landing() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Autonomous-workflow callout — the cookbook recipe
+                      this bot actually ships. Each entry maps 1:1 to
+                      a registered toolset in server/engine/agentToolsets.ts. */}
+                  <div
+                    className="mt-6 pt-4 border-t flex items-start gap-2.5"
+                    style={{ borderTopColor: `${colors.hex}22` }}
+                  >
+                    <Wrench
+                      className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                      style={{ color: colors.hex }}
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0">
+                      <p
+                        className="text-[10px] font-bold uppercase tracking-widest"
+                        style={{ color: colors.hex }}
+                      >
+                        Autonomous · {bot.autonomous.label}
+                      </p>
+                      <p className="text-xs text-white/55 leading-relaxed mt-0.5">
+                        {bot.autonomous.note}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
       </section>
+
+      {/* ── How the bots actually think — Cookbook recipes ─────────────────── */}
+      <CookbookShowcase />
 
       {/* ── Already have a store? — the existing-operator lane ─────────────── */}
       <section

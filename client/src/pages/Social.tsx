@@ -16,6 +16,7 @@ import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
 import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
 import { BotRecentWins } from "@/components/BotRecentWins";
+import { BotCookbookSpotlight } from "@/components/BotCookbookSpotlight";
 import {
   Megaphone,
   Loader2,
@@ -288,6 +289,13 @@ function SocialContent({
           posts, drop announcements all surface here while running. */}
       <div className="px-3 md:px-5 pt-3">
         <ActiveBotWorkflows agentType="social" />
+      </div>
+
+      {/* Autonomous workflow spotlight — one-click launch for Social's
+          Trend Hunter. Crawls TikTok / Instagram / Twitter and commits
+          creative briefs for trends scoring ≥40 worth-testing. */}
+      <div className="px-3 md:px-5 pt-3">
+        <BotCookbookSpotlight agentType="social" />
       </div>
 
       {/* Recent wins for the Social bot — last 3 completed runs. */}

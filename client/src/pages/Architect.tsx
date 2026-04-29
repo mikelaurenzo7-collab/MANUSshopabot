@@ -13,6 +13,7 @@ import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
 import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
 import { BotRecentWins } from "@/components/BotRecentWins";
+import { BotCookbookSpotlight } from "@/components/BotCookbookSpotlight";
 
 export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
@@ -171,6 +172,12 @@ export default function Architect() {
                 watch Builder execute step by step without leaving the
                 page. Auto-hides when nothing is running. */}
             <ActiveBotWorkflows agentType="architect" />
+
+            {/* Autonomous workflow spotlight — one-click launch for
+                Builder's agentic Competitor Stalker. The badge that
+                lights up on the runner step rail tells the operator
+                which tools the agent actually called. */}
+            <BotCookbookSpotlight agentType="architect" />
 
             {/* Recent wins — last 3 completions with one-click rerun.
                 Auto-hides on empty so a fresh org doesn't see a
