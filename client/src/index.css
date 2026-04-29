@@ -2083,6 +2083,262 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   
   /* Mobile-safe split layout */
   .mobile-split { @apply flex flex-col sm:flex-row gap-4 sm:gap-0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     PLATFORM TILE — Sprint 27 cinematic edition
+     The integrations grid is a discovery surface; every tile is a brand
+     ambassador. The primitives below let any platform card opt into:
+       1. A hero ribbon along the top edge in brand color → accent
+       2. A holographic seam that lights up on hover
+       3. A breathing glow that pulses at idle so the page feels alive
+       4. A magnetic lift on hover (subtle scale + ring + shadow)
+     A tile that wires its `--tile-color` and `--tile-accent` CSS vars
+     gets all four for free.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  .platform-tile {
+    --tile-color: 100, 116, 139;
+    --tile-accent: 148, 163, 184;
+    position: relative;
+    isolation: isolate;
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.045) 0%,
+        rgba(255, 255, 255, 0.018) 60%,
+        rgba(255, 255, 255, 0.01) 100%
+      );
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      border-color 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      background 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .platform-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 0.55) 0%,
+      rgba(var(--tile-accent), 0.18) 35%,
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000, #000) content-box,
+      linear-gradient(#000, #000);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    opacity: 0.55;
+    transition: opacity 320ms ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .platform-tile::after {
+    content: "";
+    position: absolute;
+    inset: -40% -10% auto auto;
+    width: 60%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.22) 0%,
+      transparent 65%
+    );
+    filter: blur(28px);
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0);
+    transition: opacity 380ms ease, transform 600ms ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .platform-tile > * { position: relative; z-index: 2; }
+
+  .platform-tile:hover {
+    border-color: rgba(var(--tile-color), 0.28);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(var(--tile-color), 0.05) 0%,
+        rgba(255, 255, 255, 0.02) 100%
+      );
+    box-shadow:
+      0 12px 40px -12px rgba(var(--tile-color), 0.45),
+      0 0 0 1px rgba(var(--tile-color), 0.18) inset;
+    transform: translateY(-2px);
+  }
+  .platform-tile:hover::before { opacity: 1; }
+  .platform-tile:hover::after { opacity: 0.85; transform: translate3d(-10%, 10%, 0); }
+
+  /* Hero ribbon along the top edge — picks up the brand colors. */
+  .platform-tile-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(var(--tile-color), 0.95),
+      rgba(var(--tile-accent), 0.6) 50%,
+      transparent
+    );
+    border-radius: inherit inherit 0 0;
+    z-index: 3;
+    opacity: 0.9;
+  }
+
+  /* Breathing glow under the icon — small, subliminal, says "alive". */
+  .platform-tile-icon-halo {
+    position: relative;
+  }
+  .platform-tile-icon-halo::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.35) 0%,
+      transparent 65%
+    );
+    border-radius: 50%;
+    filter: blur(10px);
+    opacity: 0.55;
+    animation: tile-icon-breathe 4.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @keyframes tile-icon-breathe {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.12); }
+  }
+
+  /* Capability halo — circular badge for connected count.  */
+  .platform-tile-status-pulse {
+    position: relative;
+  }
+  .platform-tile-status-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    border: 1px solid currentColor;
+    opacity: 0.5;
+    animation: tile-status-pulse 1.8s ease-out infinite;
+  }
+  @keyframes tile-status-pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* Holographic seam — drifts diagonally on hover only. */
+  .platform-tile-seam {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.06) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 1;
+  }
+  .platform-tile:hover .platform-tile-seam {
+    transform: translateX(100%);
+  }
+
+  /* "Connect" pill — brand-colored fill that subtly glows at rest. */
+  .platform-tile-cta {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 1),
+      rgba(var(--tile-accent), 0.85)
+    );
+    box-shadow:
+      0 6px 18px -6px rgba(var(--tile-color), 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+  }
+  .platform-tile-cta:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow:
+      0 10px 26px -6px rgba(var(--tile-color), 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  }
+  .platform-tile-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .platform-tile-cta:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Capability chip — tiny pill that adopts the tile's color in
+     hover state but stays neutral at rest. */
+  .platform-cap-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgb(203, 213, 225);
+    transition: all 220ms ease;
+  }
+  .platform-tile:hover .platform-cap-chip {
+    background: rgba(var(--tile-color), 0.12);
+    border-color: rgba(var(--tile-color), 0.3);
+    color: rgb(255, 255, 255);
+  }
+
+  /* "Strength" highlight — a single-line bullet under the chips */
+  .platform-tile-strength {
+    color: rgba(255, 255, 255, 0.78);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(var(--tile-color), 0.07),
+        rgba(var(--tile-accent), 0.04) 100%
+      );
+    border-left: 2px solid rgba(var(--tile-color), 0.45);
+  }
+
+  /* Connected badge — the subtle pulse on the corner */
+  .platform-connected-dot {
+    position: relative;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: rgb(110, 231, 183);
+  }
+  .platform-connected-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    animation: tile-status-pulse 2.2s ease-out infinite;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

@@ -12,28 +12,7 @@ import {
   Radio, SkipForward, AlertOctagon, ShieldAlert, Network, ChevronDown, ChevronRight
 } from "lucide-react";
 import InfraTopology from "@/components/InfraTopology";
-
-const PLATFORM_ICONS: Record<string, string> = {
-  shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
-  ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
-  meta: "📘", instagram: "📸", tiktok: "🎶", twitter: "🐦",
-};
-
-const PLATFORM_COLORS: Record<string, string> = {
-  shopify: "border-green-500/30 bg-green-500/5",
-  woocommerce: "border-blue-500/30 bg-blue-500/5",
-  amazon: "border-orange-500/30 bg-orange-500/5",
-  etsy: "border-red-500/30 bg-red-500/5",
-  ebay: "border-blue-500/30 bg-blue-500/5",
-  tiktok_shop: "border-pink-500/30 bg-pink-500/5",
-  walmart: "border-sky-500/30 bg-sky-500/5",
-  meta: "border-blue-500/30 bg-blue-500/5",
-  instagram: "border-cyan-500/30 bg-cyan-500/5",
-  tiktok: "border-pink-500/30 bg-pink-500/5",
-  twitter: "border-sky-400/30 bg-sky-400/5",
-  pinterest: "border-red-500/30 bg-red-500/5",
-  google_ads: "border-yellow-500/30 bg-yellow-500/5",
-};
+import { getBrand } from "@/lib/platformBrand";
 
 type HealthResult = {
   id: number;
@@ -54,15 +33,21 @@ type HealthData = {
 };
 
 function HealthCard({ result }: { result: HealthResult }) {
-  const label = result.storeName ?? result.accountName ?? result.platform;
-  const colorClass = PLATFORM_COLORS[result.platform] ?? "border-zinc-700 bg-zinc-900/30";
+  const brand = getBrand(result.platform);
+  const label = result.storeName ?? result.accountName ?? brand.name;
   return (
-    <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${colorClass}`}>
+    <div
+      className="flex items-center justify-between p-4 rounded-xl border transition-all hover:bg-white/[0.04]"
+      style={{
+        borderColor: `${brand.color}40`,
+        background: `linear-gradient(135deg, ${brand.color}0d 0%, transparent 60%)`,
+      }}
+    >
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-2xl shrink-0">{PLATFORM_ICONS[result.platform] ?? "🔌"}</span>
+        <span className="text-2xl shrink-0">{brand.icon}</span>
         <div className="min-w-0">
           <p className="font-medium text-sm truncate">{label}</p>
-          <p className="text-xs text-muted-foreground capitalize">{result.platform.replace(/_/g, " ")}</p>
+          <p className="text-xs text-muted-foreground truncate">{brand.name}</p>
           {!result.healthy && (
             <p className="text-xs text-red-400 mt-0.5 truncate">{result.message}</p>
           )}
@@ -135,12 +120,12 @@ function WebhookEventLog() {
               const cfg = STATUS_CONFIG[evt.status] ?? STATUS_CONFIG.received;
               return (
                 <div key={evt.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                  <span className="text-base shrink-0">{PLATFORM_ICONS[evt.platform] ?? "🔌"}</span>
+                  <span className="text-base shrink-0">{getBrand(evt.platform).icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-semibold text-white/80 truncate">{evt.eventType}</span>
                       <span className="text-white/20 text-xs hidden sm:inline">·</span>
-                      <span className="text-xs text-white/30 capitalize hidden sm:inline">{evt.platform.replace(/_/g, " ")}</span>
+                      <span className="text-xs text-white/30 hidden sm:inline">{getBrand(evt.platform).name}</span>
                     </div>
                     <div className="text-xs text-white/25 mt-0.5">{new Date(evt.createdAt).toLocaleString()}{evt.processingMs ? ` · ${evt.processingMs}ms` : ""}</div>
                     {evt.errorMessage && <div className="text-xs text-red-400 mt-0.5 truncate">{evt.errorMessage}</div>}

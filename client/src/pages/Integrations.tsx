@@ -6,7 +6,8 @@ import {
   Plug, ShoppingBag, Share2, CheckCircle2, AlertCircle, XCircle,
   ExternalLink, Trash2, RefreshCw, Plus, Shield, Loader2, Wifi, WifiOff,
   ChevronRight, TrendingUp, Package, ShoppingCart, Activity, Zap,
-  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff, Wrench, Hourglass
+  DollarSign, BarChart3, Globe, Store, KeyRound, Eye, EyeOff, Wrench, Hourglass,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,22 +17,31 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { getBrand, type PlatformBrand } from "@/lib/platformBrand";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
 const ToolsTab = lazy(() => import("@/components/integrations/ToolsTab").then(m => ({ default: m.ToolsTab })));
 
-const PLATFORM_COLORS: Record<string, string> = {
-  shopify: "#96BF48", woocommerce: "#96588A", amazon: "#FF9900",
-  etsy: "#F1641E", ebay: "#E53238", tiktok_shop: "#000000", walmart: "#0071CE",
-  meta: "#1877F2", instagram: "#E1306C", tiktok: "#010101", twitter: "#1DA1F2",
-  pinterest: "#E60023", youtube: "#FF0000", gmail: "#EA4335",
-};
-const PLATFORM_ICONS: Record<string, string> = {
-  shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
-  ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
-  meta: "📘", instagram: "📸", tiktok: "🎵", twitter: "🐦",
-  pinterest: "📌", youtube: "▶️", gmail: "📧",
-};
+/**
+ * Convert a #rrggbb hex to a "r, g, b" CSS triple — the platform tile
+ * primitives in index.css read --tile-color/--tile-accent as raw RGB
+ * triples so they can compose them into rgba() with arbitrary alpha.
+ */
+function hexToRgbTriple(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+/** CSS variable bag a `.platform-tile` element wires up. */
+function tileVars(brand: PlatformBrand): React.CSSProperties {
+  return {
+    ["--tile-color" as any]: hexToRgbTriple(brand.color),
+    ["--tile-accent" as any]: hexToRgbTriple(brand.accent),
+  };
+}
 
 /* ─── API-key field definitions per platform ─── */
 const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: string; secret?: boolean }[]> = {
@@ -43,6 +53,15 @@ const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: 
   walmart: [
     { label: "Client ID", key: "clientId", placeholder: "Your Walmart Client ID" },
     { label: "Client Secret", key: "clientSecret", placeholder: "Your Walmart Client Secret", secret: true },
+  ],
+  // Sprint 27 — three new API-key flows.
+  faire: [
+    { label: "API Token", key: "apiKey", placeholder: "Faire brand portal · Integrations → API", secret: true },
+  ],
+  bonanza: [
+    { label: "Developer ID", key: "devId", placeholder: "Your Bonanza dev_id" },
+    { label: "Certificate ID", key: "certId", placeholder: "Your Bonanza cert_id", secret: true },
+    { label: "User Token", key: "userToken", placeholder: "Bonanza user_token", secret: true },
   ],
 };
 
@@ -177,9 +196,13 @@ export default function IntegrationsPage() {
     if (existingStore) {
       storeId = existingStore.id;
     } else {
-      const storeName = apiKeyPlatform === "woocommerce"
-        ? (apiKeyValues.storeUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, "").split("/")[0] || "WooCommerce Store"
-        : "Walmart Store";
+      const storeName =
+        apiKeyPlatform === "woocommerce"
+          ? (apiKeyValues.storeUrl || "")
+              .replace(/^https?:\/\//, "")
+              .replace(/\/$/, "")
+              .split("/")[0] || "WooCommerce Store"
+          : `${getBrand(apiKeyPlatform).name} Store`;
       const newStore = await createStore.mutateAsync({
         name: storeName,
         platform: apiKeyPlatform as any,
@@ -284,8 +307,7 @@ export default function IntegrationsPage() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stores.map((store: any) => {
-                  const color = PLATFORM_COLORS[store.platform] || "#64748b";
-                  const icon = PLATFORM_ICONS[store.platform] || "🏪";
+                  const brand = getBrand(store.platform);
                   const cred = (credentials || []).find((c: any) => c.platform === store.platform);
                   const isConnected = !!cred;
 
@@ -293,27 +315,26 @@ export default function IntegrationsPage() {
                     <button
                       key={store.id}
                       onClick={() => setSelectedStoreId(store.id)}
-                      className="group text-left bg-white/4 border border-white/8 rounded-2xl p-5 hover:bg-white/7 hover:border-white/15 transition-all duration-200 relative overflow-hidden"
+                      className="platform-tile group text-left p-5"
+                      style={tileVars(brand)}
                     >
-                      <div
-                        className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl"
-                        style={{ background: `linear-gradient(90deg, ${color}80, ${color}20)` }}
-                      />
+                      <span className="platform-tile-ribbon" />
+                      <span className="platform-tile-seam" />
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className="text-2xl">{icon}</div>
+                          <div className="platform-tile-icon-halo text-3xl leading-none">{brand.icon}</div>
                           <div>
-                            <div className="text-sm font-semibold text-white group-hover:text-sky-300 transition-colors">{store.name}</div>
-                            <div className="text-xs text-slate-500 truncate max-w-[140px]">{store.platformDomain || store.platform}</div>
+                            <div className="text-sm font-semibold text-white tracking-tight transition-colors">{store.name}</div>
+                            <div className="text-xs text-slate-500 truncate max-w-[160px]">{store.platformDomain || brand.name}</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {isConnected ? (
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+                            <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full">
                               <Wifi className="w-2.5 h-2.5" /> Live
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[10px] text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full">
                               <WifiOff className="w-2.5 h-2.5" /> Setup
                             </span>
                           )}
@@ -321,8 +342,8 @@ export default function IntegrationsPage() {
                       </div>
                       <StoreCardMetrics storeId={store.id} />
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/6">
-                        <div className="text-xs text-slate-500">{store.niche || store.platform}</div>
-                        <div className="flex items-center gap-1 text-xs text-sky-400 group-hover:gap-2 transition-all">
+                        <div className="text-xs text-slate-500 truncate max-w-[60%]">{store.niche || brand.tagline}</div>
+                        <div className="flex items-center gap-1 text-xs text-sky-300 group-hover:gap-2 transition-all">
                           View store <ChevronRight className="w-3 h-3" />
                         </div>
                       </div>
@@ -344,14 +365,22 @@ export default function IntegrationsPage() {
             {/* Platform Credentials (API keys) */}
             {credentials && credentials.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-sm font-medium text-slate-300 mb-3">Platform Credentials</h3>
+                <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-300/80" /> Platform Credentials
+                </h3>
                 <div className="space-y-2">
-                  {credentials.map((cred: any) => (
-                    <div key={cred.id} className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3">
-                      <div className="text-lg">{PLATFORM_ICONS[cred.platform] || "🔌"}</div>
+                  {credentials.map((cred: any) => {
+                    const credBrand = getBrand(cred.platform);
+                    return (
+                    <div
+                      key={cred.id}
+                      className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3 hover:bg-white/6 transition-colors"
+                      style={{ borderLeft: `3px solid ${credBrand.color}` }}
+                    >
+                      <div className="platform-tile-icon-halo text-xl" style={tileVars(credBrand)}>{credBrand.icon}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white">{cred.platform?.toUpperCase()}</div>
-                        <div className="text-xs text-slate-400">Added {new Date(cred.createdAt).toLocaleDateString()}</div>
+                        <div className="text-sm font-semibold text-white">{credBrand.name}</div>
+                        <div className="text-[11px] text-slate-400">Added {new Date(cred.createdAt).toLocaleDateString()}</div>
                       </div>
                       <div className="flex items-center gap-1">
                         {statusIcon(cred.status || "active")}
@@ -377,7 +406,8 @@ export default function IntegrationsPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -398,15 +428,14 @@ export default function IntegrationsPage() {
               </div>
             ) : (
               socialAccounts.map((acc: any) => {
-                const color = PLATFORM_COLORS[acc.platform] || "#64748b";
-                const icon = PLATFORM_ICONS[acc.platform] || "📱";
+                const accBrand = getBrand(acc.platform);
                 return (
                   <div
                     key={acc.id}
                     className="flex items-center gap-4 bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
-                    style={{ borderLeft: `3px solid ${color}40` }}
+                    style={{ borderLeft: `3px solid ${accBrand.color}` }}
                   >
-                    <div className="text-2xl">{icon}</div>
+                    <div className="platform-tile-icon-halo text-2xl" style={tileVars(accBrand)}>{accBrand.icon}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-white">{acc.accountName || acc.platform}</span>
@@ -447,20 +476,56 @@ export default function IntegrationsPage() {
         {/* ── CONNECT NEW TAB ── */}
         {mainTab === "connect" && (
           <div className="space-y-6">
+            {/* Hero band — sets the tone, surfaces platform counts up front */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-sky-500/8 via-cyan-500/4 to-orange-500/6 p-5">
+              <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-sky-500/15 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -left-8 w-56 h-56 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+              <div className="relative flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-heading font-bold tracking-tight text-white">
+                    Plug into the universe ✦
+                  </h2>
+                  <p className="text-[12px] text-slate-300/85 max-w-xl leading-snug">
+                    {(ecommercePlatforms?.length || 0)} commerce surfaces · {(socialPlatforms?.length || 0)} social channels · cross-cutting tools.
+                    Every adapter ships with a real capability matrix the bots branch on — no dead tiles.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
+                    <ShoppingBag className="w-3 h-3 text-sky-400" /> {(ecommercePlatforms?.length || 0)} e-commerce
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
+                    <Share2 className="w-3 h-3 text-fuchsia-400" /> {(socialPlatforms?.length || 0)} social
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
+                    <Wrench className="w-3 h-3 text-amber-300" /> 9 tools
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-2">
-              {(["ecommerce", "social", "tools"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setConnectTab(t)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    connectTab === t
-                      ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
-                      : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
-                  }`}
-                >
-                  {t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools"}
-                </button>
-              ))}
+              {(["ecommerce", "social", "tools"] as const).map(t => {
+                const count = t === "ecommerce" ? (ecommercePlatforms?.length || 0)
+                  : t === "social" ? (socialPlatforms?.length || 0)
+                  : 9;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setConnectTab(t)}
+                    className={`relative inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      connectTab === t
+                        ? "bg-sky-500/15 text-sky-300 border border-sky-500/30 shadow-[0_4px_16px_-4px_rgba(14,165,233,0.45)]"
+                        : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
+                    }`}
+                  >
+                    {t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools"}
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                      connectTab === t ? "bg-sky-400/20 text-sky-200" : "bg-white/8 text-slate-400"
+                    }`}>{count}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {connectTab === "tools" ? (
@@ -468,97 +533,129 @@ export default function IntegrationsPage() {
                 <ToolsTab />
               </Suspense>
             ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
                 const isConnected = connectTab === "ecommerce"
                   ? connectedPlatformIds.has(platform.id)
                   : connectedSocialIds.has(platform.id);
-                const color = PLATFORM_COLORS[platform.id] || "#64748b";
+                const brand = getBrand(platform.id);
                 const isAvailable = platform.available !== false;
+                const strength = platform.capabilityMatrix?.strengths?.[0];
+                const limitation = platform.capabilityMatrix?.limitations?.[0];
 
                 return (
                   <div
                     key={platform.id}
-                    className={`border rounded-xl p-4 transition-colors ${
-                      isAvailable
-                        ? "bg-white/4 border-white/8 hover:bg-white/6"
-                        : "bg-white/[0.02] border-white/[0.05] opacity-70"
+                    className={`platform-tile p-5 flex flex-col gap-3 ${
+                      isAvailable ? "" : "opacity-60 grayscale-[0.2]"
                     }`}
+                    style={tileVars(brand)}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{PLATFORM_ICONS[platform.id] || "🔌"}</span>
-                        <div>
-                          <div className="text-sm font-semibold text-white">{platform.name}</div>
-                          <div className="text-xs text-slate-500">{platform.description?.slice(0, 40)}...</div>
+                    <span className="platform-tile-ribbon" />
+                    <span className="platform-tile-seam" />
+
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="platform-tile-icon-halo text-3xl leading-none">
+                          {brand.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-white tracking-tight truncate">
+                            {platform.name || brand.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400/90 truncate">
+                            {brand.tagline}
+                          </div>
                         </div>
                       </div>
-                      {isConnected && <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                      {isConnected && (
+                        <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Live
+                        </span>
+                      )}
                     </div>
 
-                    {platform.capabilities && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {platform.capabilities.slice(0, 3).map((cap: string) => (
-                          <span key={cap} className="text-[10px] bg-white/6 text-slate-400 px-1.5 py-0.5 rounded">{cap}</span>
+                    {platform.capabilities && platform.capabilities.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {platform.capabilities.slice(0, 4).map((cap: string) => (
+                          <span
+                            key={cap}
+                            className="platform-cap-chip text-[10px] px-1.5 py-0.5 rounded-md font-medium"
+                          >
+                            {cap}
+                          </span>
                         ))}
                       </div>
                     )}
-                    {platform.capabilityMatrix?.strengths?.[0] && (
-                      <p className="text-[10.5px] text-emerald-300/80 mb-3 leading-snug line-clamp-2">
-                        ✦ {platform.capabilityMatrix.strengths[0]}
+
+                    {strength && (
+                      <p className="platform-tile-strength text-[10.5px] leading-snug px-2.5 py-1.5 rounded-md line-clamp-2">
+                        <Sparkles className="inline w-2.5 h-2.5 mr-1 -mt-0.5 text-white/70" />
+                        {strength}
                       </p>
                     )}
 
                     {/* Connection type badge */}
                     {platform.connectionType === "api_key" && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <KeyRound className="w-3 h-3 text-amber-400" />
-                        <span className="text-[10px] text-amber-400">API Key Connection</span>
+                      <div className="flex items-center gap-1">
+                        <KeyRound className="w-3 h-3 text-amber-300/90" />
+                        <span className="text-[10px] text-amber-300/90 font-medium">API Key</span>
                       </div>
                     )}
 
-                    {!isAvailable ? (
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              disabled
-                              className="w-full flex items-center justify-center gap-1.5 text-[11px] text-slate-400 border border-dashed border-white/10 bg-white/[0.02] rounded-md py-1.5 cursor-not-allowed hover:bg-white/[0.04] transition-colors"
-                              aria-label={`${platform.name} coming soon`}
-                            >
-                              <Hourglass className="w-3 h-3" /> Coming soon
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs max-w-[240px]">
-                            {platform.name} integration is rolling out. Track progress on the status page or subscribe to launch updates.
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className={`w-full text-xs ${
-                          isConnected
-                            ? "bg-white/6 text-slate-300 hover:bg-white/10 border border-white/10"
-                            : "text-white hover:opacity-90"
-                        }`}
-                        style={!isConnected ? { backgroundColor: color } : {}}
-                        onClick={() => {
-                          if (connectTab === "ecommerce") {
-                            handleEcommerceConnect(platform);
-                          } else {
-                            generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
-                          }
-                        }}
-                        disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
-                      >
-                        {generateOAuth.isPending || generateSocialOAuth.isPending ? (
-                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                        ) : null}
-                        {isConnected ? "Reconnect" : "Connect"}
-                      </Button>
+                    {limitation && (
+                      <p className="text-[10px] text-slate-500/90 leading-snug line-clamp-1">
+                        ⓘ {limitation}
+                      </p>
                     )}
+
+                    <div className="mt-auto pt-1">
+                      {!isAvailable ? (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                disabled
+                                className="w-full flex items-center justify-center gap-1.5 text-[11px] text-slate-400 border border-dashed border-white/10 bg-white/[0.02] rounded-md py-2 cursor-not-allowed transition-colors"
+                                aria-label={`${platform.name} coming soon`}
+                              >
+                                <Hourglass className="w-3 h-3" /> Coming soon
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs max-w-[240px]">
+                              {platform.name} integration is rolling out. Track progress on the status page or subscribe to launch updates.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-md transition-all duration-200 ${
+                            isConnected
+                              ? "bg-white/6 text-slate-200 hover:bg-white/10 border border-white/10"
+                              : "platform-tile-cta text-white"
+                          }`}
+                          onClick={() => {
+                            if (connectTab === "ecommerce") {
+                              handleEcommerceConnect(platform);
+                            } else {
+                              generateSocialOAuth.mutate({ platform: platform.id, origin: window.location.origin });
+                            }
+                          }}
+                          disabled={generateOAuth.isPending || generateSocialOAuth.isPending}
+                        >
+                          {generateOAuth.isPending || generateSocialOAuth.isPending ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : isConnected ? (
+                            <RefreshCw className="w-3 h-3" />
+                          ) : (
+                            <Plug className="w-3 h-3" />
+                          )}
+                          {isConnected ? "Reconnect" : "Connect"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -614,19 +711,23 @@ export default function IntegrationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── API Key Dialog (WooCommerce, Walmart) ── */}
+      {/* ── API Key Dialog (WooCommerce, Walmart, Faire, Bonanza) ── */}
       <Dialog open={apiKeyDialogOpen} onOpenChange={setApiKeyDialogOpen}>
         <DialogContent className="sm:max-w-md bg-slate-900 border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-xl">{apiKeyPlatform ? PLATFORM_ICONS[apiKeyPlatform] : "🔌"}</span>
-              Connect {apiKeyPlatform === "woocommerce" ? "WooCommerce" : apiKeyPlatform === "walmart" ? "Walmart" : apiKeyPlatform}
+              <span className="text-xl">{apiKeyPlatform ? getBrand(apiKeyPlatform).icon : "🔌"}</span>
+              Connect {apiKeyPlatform ? getBrand(apiKeyPlatform).name : ""}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
               {apiKeyPlatform === "woocommerce"
-                ? "Enter your WooCommerce REST API credentials. You can generate them in WooCommerce > Settings > Advanced > REST API."
+                ? "Enter your WooCommerce REST API credentials. Generate them in WooCommerce → Settings → Advanced → REST API."
                 : apiKeyPlatform === "walmart"
                 ? "Enter your Walmart Marketplace API credentials from the Walmart Developer Portal."
+                : apiKeyPlatform === "faire"
+                ? "Enter your Faire API token from the Faire brand portal → Integrations → API."
+                : apiKeyPlatform === "bonanza"
+                ? "Enter your Bonanza Bonapitit dev_id, cert_id, and user_token from the Bonanza Developer Portal."
                 : "Enter your API credentials to connect."}
             </DialogDescription>
           </DialogHeader>
@@ -664,7 +765,7 @@ export default function IntegrationsPage() {
               onClick={handleApiKeyConnect}
               disabled={connectApiKey.isPending || createStore.isPending}
               className="text-white"
-              style={{ backgroundColor: apiKeyPlatform ? PLATFORM_COLORS[apiKeyPlatform] : "#0ea5e9" }}
+              style={{ backgroundColor: apiKeyPlatform ? getBrand(apiKeyPlatform).color : "#0ea5e9" }}
             >
               {(connectApiKey.isPending || createStore.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <KeyRound className="w-4 h-4 mr-2" />}
               Save & Connect
