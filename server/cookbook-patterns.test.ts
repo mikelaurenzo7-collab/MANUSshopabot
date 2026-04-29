@@ -293,8 +293,83 @@ describe("Cookbook patterns — additional reflect opt-ins", () => {
   });
 });
 
+describe("Cookbook recipe — agent-loop engine wiring", () => {
+  it("agentToolsets registry exposes register / get / list", async () => {
+    const mod = await import("./engine/agentToolsets");
+    expect(typeof mod.registerAgentToolset).toBe("function");
+    expect(typeof mod.getAgentToolset).toBe("function");
+    expect(typeof mod.listAgentToolsetNames).toBe("function");
+    // The v0 toolset registers at module load — must be present.
+    const names = mod.listAgentToolsetNames();
+    expect(names).toContain("architect.competitor_stalker_v0");
+    const set = mod.getAgentToolset("architect.competitor_stalker_v0");
+    expect(set).toBeDefined();
+    expect(Array.isArray(set!.tools)).toBe(true);
+    expect(set!.tools.length).toBe(3);
+    for (const t of set!.tools) {
+      expect(typeof t.name).toBe("string");
+      expect(typeof t.description).toBe("string");
+      expect(typeof t.input_schema).toBe("object");
+    }
+  });
+
+  it("competitor_stalker dispatcher returns the documented shapes for each tool", async () => {
+    const { getAgentToolset } = await import("./engine/agentToolsets");
+    const set = getAgentToolset("architect.competitor_stalker_v0");
+    expect(set).toBeDefined();
+    const searchResult = (await set!.dispatch("search_competitors", { niche: "minimalist watches", limit: 4 })) as any;
+    expect(searchResult.ok).toBe(true);
+    expect(searchResult.niche).toBe("minimalist watches");
+    expect(Array.isArray(searchResult.candidates)).toBe(true);
+    expect(searchResult.candidates.length).toBe(4);
+    for (const c of searchResult.candidates) {
+      expect(typeof c.name).toBe("string");
+      expect(typeof c.platform).toBe("string");
+      expect(typeof c.estimatedMonthlyVisits).toBe("number");
+    }
+    const fetchResult = (await set!.dispatch("fetch_competitor_pricing", { sellerName: "BrandA", platform: "shopify" })) as any;
+    expect(fetchResult.ok).toBe(true);
+    expect(fetchResult.priceBandUsd.min).toBeGreaterThan(0);
+    expect(fetchResult.priceBandUsd.max).toBeGreaterThanOrEqual(fetchResult.priceBandUsd.min);
+    const compareResult = (await set!.dispatch("compare_to_our_pricing", {
+      ourPriceUsdMin: 30, ourPriceUsdMax: 50,
+      competitorPriceUsdMin: 25, competitorPriceUsdMax: 45,
+      targetMarginPct: 40,
+    })) as any;
+    expect(compareResult.ok).toBe(true);
+    expect(["above", "below", "at-parity"]).toContain(compareResult.positioning);
+    expect(typeof compareResult.recommendation).toBe("string");
+  });
+
+  it("workflow engine wires useAgentLoop ahead of the standard path", () => {
+    const src = read("engine/workflowEngine.ts");
+    expect(src).toContain("import { runAgentLoop");
+    expect(src).toContain("import { getAgentToolset }");
+    expect(src).toContain("input.useAgentLoop");
+    expect(src).toContain("input.agentToolset");
+    expect(src).toContain("__agentLoop");
+    // Misregistered toolsets must fall through to single-shot — never
+    // crash the workflow on a typo'd toolset name.
+    expect(src).toMatch(/is not registered .* falling back/);
+  });
+
+  it("autonomous_competitor_stalker workflow opts into the agent loop", () => {
+    const src = read("engine/architectWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("autonomous_competitor_stalker"'));
+    expect(block).toContain("useAgentLoop: true");
+    expect(block).toContain('agentToolset: "architect.competitor_stalker_v0"');
+    // Iteration cap must be set so a thrashing agent can't burn budget.
+    expect(block).toContain("maxIterations:");
+  });
+
+  it("agentToolsets registers at boot via the workflow router import", () => {
+    const src = read("routers/workflows.ts");
+    expect(src).toContain('import "../engine/agentToolsets"');
+  });
+});
+
 describe("Cookbook badges — operator-facing surface", () => {
-  it("LiveWorkflowRunner renders CookbookBadges from step.output.__reflect / __multiDraft", () => {
+  it("LiveWorkflowRunner renders CookbookBadges from step.output.__reflect / __multiDraft / __agentLoop", () => {
     const src = read("../client/src/components/LiveWorkflowRunner.tsx");
     expect(src).toContain("CookbookBadges");
     // Badges only render when the underlying flag actually fired —
@@ -302,10 +377,14 @@ describe("Cookbook badges — operator-facing surface", () => {
     // path fell back to single-shot.
     expect(src).toMatch(/reflectedAndRevised === true/);
     expect(src).toMatch(/multiDrafted === true/);
+    // Agent pill lights only when at least one tool was actually called.
+    expect(src).toContain("__agentLoop");
+    expect(src).toMatch(/toolCallCount > 0/);
     // Tooltip must surface the cookbook detail so operators
     // understand what changed without opening the full panel.
     expect(src).toContain("Reflected & revised");
     expect(src).toContain("Multi-drafted");
+    expect(src).toContain("Agent-looped");
   });
 
   it("index.css carries the cookbook-pill styles", () => {

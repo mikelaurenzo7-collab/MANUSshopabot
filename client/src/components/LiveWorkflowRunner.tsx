@@ -34,6 +34,7 @@ import {
   Layers,
   ThumbsUp,
   ThumbsDown,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -295,10 +296,10 @@ function RunnerStatusPill({ status }: { status: RunnerStatus }) {
 
 /**
  * Cookbook-pattern badges. The workflow engine attaches __reflect /
- * __multiDraft audit fields to step outputs when the step opted into
- * those Anthropic Cookbook recipes. We surface them as small pills so
- * operators can see the quality lift on the step rail without opening
- * the full result panel.
+ * __multiDraft / __agentLoop audit fields to step outputs when the
+ * step opted into those Anthropic Cookbook recipes. We surface them
+ * as small pills so operators can see the quality lift on the step
+ * rail without opening the full result panel.
  *
  * Only renders when the underlying flag is true — when the path fell
  * back to single-shot (ANTHROPIC_API_KEY unset), the badges stay quiet
@@ -308,9 +309,11 @@ function CookbookBadges({ output }: { output: any }) {
   if (!output || typeof output !== "object") return null;
   const reflect = output.__reflect as { reflectedAndRevised?: boolean; critique?: any[] } | undefined;
   const multi = output.__multiDraft as { multiDrafted?: boolean; chosenPersona?: string; personaCount?: number } | undefined;
+  const agent = output.__agentLoop as { iterations?: number; toolCallCount?: number; hitIterationCap?: boolean; toolset?: string } | undefined;
   const reflected = reflect?.reflectedAndRevised === true;
   const multiDrafted = multi?.multiDrafted === true;
-  if (!reflected && !multiDrafted) return null;
+  const agentLooped = typeof agent?.toolCallCount === "number" && agent.toolCallCount > 0;
+  if (!reflected && !multiDrafted && !agentLooped) return null;
   const issueCount = Array.isArray(reflect?.critique) ? reflect!.critique.length : 0;
   return (
     <span className="live-workflow-runner-cookbook">
@@ -338,6 +341,19 @@ function CookbookBadges({ output }: { output: any }) {
         >
           <Layers className="w-2.5 h-2.5" strokeWidth={2.4} aria-hidden="true" />
           <span>{multi?.personaCount ?? ""}-draft</span>
+        </span>
+      )}
+      {agentLooped && (
+        <span
+          className="live-workflow-runner-cookbook-pill is-agent"
+          title={
+            agent?.toolset
+              ? `Agent-looped via ${agent.toolset} — ${agent.iterations ?? "?"} iterations, ${agent.toolCallCount} tool call${agent.toolCallCount === 1 ? "" : "s"}${agent.hitIterationCap ? " (hit cap)" : ""}`
+              : `Agent-looped — ${agent?.toolCallCount} tool call${agent?.toolCallCount === 1 ? "" : "s"}`
+          }
+        >
+          <Wrench className="w-2.5 h-2.5" strokeWidth={2.4} aria-hidden="true" />
+          <span>{agent?.toolCallCount} tool{agent?.toolCallCount === 1 ? "" : "s"}</span>
         </span>
       )}
     </span>

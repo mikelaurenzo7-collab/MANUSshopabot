@@ -2973,6 +2973,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     background: rgba(167, 139, 250, 0.1);
     border: 1px solid rgba(167, 139, 250, 0.28);
   }
+  /* Agent-loop pill — emerald to signal "the bot actually did something
+   * autonomously," distinct from reflection (sky) and multi-draft (violet). */
+  .live-workflow-runner-cookbook-pill.is-agent {
+    color: rgb(110, 231, 183);
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+  }
   .live-workflow-runner-step-desc {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.55);

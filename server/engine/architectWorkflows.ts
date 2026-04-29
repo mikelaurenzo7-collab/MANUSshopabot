@@ -1330,3 +1330,76 @@ Return JSON: { products: [...] }`,
     },
   ];
 });
+
+// ─── Autonomous Competitor Stalker ─────────────────────────────────────────
+//
+// Cookbook recipe — autonomous tool-use agent. Hand the agent a task
+// + a toolset (registered as "architect.competitor_stalker_v0") and
+// let it decide which competitors to look at, in which order, and
+// when it has enough triangulation to recommend a counter-positioning.
+//
+// Why this is different from competitor_pricing_scan:
+//   • competitor_pricing_scan is a fixed, parallelized 2-step
+//     workflow — it always runs the same shape regardless of what
+//     comes back.
+//   • autonomous_competitor_stalker hands the model the wheel — it
+//     can search, fetch, compare, then loop back to fetch a
+//     different segment if the first batch wasn't representative.
+//
+// The audit trail (__agentLoop on the step output) shows every tool
+// call the agent made, so operators see exactly which competitors
+// were inspected and why the final recommendation landed where it did.
+// Falls back to a single-shot when ANTHROPIC_API_KEY is unset (the
+// engine handles the fallback automatically; the agent loop simply
+// doesn't fire).
+
+registerWorkflow("autonomous_competitor_stalker", (input): WorkflowStepDefinition[] => {
+  const niche = String(input.niche ?? "your category").trim();
+  const ourPriceUsdMin = Number(input.ourPriceUsdMin ?? 25);
+  const ourPriceUsdMax = Number(input.ourPriceUsdMax ?? 65);
+  const targetMarginPct = Number(input.targetMarginPct ?? 40);
+
+  return [
+    {
+      stepType: "llm_call",
+      title: "Autonomous Competitor Stalk",
+      description: `Agentic competitor research for "${niche}" — agent decides which competitors to inspect.`,
+      input: {
+        // Cookbook recipe — autonomous tool-use loop. Toolset registered
+        // in server/engine/agentToolsets.ts. Agent picks the order +
+        // depth of tool calls; the engine records each call to
+        // __agentLoop.toolCalls so operators see the trail.
+        useAgentLoop: true,
+        agentToolset: "architect.competitor_stalker_v0",
+        cacheSystemPrompt: true,
+        effort: "high",
+        // 8 iterations is enough for: search → fetch 3-4 competitors
+        // → compare → decide. Anything more is the agent thrashing.
+        maxIterations: 8,
+        systemPrompt: composeSystemPrompt(
+          `You are an autonomous competitive-pricing researcher. You have three tools — use them in sequence:
+1. search_competitors to scope the field (call once).
+2. fetch_competitor_pricing on 3-4 of the candidates from step 1 (do NOT fetch every candidate; pick a representative spread).
+3. compare_to_our_pricing once you have a triangulated price band.
+
+After tool calls converge, return a final recommendation as plain prose: positioning vs. competitors, suggested price band, and a one-sentence justification grounded in the data you actually fetched. Do NOT invent competitors that didn't come back from search_competitors.`,
+        ),
+        userPrompt: `Stalk competitors for "${niche}". Our current price band is $${ourPriceUsdMin}-$${ourPriceUsdMax}. Our target margin is ${targetMarginPct}%.
+
+Decide which competitors to look at, fetch pricing snapshots for the most representative ones, then compare and recommend a positioning. Show your work in the final response — name the competitors you actually inspected (not all candidates).`,
+      },
+    },
+    {
+      stepType: "notification",
+      title: "Competitor Stalk Complete",
+      description: "Agent has triangulated a price band and recommended positioning.",
+      input: {
+        title: `Competitor stalk for "${niche}" complete`,
+        message: `Builder Bot autonomously stalked competitors for "${niche}" and produced a positioning recommendation. The audit trail (visible on the workflow detail) shows every competitor it actually inspected.`,
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

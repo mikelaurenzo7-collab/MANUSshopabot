@@ -18,6 +18,11 @@ import "../engine/architectWorkflows";
 import "../engine/merchantWorkflows";
 import "../engine/socialWorkflows";
 import "../engine/platformEliteWorkflows";
+// Side-effect import: registers agent-loop toolsets the workflows
+// reference by name (architect.competitor_stalker_v0, …). Must come
+// after the workflow imports so workflows can verify the toolset
+// exists at boot time if they want to.
+import "../engine/agentToolsets";
 
 export const workflowRouter = router({
   // ─── Launch a workflow ─────────────────────────────────────────────────

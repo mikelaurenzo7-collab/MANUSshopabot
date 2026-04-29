@@ -24,6 +24,8 @@ import { invokeLLM } from "../_core/llm";
 import { invokeWithFallback, isClaudeDirectAvailable } from "../_core/claudeDirect";
 import { reflectAndRevise, type ReflectionFocus } from "../_core/claudeReflect";
 import { multiDraftAndJudge, type DraftPersona } from "../_core/claudeMultiDraft";
+import { runAgentLoop, isAgentLoopAvailable } from "../_core/claudeAgentLoop";
+import { getAgentToolset } from "./agentToolsets";
 import { runMemoryAgent, isMemoryAgentAvailable } from "./memoryAgent";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -723,6 +725,58 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       );
       // Fall through to the standard path so a flaky agentic call
       // doesn't hard-fail the workflow.
+    }
+  }
+
+  // ── Agent-loop opt-in (Anthropic Cookbook recipe) ───────────────
+  // Generic autonomous tool-use loop. Workflow author registers a
+  // toolset (in server/engine/agentToolsets.ts) and references it by
+  // name. The engine resolves the toolset, runs the loop, and stamps
+  // the audit trail (iteration count, tool calls, hit-cap?) on the
+  // step output as `__agentLoop`. No fallback path — if
+  // ANTHROPIC_API_KEY is unset, we skip and fall through to the
+  // standard call so the workflow gets *something*.
+  if (
+    input.useAgentLoop &&
+    typeof input.agentToolset === "string" &&
+    isAgentLoopAvailable()
+  ) {
+    const toolset = getAgentToolset(input.agentToolset);
+    if (!toolset) {
+      console.error(
+        `[WorkflowEngine.LLMStep] agent toolset "${input.agentToolset}" is not registered — falling back to single-shot.`,
+      );
+    } else {
+      try {
+        const agent = await runAgentLoop({
+          systemPrompt,
+          userPrompt: userPrompt + contextStr,
+          tools: toolset.tools,
+          dispatch: toolset.dispatch,
+          ...(input.maxIterations ? { maxIterations: input.maxIterations } : {}),
+          ...(input.maxTokens ? { maxTokens: input.maxTokens } : {}),
+          ...(input.effort ? { effort: input.effort as any } : {}),
+          ...(input.cacheSystemPrompt !== undefined ? { cacheSystemPrompt: input.cacheSystemPrompt } : {}),
+        });
+        return {
+          text: agent.text,
+          __agentLoop: {
+            toolset: input.agentToolset,
+            iterations: agent.iterations,
+            toolCallCount: agent.toolCallCount,
+            hitIterationCap: agent.hitIterationCap,
+            stopReason: agent.stopReason,
+            // Truncate the audit trail to keep step output rows
+            // reasonable in the DB. The full trail is reconstructible
+            // from the model's tool-use blocks if ever needed.
+            toolCalls: agent.toolCalls.slice(0, 24),
+          },
+        };
+      } catch (err: any) {
+        console.error(
+          `[WorkflowEngine.LLMStep] agent loop failed, falling back to single-shot: ${err?.message ?? err}`,
+        );
+      }
     }
   }
 
