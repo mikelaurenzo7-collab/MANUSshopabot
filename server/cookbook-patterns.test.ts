@@ -220,6 +220,79 @@ describe("Cookbook recipe — multi-draft + judge", () => {
   });
 });
 
+describe("Cookbook recipe — generic agent loop", () => {
+  it("claudeAgentLoop.ts exports the expected helper surface", async () => {
+    const mod = await import("./_core/claudeAgentLoop");
+    expect(typeof mod.runAgentLoop).toBe("function");
+    expect(typeof mod.isAgentLoopAvailable).toBe("function");
+    expect(mod.isAgentLoopAvailable()).toBe(false);
+  });
+
+  it("throws (no fallback) when ANTHROPIC_API_KEY is missing", () => {
+    // Unlike reflect / multi-draft, the agent loop has no meaningful
+    // single-call fallback — autonomous research without a loop is a
+    // contradiction. The helper must throw so callers route around it.
+    const src = read("_core/claudeAgentLoop.ts");
+    expect(src).toContain("ANTHROPIC_API_KEY is not set");
+    expect(src).toContain("no meaningful single-call fallback");
+  });
+
+  it("dispatches tool calls + records an audit trail with iteration + category", () => {
+    const src = read("_core/claudeAgentLoop.ts");
+    // Audit trail is the operator-facing surface — workflow engine
+    // attaches it to the step output so the dashboard can render
+    // "scraped 3 pages, looked up SKU, decided to hold pricing".
+    expect(src).toContain("toolCalls: auditTrail");
+    expect(src).toContain("toolCategoryByName");
+    expect(src).toContain("iteration: iterations");
+    // Failures must be caught and returned to the model as
+    // tool_result with is_error so the loop can self-correct rather
+    // than crashing the whole step.
+    expect(src).toContain("is_error: true");
+  });
+
+  it("caches the system prompt across loop iterations", () => {
+    const src = read("_core/claudeAgentLoop.ts");
+    // Multi-iteration loops are exactly the case caching pays for —
+    // the system prompt is identical across all N round-trips.
+    expect(src).toContain('cache_control: { type: "ephemeral" as const }');
+  });
+});
+
+describe("Cookbook patterns — additional reflect opt-ins", () => {
+  it("competitor_pricing_scan opts in to merchant_quality", () => {
+    const src = read("engine/architectWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("competitor_pricing_scan"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("brand_identity_kit"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "merchant_quality"');
+  });
+
+  it("competitor_analysis (Merchant) opts in to merchant_quality", () => {
+    const src = read("engine/merchantWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("competitor_analysis"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("supply_chain_intelligence"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "merchant_quality"');
+  });
+
+  it("seo_audit (Social) opts in to merchant_quality", () => {
+    const src = read("engine/socialWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("seo_audit"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("email_flow"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "merchant_quality"');
+  });
+
+  it("viral_trend_detector (Social) opts in to content_calendar", () => {
+    const src = read("engine/socialWorkflows.ts");
+    const block = src.slice(src.indexOf('registerWorkflow("viral_trend_detector"'));
+    const upToNext = block.slice(0, block.indexOf('registerWorkflow("influencer_outreach"'));
+    expect(upToNext).toContain("reflectAndRevise: true");
+    expect(upToNext).toContain('reflectionFocus: "content_calendar"');
+  });
+});
+
 describe("Cookbook badges — operator-facing surface", () => {
   it("LiveWorkflowRunner renders CookbookBadges from step.output.__reflect / __multiDraft", () => {
     const src = read("../client/src/components/LiveWorkflowRunner.tsx");

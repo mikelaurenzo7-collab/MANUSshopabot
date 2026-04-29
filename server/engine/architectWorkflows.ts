@@ -796,6 +796,14 @@ registerWorkflow("competitor_pricing_scan", (input): WorkflowStepDefinition[] =>
           {
             stepType: "llm_call",
             input: {
+              // Cookbook recipe — reflect-and-revise. Competitor pricing
+              // claims fall into the "every claim specific" trap most
+              // often: first drafts invent plausible-sounding names
+              // ("UrbanGreen Co.") and round-number prices. The
+              // merchant_quality rubric in claudeReflect.ts forces a
+              // critique pass that rejects obvious fabrications.
+              reflectAndRevise: true,
+              reflectionFocus: "merchant_quality",
               systemPrompt: `You are a competitive-pricing analyst. Identify 5-10 real competitors selling "${productType}" in the "${niche}" niche across Shopify, Amazon, Etsy, and TikTok Shop. For each, estimate their typical price, sale-price discount %, and key positioning angle. Be concrete — name real brands when possible.`,
               userPrompt: `Map competitors for "${productType}" in "${niche}". Return JSON.`,
               responseFormat: {

@@ -307,6 +307,14 @@ registerWorkflow("seo_audit", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high" as const,
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. SEO keyword recs go
+        // straight into the operator's content backlog; first drafts
+        // tend to hand-wave search volumes and ship generic difficulty
+        // estimates. The merchant_quality rubric forces specificity
+        // (real volumes, justified difficulty, content-type mapped to
+        // intent).
+        reflectAndRevise: true,
+        reflectionFocus: "merchant_quality",
         systemPrompt: composeSystemPrompt(
           "You are an SEO expert who has ranked hundreds of e-commerce stores on page 1 of Google. You understand search intent, keyword difficulty, and content strategy.",
         ),
@@ -666,6 +674,13 @@ registerWorkflow("viral_trend_detector", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high" as const,
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Trend reports inform
+        // budget decisions on viral hijacks; first drafts default to
+        // last year's trends and platform-flat hashtag dumps. The
+        // content_calendar rubric forces per-platform specificity and
+        // justified content-format choices.
+        reflectAndRevise: true,
+        reflectionFocus: "content_calendar",
         systemPrompt: composeSystemPrompt(
           "You are a viral content strategist and trend forecaster. You've predicted and capitalized on trends that generated millions of views and six-figure revenue spikes for e-commerce brands.",
         ),

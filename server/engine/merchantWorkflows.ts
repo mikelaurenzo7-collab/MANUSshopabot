@@ -361,6 +361,14 @@ registerWorkflow("competitor_analysis", (input): WorkflowStepDefinition[] => {
         cacheSystemPrompt: true,
         effort: "high",
         adaptiveThinking: true,
+        // Cookbook recipe — reflect-and-revise. Competitor analysis
+        // first drafts default to "every claim specific" failure modes:
+        // round revenue numbers, generic SWOT bullets, hand-waved
+        // marketing-channel lists. The merchant_quality rubric in
+        // claudeReflect.ts forces a critique pass that rejects the
+        // boilerplate.
+        reflectAndRevise: true,
+        reflectionFocus: "merchant_quality",
         systemPrompt: composeSystemPrompt(
           caps
             ? `You are a competitive intelligence analyst specializing in e-commerce. Provide detailed, actionable competitor analysis. ${platform === "amazon" ? "On Amazon, competition centers on Buy-Box wins and review velocity, not storefront polish." : platform === "etsy" ? "On Etsy, competition centers on tag/section optimization and craftsmanship signals, not paid distribution." : platform ? `On ${platform}, prioritize the platform's distinctive surfaces.` : ""}`
