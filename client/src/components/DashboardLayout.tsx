@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { getBrand } from "@/lib/platformBrand";
 
 type AgentType = "architect" | "merchant" | "social";
 
@@ -377,17 +378,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {stores.map((s: any) => (
-                <DropdownMenuItem
-                  key={s.id}
-                  onSelect={() => setActiveStoreId(s.id)}
-                  className={s.id === activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
-                >
-                  <Store className="w-3.5 h-3.5 mr-2 opacity-70" />
-                  <span className="truncate">{s.name}</span>
-                  <span className="ml-auto text-[10px] text-white/55 uppercase">{s.platform}</span>
-                </DropdownMenuItem>
-              ))}
+              {stores.map((s: any) => {
+                const brand = getBrand(s.platform);
+                return (
+                  <DropdownMenuItem
+                    key={s.id}
+                    onSelect={() => setActiveStoreId(s.id)}
+                    className={s.id === activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
+                  >
+                    <span className="text-sm leading-none mr-2">{brand.icon}</span>
+                    <span className="truncate">{s.name}</span>
+                    <span className="ml-auto text-[10px] text-white/55">{brand.name}</span>
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

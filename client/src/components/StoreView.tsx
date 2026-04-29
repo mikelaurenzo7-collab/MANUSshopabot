@@ -466,8 +466,8 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
                       loading="lazy"
                     />
                     {/* Overlay hint */}
-                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white/50 text-xs px-2.5 py-1.5 rounded-lg border border-white/10 pointer-events-none">
-                      Live preview · {store.platform}
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white/55 text-xs px-2.5 py-1.5 rounded-lg border border-white/10 pointer-events-none flex items-center gap-1.5">
+                      Live preview · <span className="text-base leading-none">{platformIcon}</span> {platformBrand?.name ?? store.platform}
                     </div>
                   </div>
                   <p className="text-xs text-slate-500 text-center">

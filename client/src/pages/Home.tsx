@@ -244,8 +244,12 @@ function radialPosition(index: number, count: number, radius: number, originX = 
 }
 
 const PLATFORM_LABEL: Record<string, string> = {
+  // 14 e-commerce surfaces
   shopify: "Shopify", woocommerce: "WooCommerce", amazon: "Amazon", etsy: "Etsy",
   ebay: "eBay", tiktok_shop: "TikTok Shop", walmart: "Walmart",
+  depop: "Depop", bigcommerce: "BigCommerce", square: "Square", faire: "Faire",
+  bonanza: "Bonanza", stockx: "StockX", reverb: "Reverb",
+  // 7 social channels
   meta: "Meta", instagram: "Instagram", tiktok: "TikTok", twitter: "X",
   pinterest: "Pinterest", google_ads: "Google Ads", gmail: "Gmail",
 };

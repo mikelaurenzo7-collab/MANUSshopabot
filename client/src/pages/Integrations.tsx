@@ -296,13 +296,42 @@ export default function IntegrationsPage() {
         {mainTab === "stores" && (
           <div className="space-y-4">
             {!stores || stores.length === 0 ? (
-              <div className="text-center py-20">
-                <Store className="w-12 h-12 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-base font-medium text-slate-300 mb-1">No stores connected yet</h3>
-                <p className="text-sm text-slate-500 mb-4">Connect your first store to start selling with AI-powered bots.</p>
-                <Button onClick={() => setMainTab("connect")} className="bg-sky-500 hover:bg-sky-400 text-white">
-                  <Plus className="w-4 h-4 mr-2" /> Connect a Store
-                </Button>
+              <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-b from-sky-500/[0.06] via-cyan-500/[0.03] to-transparent py-14 px-6 text-center empty-state">
+                <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full bg-sky-500/15 blur-[60px] pointer-events-none" />
+                <div className="relative">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 mb-4">
+                    <Store className="w-6 h-6 text-sky-300" />
+                  </div>
+                  <h3 className="text-lg font-heading font-bold tracking-tight text-white mb-1.5">
+                    No stores connected yet
+                  </h3>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto mb-5">
+                    Plug into one of <span className="text-white font-semibold">14</span> commerce surfaces and the bots
+                    inherit your catalog from minute one — no migration, no re-entry.
+                  </p>
+
+                  {/* Brand orbit — dense preview row of every supported platform */}
+                  <div className="flex flex-wrap justify-center gap-1.5 max-w-xl mx-auto mb-6">
+                    {ecommercePlatforms?.slice(0, 14).map((p: any) => {
+                      const b = getBrand(p.id);
+                      return (
+                        <span
+                          key={p.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[11px] text-slate-300/85 hover:bg-white/[0.07] transition-colors"
+                          style={{ boxShadow: `0 0 0 1px ${b.color}25 inset` }}
+                          title={b.tagline}
+                        >
+                          <span className="text-sm leading-none">{b.icon}</span>
+                          {b.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <Button onClick={() => setMainTab("connect")} className="bg-sky-500 hover:bg-sky-400 text-white shadow-[0_8px_24px_-8px_rgba(14,165,233,0.55)]">
+                    <Plus className="w-4 h-4 mr-2" /> Connect a Store
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -418,13 +447,41 @@ export default function IntegrationsPage() {
         {mainTab === "social" && (
           <div className="space-y-3">
             {!socialAccounts || socialAccounts.length === 0 ? (
-              <div className="text-center py-20">
-                <Share2 className="w-12 h-12 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-base font-medium text-slate-300 mb-1">No social accounts connected</h3>
-                <p className="text-sm text-slate-500 mb-4">Connect your social platforms to automate posts, ads, and email campaigns.</p>
-                <Button onClick={() => { setMainTab("connect"); setConnectTab("social"); }} className="bg-sky-500 hover:bg-sky-400 text-white">
-                  <Plus className="w-4 h-4 mr-2" /> Connect Social Account
-                </Button>
+              <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-b from-fuchsia-500/[0.06] via-orange-500/[0.03] to-transparent py-14 px-6 text-center empty-state">
+                <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full bg-fuchsia-500/15 blur-[60px] pointer-events-none" />
+                <div className="relative">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 mb-4">
+                    <Share2 className="w-6 h-6 text-fuchsia-300" />
+                  </div>
+                  <h3 className="text-lg font-heading font-bold tracking-tight text-white mb-1.5">
+                    No social accounts connected
+                  </h3>
+                  <p className="text-sm text-slate-400 max-w-md mx-auto mb-5">
+                    Six platforms plus Gmail. The Social Bot picks the channel by content type and tunes copy to each
+                    surface's audience automatically.
+                  </p>
+
+                  <div className="flex flex-wrap justify-center gap-1.5 max-w-md mx-auto mb-6">
+                    {socialPlatforms?.map((p: any) => {
+                      const b = getBrand(p.id);
+                      return (
+                        <span
+                          key={p.id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[11px] text-slate-300/85"
+                          style={{ boxShadow: `0 0 0 1px ${b.color}25 inset` }}
+                          title={b.tagline}
+                        >
+                          <span className="text-sm leading-none">{b.icon}</span>
+                          {b.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <Button onClick={() => { setMainTab("connect"); setConnectTab("social"); }} className="bg-fuchsia-500 hover:bg-fuchsia-400 text-white shadow-[0_8px_24px_-8px_rgba(217,70,239,0.55)]">
+                    <Plus className="w-4 h-4 mr-2" /> Connect Social Account
+                  </Button>
+                </div>
               </div>
             ) : (
               socialAccounts.map((acc: any) => {

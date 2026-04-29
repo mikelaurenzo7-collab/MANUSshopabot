@@ -672,7 +672,7 @@ function ImageOptimizerPanel() {
         >
           <option value="">SELECT STORE TARGET</option>
           {storeList.map((s: any) => (
-            <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+            <option key={s.id} value={s.id}>{getBrand(s.platform).icon} {s.name} ({getBrand(s.platform).name})</option>
           ))}
         </select>
         <button
