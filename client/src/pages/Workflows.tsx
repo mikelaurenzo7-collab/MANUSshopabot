@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { PageHeader } from "@/components/PageHeader";
+import { LiveWorkflowRunner } from "@/components/LiveWorkflowRunner";
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
@@ -427,15 +428,24 @@ export default function Workflows() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Live runner takes over from the static card while the
+                  workflow is in flight — shows every step lighting up
+                  in real-time. Falls back to the standard card for
+                  paused/queued workflows so the layout stays familiar. */}
               {activeWorkflows!.map((w: any) => (
-                <WorkflowCard
-                  key={w.id}
-                  workflow={w}
-                  onRetry={onRetry}
-                  isRetryingThis={retryLoading && retryingId === w.id}
-                  anyRetryInFlight={retryLoading}
-                />
+                <div key={w.id} className="space-y-3">
+                  {(w.status === "running" || w.status === "awaiting_approval" || w.status === "pending") ? (
+                    <LiveWorkflowRunner workflowId={w.id} />
+                  ) : (
+                    <WorkflowCard
+                      workflow={w}
+                      onRetry={onRetry}
+                      isRetryingThis={retryLoading && retryingId === w.id}
+                      anyRetryInFlight={retryLoading}
+                    />
+                  )}
+                </div>
               ))}
             </div>
           )}

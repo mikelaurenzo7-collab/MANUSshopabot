@@ -51,6 +51,7 @@ import {
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 import { ActivationCoach } from "@/components/ActivationCoach";
 import { DailyBrief } from "@/components/DailyBrief";
+import { LiveActivityTicker } from "@/components/LiveActivityTicker";
 import { FirstRunTour } from "@/components/FirstRunTour";
 import { RecommendedWorkflows } from "@/components/RecommendedWorkflows";
 
@@ -716,6 +717,13 @@ export default function Home() {
           and collapses to a single-line summary the user can re-expand */}
       <div className="shrink-0 px-4 md:px-5 pt-3 z-20">
         <DailyBrief />
+      </div>
+
+      {/* ── Live Activity Ticker ── always-on bot newsfeed. Rotates
+          through recent agent tasks every 4.5s so the page never
+          feels static even when no workflow is running. */}
+      <div className="shrink-0 px-4 md:px-5 pt-2 z-20">
+        <LiveActivityTicker />
       </div>
 
       {/* ── Activation Coach ── (auto-dismisses once fully activated) */}
