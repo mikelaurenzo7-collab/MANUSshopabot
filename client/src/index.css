@@ -123,6 +123,33 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+
+  /* ── Motion tokens ─────────────────────────────────────────────────────── */
+  /* Single source of truth for transitions. Primitives & components should
+     consume these instead of redeclaring durations/easings inline. */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 600ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Shadow / elevation tokens ─────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 30px -6px rgba(0, 0, 0, 0.3);
+
+  /* ── Glow tokens (brand-keyed) ─────────────────────────────────────────── */
+  --glow-primary-sm: 0 0 0 1px rgba(var(--blue-raw), 0.25), 0 4px 12px rgba(var(--blue-raw), 0.2);
+  --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
+  --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
+  --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+
+  /* ── Focus ring token ──────────────────────────────────────────────────── */
+  --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
 }
 
 .dark {
@@ -161,6 +188,25 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+
+  /* Motion / shadow / glow tokens — see :root for documentation */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 600ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 30px -6px rgba(0, 0, 0, 0.3);
+  --glow-primary-sm: 0 0 0 1px rgba(var(--blue-raw), 0.25), 0 4px 12px rgba(var(--blue-raw), 0.2);
+  --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
+  --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
+  --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+  --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -586,6 +632,12 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   @keyframes shimmer {
     0%   { background-position: -200% center; }
     100% { background-position: 200% center; }
+  }
+  /* Translate-based shimmer for the Skeleton primitive (which overlays a
+     translateX pseudo-element rather than a gradient background). */
+  @keyframes shimmer-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
   .shimmer {
     background: linear-gradient(
