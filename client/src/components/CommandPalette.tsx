@@ -120,13 +120,16 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     { id: "merchant",       label: "Merchant Bot",   description: "Inventory, pricing & fulfilment",         icon: Package, action: () => go("/merchant"),     group: "navigation" },
     { id: "social",         label: "Social Bot",     description: "Ads, posts & campaigns",                  icon: Megaphone, action: () => go("/social"),     group: "navigation" },
     { id: "workflows",      label: "Workflows",      description: "Active and historical bot workflows",     icon: GitBranch, action: () => go("/workflows"),  group: "navigation" },
-    { id: "storefronts",    label: "Storefronts & Channels", description: "Connections, plugins, suppliers", icon: Globe, action: () => go("/storefronts"),    group: "navigation" },
-    { id: "insights",       label: "Insights",       description: "Per-store analytics & market intel",      icon: BarChart3, action: () => go("/insights"),   group: "navigation" },
+    { id: "communicator",   label: "Communicator Bot", description: "Gmail & Outlook email management",     icon: Mail,     action: () => go("/communicator"),  group: "navigation" },
+    { id: "workflow-builder", label: "Workflow Builder", description: "Design custom automation workflows",  icon: Zap,      action: () => go("/workflow-builder"), group: "navigation" },
+    { id: "integrations",   label: "Integrations",   description: "Connect stores, social & tools",          icon: Globe,    action: () => go("/storefronts"),    group: "navigation" },
+    { id: "analytics",      label: "Analytics",      description: "Per-store analytics & market intel",      icon: BarChart3, action: () => go("/insights"),   group: "navigation" },
     { id: "settings",       label: "Settings",       description: "Profile, bot config, platform health",    icon: Settings, action: () => go("/settings"),    group: "navigation" },
-    // Legacy aliases — searchable, deep-linkable
+    // Deep links — searchable aliases
     { id: "approvals",      label: "Approvals",      description: "Review pending bot decisions",            icon: Shield,   action: () => go("/inbox#approvals"), group: "navigation" },
     { id: "activity",       label: "Activity Log",   description: "Bot task history",                        icon: Sparkles, action: () => go("/inbox#activity"),  group: "navigation" },
-    { id: "stores",         label: "Stores",         description: "Manage connected stores",                 icon: ShoppingCart, action: () => go("/storefronts"),    group: "navigation" },
+    { id: "connect-store",  label: "Connect a Store", description: "Add Shopify, WooCommerce & more",        icon: ShoppingCart, action: () => go("/storefronts#integrations"), group: "navigation" },
+    { id: "connect-social", label: "Connect Social Account", description: "Twitter, Instagram, TikTok & more", icon: Megaphone, action: () => go("/storefronts#social"),  group: "navigation" },
     { id: "chat",           label: "Bot Chat",       description: "Talk to your bots",                       icon: MessageSquare, action: () => go("/chat"),          group: "navigation" },
   ];
 

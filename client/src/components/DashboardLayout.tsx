@@ -60,7 +60,7 @@ interface NavItem {
   /** Live colored dot rendered to the right of the label (e.g. bot status). */
   dot?: "ok" | "running" | "error" | null;
   /** Bot brand dot (purely visual). */
-  brand?: "sky" | "cyan" | "amber";
+  brand?: "sky" | "cyan" | "amber" | "emerald";
   /** Sub-item: indented under parent, smaller style */
   sub?: boolean;
   /** Section header (e.g. "BOTS", "OPERATIONS") */
@@ -88,6 +88,8 @@ function brandDotClass(brand: NavItem["brand"]): string | null {
       return "bg-cyan-400";
     case "amber":
       return "bg-amber-400";
+    case "emerald":
+      return "bg-emerald-400";
     default:
       return null;
   }
@@ -212,7 +214,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
     { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
     { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
-    { title: "Communicator", path: "/communicator", icon: Mail, brand: "amber", dot: statusByAgent.social ?? "ok" },
+    { title: "Communicator", path: "/communicator", icon: Mail, brand: "emerald", dot: statusByAgent.social ?? "ok" },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },

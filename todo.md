@@ -1420,3 +1420,33 @@
 - [x] Test returnTo redirects work correctly
 - [x] Perfect design and visual hierarchy
 - [x] Save checkpoint with perfected routing and design
+
+## Sprint 28: Precision Cohesion Audit
+- [ ] Audit Builder bot: feature completeness, empty states, error handling
+- [ ] Audit Merchant bot: feature completeness, empty states, error handling
+- [ ] Audit Social bot: feature completeness, empty states, error handling
+- [ ] Audit Communicator bot: feature completeness, empty states, error handling
+- [ ] Verify all 4 bots share consistent UI patterns (headers, cards, status dots)
+- [ ] Audit navigation: all links resolve correctly, no dead ends
+- [ ] Audit routing: all redirects point to correct destinations
+- [ ] Verify Integrations page: stores at top, proper OAuth flows
+- [ ] Verify connection status shows correctly in Social page banner
+- [ ] Verify Communicator shows Gmail/Outlook connection status
+- [ ] Audit all empty states: consistent messaging and CTAs
+- [ ] Audit all loading states: consistent spinners and skeletons
+- [ ] Verify DashboardLayout section headers render correctly
+- [ ] Check all TypeScript errors are resolved
+- [ ] Run full test suite and verify all tests pass
+- [ ] Save final cohesion checkpoint
+
+## Sprint 28: Precision Cohesion Audit (COMPLETED ✅)
+- [x] Audit all 4 bots for feature completeness and consistency
+- [x] Fix Communicator bot brand color (emerald — distinct from Social amber)
+- [x] Update CommandPalette with correct navigation labels (4 bots, Integrations, Analytics, Workflow Builder, deep links)
+- [x] Update FirstRunTour copy to reflect 4-bot architecture
+- [x] Fix BotOperatingAcross links to include returnTo parameter
+- [x] Fix JustLanded stale href links
+- [x] Remove duplicate workflows entry from CommandPalette
+- [x] TypeScript clean — 0 errors
+- [x] Full test suite passing — 1147 tests, 73 files
+- [x] Save checkpoint with precision cohesion fixes

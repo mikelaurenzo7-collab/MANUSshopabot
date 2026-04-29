@@ -62,7 +62,7 @@ export function BotOperatingAcross({ botId }: { botId: BotId }) {
           <span>Bot is on standby — connect a platform to give it a stage.</span>
         </div>
         <Link
-          href="/storefronts#integrations"
+          href={`/storefronts?returnTo=${encodeURIComponent(window.location.pathname)}#integrations`}
           className={`inline-flex items-center gap-1 text-[11px] font-semibold ${accent.text} hover:opacity-80 transition-opacity`}
         >
           <Plus className="w-3 h-3" /> Connect
@@ -104,7 +104,7 @@ export function BotOperatingAcross({ botId }: { botId: BotId }) {
         ))}
       </div>
       <Link
-        href="/storefronts#integrations"
+        href={`/storefronts?returnTo=${encodeURIComponent(window.location.pathname)}#integrations`}
         className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold ${accent.text} hover:opacity-80 transition-opacity`}
       >
         <Plus className="w-3 h-3" /> Add

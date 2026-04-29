@@ -94,12 +94,14 @@ export default function SocialPage() {
         </div>
 
         <ConnectionStatusBanner />
-        <SocialContent
-          isMobile={isMobile}
-          storeId={storeId}
-          selectedStore={selectedStore}
-          setSelectedStore={setSelectedStore}
-        />
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <SocialContent
+            isMobile={isMobile}
+            storeId={storeId}
+            selectedStore={selectedStore}
+            setSelectedStore={setSelectedStore}
+          />
+        </div>
       </div>
     </div>
   );

@@ -42,22 +42,22 @@ const STOPS = [
   },
   {
     id: 2,
-    title: "Watch your bots work",
+    title: "Four bots, one mission",
     description:
-      "Three bots, one mission. Builder builds your store, Merchant runs it, Social grows it. Click any bot card to open its cockpit or start a chat.",
+      "Builder builds your store, Merchant runs it, Social grows it, Communicator handles email. Click any bot card to open its cockpit or start a task.",
     Icon: Bot,
     accent: "text-cyan-300",
     accentBg: "bg-cyan-500/15 border-cyan-500/30",
   },
   {
     id: 3,
-    title: "Add channels anytime",
+    title: "Connect your channels",
     description:
-      "Need WooCommerce, TikTok, or another social platform later? Open Storefronts → Connect to wire it up in 30 seconds.",
+      "Add Shopify, WooCommerce, TikTok, Gmail, and more from Integrations → Connect. Wire up any platform in 30 seconds.",
     Icon: Plug,
     accent: "text-amber-300",
     accentBg: "bg-amber-500/15 border-amber-500/30",
-    cta: { label: "Open Storefronts", href: "/storefronts" },
+    cta: { label: "Open Integrations", href: "/storefronts" },
   },
 ] as const;
 

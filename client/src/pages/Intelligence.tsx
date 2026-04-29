@@ -296,7 +296,7 @@ export default function Intelligence() {
           icon={<BarChart3 className="w-5 h-5 text-white/40" />}
           title="No metrics yet"
           description="Connect a store to see anomaly detection, performance trends, and revenue intelligence."
-          action={{ label: "Connect a store", href: "/storefronts" }}
+          action={{ label: "Connect a store", href: "/storefronts#integrations" }}
         />
       )}
 

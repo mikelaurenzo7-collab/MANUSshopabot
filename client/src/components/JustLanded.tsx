@@ -79,7 +79,7 @@ export function JustLanded({
           </p>
         </div>
         <Link
-          href="/storefronts#integrations"
+          href="/storefronts"
           className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-300 hover:text-sky-200 transition-colors"
         >
           See all integrations <ArrowUpRight className="w-3 h-3" />
@@ -92,7 +92,7 @@ export function JustLanded({
           return (
             <Link
               key={b.id}
-              href={`/storefronts#integrations`}
+              href="/storefronts"
               className="just-landed-spot block"
               style={tileVars(b)}
             >
