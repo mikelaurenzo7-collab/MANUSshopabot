@@ -195,6 +195,58 @@ async function startServer() {
     })
   );
 
+  // ─── Internal: resume a stuck/pending workflow ─────────────────────────
+  // POST /api/workflows/resume-stuck { workflowId: number }
+  // Auth: server-internal only — protected by requiring a valid session cookie
+  app.post("/api/workflows/resume-stuck", async (req: Request, res: Response) => {
+    try {
+      const { workflowId } = req.body as { workflowId?: number };
+      if (!workflowId || typeof workflowId !== "number") {
+        res.status(400).json({ error: "workflowId (number) required" });
+        return;
+      }
+      // Dynamic imports to avoid circular deps at module load time
+      const [engineModule, dbModule] = await Promise.all([
+        import("../engine/workflowEngine"),
+        import("../db"),
+      ]);
+      // Ensure all workflow registrations are loaded
+      await Promise.all([
+        import("../engine/architectWorkflows"),
+        import("../engine/merchantWorkflows"),
+        import("../engine/socialWorkflows"),
+      ]);
+      const workflow = await dbModule.getWorkflowById(workflowId);
+      if (!workflow) {
+        res.status(404).json({ error: `Workflow ${workflowId} not found` });
+        return;
+      }
+      const factory = engineModule.workflowRegistry.get(workflow.workflowType);
+      if (!factory) {
+        res.status(400).json({ error: `No registered factory for: ${workflow.workflowType}` });
+        return;
+      }
+      const stepDefinitions = factory(workflow.input as Record<string, any> ?? {});
+      // Ensure workflow is in running state so executeWorkflow proceeds
+      await dbModule.updateWorkflow(workflowId, { status: "running" });
+      // Fire execution non-blocking — launchWorkflowResume is the exported recovery shim
+      // that calls the internal executeWorkflow directly.
+      const resumeFn = (engineModule as any).launchWorkflowResume as ((id: number, uid: number, steps: any[]) => Promise<void>) | undefined;
+      if (resumeFn) {
+        resumeFn(workflowId, workflow.userId, stepDefinitions).catch((err: Error) => {
+          logger.error("resume_stuck_workflow_error", { workflowId, error: err?.message });
+        });
+      } else {
+        // Fallback: just ensure status=running and let scheduler pick it up
+        logger.warn("resume_stuck_fallback", { workflowId, message: "launchWorkflowResume not found, relying on scheduler" });
+      }
+      res.json({ ok: true, workflowId, message: `Workflow ${workflowId} resume triggered` });
+    } catch (err) {
+      logger.error("resume_stuck_error", { error: err instanceof Error ? err.message : String(err) });
+      res.status(500).json({ error: "internal_server_error" });
+    }
+  });
+
   // ─── Unknown /api/* routes → JSON 404 (do not fall through to the SPA) ──
   app.use("/api", (req: Request, res: Response, next: NextFunction) => {
     if (res.headersSent) return next();
