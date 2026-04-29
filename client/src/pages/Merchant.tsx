@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
+import { PulseStream } from "@/components/PulseStream";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -98,7 +99,12 @@ export default function MerchantPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            <PulseStream
+              status={merchantStatus.status === 'running' ? 'running' : 'ready'}
+              color="#22d3ee"
+              label="Merchant bot pulse"
+            />
             <span className={`bot-page-header-status ${merchantStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
               <span className="bot-page-header-status-dot" />
               {merchantStatus.status === 'running' ? 'Running' : 'Ready'}

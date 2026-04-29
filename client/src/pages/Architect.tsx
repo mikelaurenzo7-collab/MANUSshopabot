@@ -10,6 +10,7 @@ import {
 import { Streamdown } from "streamdown";
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
+import { PulseStream } from "@/components/PulseStream";
 
 export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
@@ -108,7 +109,12 @@ export default function Architect() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            <PulseStream
+              status={architectStatus.status === 'running' ? 'running' : 'ready'}
+              color="#38bdf8"
+              label="Builder bot pulse"
+            />
             <span className={`bot-page-header-status ${architectStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
               <span className="bot-page-header-status-dot" />
               {architectStatus.status === 'running' ? 'Running' : 'Ready'}

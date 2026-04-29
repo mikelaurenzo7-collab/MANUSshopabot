@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/context-menu";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 import { ActivationCoach } from "@/components/ActivationCoach";
+import { DailyBrief } from "@/components/DailyBrief";
 import { FirstRunTour } from "@/components/FirstRunTour";
 import { RecommendedWorkflows } from "@/components/RecommendedWorkflows";
 
@@ -709,6 +710,12 @@ export default function Home() {
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
           <span className="text-[10.5px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
         </div>
+      </div>
+
+      {/* ── Daily Brief ── morning report, auto-hides on empty data
+          and collapses to a single-line summary the user can re-expand */}
+      <div className="shrink-0 px-4 md:px-5 pt-3 z-20">
+        <DailyBrief />
       </div>
 
       {/* ── Activation Coach ── (auto-dismisses once fully activated) */}

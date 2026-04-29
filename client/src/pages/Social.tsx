@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
+import { PulseStream } from "@/components/PulseStream";
 import {
   Megaphone,
   Loader2,
@@ -75,7 +76,12 @@ export default function SocialPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            <PulseStream
+              status={socialStatus.status === 'running' ? 'running' : 'ready'}
+              color="#fb923c"
+              label="Social bot pulse"
+            />
             <span className={`bot-page-header-status ${socialStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
               <span className="bot-page-header-status-dot" />
               {socialStatus.status === 'running' ? 'Running' : 'Ready'}
