@@ -1078,3 +1078,131 @@
 - [ ] Add supplier management UI (configure preferred suppliers per store)
 - [ ] Add supplier credentials to secrets management
 - [ ] Test end-to-end product sourcing with real API data
+
+## Sprint 11: Supplier Workflow Perfection (Printful + CJ Dropshipping)
+
+- [x] Rewrite CJ Dropshipping adapter with correct email/password → JWT auth (POST /authentication/getAccessToken)
+- [x] CJ adapter: auto-refresh token 5 min before expiry, retry once on 401
+- [x] CJ adapter: graceful empty-array fallback when credentials missing (no throw)
+- [x] CJ adapter: correct CJ API v2 base URL (developers.cjdropshipping.com/api2.0/v1)
+- [x] CJ adapter: CJ-Access-Token header (not Bearer), correct /product/list endpoint
+- [x] CJ adapter: platform routing guard (etsy/faire excluded, 9 supported platforms)
+- [x] Printful adapter: full catalog cache (1hr TTL, paginated fetch of all 300+ products)
+- [x] Printful adapter: relevance-scored keyword search (title=3pts, type=2pts, desc=1pt)
+- [x] Printful adapter: graceful empty-array fallback when token missing
+- [x] Printful adapter: platform routing (9 supported platforms including etsy)
+- [x] Workflow engine: add executeSupplierApiCall() routing function
+- [x] Workflow engine: route suppliers.printful.search/trending/category/product endpoints
+- [x] Workflow engine: route suppliers.cj.search/trending/category/product endpoints
+- [x] Workflow engine: route suppliers.all.search/trending (parallel both suppliers)
+- [x] catalog_generation: fetch real Printful + CJ products before LLM enrichment
+- [x] catalog_generation: platform-aware (skip CJ for Etsy, use compare-at only when supported)
+- [x] catalog_generation: LLM enriches real supplier data (SEO copy, pricing, tags) instead of hallucinating
+- [x] complete_store_buildout: inject real Printful + CJ supplier data into catalog generation step
+- [x] complete_store_buildout: LLM curation uses actual supplier URLs and product IDs
+- [x] inventory_audit: fetch trending supplier products to identify catalog gaps
+- [x] pricing_optimization: fetch real supplier cost benchmarks before LLM margin analysis
+- [x] pricing_optimization: LLM uses actual wholesale prices to ground margin floor calculations
+- [ ] AliExpress IOP adapter: evaluate production readiness of generateSecurityToken API
+
+## Sprint 12: Critical Bug Fixes
+
+### Store Cleanup
+- [x] Delete stores id=1 (laurienzogolf), id=30001 (laurenzogolf), id=30002 (duplicate laurenzo-4) from DB
+- [x] Delete all related workflow_steps, agent_workflows, agent_tasks, platform_credentials for those stores
+
+### Shopify OAuth Fix (CRITICAL)
+- [x] Audit current Shopify store connection flow — verify it redirects to real Shopify OAuth login
+- [x] Shopify OAuth confirmed correct: domain input triggers real redirect to Shopify admin/oauth/authorize
+- [x] Access token obtained via proper OAuth code exchange after Shopify login
+- [x] Access token stored in stores.platformAccessToken after successful OAuth
+
+### Builder Bot Chat Fix (CRITICAL)
+- [x] Audit Builder Bot chat system prompt — it must tell the bot to EXECUTE workflows, not give instructions
+- [x] Rewrote chat router v2 with LLM function-calling tools (launch_workflow, get_store_status, list_recent_workflows)
+- [x] Bot now calls launch_workflow tool when user says "build my store" or similar — executes autonomously
+- [x] Bot reports workflow ID and what it launched, not generic instructions
+- [x] All 6 agentic chat tests passing
+
+## Sprint 13: Shopify Connection Fixes
+
+- [x] Fix WorkspaceContext: validate persisted storeId against real stores on mount, clear stale IDs
+- [x] Auto-select first valid store when persisted ID is stale/deleted
+- [x] Fix ReactFlow container height warning on Command Center (explicit height on both Home.tsx and InfraTopology.tsx)
+- [x] WorkspaceContext now uses trpc.stores.list to validate on mount — stale IDs auto-corrected
+
+## Sprint 14: Drag-and-Drop Workflow Canvas
+
+- [ ] Audit current Home.tsx ReactFlow node types and canvas architecture
+- [ ] Create WorkflowCanvas.tsx — dedicated drag-and-drop canvas component
+- [ ] Build NodePalette sidebar with draggable step types (LLM Call, API Call, Approval Gate, Store Action, Notification, Analysis)
+- [ ] Custom node types: WorkflowStepNode with handles, status badge, title/description editing
+- [ ] Enable onDrop + onDragOver to place nodes from palette onto canvas
+- [ ] Enable edge drawing between nodes (connect handles)
+- [ ] Node config panel: click a node to edit its title, stepType, prompt/endpoint/action
+- [ ] Delete node/edge via keyboard (Backspace/Delete) or context menu
+- [ ] Save canvas as custom workflow (POST to workflows.launch with custom steps)
+- [ ] Launch button to immediately run the built workflow
+- [ ] Add /workflow-builder route and sidebar nav entry
+
+## Sprint 14: Full Design & Layout Audit
+
+- [x] Remove ReactFlow node map from Command Center entirely
+- [x] Replace with live ops dashboard: 3-col grid (Bot Status cards, Workflow Feed, Store Health), KPI strip, activity ticker, recommended workflows
+- [x] Update FirstRunTour copy to match new ops dashboard (no more node map references)
+- [x] Architect page: already solid — proper empty states, inspector panel, loading skeletons
+- [x] Merchant page: already solid — proper empty states, store selector, product/order tables
+- [x] Social page: already solid — tabbed tool surfaces, empty states
+- [x] Workflows page: already solid — stats row, live runner, retry/rerun, empty states
+- [x] Inbox/Storefronts/Insights/Settings: all use PageHeader consistently, no gaps found
+- [x] Global: consistent spacing, typography, card styles confirmed across all pages
+
+## Sprint 15: Workflow Builder + Nav Consolidation
+
+- [x] Audit DashboardLayout sidebar nav — nav is already lean (9 items), no redundant entries
+- [x] Add "Build" as violet sub-item under Workflows with NEW badge — discoverable without cluttering top nav
+- [x] Build WorkflowBuilder page with ReactFlow drag-and-drop canvas
+- [x] Node palette sidebar: LLM Analysis, API Call, Approval Gate, Store Action, Notification, Condition branch
+- [x] Drop-to-canvas with snap-to-grid (16px) and connection handles
+- [x] Node config panel (right slide-over): kind-specific fields per step type
+- [x] Custom animated edges with arrow markers
+- [x] Save draft to localStorage + Launch via trpc.workflows.launch
+- [x] Register /workflow-builder route in App.tsx with lazy loading
+- [x] Empty canvas state with guided prompt and step count badge
+- [x] Mobile graceful degradation message
+- [x] Delete/Backspace keyboard shortcut to remove selected node
+- [x] 3 starter templates (Product Drop, Pricing Sweep, Campaign Launch)
+- [x] 16/16 vitest tests passing for step registry, templates, and sort logic
+
+## Sprint 16: Bot Functionality Perfection ✅
+
+### Builder Bot Fixes
+- [x] Fix Architect page niche research: call trpc.architect.nicheResearch directly so results appear in niche reports panel immediately
+- [x] Fix inspector panel field names: marketSize, competition, trendDirection, targetAudience, strengths, risks (was using old broken names)
+- [x] Wire "Generate Brand Pack" and "Initialize Drop Store" buttons on Architect page
+- [x] Add workflow launch buttons to Architect page (Catalog Generation, Store Setup, Brand Identity Kit)
+
+### Merchant Bot Fixes
+- [x] Add 4 workflow launch buttons to Merchant page: Inventory Audit, Pricing Sweep, Auto-Fulfill, Competitor Scan
+- [x] Wire Force DB Sync button to trpc.merchant.syncProducts
+
+### Social Bot Fixes
+- [x] Fix chat router: social_posting → social_content (correct registered workflow name)
+- [x] Fix chat router: ad_campaign_creation → ad_campaign (correct registered workflow name)
+
+### Chat Router Fixes (all bots)
+- [x] Expanded chat router workflow type enum from 10 → 27 workflow types (all registered workflows)
+- [x] Fixed AGENT_TYPE_MAP: all 27 workflows correctly mapped to architect/merchant/social
+- [x] Fixed AGENT_WORKFLOW_SCOPE: all 27 workflows correctly mapped to specific_store/all_stores/global
+- [x] Updated system prompts to use correct workflow names
+- [x] 14/14 Sprint 16 vitest tests passing
+
+## Sprint 17: Deep Perfection Pass ✅
+
+- [x] Approvals router confirmed registered inline in routers.ts (not missing)
+- [x] Owner role promotion: all 3 user accounts promoted to org owner role so approval gates work
+- [x] Add inline approve/reject buttons to LiveWorkflowRunner for awaiting_approval workflows
+- [x] Wire bulk_push_products to also call Shopify API (pushProductToStore) after local DB insert when status=active or pushToPlatform=true
+- [x] Add approve_workflow tool to chat router — bots can approve/reject pending gates from chat
+- [x] Add get_products tool to chat router — bots can report on catalog from chat
+- [x] 15/15 Sprint 17 vitest tests passing

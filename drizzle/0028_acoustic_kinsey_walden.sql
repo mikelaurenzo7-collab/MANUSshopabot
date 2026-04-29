@@ -1,0 +1,4 @@
+ALTER TABLE `ad_campaigns` MODIFY COLUMN `platform` enum('tiktok','meta','instagram','twitter','pinterest','google_ads','email','sms','gmail','snapchat','outlook','slack','youtube') NOT NULL DEFAULT 'meta';--> statement-breakpoint
+ALTER TABLE `social_accounts` MODIFY COLUMN `platform` enum('meta','instagram','tiktok','twitter','pinterest','google_ads','gmail','snapchat','outlook','slack','youtube') NOT NULL;--> statement-breakpoint
+ALTER TABLE `social_posts` MODIFY COLUMN `platform` enum('tiktok','instagram','facebook','meta','twitter','pinterest','google_ads','snapchat','slack','youtube') NOT NULL;--> statement-breakpoint
+ALTER TABLE `stores` MODIFY COLUMN `platform` enum('shopify','woocommerce','amazon','etsy','ebay','tiktok_shop','walmart','depop','bigcommerce','square','faire','bonanza','stockx','reverb') NOT NULL DEFAULT 'shopify';

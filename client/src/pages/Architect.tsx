@@ -27,13 +27,14 @@ export default function Architect() {
   
   const architectStatus: any = (status as any[])?.find?.((s: any) => s.agentType === 'architect') || { status: 'idle', currentTask: null };
 
-  const analyzeNicheMutation = trpc.workflows.launch.useMutation({
-    onSuccess: () => {
-      toast.success("INITIATING_NICHE_ANALYSIS");
+  const analyzeNicheMutation = trpc.architect.nicheResearch.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Niche analysis complete — viability score: ${data.report.viabilityScore}/100`);
       setKeyword("");
       setError(null);
+      setSelectedReportId(data.id);
+      utils.architect.nicheReports.invalidate();
       utils.dashboard.agentStatus.invalidate();
-      utils.workflows.list?.invalidate?.();
       utils.dashboard.recentActivity.invalidate();
     },
     onError: (err) => {
@@ -46,6 +47,23 @@ export default function Architect() {
         toast.error(err.message || "Failed to launch workflow");
       }
     }
+  });
+
+  const launchBuildoutMutation = trpc.workflows.launch.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Store buildout launched — workflow #${data.workflowId}`);
+      utils.dashboard.agentStatus.invalidate();
+      utils.dashboard.recentActivity.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to launch buildout"),
+  });
+
+  const launchBrandPackMutation = trpc.workflows.launch.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Brand identity kit launched — workflow #${data.workflowId}`);
+      utils.dashboard.agentStatus.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to launch brand pack"),
   });
 
   const selectedReport = useMemo(() => {
@@ -69,13 +87,29 @@ export default function Architect() {
 
   const handleAnalyze = () => {
     if (!keyword.trim()) return;
-    analyzeNicheMutation.mutate({
+    analyzeNicheMutation.mutate({ keyword: keyword.trim() });
+  };
+
+  const handleGenerateBrandPack = (keyword: string) => {
+    launchBrandPackMutation.mutate({
       agentType: "architect",
-      workflowType: "niche_research",
-      title: `Niche Research: ${keyword.trim()}`,
+      workflowType: "brand_identity_kit",
+      title: `Brand Identity Kit: ${keyword}`,
       scope: "global",
-      input: { keyword: keyword.trim() },
+      input: { niche: keyword },
     });
+    setSelectedReportId(null);
+  };
+
+  const handleInitializeStore = (keyword: string) => {
+    launchBuildoutMutation.mutate({
+      agentType: "architect",
+      workflowType: "complete_store_buildout",
+      title: `Store Buildout: ${keyword}`,
+      scope: "global",
+      input: { niche: keyword, productCount: 8 },
+    });
+    setSelectedReportId(null);
   };
 
   return (
@@ -298,9 +332,10 @@ export default function Architect() {
                 </div>
 
                 <div className="space-y-2">
-                   <InspectorRow label="Market Demand" value={`${(selectedReport.report as any).marketDemandScore}/100`} />
-                   <InspectorRow label="Competition" value={`${(selectedReport.report as any).competitionScore}/100`} />
-                   <InspectorRow label="Profit Margin" value={`${(selectedReport.report as any).profitMarginScore}/100`} />
+                   <InspectorRow label="Market Size" value={(selectedReport.report as any).marketSize ?? "—"} />
+                   <InspectorRow label="Competition" value={(selectedReport.report as any).competition ?? "—"} />
+                   <InspectorRow label="Trend" value={(selectedReport.report as any).trendDirection ?? "—"} />
+                   <InspectorRow label="Target Audience" value={(selectedReport.report as any).targetAudience ?? "—"} />
                 </div>
 
                 <div>
@@ -315,9 +350,9 @@ export default function Architect() {
                 </div>
 
                 <div>
-                   <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-2 border-b border-white/[0.08] pb-1">Weaknesses</p>
+                   <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-2 border-b border-white/[0.08] pb-1">Risks</p>
                    <ul className="space-y-1.5 mt-2">
-                     {(selectedReport.report as any).weaknesses?.map((wk: string, i: number) => (
+                     {(selectedReport.report as any).risks?.map((wk: string, i: number) => (
                        <li key={i} className="flex gap-2 text-[10px] font-mono text-white opacity-80 leading-relaxed">
                          <span className="text-red-500 mt-0.5">■</span> {wk}
                        </li>
@@ -325,14 +360,38 @@ export default function Architect() {
                    </ul>
                 </div>
 
+                {(selectedReport.report as any).topProducts?.length > 0 && (
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-2 border-b border-white/[0.08] pb-1">Top Product Ideas</p>
+                    <ul className="space-y-1.5 mt-2">
+                      {(selectedReport.report as any).topProducts?.map((p: any, i: number) => (
+                        <li key={i} className="flex justify-between text-[10px] font-mono text-white opacity-80">
+                          <span>{p.name}</span>
+                          <span className="text-emerald-400">{p.estimatedPrice} · {p.margin}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="pt-4 border-t border-white/[0.08]">
                   <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-3">Recommended Actions</p>
                   <div className="flex flex-col gap-2">
-                    <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-[#00ff41] hover:text-emerald-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
-                       Generate Brand Pack <Sparkles className="w-3 h-3 group-hover:text-emerald-400" />
+                    <button
+                      onClick={() => handleGenerateBrandPack(selectedReport.keyword)}
+                      disabled={launchBrandPackMutation.isPending}
+                      className="w-full bg-[#050505] border border-white/[0.08] hover:border-[#00ff41] hover:text-emerald-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
+                    >
+                       {launchBrandPackMutation.isPending ? "Launching..." : "Generate Brand Pack"}
+                       <Sparkles className="w-3 h-3 group-hover:text-emerald-400" />
                     </button>
-                    <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
-                       Initialize Drop Store <Store className="w-3 h-3 group-hover:text-sky-400" />
+                    <button
+                      onClick={() => handleInitializeStore(selectedReport.keyword)}
+                      disabled={launchBuildoutMutation.isPending}
+                      className="w-full bg-[#050505] border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
+                    >
+                       {launchBuildoutMutation.isPending ? "Launching..." : "Initialize Drop Store"}
+                       <Store className="w-3 h-3 group-hover:text-sky-400" />
                     </button>
                   </div>
                 </div>

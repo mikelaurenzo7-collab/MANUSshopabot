@@ -46,6 +46,7 @@ import {
 } from "./tasks/system";
 
 import { signalRegistry } from "../signals"; // <-- THE PROACTIVENESS ENGINE
+import { getActiveStores } from "../db";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -203,7 +204,7 @@ export function registerDefaultTasks(): void {
     agentType: "system" as any,
     taskType: "signal_evaluator",
     handler: async () => {
-      const stores = await require("../db").getActiveStores();
+      const stores = await getActiveStores();
       for (const store of stores) {
         await signalRegistry.executeAllForStore(store.userId, store.id);
       }

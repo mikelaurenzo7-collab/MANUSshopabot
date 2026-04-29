@@ -242,34 +242,76 @@ registerWorkflow("product_sourcing", (input): WorkflowStepDefinition[] => {
 });
 
 // ─── Catalog Generation Workflow ───────────────────────────────────────────
+//
+// Upgraded: now fetches REAL products from Printful + CJ Dropshipping
+// before the LLM curation step. The LLM receives actual catalog data
+// (titles, prices, images, supplier URLs) and enriches it with
+// SEO copy, compare-at pricing, and stock thresholds — it no longer
+// hallucinates products from scratch.
 
 registerWorkflow("catalog_generation", (input): WorkflowStepDefinition[] => {
   const keyword = input.keyword ?? "trending";
-  const productCount = input.productCount ?? 15;
+  const productCount = Math.max(5, Math.min(30, Number(input.productCount ?? 15)));
+  const platform = (input.platform as string | undefined)?.toLowerCase();
+  const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
+
+  // Decide which suppliers to hit based on platform suitability
+  // Printful (POD) works everywhere; CJ works on non-Etsy platforms.
+  const useCJ = !platform || platform !== "etsy";
+  const halfCount = Math.ceil(productCount / 2);
+
   return [
     {
-      stepType: "llm_call",
-      title: "Generate Product Catalog",
-      description: `Creating ${productCount} products for "${keyword}"`,
+      stepType: "api_call",
+      title: "Fetch Real Products from Printful",
+      description: `Searching Printful catalog for "${keyword}" print-on-demand products`,
       input: {
-        systemPrompt: "You are an expert e-commerce catalog builder. Generate complete, market-ready product listings.",
-        userPrompt: `Generate a complete product catalog of ${productCount} products for the keyword "${keyword}". Each product must include:
-- title: Compelling product name
-- description: SEO-optimized description (100-200 words)
-- price: Retail price in cents (USD)
-- costPrice: Wholesale cost in cents
-- compareAtPrice: Original/compare price in cents (for showing discounts)
-- sku: Unique SKU code
-- category: Product category
-- supplier: Recommended supplier
-- stockLevel: Initial stock quantity (50-500)
-- lowStockThreshold: Restock alert threshold
+        endpoint: "suppliers.printful.search",
+        params: { keyword, limit: useCJ ? halfCount : productCount },
+      },
+    },
+    ...(useCJ ? [{
+      stepType: "api_call" as const,
+      title: "Fetch Real Products from CJ Dropshipping",
+      description: `Searching CJ Dropshipping for "${keyword}" general merchandise`,
+      input: {
+        endpoint: "suppliers.cj.search",
+        params: { keyword, limit: halfCount },
+      },
+    }] : []),
+    {
+      stepType: "llm_call",
+      title: "Curate & Enrich Catalog",
+      description: `Selecting and enriching the best ${productCount} products with SEO copy and pricing`,
+      input: {
+        useClaudeDirect: true,
+        cacheSystemPrompt: true,
+        effort: "high",
+        systemPrompt: composeSystemPrompt(
+          `You are an expert e-commerce catalog builder. You receive REAL product data from verified suppliers and enrich it with compelling copy, SEO keywords, and smart pricing. You never invent products — you work only with the supplier data provided in the previous steps.${caps ? ` Platform: ${platform} (${caps.category}, ${caps.feeStructure} fees). ${caps.compareAtPrice ? "Use compare-at pricing to show savings." : "No compare-at pricing on this platform — use charm pricing instead."}` : ""}`,
+        ),
+        userPrompt: `You have real product data from Printful and CJ Dropshipping in the previous step outputs. Select the best ${productCount} products for the "${keyword}" keyword/niche.
 
-Return as JSON with a "products" array.`,
+For each selected product, enrich it with:
+- title: Optimized, keyword-rich product title (keep supplier's product type, add niche context)
+- description: SEO-optimized description (100-150 words, benefit-focused)
+- price: Retail price in cents (2-3x cost for 50-67% margin)
+- costPrice: Actual supplier cost in cents (from the supplier data)
+- compareAtPrice: Compare-at price in cents (10-20% above retail to show savings)
+- sku: Clean SKU (e.g. NICHE-CAT-001)
+- category: Product category
+- supplier: "printful" or "cjdropshipping" (from the supplier data)
+- supplierUrl: Actual supplier URL (from the supplier data)
+- supplierProductId: Supplier's product ID (from the supplier data)
+- stockLevel: Suggested initial stock (50-200 for POD=unlimited, 100-500 for dropship)
+- lowStockThreshold: Restock alert level (10% of stockLevel)
+- tags: Array of 5-8 SEO tags
+
+Return JSON: { products: [...] }`,
         responseFormat: {
           type: "json_schema",
           json_schema: {
-            name: "catalog",
+            name: "catalog_enriched",
             strict: true,
             schema: {
               type: "object",
@@ -287,10 +329,13 @@ Return as JSON with a "products" array.`,
                       sku: { type: "string" },
                       category: { type: "string" },
                       supplier: { type: "string" },
+                      supplierUrl: { type: "string" },
+                      supplierProductId: { type: "string" },
                       stockLevel: { type: "number" },
                       lowStockThreshold: { type: "number" },
+                      tags: { type: "array", items: { type: "string" } },
                     },
-                    required: ["title", "description", "price", "costPrice", "compareAtPrice", "sku", "category", "supplier", "stockLevel", "lowStockThreshold"],
+                    required: ["title", "description", "price", "costPrice", "compareAtPrice", "sku", "category", "supplier", "supplierUrl", "supplierProductId", "stockLevel", "lowStockThreshold", "tags"],
                     additionalProperties: false,
                   },
                 },
@@ -305,16 +350,16 @@ Return as JSON with a "products" array.`,
     {
       stepType: "approval_gate",
       title: "Approve Product Catalog",
-      description: `Review ${productCount} generated products before they are added to your store`,
+      description: `Review ${productCount} real supplier products before they are added to your store`,
       requiresApproval: true,
     },
     {
       stepType: "notification",
       title: "Catalog Ready",
-      description: "Products generated and ready for store import",
+      description: "Real supplier products curated and ready for store import",
       input: {
         title: `Catalog Generated: ${keyword}`,
-        message: `The Architect has generated ${productCount} products for "${keyword}". Review and approve to add them to your store.`,
+        message: `The Architect has sourced and enriched ${productCount} real products from Printful${useCJ ? " and CJ Dropshipping" : ""} for "${keyword}". Review and approve to add them to your store.`,
         agentType: "architect",
         notificationType: "success",
         notifyOwner: true,
@@ -1132,19 +1177,54 @@ registerWorkflow("complete_store_buildout", (input): WorkflowStepDefinition[] =>
         },
       },
     },
+    // Step 3a: Fetch real products from Printful (POD — works on all platforms)
+    {
+      stepType: "api_call",
+      title: "Fetch Printful Products",
+      description: `Searching Printful catalog for "${niche}" print-on-demand products`,
+      input: {
+        endpoint: "suppliers.printful.search",
+        params: { keyword: niche, limit: Math.ceil(targetProductCount / 2) },
+      },
+    },
+    // Step 3b: Fetch real products from CJ Dropshipping (general merchandise)
+    {
+      stepType: "api_call",
+      title: "Fetch CJ Dropshipping Products",
+      description: `Searching CJ Dropshipping for "${niche}" general merchandise`,
+      input: {
+        endpoint: "suppliers.cj.search",
+        params: { keyword: niche, limit: Math.ceil(targetProductCount / 2) },
+      },
+    },
     {
       stepType: "llm_call",
       title: "Generate Starter Catalog",
-      description: `Generating ${targetProductCount} margin-friendly products`,
+      description: `Curating ${targetProductCount} real supplier products with brand-matched copy`,
       input: {
         useClaudeDirect: true,
         cacheSystemPrompt: true,
         effort: "xhigh",
         adaptiveThinking: true,
         systemPrompt: composeSystemPrompt(
-          `You are a senior e-commerce merchandiser. Every product you list must be realistic, margin-friendly, and consistent with the brand voice from the prior step. Prices in cents.`,
+          `You are a senior e-commerce merchandiser. You receive REAL product data from Printful and CJ Dropshipping suppliers. Your job is to select the best products for the brand and enrich them with brand-voice copy, SEO keywords, and smart pricing. You NEVER invent products — you only work with real supplier data from previous steps. Prices in cents.`,
         ),
-        userPrompt: `Generate ${targetProductCount} starter products for "${storeName}" in the "${niche}" niche. Match brand voice from the prior context. JSON: { products: [ { title, description, priceCents, costPriceCents, sku, category, tags: string[], seoKeywords: string[] } ] }`,
+        userPrompt: `You have real product data from Printful and CJ Dropshipping in the previous step outputs. Select and enrich the best ${targetProductCount} products for "${storeName}" in the "${niche}" niche, matching the brand voice from the brand identity step.
+
+For each product:
+- title: Brand-voice product title (keep product type, add brand personality)
+- description: SEO description (100-150 words, benefit-focused, brand-voice aligned)
+- priceCents: Retail price in cents (2-3x supplier cost)
+- costPriceCents: Actual supplier cost in cents (from supplier data)
+- sku: Clean SKU (BRAND-CAT-001 format)
+- category: Product category
+- supplier: "printful" or "cjdropshipping"
+- supplierUrl: Actual supplier URL from the data
+- supplierProductId: Supplier's product ID
+- tags: 5-8 SEO tags
+- seoKeywords: 5-8 long-tail keywords
+
+Return JSON: { products: [...] }`,
         responseFormat: {
           type: "json_schema",
           json_schema: {
@@ -1164,10 +1244,13 @@ registerWorkflow("complete_store_buildout", (input): WorkflowStepDefinition[] =>
                       costPriceCents: { type: "integer" },
                       sku: { type: "string" },
                       category: { type: "string" },
+                      supplier: { type: "string" },
+                      supplierUrl: { type: "string" },
+                      supplierProductId: { type: "string" },
                       tags: { type: "array", items: { type: "string" } },
                       seoKeywords: { type: "array", items: { type: "string" } },
                     },
-                    required: ["title", "description", "priceCents", "costPriceCents", "sku", "category", "tags", "seoKeywords"],
+                    required: ["title", "description", "priceCents", "costPriceCents", "sku", "category", "supplier", "supplierUrl", "supplierProductId", "tags", "seoKeywords"],
                     additionalProperties: false,
                   },
                 },

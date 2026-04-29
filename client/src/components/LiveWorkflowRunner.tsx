@@ -10,7 +10,7 @@
  * Reads `workflows.detail` and polls every 3s while running.
  * Auto-stops polling once the workflow lands in a terminal state.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import {
@@ -32,7 +32,11 @@ import {
   ArrowUpRight,
   Sparkles,
   Layers,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type StepType =
   | "llm_call"
@@ -67,6 +71,28 @@ const AGENT_META: Record<AgentType, { name: string; color: string; rgb: string; 
 type RunnerStatus = "running" | "awaiting_approval" | "completed" | "failed" | "cancelled" | "pending";
 
 export function LiveWorkflowRunner({ workflowId }: { workflowId: number }) {
+  const [approving, setApproving] = useState(false);
+  const utils = trpc.useUtils();
+  const approveMutation = trpc.workflows.reviewStep.useMutation({
+    onSuccess: (_data: unknown, vars: { approved: boolean }) => {
+      toast.success(vars.approved ? "Workflow approved — continuing…" : "Workflow rejected.");
+      utils.workflows.detail.invalidate({ workflowId });
+      utils.workflows.list.invalidate();
+      setApproving(false);
+    },
+    onError: (err: { message: string }) => {
+      toast.error(`Failed: ${err.message}`);
+      setApproving(false);
+    },
+  });
+
+  const handleApproval = (approved: boolean) => {
+    // Find the awaiting step
+    const awaitingStep = stepStates.find((s: any) => s.phase === "awaiting");
+    if (!awaitingStep) return;
+    setApproving(true);
+    approveMutation.mutate({ workflowId, stepId: awaitingStep.id, approved });
+  };
   // We poll fast (3s) while the workflow is in flight and back off the
   // moment it lands. The query handle's `dataUpdatedAt` keeps us honest
   // about the freshness of what we render.
@@ -178,6 +204,38 @@ export function LiveWorkflowRunner({ workflowId }: { workflowId: number }) {
         </span>
         <RunnerStatusPill status={status} />
       </div>
+
+      {/* Approval Gate Banner */}
+      {status === "awaiting_approval" && (
+        <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border border-amber-500/30 bg-amber-500/[0.06]">
+          <Pause className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-amber-300">Awaiting your approval</p>
+            <p className="text-[11px] text-white/50 mt-0.5">Review the step output before the workflow continues.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
+              disabled={approving}
+              onClick={() => handleApproval(false)}
+            >
+              <ThumbsDown className="w-3 h-3 mr-1" />
+              Reject
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+              disabled={approving}
+              onClick={() => handleApproval(true)}
+            >
+              {approving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <ThumbsUp className="w-3 h-3 mr-1" />}
+              Approve
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Step rail */}
       <ol className="live-workflow-runner-rail">

@@ -16,13 +16,6 @@ import { composeSystemPrompt } from "./sharedPrompts";
 
 registerWorkflow("inventory_audit", (input): WorkflowStepDefinition[] => {
   const scope = input.scope ?? "all_stores";
-  // Platform-aware tuning: when input.platform is supplied, the LLM
-  // sees inventory primitives the platform actually exposes —
-  // realTimeInventory (poll vs. push), recommendedBatchSize for the
-  // sweep, partialFulfillment for restock routing. Without this hint
-  // the bot defaults to "poll every store every 5 min" which is
-  // wasteful on Shopify (real-time webhooks already populate stock)
-  // and insufficient on Amazon (FBA inventory lags ~5–10 min).
   const platform = (input.platform as string | undefined)?.toLowerCase();
   const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
   const inventoryBrief = caps
@@ -34,21 +27,34 @@ registerWorkflow("inventory_audit", (input): WorkflowStepDefinition[] => {
     : "";
 
   return [
+    // Step 1: Fetch trending products from both suppliers to compare
+    // against current inventory — identifies gaps where high-demand
+    // supplier products are missing from the store catalog.
+    {
+      stepType: "api_call",
+      title: "Fetch Supplier Trending Products",
+      description: "Checking what's trending on Printful and CJ Dropshipping to identify catalog gaps",
+      input: {
+        endpoint: "suppliers.all.trending",
+        params: { limit: 20 },
+      },
+    },
     {
       stepType: "analysis",
       title: "Stock Level Analysis",
       description: caps
-        ? `Analyzing inventory for ${platform} (capability-tuned)`
-        : "Analyzing current inventory levels across all connected stores",
+        ? `Analyzing inventory for ${platform} (capability-tuned) + supplier gap analysis`
+        : "Analyzing current inventory levels across all connected stores + supplier gap analysis",
       input: {
         analysisPrompt: `Perform a comprehensive inventory audit:
 1. Identify all products below their low-stock threshold
 2. Calculate days-of-stock remaining based on recent sales velocity
 3. Flag products that are overstocked (>90 days supply)
 4. Identify products with zero sales in the last 30 days
-5. Calculate total inventory value at cost and retail${inventoryBrief}
+5. Calculate total inventory value at cost and retail
+6. Compare current catalog against trending supplier products (from the previous step) — identify high-demand products missing from the store${inventoryBrief}
 
-Provide specific restock quantities for low-stock items and clearance recommendations for dead stock. Where the platform supports bulk-price updates, recommend clearance markdowns the bot can apply in one sweep; where it doesn't, recommend a manual ladder.`,
+Provide specific restock quantities for low-stock items, clearance recommendations for dead stock, and a list of trending supplier products to add. Where the platform supports bulk-price updates, recommend clearance markdowns the bot can apply in one sweep; where it doesn't, recommend a manual ladder.`,
         data: { scope, platform: platform ?? null, requestedAt: new Date().toISOString() },
       },
     },
@@ -124,12 +130,6 @@ Return as JSON with keys: criticalRestocks, standardRestocks, totalEstimatedCost
 registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
   const targetMargin = input.targetMargin ?? 40;
   const strategy = input.strategy ?? "margin_target";
-  // Platform-aware tuning. compareAtPrice is the primary "show a strikethrough"
-  // primitive — Shopify, eBay, WooCommerce, TikTok Shop support it. Amazon
-  // and Etsy don't (Amazon owns its strike-through display, Etsy uses sales).
-  // The Merchant Bot uses this to gate which adjustment recipes are even
-  // viable on the target platform — recommending a compareAt strikeout on
-  // Amazon would just generate noise the bot can't act on.
   const platform = (input.platform as string | undefined)?.toLowerCase();
   const caps = platform ? getEcommerceCapabilityMatrix()[platform] : undefined;
   const platformGuard = caps
@@ -141,7 +141,25 @@ registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
       `- Fee structure: ${caps.feeStructure} (${caps.category}). When recommending margin floors, account for ${caps.feeStructure === "commission" ? "platform commission ~10-15% on top of payment processing" : caps.feeStructure === "subscription" ? "subscription cost amortized over volume" : "no platform commission — full margin retained"}.`
     : "";
 
+  // The niche/category for supplier cost benchmarking
+  const niche = (input.niche as string | undefined) ?? "general";
+
   return [
+    // Step 0: Fetch real supplier cost benchmarks so the LLM can
+    // ground margin recommendations in actual wholesale prices.
+    // Without this, the model guesses cost prices and margin floors
+    // are unreliable. With real Printful/CJ data, the bot can say
+    // "this hoodie costs $18.50 from Printful — at $39.99 retail
+    // you're at 54% margin, above your 40% target."
+    {
+      stepType: "api_call",
+      title: "Fetch Supplier Cost Benchmarks",
+      description: `Getting real wholesale prices from Printful and CJ Dropshipping for "${niche}" products`,
+      input: {
+        endpoint: "suppliers.all.search",
+        params: { keyword: niche, limit: 20 },
+      },
+    },
     {
       stepType: "llm_call",
       title: "Price Analysis",
@@ -165,23 +183,27 @@ registerWorkflow("pricing_optimization", (input): WorkflowStepDefinition[] => {
         systemPrompt: composeSystemPrompt(
           "You are a pricing strategist for e-commerce. You maximize revenue while maintaining competitive positioning. Apply the FEE-STRUCTURE AWARENESS rule from the platform preamble when recommending margin floors.",
         ),
-        userPrompt: `Analyze the current product pricing and recommend optimizations:
+        userPrompt: `Analyze the current product pricing and recommend optimizations.
+
+You have REAL supplier cost benchmark data from the previous step (Printful and CJ Dropshipping wholesale prices). Use these actual cost prices to ground your margin calculations — do not guess costs.
 
 Strategy: ${strategy}
 Target Margin: ${targetMargin}%${platformGuard}
 
 For each product category, provide:
-1. Current average margin
-2. Recommended price adjustments (specific dollar amounts)
+1. Current average margin vs. target (use real supplier costs from previous step)
+2. Recommended price adjustments (specific dollar amounts, justified against real costs)
 3. Competitor price comparison
 4. Elasticity assessment (will customers accept the new price?)
 5. Expected revenue impact
+6. Supplier cost floor: the minimum viable retail price to hit ${targetMargin}% margin given actual supplier costs
 
 Also identify:
-- Products priced too low (leaving money on the table)
+- Products priced too low (leaving money on the table vs. supplier cost)
 - Products priced too high (losing sales to competitors)
 - Bundle opportunities for higher AOV
 - Seasonal pricing adjustments needed
+- Any products where the supplier cost makes the target margin impossible at competitive prices
 
 Return as JSON with keys: categoryAnalysis, priceAdjustments, bundleOpportunities, seasonalAdjustments, expectedRevenueImpact`,
         responseFormat: {
