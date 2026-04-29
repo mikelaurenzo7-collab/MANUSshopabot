@@ -192,6 +192,20 @@ function ApprovalCard({
                 {approval.workflowType}
               </span>
             )}
+            {/* Autonomous-workflow marker — when the gate came from one of the
+                three autonomous workflows, operators see the lineage at a
+                glance. Helps especially for autonomous_repricer's policy-
+                gated >25% moves: the operator knows the bot's rationale lives
+                on the workflow detail's audit trail. */}
+            {approval.workflowType && (approval.workflowType.startsWith("autonomous_")) && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/30 rounded px-1.5 py-0.5"
+                title="This approval came from an autonomous workflow. The bot's full reasoning trail lives on the workflow detail page."
+              >
+                <span aria-hidden="true">🛠</span>
+                Auto · audit available
+              </span>
+            )}
           </div>
 
           {/* Title + description */}

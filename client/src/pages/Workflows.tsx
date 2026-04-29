@@ -243,18 +243,26 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
                   //  "google_pmax_optimization" → 📊). Tries the first
                   // token, then the first two joined ("google_ads",
                   // "tiktok_shop"); falls back to ⚡ for cross-platform
-                  // recipes like "competitor_pricing_scan".
+                  // recipes like "competitor_pricing_scan". Autonomous
+                  // workflows (the bot decides what to do) get a
+                  // distinct 🛠 marker + an "AUTO" pill so operators
+                  // can spot them at a glance in the dropdown.
                   const tokens = t.type.split("_");
                   const lookup = (id: string) => ECOMMERCE_BRANDS[id] || SOCIAL_BRANDS[id] || TOOL_BRANDS[id];
                   const brand =
                     lookup(tokens.slice(0, 2).join("_")) ||
                     lookup(tokens[0]);
-                  const icon = brand?.icon ?? "⚡";
+                  const icon = t.autonomous ? "🛠" : (brand?.icon ?? "⚡");
                   return (
                     <SelectItem key={t.type} value={t.type}>
                       <span className="inline-flex items-center gap-1.5">
                         <span className="text-sm leading-none">{icon}</span>
                         {t.title}
+                        {t.autonomous && (
+                          <span className="ml-1 inline-flex items-center text-[8px] font-bold uppercase tracking-[0.1em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5">
+                            Auto
+                          </span>
+                        )}
                       </span>
                     </SelectItem>
                   );
@@ -262,7 +270,15 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
               </SelectContent>
             </Select>
             {selectedType && (
-              <p className="text-xs text-slate-500 mt-1">{selectedType.description}</p>
+              <div className="mt-1.5 space-y-1">
+                <p className="text-xs text-slate-500">{selectedType.description}</p>
+                {(selectedType as any).autonomous && (
+                  <p className="text-[10px] text-emerald-300/85 inline-flex items-center gap-1.5 bg-emerald-500/[0.06] border border-emerald-500/25 rounded px-2 py-1">
+                    <span aria-hidden="true">🛠</span>
+                    Autonomous workflow — the bot decides which tools to call. Audit trail surfaces every dispatch in the live runner under "Show details."
+                  </p>
+                )}
+              </div>
             )}
           </div>
           <div>

@@ -151,9 +151,19 @@ export function RecommendedWorkflows() {
                   <Icon className={`h-4 w-4 ${accent.text}`} aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-[9px] font-bold uppercase tracking-widest ${accent.text}`}>
-                    {idx + 1} · {rec.agentType === "architect" ? "Builder" : rec.agentType === "merchant" ? "Merchant" : "Social"}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={`text-[9px] font-bold uppercase tracking-widest ${accent.text}`}>
+                      {idx + 1} · {rec.agentType === "architect" ? "Builder" : rec.agentType === "merchant" ? "Merchant" : "Social"}
+                    </p>
+                    {(rec as any).autonomous && (
+                      <span
+                        className="inline-flex items-center text-[8px] font-bold uppercase tracking-[0.1em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5 leading-none"
+                        title="Autonomous workflow — the bot picks which tools to call. Audit trail surfaces every dispatch on the workflow detail."
+                      >
+                        Auto
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-sm font-semibold text-foreground leading-tight mt-0.5">
                     {rec.title}
                   </h3>

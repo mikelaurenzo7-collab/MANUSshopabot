@@ -558,8 +558,23 @@ describe("Cookbook autonomous workflows — surfaced everywhere a launcher exist
     expect(src).toContain('"autonomous_trend_hunter"');
     // The autonomous: true flag lets launcher UIs visually distinguish
     // agent-loop workflows from static ones — operators see "this one
-    // decides on its own" before launching.
-    expect(src.match(/autonomous: true/g)?.length ?? 0).toBe(3);
+    // decides on its own" before launching. The flag also propagates
+    // into the recommendedForOrg recommendation pool, so the count
+    // is >= 3 (3 availableTypes entries + N recommendation entries).
+    expect(src.match(/autonomous: true/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+  });
+
+  it("recommendedForOrg promotes autonomous workflows into operating + scaling stages", () => {
+    const src = read("routers/workflows.ts");
+    // The two stages where autonomous workflows actually deliver
+    // marginal lift over static recipes — operating gets the
+    // competitor stalker, scaling gets the repricer.
+    const operating = src.slice(src.indexOf("operating: ["), src.indexOf("scaling: ["));
+    const scaling = src.slice(src.indexOf("scaling: ["));
+    expect(operating).toContain('type: "autonomous_competitor_stalker"');
+    expect(operating).toContain("autonomous: true");
+    expect(scaling).toContain('type: "autonomous_repricer"');
+    expect(scaling).toContain("autonomous: true");
   });
 });
 

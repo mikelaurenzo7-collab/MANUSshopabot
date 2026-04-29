@@ -252,6 +252,11 @@ export const workflowRouter = router({
       accent: "sky" | "cyan" | "violet" | "emerald" | "fuchsia" | "amber" | "rose";
       reason: string;
       scope: "global" | "specific_store" | "all_stores";
+      /** True when the workflow runs through the autonomous-tool-use
+       *  loop (the bot picks which tools to call). UI surfaces this
+       *  as a small indicator so operators can tell static workflows
+       *  apart from agentic ones at a glance. */
+      autonomous?: boolean;
     }
 
     // Stage → ordered recommendation list. Each one includes a reason
@@ -336,24 +341,35 @@ export const workflowRouter = router({
           scope: "specific_store",
         },
         {
-          type: "inventory_audit",
-          title: "Inventory audit",
-          agentType: "merchant",
-          icon: "ClipboardCheck",
+          // Promoted from the static inventory_audit slot — at the
+          // operating stage, agentic competitor research delivers
+          // higher-impact intelligence than another stock sweep
+          // (which the optimization sweep above already covers).
+          type: "autonomous_competitor_stalker",
+          title: "Competitor stalker (autonomous)",
+          agentType: "architect",
+          icon: "Target",
           accent: "cyan",
-          reason: "Cross-store stock-level sweep with restock recommendations and dead-stock alerts.",
-          scope: "all_stores",
+          reason: "Builder picks which competitors to inspect, fetches pricing snapshots on the most representative ones, and recommends a positioning. The audit trail shows every competitor it actually looked at.",
+          scope: "global",
+          autonomous: true,
         },
       ],
       scaling: [
         {
-          type: "competitor_analysis",
-          title: "Competitor analysis",
+          // Promoted from the static competitor_analysis slot.
+          // At the scaling stage, autonomous SKU-by-SKU repricing
+          // delivers margin lift the static workflow can't match
+          // (the agent walks each SKU; static runs miss the per-SKU
+          // detail). >25% moves auto-promote to approval per policy.
+          type: "autonomous_repricer",
+          title: "Autonomous repricer",
           agentType: "merchant",
-          icon: "Target",
+          icon: "DollarSign",
           accent: "amber",
-          reason: `${storeCount > 1 ? `Operating ${storeCount} stores` : `Catalog at ${productCount} SKUs`}. Time to map the competitive landscape with counter-strategies.`,
-          scope: "global",
+          reason: `${storeCount > 1 ? `Operating ${storeCount} stores` : `Catalog at ${productCount} SKUs`}. The repricer walks SKUs one at a time — snapshot, triangulate, propose. Moves >25% land in your approval queue per platform policy.`,
+          scope: "all_stores",
+          autonomous: true,
         },
         {
           type: "profit_loss_analysis",
