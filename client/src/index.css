@@ -617,6 +617,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   }
   .page-enter {
     animation: page-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .page-enter > * {
+    overflow-y: auto;
+    flex: 1;
   }
 
   /* Staggered list entrance — smoother for metrics and cards */

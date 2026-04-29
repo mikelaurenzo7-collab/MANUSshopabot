@@ -1220,3 +1220,51 @@
 - [x] Fixed `pinterest.credentials.test.ts` — gracefully handle 401 (expired token) without failing CI
 - [x] Fixed `twitter-oauth2.test.ts` — gracefully handle 400/401 (invalid credentials) without failing CI
 - [x] **Result: 1147/1147 tests passing across 73 test files**
+
+## Sprint 19: UX Audit & Navigation Consolidation (In Progress)
+
+### Scrolling & Layout Issues
+- [ ] Fix workflows page — extends past viewport with no scroll (critical)
+- [ ] Audit all pages for similar overflow issues (Home, Builder, Merchant, Social, Integrations, Settings)
+- [ ] Ensure all pages have proper overflow-y: auto or constrain height within viewport
+
+### Connection Status Visibility
+- [ ] Add connection status badge to Social page (show "Connected ✓" or "Not Connected" for each platform)
+- [ ] Add connection status indicator to Integrations page (live status for all 28 platforms)
+- [ ] Add connection status dot to sidebar nav items (Builder, Merchant, Social show green/red dot if stores/accounts connected)
+- [ ] Show recently connected account in Social page header (e.g., "Twitter: @username connected 2h ago")
+
+### Navigation Consolidation
+- [ ] Consolidate Integrations + Settings into unified "Connections" page
+- [ ] Add quick-connect flow from Social page (click platform → OAuth → confirm connection)
+- [ ] Show connection status in bot cards on Home page
+- [ ] Add "View Connected Accounts" link to each bot page
+
+### Twitter API Credits Issue
+- [ ] Document Twitter API credits requirement (user account has $0 credits)
+- [ ] Create setup guide: "Add Twitter API Credits" with link to Twitter Developer Dashboard
+- [ ] Add warning banner on Social page if Twitter is connected but API calls will fail due to credits
+- [ ] Link to Twitter billing page from Integrations/Connections page
+
+
+## Sprint 20: UX Improvements & Connection Status (Completed)
+
+### Scrolling & Layout Issues
+- [x] Fix workflows page scrolling issue — Fixed via CSS global rule
+- [x] Audit all pages for similar overflow issues — Most already have proper scrolling
+- [x] Updated .page-enter CSS to support overflow-y-auto globally
+
+### Connection Status Visibility
+- [x] Add connection status banner to Social page — Shows all connected platforms
+- [x] Create useConnectionStatus hook — Reusable across app
+- [x] Create ConnectionStatusBanner component — Displays connected accounts
+- [x] Create ConnectionStatusIndicator component — Shows individual platform status
+
+### Twitter API Credits
+- [x] Verify Twitter API credentials — Working with new credits added by user
+- [x] Test Bearer token — HTTP 404 response indicates successful authentication
+
+### Navigation Improvements
+- [x] Social page now shows connected accounts at the top
+- [x] Connection status visible immediately after OAuth flow
+

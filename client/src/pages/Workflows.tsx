@@ -377,7 +377,8 @@ export default function Workflows() {
   );
 
   return (
-    <div className="page-enter p-5 space-y-4">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="page-enter p-5 space-y-4 overflow-y-auto flex-1">
       <PageHeader
         icon={<GitBranch className="h-4 w-4" />}
         title="Workflows"
@@ -501,6 +502,7 @@ export default function Workflows() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

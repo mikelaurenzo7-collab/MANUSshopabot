@@ -17,6 +17,7 @@ import { PulseStream } from "@/components/PulseStream";
 import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
 import { BotRecentWins } from "@/components/BotRecentWins";
 import { BotCookbookSpotlight } from "@/components/BotCookbookSpotlight";
+import { ConnectionStatusBanner } from "@/components/ConnectionStatusBanner";
 import {
   Megaphone,
   Loader2,
@@ -92,6 +93,7 @@ export default function SocialPage() {
           </div>
         </div>
 
+        <ConnectionStatusBanner />
         <SocialContent
           isMobile={isMobile}
           storeId={storeId}
