@@ -119,6 +119,12 @@ export const ECOMMERCE_BRANDS: Record<string, PlatformBrand> = {
     color: "#F95E1A", accent: "#000000", category: "marketplace",
     tagline: "Music gear marketplace · pedals · synths · pro audio",
   },
+  cjdropshipping: {
+    id: "cjdropshipping", name: "CJ Dropshipping", icon: "📦",
+    color: "#FF6B00", accent: "#FF9F1C", category: "marketplace",
+    tagline: "Sourcing supplier · auto-fulfill drops · global warehouses",
+    newSince: "2026-04-29",
+  },
 };
 
 /* ─── Social surfaces (7) ──────────────────────────────────────────── */

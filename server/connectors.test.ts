@@ -40,12 +40,13 @@ function createAnonContext(): TrpcContext {
 
 describe("Connectors Router", () => {
   describe("ecommercePlatforms", () => {
-    it("returns all 14 e-commerce platforms with capability matrix", async () => {
+    it("returns all 16 e-commerce platforms with capability matrix", async () => {
       const ctx = createUserContext();
       const caller = appRouter.createCaller(ctx);
       const platforms = await caller.connectors.ecommercePlatforms();
       expect(platforms).toBeInstanceOf(Array);
-      expect(platforms.length).toBe(14);
+      // 14 from Sprint 27 + Manus's Printful (POD) + CJ Dropshipping (sourcing).
+      expect(platforms.length).toBe(16);
       const ids = platforms.map((p: any) => p.id);
       // Original 7
       expect(ids).toContain("shopify");
@@ -63,9 +64,19 @@ describe("Connectors Router", () => {
       expect(ids).toContain("bonanza");
       expect(ids).toContain("stockx");
       expect(ids).toContain("reverb");
-      // Each row carries a live capability matrix the bots branch on.
+      // Manus additions — POD + sourcing suppliers wired into the
+      // connect tile but without a storefront adapter yet, so they're
+      // excluded from the matrix-shape check below.
+      expect(ids).toContain("printful");
+      expect(ids).toContain("cjdropshipping");
+      // Each storefront row carries a live capability matrix the bots
+      // branch on. Suppliers without a storefront adapter (printful,
+      // cjdropshipping) live behind supplierAdapter.ts and don't expose
+      // a storefront capability matrix.
+      const SUPPLIER_ONLY = new Set(["printful", "cjdropshipping"]);
       for (const p of platforms) {
-        expect(p.capabilityMatrix).toBeTruthy();
+        if (SUPPLIER_ONLY.has(p.id)) continue;
+        expect(p.capabilityMatrix, `${p.id} must have a capability matrix`).toBeTruthy();
         expect(typeof p.capabilityMatrix.recommendedBatchSize).toBe("number");
       }
     });
