@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
+import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
+import { BotRecentWins } from "@/components/BotRecentWins";
 import {
   Megaphone,
   Loader2,
@@ -281,6 +283,18 @@ function SocialContent({
       <div className="px-3 md:px-5 pt-3">
         <BotOperatingAcross botId="social" />
       </div>
+
+      {/* Active Social runs inline — ad-creative generation, social
+          posts, drop announcements all surface here while running. */}
+      <div className="px-3 md:px-5 pt-3">
+        <ActiveBotWorkflows agentType="social" />
+      </div>
+
+      {/* Recent wins for the Social bot — last 3 completed runs. */}
+      <div className="px-3 md:px-5 pt-3">
+        <BotRecentWins agentType="social" />
+      </div>
+
       {/* Store selector + tabs */}
       <div className="px-3 md:px-5 pt-2 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div className="flex items-center gap-2">

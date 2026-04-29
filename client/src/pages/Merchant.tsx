@@ -16,6 +16,8 @@ import {
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
+import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
+import { BotRecentWins } from "@/components/BotRecentWins";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -119,6 +121,15 @@ export default function MerchantPage() {
             {/* Operating-across strip — every commerce + social surface
                 Merchant is currently driving. */}
             <BotOperatingAcross botId="merchant" />
+
+            {/* Active Merchant runs inline — pricing sweeps, inventory
+                audits, fulfillment-automation runs all surface here in
+                real-time without leaving the cockpit. */}
+            <ActiveBotWorkflows agentType="merchant" />
+
+            {/* Recent wins — operator sees last three completions
+                with one-click rerun. */}
+            <BotRecentWins agentType="merchant" />
 
             {/* Store Triage Selector */}
             <div className="border border-white/[0.08] bg-black/40 p-3 md:p-4 relative flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">

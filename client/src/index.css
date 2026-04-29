@@ -2584,6 +2584,109 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
   /* ════════════════════════════════════════════════════════════════════
+     ACTIVE BOT WORKFLOWS — inline runner panel on bot pages.
+     A thin eyebrow + brand-tinted dot above stacked LiveWorkflowRunner
+     instances. Auto-hides on empty so the bot page doesn't carry a
+     hollow wrapper at idle.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .active-bot-workflows {
+    /* Reuse the canvas the parent gives us — the runner brings its
+       own surface chrome, so we just need a header + spacing. */
+  }
+  .active-bot-workflows-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+  }
+  .active-bot-workflows-eyebrow-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: rgb(245, 158, 11);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+    animation: bot-page-status-blink 1.1s ease-in-out infinite;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     BOT RECENT WINS — small but signature trophy strip.
+     Last three completed workflows in one card. Each row is a
+     1:N grid (title+timestamp, rerun button) — keeps the height
+     small enough that the bot page can fit it above the fold.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .bot-recent-wins {
+    --wins-color: 14, 165, 233;
+    position: relative;
+    border-radius: 0.85rem;
+    padding: 0.85rem 1rem;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(var(--wins-color), 0.045) 0%,
+        rgba(255, 255, 255, 0.01) 100%
+      );
+    border: 1px solid rgba(var(--wins-color), 0.18);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .bot-recent-wins::after {
+    content: "";
+    position: absolute;
+    inset: auto -10% -50% auto;
+    width: 50%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(var(--wins-color), 0.16), transparent 65%);
+    filter: blur(28px);
+    pointer-events: none;
+    z-index: -1;
+  }
+  .bot-recent-wins-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.018);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 220ms ease, border-color 220ms ease;
+  }
+  .bot-recent-wins-row:hover {
+    background: rgba(var(--wins-color), 0.06);
+    border-color: rgba(var(--wins-color), 0.22);
+  }
+  .bot-recent-wins-rerun {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgb(110, 231, 183);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+  }
+  .bot-recent-wins-rerun:hover:not(:disabled) {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.45);
+    transform: translateY(-1px);
+  }
+  .bot-recent-wins-rerun:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
      LIVE WORKFLOW RUNNER — real-time step rail
      The signature workflow-execution view. Replaces the spartan
      "running" badge with a step-by-step rail where each step lights

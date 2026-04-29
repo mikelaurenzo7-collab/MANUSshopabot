@@ -11,6 +11,8 @@ import { Streamdown } from "streamdown";
 import { getBrand } from "@/lib/platformBrand";
 import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import { PulseStream } from "@/components/PulseStream";
+import { ActiveBotWorkflows } from "@/components/ActiveBotWorkflows";
+import { BotRecentWins } from "@/components/BotRecentWins";
 
 export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
@@ -129,6 +131,17 @@ export default function Architect() {
             {/* Operating-across strip — surfaces every connected platform
                 so the operator sees where Builder's reach extends. */}
             <BotOperatingAcross botId="architect" />
+
+            {/* Active runs inline — when the user fires a niche scan
+                from the input below, the runner appears here and they
+                watch Builder execute step by step without leaving the
+                page. Auto-hides when nothing is running. */}
+            <ActiveBotWorkflows agentType="architect" />
+
+            {/* Recent wins — last 3 completions with one-click rerun.
+                Auto-hides on empty so a fresh org doesn't see a
+                hollow card. */}
+            <BotRecentWins agentType="architect" />
 
             {/* Error Banner */}
             {error && (
