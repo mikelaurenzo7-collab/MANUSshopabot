@@ -17,7 +17,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { getBrand, type PlatformBrand } from "@/lib/platformBrand";
+import { getBrand, isPlatformNew, type PlatformBrand } from "@/lib/platformBrand";
+import { JustLanded } from "@/components/JustLanded";
 
 const StoreView = lazy(() => import("@/components/StoreView"));
 const ToolsTab = lazy(() => import("@/components/integrations/ToolsTab").then(m => ({ default: m.ToolsTab })));
@@ -541,6 +542,11 @@ export default function IntegrationsPage() {
         {/* ── CONNECT NEW TAB ── */}
         {mainTab === "connect" && (
           <div className="space-y-6">
+            {/* Just Landed spotlight — auto-hides past the 60-day grace
+                window. Surfaces every freshly-shipped integration so
+                operators see the new options before scrolling the grid. */}
+            <JustLanded />
+
             {/* Hero band — sets the tone, surfaces platform counts up front */}
             <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-sky-500/8 via-cyan-500/4 to-orange-500/6 p-5">
               <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-sky-500/15 blur-3xl pointer-events-none" />
@@ -608,6 +614,7 @@ export default function IntegrationsPage() {
                 const strength = platform.capabilityMatrix?.strengths?.[0];
                 const limitation = platform.capabilityMatrix?.limitations?.[0];
 
+                const isNew = isPlatformNew(brand);
                 return (
                   <div
                     key={platform.id}
@@ -618,6 +625,7 @@ export default function IntegrationsPage() {
                   >
                     <span className="platform-tile-ribbon" />
                     <span className="platform-tile-seam" />
+                    {isNew && <span className="platform-tile-new-ribbon" aria-label="New integration">NEW</span>}
 
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3 min-w-0">

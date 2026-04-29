@@ -37,6 +37,13 @@ export interface PlatformBrand {
     | "data";
   /** Bot-readable one-liner — surfaced on cards under the name. */
   tagline: string;
+  /**
+   * Marks a freshly-shipped integration. Drives a `NEW` ribbon on the
+   * connect tile + inclusion in the "Just Landed" hero section. Set to
+   * an ISO date string so we can hide the badge after a 60-day grace
+   * window automatically — never need to remember to take it down.
+   */
+  newSince?: string;
 }
 
 /* ─── E-commerce surfaces (14) ─────────────────────────────────────── */
@@ -156,23 +163,51 @@ export const SOCIAL_BRANDS: Record<string, PlatformBrand> = {
     color: "#EA4335", accent: "#FBBC04", category: "email",
     tagline: "Transactional + lifecycle email at workspace scale",
   },
-  // Sprint 27.5 social additions
+  // Sprint 27.5 social additions — newSince flags surface a NEW ribbon
+  // on the connect tile + a "Just Landed" hero spotlight on the connect
+  // page. The ribbon auto-hides 60 days after the date below.
   outlook: {
     id: "outlook", name: "Outlook", icon: "📨",
     color: "#0078D4", accent: "#50E6FF", category: "email",
     tagline: "Microsoft Graph · B2B inboxes · meetings on the same token",
+    newSince: "2026-04-28",
   },
   slack: {
     id: "slack", name: "Slack", icon: "💬",
     color: "#4A154B", accent: "#ECB22E", category: "messaging",
     tagline: "VIP customer + community channel · Block Kit announcements",
+    newSince: "2026-04-28",
   },
   youtube: {
     id: "youtube", name: "YouTube", icon: "▶️",
     color: "#FF0000", accent: "#282828", category: "social",
     tagline: "Shorts feed + long-form · SEO-compounding video distribution",
+    newSince: "2026-04-28",
   },
 };
+
+/**
+ * Returns true if `brand.newSince` is set and within the 60-day grace
+ * window. Used to drive the NEW ribbon on tiles + the "Just Landed"
+ * spotlight — past the window, the ribbon disappears automatically so
+ * we never accumulate dead "NEW" badges.
+ */
+export function isPlatformNew(brand: PlatformBrand, now: Date = new Date()): boolean {
+  if (!brand.newSince) return false;
+  const since = new Date(brand.newSince);
+  if (Number.isNaN(since.getTime())) return false;
+  const ageDays = (now.getTime() - since.getTime()) / (1000 * 60 * 60 * 24);
+  return ageDays >= 0 && ageDays <= 60;
+}
+
+/** All brands across e-commerce, social, and tools — sorted with new platforms first. */
+export function getAllBrands(): PlatformBrand[] {
+  return [
+    ...Object.values(ECOMMERCE_BRANDS),
+    ...Object.values(SOCIAL_BRANDS).filter((b) => b.id !== "facebook"),
+    ...Object.values(TOOL_BRANDS),
+  ];
+}
 
 /* ─── Tool surfaces (9) ────────────────────────────────────────────── */
 export const TOOL_BRANDS: Record<string, PlatformBrand> = {

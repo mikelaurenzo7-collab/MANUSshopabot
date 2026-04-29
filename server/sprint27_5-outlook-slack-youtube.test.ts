@@ -173,6 +173,72 @@ describe("Sprint 27.5 — OAuth callback dispatch", () => {
   });
 });
 
+describe("Sprint 27.5 — design surface", () => {
+  // Brand registry must mark Outlook/Slack/YouTube with a `newSince`
+  // flag so the platformBrand helpers + JustLanded hero pick them up.
+  it("brand registry flags all three new platforms with a newSince date", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "..", "client", "src", "lib", "platformBrand.ts"),
+      "utf-8",
+    );
+    expect(src).toContain("isPlatformNew");
+    // The grace window must clamp to ~60 days so `NEW` ribbons don't
+    // accumulate forever.
+    expect(src).toMatch(/ageDays.*60/);
+    // Each new brand must have a newSince set.
+    const sectionMatch = src.match(/SOCIAL_BRANDS[\s\S]+?\n};/);
+    expect(sectionMatch).toBeTruthy();
+    const section = sectionMatch?.[0] || "";
+    for (const id of ["outlook", "slack", "youtube"]) {
+      const re = new RegExp(`id:\\s*"${id}"[\\s\\S]+?newSince:`);
+      expect(section, `${id} brand must carry newSince`).toMatch(re);
+    }
+  });
+
+  it("JustLanded component renders only the in-window new brands", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "..", "client", "src", "components", "JustLanded.tsx"),
+      "utf-8",
+    );
+    // Reads the canonical registry — single source of truth.
+    expect(src).toContain("ECOMMERCE_BRANDS");
+    expect(src).toContain("SOCIAL_BRANDS");
+    expect(src).toContain("isPlatformNew");
+    // Auto-hides when nothing qualifies.
+    expect(src).toContain("if (newBrands.length === 0) return null;");
+  });
+
+  it("Connect-tab tile renders the NEW ribbon", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "..", "client", "src", "pages", "Integrations.tsx"),
+      "utf-8",
+    );
+    expect(src).toContain("isPlatformNew(brand)");
+    expect(src).toContain("platform-tile-new-ribbon");
+    expect(src).toContain("<JustLanded />");
+  });
+
+  it("bot pages mount the cinematic header + ambient backdrop", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    for (const file of ["Architect.tsx", "Merchant.tsx", "Social.tsx"]) {
+      const src = fs.readFileSync(
+        path.resolve(__dirname, "..", "client", "src", "pages", file),
+        "utf-8",
+      );
+      expect(src, `${file} should mount bot-page-ambient`).toContain("bot-page-ambient");
+      expect(src, `${file} should mount bot-page-header`).toContain("bot-page-header");
+      expect(src, `${file} should render bot-page-header-glyph-pulse`).toContain("bot-page-header-glyph-pulse");
+    }
+  });
+});
+
 describe("Sprint 27.5 — workflow catalog + engine wiring", () => {
   // The engine's executeStoreActionStep must include cases for the
   // three new actions; the workflow catalog must register all three

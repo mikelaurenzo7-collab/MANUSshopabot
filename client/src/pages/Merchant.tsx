@@ -73,29 +73,38 @@ export default function MerchantPage() {
 
   return (
     <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
-      {/* Main Workspace — full width; inspector is a slide-over */}
-      <div className="flex-1 flex flex-col h-full">
-        {/* Header Bar */}
-        <div className="h-12 md:h-14 flex items-center px-3 md:px-6 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="relative shrink-0">
-              <Package className="text-cyan-400 w-4 md:w-5 h-4 md:h-5" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+      <div className="bot-page-ambient bot-page-ambient--merchant" aria-hidden="true">
+        <div className="bot-page-ambient-grid" />
+        <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />
+        <div className="bot-page-ambient-orb bot-page-ambient-orb--bottom" />
+      </div>
+      <div className="flex-1 flex flex-col h-full relative z-10">
+        <div className="bot-page-header bot-page-header--merchant">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            <div className="bot-page-header-glyph bot-page-header-glyph--merchant">
+              <Package className="w-5 h-5" strokeWidth={2.2} />
+              <span className="bot-page-header-glyph-pulse" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-heading text-xs md:text-sm font-bold text-white truncate tracking-tight">Merchant Bot</h1>
-              <p className="font-mono text-[8px] md:text-[9px] text-muted-foreground hidden sm:block">Inventory sync · auto-fulfillment · pricing matrices</p>
+              <div className="bot-page-header-eyebrow">
+                <span className="bot-page-header-eyebrow-dot" />
+                Merchant · The Operator
+              </div>
+              <h1 className="font-heading text-base md:text-lg font-black tracking-tight text-white truncate leading-tight">
+                Run my store while I sleep.
+              </h1>
+              <p className="text-[11px] text-white/55 hidden sm:block leading-tight mt-0.5">
+                Inventory sync · auto-fulfillment · pricing matrices
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-            <span className={`font-mono text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5 ${merchantStatus.status === 'running' ? 'text-amber-400' : 'text-emerald-400'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${merchantStatus.status === 'running' ? 'bg-amber-400 animate-pulse' : 'bg-cyan-400'}`} />
-              {merchantStatus.status === 'running' ? 'RUNNING' : 'READY'}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`bot-page-header-status ${merchantStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
+              <span className="bot-page-header-status-dot" />
+              {merchantStatus.status === 'running' ? 'Running' : 'Ready'}
             </span>
           </div>
         </div>
-        {/* Accent gradient line under header */}
-        <div className="h-px bg-gradient-to-r from-cyan-500/50 via-cyan-500/10 to-transparent shrink-0" />
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">

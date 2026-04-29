@@ -2331,11 +2331,373 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border-left: 2px solid rgba(var(--tile-color), 0.45);
   }
 
+  /* NEW ribbon — angled corner badge for freshly-shipped platforms.
+     Drives celebration on Sprint 27.5 launches without taking the
+     prime real estate of the platform CTA. Pulses gently so the eye
+     catches it on first scan. */
+  .platform-tile-new-ribbon {
+    position: absolute;
+    top: 10px;
+    right: -28px;
+    transform: rotate(35deg);
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 1) 0%,
+      rgba(var(--tile-accent), 0.95) 100%
+    );
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    padding: 3px 28px;
+    text-transform: uppercase;
+    box-shadow:
+      0 4px 12px -4px rgba(var(--tile-color), 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    z-index: 4;
+    pointer-events: none;
+    animation: tile-new-ribbon-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes tile-new-ribbon-pulse {
+    0%, 100% {
+      box-shadow:
+        0 4px 12px -4px rgba(var(--tile-color), 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    }
+    50% {
+      box-shadow:
+        0 6px 18px -4px rgba(var(--tile-color), 1),
+        0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    }
+  }
+
+  /* "Just Landed" hero card — a wider, deeper spotlight strip that
+     sits above the connect grid when at least one platform carries
+     `newSince`. Two soft brand-colored radial blooms drift in the
+     corners; the headline + chips ride on top. Reads as a launch
+     announcement, not a banner ad. */
+  .just-landed-hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 1.5rem;
+    padding: 1.75rem 1.5rem;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(14, 165, 233, 0.09) 0%,
+        rgba(6, 182, 212, 0.05) 35%,
+        rgba(249, 115, 22, 0.08) 100%
+      );
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 36px -16px rgba(14, 165, 233, 0.4);
+  }
+  .just-landed-hero::before {
+    content: "";
+    position: absolute;
+    inset: -30% -10% auto auto;
+    width: 50%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(56, 189, 248, 0.28) 0%,
+      transparent 65%
+    );
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+    animation: just-landed-orb-1 14s ease-in-out infinite;
+  }
+  .just-landed-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto auto -40% -10%;
+    width: 55%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(251, 146, 60, 0.22) 0%,
+      transparent 65%
+    );
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: just-landed-orb-2 18s ease-in-out -7s infinite;
+  }
+  .just-landed-hero > * { position: relative; z-index: 1; }
+  @keyframes just-landed-orb-1 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-8%, 5%, 0) scale(1.1); }
+  }
+  @keyframes just-landed-orb-2 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+  }
+
+  /* Eyebrow tag inside the just-landed hero */
+  .just-landed-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.14);
+    border: 1px solid rgba(14, 165, 233, 0.32);
+    color: rgba(125, 211, 252, 0.95);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .just-landed-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgb(56, 189, 248);
+    box-shadow: 0 0 8px rgb(56, 189, 248);
+    animation: tile-status-pulse 2.2s ease-out infinite;
+  }
+
+  /* New-platform spotlight tile — used inside the just-landed hero. */
+  .just-landed-spot {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--tile-color), 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(var(--tile-color), 0.3);
+    transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    cursor: pointer;
+  }
+  .just-landed-spot:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 16px 36px -12px rgba(var(--tile-color), 0.55),
+      0 0 0 1px rgba(var(--tile-color), 0.4) inset;
+  }
+  .just-landed-spot::after {
+    content: "";
+    position: absolute;
+    inset: auto auto -50% -20%;
+    width: 80%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.35) 0%,
+      transparent 65%
+    );
+    filter: blur(28px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
   /* Hide scrollbars on chip strips while keeping overflow-x scrollable
      by drag/wheel. Used by BotOperatingAcross so the chip row stays
      visually clean even when the platform list overflows. */
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ════════════════════════════════════════════════════════════════════
+     BOT PAGE HEADER — cinematic edition
+     Replaces the spartan ID bar that used to sit at the top of
+     /architect, /merchant, /social. Each bot gets its own brand
+     gradient, an animated glyph plate, and a status pill that breathes
+     with the agent's running state.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .bot-page-header {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem 1.1rem;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.18) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .bot-page-header::before {
+    content: "";
+    position: absolute;
+    inset: -50% auto auto -10%;
+    width: 60%;
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(50px);
+  }
+  .bot-page-header::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 -1px 0;
+    height: 1px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .bot-page-header > * { position: relative; z-index: 2; }
+
+  .bot-page-header--builder::before { background: radial-gradient(circle, rgba(14, 165, 233, 0.35), transparent 65%); }
+  .bot-page-header--builder::after { background: linear-gradient(90deg, rgba(14, 165, 233, 0.7), rgba(14, 165, 233, 0.1) 60%, transparent); }
+  .bot-page-header--merchant::before { background: radial-gradient(circle, rgba(6, 182, 212, 0.35), transparent 65%); }
+  .bot-page-header--merchant::after { background: linear-gradient(90deg, rgba(6, 182, 212, 0.7), rgba(6, 182, 212, 0.1) 60%, transparent); }
+  .bot-page-header--social::before { background: radial-gradient(circle, rgba(249, 115, 22, 0.32), transparent 65%); }
+  .bot-page-header--social::after { background: linear-gradient(90deg, rgba(249, 115, 22, 0.7), rgba(249, 115, 22, 0.1) 60%, transparent); }
+
+  /* Animated glyph plate — squircle backdrop + animated pulse halo */
+  .bot-page-header-glyph {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    isolation: isolate;
+  }
+  .bot-page-header-glyph::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 0;
+  }
+  .bot-page-header-glyph--builder {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(14, 165, 233, 0.05));
+    color: rgb(56, 189, 248);
+    box-shadow: 0 8px 22px -10px rgba(14, 165, 233, 0.6), inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+  }
+  .bot-page-header-glyph--merchant {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(6, 182, 212, 0.05));
+    color: rgb(34, 211, 238);
+    box-shadow: 0 8px 22px -10px rgba(6, 182, 212, 0.6), inset 0 0 0 1px rgba(34, 211, 238, 0.25);
+  }
+  .bot-page-header-glyph--social {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
+    color: rgb(251, 146, 60);
+    box-shadow: 0 8px 22px -10px rgba(249, 115, 22, 0.6), inset 0 0 0 1px rgba(251, 146, 60, 0.25);
+  }
+  .bot-page-header-glyph-pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 14px;
+    border: 1px solid currentColor;
+    opacity: 0.35;
+    animation: bot-glyph-pulse 2.4s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes bot-glyph-pulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+
+  .bot-page-header-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 2px;
+  }
+  .bot-page-header-eyebrow-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    opacity: 0.7;
+    animation: tile-status-pulse 2.4s ease-out infinite;
+  }
+
+  /* Status pill */
+  .bot-page-header-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid;
+    backdrop-filter: blur(6px);
+  }
+  .bot-page-header-status--ready {
+    color: rgb(110, 231, 183);
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.32);
+  }
+  .bot-page-header-status--running {
+    color: rgb(252, 211, 77);
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+  .bot-page-header-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .bot-page-header-status--running .bot-page-header-status-dot {
+    animation: bot-page-status-blink 1.2s ease-in-out infinite;
+  }
+  @keyframes bot-page-status-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* Ambient page backdrop — soft brand light leaks + faint grid that
+     drift to make the page feel alive without distracting from the
+     content. Pointer-events:none so the layer is purely decorative. */
+  .bot-page-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .bot-page-ambient-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 50% at 50% 0%, #000 30%, transparent 80%);
+  }
+  .bot-page-ambient-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.5;
+  }
+  .bot-page-ambient-orb--top { top: -120px; right: -80px; width: 320px; height: 320px; }
+  .bot-page-ambient-orb--bottom { bottom: -160px; left: -100px; width: 360px; height: 360px; opacity: 0.35; }
+  .bot-page-ambient--builder .bot-page-ambient-orb--top { background: rgba(14, 165, 233, 0.55); }
+  .bot-page-ambient--builder .bot-page-ambient-orb--bottom { background: rgba(56, 189, 248, 0.4); }
+  .bot-page-ambient--merchant .bot-page-ambient-orb--top { background: rgba(6, 182, 212, 0.55); }
+  .bot-page-ambient--merchant .bot-page-ambient-orb--bottom { background: rgba(34, 211, 238, 0.4); }
+  .bot-page-ambient--social .bot-page-ambient-orb--top { background: rgba(249, 115, 22, 0.5); }
+  .bot-page-ambient--social .bot-page-ambient-orb--bottom { background: rgba(251, 146, 60, 0.35); }
 
   /* Connected badge — the subtle pulse on the corner */
   .platform-connected-dot {
