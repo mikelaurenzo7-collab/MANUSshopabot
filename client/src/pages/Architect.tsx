@@ -212,13 +212,13 @@ export default function Architect() {
                   placeholder="ENTER NICHE KEYWORD (E.G., 'MODERN MINIMALIST LAMPS')"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="flex-1 bg-[#050505] border border-white/[0.08] rounded-none px-4 py-2 font-mono text-xs text-white uppercase placeholder:text-muted-foreground focus:outline-none focus:border-[#00ff41] transition-colors"
+                  className="flex-1 bg-[#050505] border border-white/[0.08] rounded-none px-4 py-2 font-mono text-xs text-white uppercase placeholder:text-muted-enhanced transition-standard focus:border-sky-400/50 focus:shadow-premium-sm"
                   onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                 />
                 <button
                   onClick={handleAnalyze}
                   disabled={analyzeNicheMutation.isPending || !keyword.trim()}
-                  className="bg-white/[0.06] hover:bg-sky-500/20 border border-white/[0.08] hover:border-sky-500 text-white font-mono text-[10px] uppercase tracking-widest px-6 py-2 transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white/[0.06] hover:bg-sky-500/20 border border-white/[0.08] hover:border-sky-500/50 text-white font-mono text-[10px] uppercase tracking-widest px-6 py-2 transition-standard flex items-center hover:shadow-premium-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {analyzeNicheMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-sky-400" /> : <Search className="w-3.5 h-3.5 mr-2 text-sky-400" />}
                   Execute Scan

@@ -1295,3 +1295,27 @@
 - [x] .badge-standard, .badge-success, .badge-warning, .badge-error, .badge-info
 - [x] .transition-fast, .transition-standard, .transition-slow utilities
 
+
+
+## Tier 2 Improvements (Medium Impact)
+- [x] Accent color unification (sky, cyan, amber, emerald, warning, error)
+- [x] Loading state skeleton animation (skeleton-pulse)
+- [x] Focus ring utilities (.focus-ring, .focus-ring-sm)
+- [x] Input/Select/Textarea focus improvements
+- [x] Improved form label styling
+- [x] Section divider styling
+- [x] Empty state icon, text, and description utilities
+- [x] Tooltip base styling
+- [x] Premium shadow system (shadow-premium-sm/md/lg)
+- [x] Improved scrollbar styling
+- [x] Button focus-visible ring
+- [x] Link focus-visible ring
+- [x] Disabled button styling
+- [x] Form checkbox/radio focus improvements
+- [x] Table row hover effects
+- [x] Table header and cell styling
+- [x] Architect page input/button micro-interactions
+- [x] EmptyState component styling enhancements
+- [x] DashboardLayout nav item transitions
+- [x] PageHeader icon plate transitions
+
