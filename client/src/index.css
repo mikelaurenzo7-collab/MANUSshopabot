@@ -627,6 +627,97 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     flex: 1;
   }
 
+  /* ── Standardized padding system ──────────────────────────────────────── */
+  .page-compact { @apply p-3; }
+  .page-standard { @apply p-5; }
+  .page-spacious { @apply p-6; }
+  .section-spacing { @apply mb-4 space-y-4; }
+
+  /* ── Enhanced card hover effects ──────────────────────────────────────── */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-hover:hover {
+    border-color: rgba(14, 165, 233, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(14, 165, 233, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ── Improved button states ──────────────────────────────────────────── */
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  select:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* ── Secondary button hover state ────────────────────────────────────── */
+  .btn-secondary {
+    @apply transition-all duration-300;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    @apply bg-white/[0.08] border-white/[0.15];
+  }
+
+  /* ── Outline button hover state ──────────────────────────────────────── */
+  .btn-outline {
+    @apply transition-all duration-300;
+  }
+  .btn-outline:hover:not(:disabled) {
+    @apply bg-white/[0.05] border-sky-400/30 text-sky-300;
+  }
+
+  /* ── Improved muted text ─────────────────────────────────────────────── */
+  .text-muted-enhanced { @apply text-white/50; }
+  .text-muted-light { @apply text-white/40; }
+
+  /* ── Standardized badge styling ──────────────────────────────────────── */
+  .badge-standard {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid;
+    font-size: 0.625rem;
+    font-weight: 500;
+  }
+  .badge-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: rgb(16, 185, 129);
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+  .badge-warning {
+    background-color: rgba(251, 146, 60, 0.1);
+    color: rgb(251, 146, 60);
+    border-color: rgba(251, 146, 60, 0.2);
+  }
+  .badge-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: rgb(239, 68, 68);
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+  .badge-info {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: rgb(14, 165, 233);
+    border-color: rgba(14, 165, 233, 0.2);
+  }
+
+  /* ── Unified transition timing ───────────────────────────────────────── */
+  .transition-fast { @apply transition-all duration-150; }
+  .transition-standard { @apply transition-all duration-300; }
+  .transition-slow { @apply transition-all duration-500; }
+
+  /* ── Improved placeholder text color ─────────────────────────────────── */
+  input::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    @apply text-white/40;
+  }
+
+  /* ── Heading line-height improvements ────────────────────────────────── */
+  h1, h2 { @apply leading-tight; }
+  h3, h4 { @apply leading-snug; }
+
   /* Staggered list entrance — smoother for metrics and cards */
   @keyframes stagger-in {
     from { opacity: 0; transform: translateY(20px); }

@@ -249,18 +249,18 @@ export default function Home() {
                 return (
                   <div
                     key={bot}
-                    className={`group relative rounded-xl border ${meta.border} bg-white/[0.025] p-4 transition-all hover:bg-white/[0.04] hover:${meta.border} ${meta.glow} cursor-pointer`}
+                    className={`group relative rounded-xl border ${meta.border} bg-white/[0.025] p-4 transition-standard hover:bg-white/[0.05] hover:border-opacity-100 hover:shadow-lg hover:-translate-y-1 ${meta.glow} cursor-pointer card-hover`}
                     onClick={() => setLocation(meta.href)}
                   >
                     {/* Status dot */}
                     <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${sc.dot}`} />
                     <div className="flex items-start gap-3">
-                      <div className={`w-9 h-9 rounded-lg border ${meta.border} bg-white/[0.04] flex items-center justify-center shrink-0 ${meta.accent}`}>
+                      <div className={`w-9 h-9 rounded-lg border ${meta.border} bg-white/[0.04] flex items-center justify-center shrink-0 ${meta.accent} transition-standard group-hover:bg-white/[0.08]`}>
                         {meta.icon}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className={`text-[11px] font-bold uppercase tracking-widest ${meta.accent}`}>{meta.label}</p>
-                        <p className="text-[10px] text-white/40 mt-0.5 leading-relaxed">{meta.description}</p>
+                        <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">{meta.description}</p>
                         <div className="flex items-center gap-3 mt-2">
                           <span className={`flex items-center gap-1 text-[10px] font-mono ${sc.color}`}>
                             {sc.icon} {sc.label}

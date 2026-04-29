@@ -422,7 +422,7 @@ export default function IntegrationsPage() {
                     return (
                     <div
                       key={cred.id}
-                      className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3 hover:bg-white/6 transition-colors"
+                      className="flex items-center gap-3 bg-white/4 border border-white/8 rounded-xl p-3 hover:bg-white/6 transition-standard hover:border-white/12 card-hover"
                       style={{ borderLeft: `3px solid ${credBrand.color}` }}
                     >
                       <div className="platform-tile-icon-halo text-xl" style={tileVars(credBrand)}>{credBrand.icon}</div>
@@ -508,7 +508,7 @@ export default function IntegrationsPage() {
                 return (
                   <div
                     key={acc.id}
-                    className="flex items-center gap-4 bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-colors"
+                    className="flex items-center gap-4 bg-white/4 border border-white/8 rounded-xl p-4 hover:bg-white/6 transition-standard hover:border-white/12 card-hover"
                     style={{ borderLeft: `3px solid ${accBrand.color}` }}
                   >
                     <div className="platform-tile-icon-halo text-2xl" style={tileVars(accBrand)}>{accBrand.icon}</div>
