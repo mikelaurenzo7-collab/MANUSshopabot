@@ -1196,3 +1196,13 @@
 - [x] Fixed AGENT_WORKFLOW_SCOPE: all 27 workflows correctly mapped to specific_store/all_stores/global
 - [x] Updated system prompts to use correct workflow names
 - [x] 14/14 Sprint 16 vitest tests passing
+
+## Sprint 17: Deep Perfection Pass ✅
+
+- [x] Approvals router confirmed registered inline in routers.ts (not missing)
+- [x] Owner role promotion: all 3 user accounts promoted to org owner role so approval gates work
+- [x] Add inline approve/reject buttons to LiveWorkflowRunner for awaiting_approval workflows
+- [x] Wire bulk_push_products to also call Shopify API (pushProductToStore) after local DB insert when status=active or pushToPlatform=true
+- [x] Add approve_workflow tool to chat router — bots can approve/reject pending gates from chat
+- [x] Add get_products tool to chat router — bots can report on catalog from chat
+- [x] 15/15 Sprint 17 vitest tests passing

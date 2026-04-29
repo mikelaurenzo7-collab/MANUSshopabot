@@ -104,6 +104,50 @@ const TOOLS = [
   {
     type: "function" as const,
     function: {
+      name: "approve_workflow",
+      description: "Approve or reject a workflow that is paused at an approval gate. Use this when the user says 'approve', 'reject', 'looks good', 'proceed', 'stop the workflow', etc. First call list_recent_workflows to find the awaiting_approval workflow ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          workflowId: {
+            type: "number",
+            description: "The workflow ID to approve or reject.",
+          },
+          approved: {
+            type: "boolean",
+            description: "true to approve (continue the workflow), false to reject (stop it).",
+          },
+          note: {
+            type: "string",
+            description: "Optional note explaining the decision.",
+          },
+        },
+        required: ["workflowId", "approved"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_products",
+      description: "Get the product catalog for a store — titles, prices, stock levels, and status.",
+      parameters: {
+        type: "object",
+        properties: {
+          storeId: {
+            type: "number",
+            description: "The store ID to get products for.",
+          },
+        },
+        required: ["storeId"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
       name: "list_recent_workflows",
       description: "List the user's recent workflow runs and their status (completed, running, failed, awaiting_approval).",
       parameters: {
@@ -328,6 +372,56 @@ async function executeTool(
           createdAt: w.createdAt,
         })),
         count: (workflows || []).length,
+      });
+    }
+
+    if (toolName === "approve_workflow") {
+      const { workflowId, approved, note } = toolArgs;
+      const workflow = await db.getWorkflowById(workflowId);
+      if (!workflow || workflow.orgId !== ctx.orgId) {
+        return JSON.stringify({ error: "Workflow not found or access denied" });
+      }
+      if (workflow.status !== "awaiting_approval") {
+        return JSON.stringify({ error: `Workflow ${workflowId} is not awaiting approval (status: ${workflow.status})` });
+      }
+      // Find the awaiting step
+      const steps = await db.getWorkflowSteps(workflowId);
+      const awaitingStep = steps.find((s: any) => s.status === "awaiting_approval" || s.approvalStatus === "pending");
+      if (!awaitingStep) {
+        return JSON.stringify({ error: "No awaiting approval step found" });
+      }
+      const { resumeWorkflow } = await import("../engine/workflowEngine");
+      await resumeWorkflow(workflowId, awaitingStep.id, approved, note);
+      return JSON.stringify({
+        success: true,
+        workflowId,
+        decision: approved ? "approved" : "rejected",
+        message: approved
+          ? `Workflow ${workflowId} approved — continuing execution.`
+          : `Workflow ${workflowId} rejected and stopped.`,
+      });
+    }
+
+    if (toolName === "get_products") {
+      const { storeId } = toolArgs;
+      const store = await db.getStoreById(storeId);
+      if (!store || store.orgId !== ctx.orgId) {
+        return JSON.stringify({ error: "Store not found or access denied" });
+      }
+      const prods = await db.getProductsByStore(storeId);
+      return JSON.stringify({
+        storeId,
+        storeName: store.name,
+        productCount: prods.length,
+        products: prods.slice(0, 20).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price ? `$${(p.price / 100).toFixed(2)}` : "N/A",
+          status: p.status,
+          stock: p.stockLevel,
+          category: p.category,
+        })),
+        note: prods.length > 20 ? `Showing first 20 of ${prods.length} products` : undefined,
       });
     }
 

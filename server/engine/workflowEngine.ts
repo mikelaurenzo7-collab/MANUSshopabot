@@ -1146,7 +1146,41 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
         status,
       }));
       const inserted = await dbModule.bulkInsertProducts(rows as any);
-      return { action, storeId, inserted, status, total: productList.length };
+
+      // After local DB insert, also push to the remote platform if the
+      // store has a live access token and caller requested active status
+      // or explicitly set pushToPlatform:true.
+      let platformPushed = 0;
+      const platformErrors: string[] = [];
+      if (status === "active" || input.pushToPlatform === true) {
+        try {
+          const storedProducts = await dbModule.getProductsByStore(storeId);
+          const insertedTitles = new Set(rows.map((r: any) => r.title));
+          const toPush = storedProducts
+            .filter((p: any) => insertedTitles.has(p.title) && (p.status === "active" || p.status === "draft"))
+            .slice(0, 50);
+          for (const p of toPush) {
+            try {
+              await pushProductToStore(storeId, p.id);
+              platformPushed++;
+            } catch (pushErr: any) {
+              platformErrors.push(`${p.title}: ${pushErr.message}`);
+            }
+          }
+        } catch (_fetchErr: any) {
+          // Non-fatal — local insert succeeded, platform push failed gracefully
+        }
+      }
+
+      return {
+        action,
+        storeId,
+        inserted,
+        status,
+        total: productList.length,
+        ...(platformPushed > 0 && { platformPushed }),
+        ...(platformErrors.length > 0 && { platformErrors }),
+      };
     }
     case "fulfill_order": {
       if (!storeId || !input.orderId) return { error: "Missing storeId or orderId" };
