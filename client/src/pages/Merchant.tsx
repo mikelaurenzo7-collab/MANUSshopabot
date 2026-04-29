@@ -44,6 +44,23 @@ export default function MerchantPage() {
   const { data: status } = trpc.dashboard.agentStatus.useQuery();
   const merchantStatus: any = status?.find?.((s: any) => s.agentType === 'merchant') || { status: 'idle' };
 
+  const launchWorkflow = trpc.workflows.launch.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Workflow launched — #${data.workflowId}`);
+      utils.dashboard.agentStatus.invalidate();
+      utils.dashboard.recentActivity.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Failed to launch workflow"),
+  });
+
+  const syncProductsMutation = trpc.merchant.syncProducts.useMutation({
+    onSuccess: () => {
+      toast.success("Products synced from store");
+      utils.merchant.products.invalidate();
+    },
+    onError: (err) => toast.error(err.message || "Sync failed"),
+  });
+
   const autoFulfill = trpc.merchant.autoFulfill.useMutation({
     onSuccess: () => {
       toast.success("ORDER_FULFILLED");
@@ -174,6 +191,52 @@ export default function MerchantPage() {
                     <AlertTriangle className="w-3 h-3 text-red-500 mr-2" />
                     <span className="font-mono text-[10px] font-bold text-red-500 uppercase">{lowStock.length} INVENTORY WARNINGS</span>
                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* Workflow Launch Bar */}
+            <div className="border border-white/[0.08] bg-black/40 p-3 md:p-4 relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />
+              <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white mb-3 pl-2">Merchant Operations</h2>
+              <div className="flex flex-wrap gap-2 pl-2">
+                <button
+                  onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "inventory_audit", title: "Inventory Audit", scope: "all_stores", input: { scope: "all" } })}
+                  disabled={launchWorkflow.isPending}
+                  className="bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Package className="w-3 h-3" /> Inventory Audit
+                </button>
+                <button
+                  onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "pricing_optimization", title: "Pricing Optimization", scope: "all_stores", input: { targetMargin: 40, strategy: "competitive" } })}
+                  disabled={launchWorkflow.isPending}
+                  className="bg-[#050505] border border-white/[0.08] hover:border-emerald-400 hover:text-emerald-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <DollarSign className="w-3 h-3" /> Pricing Sweep
+                </button>
+                <button
+                  onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "fulfillment_automation", title: "Fulfillment Automation", scope: "all_stores", input: {} })}
+                  disabled={launchWorkflow.isPending}
+                  className="bg-[#050505] border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Truck className="w-3 h-3" /> Auto-Fulfill
+                </button>
+                <button
+                  onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "competitor_analysis", title: "Competitor Analysis", scope: "all_stores", input: {} })}
+                  disabled={launchWorkflow.isPending}
+                  className="bg-[#050505] border border-white/[0.08] hover:border-violet-400 hover:text-violet-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <TrendingUp className="w-3 h-3" /> Competitor Scan
+                </button>
+                {storeId && (
+                  <button
+                    onClick={() => syncProductsMutation.mutate({ storeId: storeId! })}
+                    disabled={syncProductsMutation.isPending}
+                    className="bg-[#050505] border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50 ml-auto"
+                  >
+                    {syncProductsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                    Sync Store
+                  </button>
                 )}
               </div>
             </div>
@@ -371,8 +434,12 @@ export default function MerchantPage() {
                 
                 <div className="pt-4 border-t border-white/[0.08]">
                   <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-3">Linked Actions</p>
-                  <button className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group">
-                     Force DB Sync <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
+                  <button
+                    onClick={() => storeId && syncProductsMutation.mutate({ storeId })}
+                    disabled={syncProductsMutation.isPending || !storeId}
+                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 disabled:opacity-50 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                  >
+                    {syncProductsMutation.isPending ? "Syncing..." : "Force DB Sync"} <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
                   </button>
                 </div>
              </div>

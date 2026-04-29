@@ -32,18 +32,38 @@ const TOOLS = [
         properties: {
           workflowType: {
             type: "string",
-            description: "The workflow type to launch. Options: niche_research, product_sourcing, catalog_generation, store_setup, complete_store_buildout, inventory_audit, pricing_optimization, fulfillment_automation, ad_campaign_creation, social_posting",
+            description: "The workflow type to launch. Use exact names: niche_research, product_sourcing, catalog_generation, store_setup, complete_store_buildout, brand_identity_kit, brand_audit, product_optimization, competitor_pricing_scan, multi_store_expansion, inventory_audit, pricing_optimization, fulfillment_automation, competitor_analysis, supply_chain_intelligence, profit_loss_analysis, customer_segmentation, margin_guard_audit, velocity_restock_predictor, store_optimization_sweep, ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content, viral_trend_detector",
             enum: [
+              // Architect workflows
               "niche_research",
               "product_sourcing",
               "catalog_generation",
               "store_setup",
               "complete_store_buildout",
+              "brand_identity_kit",
+              "brand_audit",
+              "product_optimization",
+              "competitor_pricing_scan",
+              "multi_store_expansion",
+              // Merchant workflows
               "inventory_audit",
               "pricing_optimization",
               "fulfillment_automation",
-              "ad_campaign_creation",
-              "social_posting",
+              "competitor_analysis",
+              "supply_chain_intelligence",
+              "profit_loss_analysis",
+              "customer_segmentation",
+              "margin_guard_audit",
+              "velocity_restock_predictor",
+              "store_optimization_sweep",
+              // Social workflows
+              "ad_campaign",
+              "social_content",
+              "seo_audit",
+              "email_flow",
+              "product_creative",
+              "brand_content",
+              "viral_trend_detector",
             ],
           },
           title: {
@@ -108,29 +128,69 @@ const TOOLS = [
 // ─── Agent type → workflow scope mapping ────────────────────────────────────
 
 const AGENT_WORKFLOW_SCOPE: Record<string, "specific_store" | "all_stores" | "global"> = {
+  // Architect
   niche_research: "global",
   product_sourcing: "global",
   catalog_generation: "global",
   store_setup: "specific_store",
   complete_store_buildout: "specific_store",
+  brand_identity_kit: "global",
+  brand_audit: "specific_store",
+  product_optimization: "specific_store",
+  competitor_pricing_scan: "global",
+  multi_store_expansion: "global",
+  // Merchant
   inventory_audit: "all_stores",
   pricing_optimization: "all_stores",
   fulfillment_automation: "all_stores",
-  ad_campaign_creation: "global",
-  social_posting: "global",
+  competitor_analysis: "all_stores",
+  supply_chain_intelligence: "global",
+  profit_loss_analysis: "all_stores",
+  customer_segmentation: "all_stores",
+  margin_guard_audit: "all_stores",
+  velocity_restock_predictor: "all_stores",
+  store_optimization_sweep: "all_stores",
+  // Social
+  ad_campaign: "global",
+  social_content: "global",
+  seo_audit: "global",
+  email_flow: "global",
+  product_creative: "global",
+  brand_content: "global",
+  viral_trend_detector: "global",
 };
 
 const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
+  // Architect
   niche_research: "architect",
   product_sourcing: "architect",
   catalog_generation: "architect",
   store_setup: "architect",
   complete_store_buildout: "architect",
+  brand_identity_kit: "architect",
+  brand_audit: "architect",
+  product_optimization: "architect",
+  competitor_pricing_scan: "architect",
+  multi_store_expansion: "architect",
+  // Merchant
   inventory_audit: "merchant",
   pricing_optimization: "merchant",
   fulfillment_automation: "merchant",
-  ad_campaign_creation: "social",
-  social_posting: "social",
+  competitor_analysis: "merchant",
+  supply_chain_intelligence: "merchant",
+  profit_loss_analysis: "merchant",
+  customer_segmentation: "merchant",
+  margin_guard_audit: "merchant",
+  velocity_restock_predictor: "merchant",
+  store_optimization_sweep: "merchant",
+  // Social
+  ad_campaign: "social",
+  social_content: "social",
+  seo_audit: "social",
+  email_flow: "social",
+  product_creative: "social",
+  brand_content: "social",
+  viral_trend_detector: "social",
 };
 
 // ─── System prompts ─────────────────────────────────────────────────────────
@@ -166,8 +226,11 @@ After calling a tool, tell the user exactly what you launched/found. Be specific
 **CRITICAL: You are an EXECUTOR, not an advisor. When the user asks you to do something, you DO it using your tools.**
 
 Examples:
-- User: "Create an ad campaign for my store" → You call launch_workflow(ad_campaign_creation) and execute it.
-- User: "Post to social media" → You call launch_workflow(social_posting) and execute it.
+- User: "Create an ad campaign for my store" → You call launch_workflow(ad_campaign) and execute it.
+- User: "Post to social media" → You call launch_workflow(social_content) and execute it.
+- User: "Run an SEO audit" → You call launch_workflow(seo_audit) and execute it.
+- User: "Detect viral trends" → You call launch_workflow(viral_trend_detector) and execute it.
+- User: "Create email flows" → You call launch_workflow(email_flow) and execute it.
 - User: "What campaigns are running?" → You call list_recent_workflows({agentType: "social"}) and report real data.
 
 After calling a tool, tell the user exactly what you launched/found. Be specific and confident.`,

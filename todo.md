@@ -1173,3 +1173,26 @@
 - [x] Delete/Backspace keyboard shortcut to remove selected node
 - [x] 3 starter templates (Product Drop, Pricing Sweep, Campaign Launch)
 - [x] 16/16 vitest tests passing for step registry, templates, and sort logic
+
+## Sprint 16: Bot Functionality Perfection ✅
+
+### Builder Bot Fixes
+- [x] Fix Architect page niche research: call trpc.architect.nicheResearch directly so results appear in niche reports panel immediately
+- [x] Fix inspector panel field names: marketSize, competition, trendDirection, targetAudience, strengths, risks (was using old broken names)
+- [x] Wire "Generate Brand Pack" and "Initialize Drop Store" buttons on Architect page
+- [x] Add workflow launch buttons to Architect page (Catalog Generation, Store Setup, Brand Identity Kit)
+
+### Merchant Bot Fixes
+- [x] Add 4 workflow launch buttons to Merchant page: Inventory Audit, Pricing Sweep, Auto-Fulfill, Competitor Scan
+- [x] Wire Force DB Sync button to trpc.merchant.syncProducts
+
+### Social Bot Fixes
+- [x] Fix chat router: social_posting → social_content (correct registered workflow name)
+- [x] Fix chat router: ad_campaign_creation → ad_campaign (correct registered workflow name)
+
+### Chat Router Fixes (all bots)
+- [x] Expanded chat router workflow type enum from 10 → 27 workflow types (all registered workflows)
+- [x] Fixed AGENT_TYPE_MAP: all 27 workflows correctly mapped to architect/merchant/social
+- [x] Fixed AGENT_WORKFLOW_SCOPE: all 27 workflows correctly mapped to specific_store/all_stores/global
+- [x] Updated system prompts to use correct workflow names
+- [x] 14/14 Sprint 16 vitest tests passing
