@@ -1010,7 +1010,7 @@ function SocialContent({
                         <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between mb-1">
                             <Badge variant="outline" className="text-[9px]">{v.variantLabel || `Variant ${i + 1}`}</Badge>
-                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(v.copy || v.text || '')}><Copy className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Copy variant" onClick={() => copyToClipboard(v.copy || v.text || '')}><Copy className="h-3 w-3" /></Button>
                           </div>
                           <p className="text-xs text-foreground">{v.copy || v.text}</p>
                           {v.psychologicalTrigger && <p className="text-[10px] text-muted-foreground mt-1">Trigger: {v.psychologicalTrigger}</p>}
@@ -1037,7 +1037,7 @@ function SocialContent({
                         <div key={i} className="p-3 rounded-md bg-white/[0.03]">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[10px] text-muted-foreground">{m.timing || m.delay || `Message ${i + 1}`}</span>
-                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(m.text || m.content || '')}><Copy className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" aria-label="Copy message" onClick={() => copyToClipboard(m.text || m.content || '')}><Copy className="h-3 w-3" /></Button>
                           </div>
                           <p className="text-xs text-foreground">{m.text || m.content}</p>
                         </div>

@@ -573,6 +573,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           railMode ? "w-14" : "w-56"
         }`}
       >
+        {/* Neon top accent — 2px animated scan-line at the very top of sidebar */}
+        <span className="sidebar-top-accent" aria-hidden="true" />
         {/* Header */}
         <div className={`h-12 flex items-center border-b border-white/[0.05] relative ${railMode ? "justify-center px-2" : "px-4 gap-2"}`} aria-label={BRAND_NAME}>
           <div className="brand-mark shrink-0">
@@ -604,7 +606,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505]/80 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(14,165,233,0.07),transparent_35%),radial-gradient(circle_at_85%_18%,rgba(6,182,212,0.05),transparent_28%),radial-gradient(circle_at_50%_100%,rgba(249,115,22,0.04),transparent_28%)]" />
+        <div className="pointer-events-none absolute inset-0 main-ambient-animate" />
         {children}
       </main>
 

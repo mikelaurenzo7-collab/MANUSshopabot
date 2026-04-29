@@ -5,6 +5,7 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 import { getSocialCapabilityMatrix } from "../adapters/social";
+import { getCapabilityRows } from "../adapters/capabilityMatrix";
 
 /**
  * Legacy in-memory fallback for pre-deployment OAuth callbacks.
@@ -169,9 +170,14 @@ const ECOMMERCE_PLATFORMS = {
     name: "Faire",
     icon: "🏪",
     color: "#6B5B95",
-    connectionType: "api_key" as const,
+    connectionType: "oauth" as const,
     description: "Wholesale marketplace — manage orders and inventory",
-    requiredFields: ["apiKey"],
+    oauthConfig: {
+      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://faire.com/oauth2/authorize?applicationId=${clientId}&redirectUrl=${encodeURIComponent(redirectUri)}&state=${state}&scope=${encodeURIComponent(scopes)}`,
+      tokenUrl: () => "https://www.faire.com/api/external-api-oauth2/token",
+      scopes: "READ_ORDERS WRITE_ORDERS READ_PRODUCTS WRITE_PRODUCTS READ_INVENTORIES WRITE_INVENTORIES READ_BRAND",
+    },
     capabilities: ["orders", "inventory", "wholesale"],
   },
   bonanza: {
@@ -305,6 +311,20 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["email_sending", "customer_support", "abandoned_cart_recovery", "order_notifications"],
   },
+  snapchat: {
+    name: "Snapchat",
+    icon: "👻",
+    color: "#FFFC00",
+    connectionType: "oauth" as const,
+    description: "Run Snap Ads, Dynamic Product Ads, and manage Snapchat marketing",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://accounts.snapchat.com/login/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
+      tokenUrl: "https://accounts.snapchat.com/login/oauth2/access_token",
+      scopes: "snapchat-marketing-api",
+    },
+    capabilities: ["snap_ads", "dynamic_product_ads", "story_ads", "analytics", "audience_targeting"],
+  },
   outlook: {
     name: "Outlook",
     icon: "📨",
@@ -378,7 +398,7 @@ export const connectorsRouter = router({
       depop: !!ENV.depopAppId && !!ENV.depopAppSecret,
       bigcommerce: !!ENV.bigcommerceClientId && !!ENV.bigcommerceClientSecret,
       square: !!ENV.squareClientId && !!ENV.squareClientSecret,
-      faire: true, // API-key based
+      faire: !!ENV.faireClientId && !!ENV.faireClientSecret,
       bonanza: true, // API-key based
       stockx: !!ENV.stockxClientId && !!ENV.stockxClientSecret,
       reverb: !!ENV.reverbClientId && !!ENV.reverbClientSecret,
@@ -410,6 +430,7 @@ export const connectorsRouter = router({
       twitter: !!ENV.twitterClientId && !!ENV.twitterClientSecret,
       pinterest: !!ENV.pinterestAppId && !!ENV.pinterestAppSecret,
       gmail: !!ENV.googleClientId && !!ENV.googleClientSecret,
+      snapchat: !!ENV.snapchatClientId && !!ENV.snapchatClientSecret,
       // Sprint 27.5 expansion. YouTube rides the Google OAuth client.
       outlook: !!ENV.azureClientId && !!ENV.azureClientSecret,
       slack: !!ENV.slackClientId && !!ENV.slackClientSecret,
@@ -439,6 +460,12 @@ export const connectorsRouter = router({
     return {
       ecommerce: getEcommerceCapabilityMatrix(),
       social: getSocialCapabilityMatrix(),
+      // Flat, machine-readable matrix
+      // ({ platform, capability, supported, requires_auth, rate_limit,
+      //    idempotent }) projected from the live adapter registries.
+      // Consumed by the /PlatformHealth page and (in subsequent PRs)
+      // by the orchestrator's tool-dispatch gate.
+      flat: getCapabilityRows(),
     };
   }),
 
@@ -508,7 +535,7 @@ export const connectorsRouter = router({
   connectSocialAccount: protectedProcedure
     .input(z.object({
       platform: z.enum([
-        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail",
+        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat",
         // Sprint 27.5 expansion
         "outlook", "slack", "youtube",
       ]),
@@ -670,6 +697,12 @@ export const connectorsRouter = router({
         amazon: ENV.amazonSpClientId,
         ebay: ENV.ebayAppId,
         tiktok_shop: ENV.tiktokAppId || ENV.tiktokClientKey,
+        square: ENV.squareClientId,
+        faire: ENV.faireClientId,
+        bigcommerce: ENV.bigcommerceClientId,
+        depop: ENV.depopAppId,
+        stockx: ENV.stockxClientId,
+        reverb: ENV.reverbClientId,
       };
       const ecomClientId = ecomClientIdMap[input.platform];
       if (!ecomClientId) {
@@ -721,7 +754,7 @@ export const connectorsRouter = router({
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
       platform: z.enum([
-        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail",
+        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat",
         // Sprint 27.5 expansion
         "outlook", "slack", "youtube",
       ]),
@@ -742,6 +775,7 @@ export const connectorsRouter = router({
         twitter: ENV.twitterClientId,
         pinterest: ENV.pinterestAppId,
         gmail: ENV.googleClientId,
+        snapchat: ENV.snapchatClientId,
         // Sprint 27.5: Outlook is on Azure; Slack has its own; YouTube
         // shares the Google client with Gmail (same OAuth consent).
         outlook: ENV.azureClientId,

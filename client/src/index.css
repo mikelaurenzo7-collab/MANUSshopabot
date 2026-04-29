@@ -41,6 +41,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Semantic surface aliases — pixel-identical to recurring literals so
+     pages/components can reference them via Tailwind utilities
+     (`bg-surface-base`, `bg-surface-overlay`) instead of `bg-[#050507]`. */
+  --color-surface-base: var(--surface-base);
+  --color-surface-overlay: var(--surface-overlay);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -123,6 +128,46 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+  --destructive-raw: 239, 68, 68;
+
+  /* ── Surface aliases ───────────────────────────────────────────────────── */
+  /* Semantic names for the two recurring page/overlay backdrops. Values are
+     intentionally identical to existing literals so this is purely a
+     consolidation, not a visual change. */
+  --surface-base: #050507;
+  --surface-overlay: #0a0a0f;
+
+  /* ── Motion tokens ─────────────────────────────────────────────────────── */
+  /* Single source of truth for transitions. Primitives & components should
+     consume these instead of redeclaring durations/easings inline. */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 600ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Shadow / elevation tokens ─────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 30px -6px rgba(0, 0, 0, 0.3);
+
+  /* ── Glow tokens (brand-keyed) ─────────────────────────────────────────── */
+  --glow-primary-sm: 0 0 0 1px rgba(var(--blue-raw), 0.25), 0 4px 12px rgba(var(--blue-raw), 0.2);
+  --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
+  --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
+  --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+
+  /* ── Button hover shadows (soft drop, brand-tinted) ────────────────────── */
+  --shadow-button-hover-primary: 0 8px 20px -8px rgba(var(--blue-raw), 0.3);
+  --shadow-button-hover-secondary: 0 8px 20px -8px rgba(255, 255, 255, 0.1);
+  --shadow-button-hover-destructive: 0 8px 20px -8px rgba(var(--destructive-raw), 0.3);
+
+  /* ── Focus ring token ──────────────────────────────────────────────────── */
+  --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
 }
 
 .dark {
@@ -161,6 +206,33 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+  --destructive-raw: 239, 68, 68;
+
+  /* Surface aliases — see :root for documentation */
+  --surface-base: #050507;
+  --surface-overlay: #0a0a0f;
+
+  /* Motion / shadow / glow tokens — see :root for documentation */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 600ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 30px -6px rgba(0, 0, 0, 0.3);
+  --glow-primary-sm: 0 0 0 1px rgba(var(--blue-raw), 0.25), 0 4px 12px rgba(var(--blue-raw), 0.2);
+  --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
+  --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
+  --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+  --shadow-button-hover-primary: 0 8px 20px -8px rgba(var(--blue-raw), 0.3);
+  --shadow-button-hover-secondary: 0 8px 20px -8px rgba(255, 255, 255, 0.1);
+  --shadow-button-hover-destructive: 0 8px 20px -8px rgba(var(--destructive-raw), 0.3);
+  --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -586,6 +658,12 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   @keyframes shimmer {
     0%   { background-position: -200% center; }
     100% { background-position: 200% center; }
+  }
+  /* Translate-based shimmer for the Skeleton primitive (which overlays a
+     translateX pseudo-element rather than a gradient background). */
+  @keyframes shimmer-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
   }
   .shimmer {
     background: linear-gradient(
@@ -3127,4 +3205,308 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN UPLIFT — Premium Layer
+   Purely additive; all classes are new. Zero risk to existing styles.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Animated ambient aurora overlay for app-chrome ────────────────────── */
+  /* Floats a slow-drifting glow over the app shell so the background
+     never feels static. Uses ::after so ::before (grid pattern) is untouched. */
+  .app-chrome::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 65% 50% at 14% 8%, rgba(14, 165, 233, 0.09), transparent 55%),
+      radial-gradient(ellipse 55% 45% at 88% 14%, rgba(6, 182, 212, 0.06), transparent 55%),
+      radial-gradient(ellipse 45% 40% at 52% 92%, rgba(249, 115, 22, 0.06), transparent 55%);
+    z-index: 0;
+    will-change: transform, opacity;
+    animation: app-aurora-drift 32s ease-in-out infinite alternate;
+  }
+  @keyframes app-aurora-drift {
+    0%   { transform: translate3d(0, 0, 0) scale(1);      opacity: 0.65; }
+    30%  { transform: translate3d(2%, -1%, 0) scale(1.04); opacity: 0.9; }
+    65%  { transform: translate3d(-1.5%, 1.5%, 0) scale(0.97); opacity: 0.75; }
+    100% { transform: translate3d(1%, -0.5%, 0) scale(1.02); opacity: 0.7; }
+  }
+
+  /* ── Sidebar neon top accent ─────────────────────────────────────────────
+     A 2 px animated scan-line at the very top of the sidebar.
+     Apply to the <aside> element directly. */
+  .sidebar-top-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(14, 165, 233, 0.8) 30%,
+      rgba(6, 182, 212, 0.6) 65%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 0 0 2px 2px;
+    pointer-events: none;
+    z-index: 2;
+    animation: sidebar-accent-sweep 7s ease-in-out infinite alternate;
+  }
+  @keyframes sidebar-accent-sweep {
+    from { background-position: 0% center;   opacity: 0.65; }
+    to   { background-position: 100% center; opacity: 1; }
+  }
+
+  /* ── Animated main-content ambient gradient ──────────────────────────────
+     Replaces the static inline gradient on the DashboardLayout <main>.
+     Class is applied to the ambient overlay <div> inside <main>. */
+  .main-ambient-animate {
+    background:
+      radial-gradient(circle at 20% 0%,   rgba(14, 165, 233, 0.09), transparent 35%),
+      radial-gradient(circle at 85% 18%,  rgba(6,  182, 212, 0.06), transparent 28%),
+      radial-gradient(circle at 50% 100%, rgba(249, 115, 22, 0.05), transparent 28%);
+    will-change: transform, opacity;
+    animation: main-ambient-breathe 24s ease-in-out infinite alternate;
+  }
+  @keyframes main-ambient-breathe {
+    0%   { opacity: 0.7;  transform: translate3d(0, 0, 0) scale(1); }
+    50%  { opacity: 1;    transform: translate3d(-1.5%, 1%, 0) scale(1.03); }
+    100% { opacity: 0.75; transform: translate3d(1%, -1%, 0) scale(1.01); }
+  }
+
+  /* ── Glowing text utilities for revenue / metric numbers ─────────────────
+     Use on large display numbers: <span className="text-glow-blue">$1.2M</span> */
+  .text-glow-blue {
+    color: #38bdf8;
+    text-shadow:
+      0 0 16px rgba(56, 189, 248, 0.55),
+      0 0 36px rgba(14, 165, 233, 0.28);
+  }
+  .text-glow-emerald {
+    color: #34d399;
+    text-shadow:
+      0 0 16px rgba(52, 211, 153, 0.55),
+      0 0 36px rgba(16, 185, 129, 0.28);
+  }
+  .text-glow-amber {
+    color: #fb923c;
+    text-shadow:
+      0 0 16px rgba(251, 146, 60, 0.55),
+      0 0 36px rgba(249, 115, 22, 0.28);
+  }
+
+  /* ── Neon badge pills ────────────────────────────────────────────────────
+     Drop-in premium replacements for plain badges. */
+  .badge-neon-blue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.12);
+    border: 1px solid rgba(14, 165, 233, 0.38);
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 0 14px rgba(14, 165, 233, 0.22), inset 0 1px 0 rgba(14, 165, 233, 0.16);
+  }
+  .badge-neon-emerald {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.32);
+    color: #6ee7b7;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 0 14px rgba(52, 211, 153, 0.2), inset 0 1px 0 rgba(52, 211, 153, 0.12);
+  }
+  .badge-neon-amber {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.32);
+    color: #fdba74;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 0 14px rgba(249, 115, 22, 0.2), inset 0 1px 0 rgba(249, 115, 22, 0.12);
+  }
+
+  /* ── Featured pricing card animated shimmer ring ─────────────────────────
+     Apply to the featured tier card on the landing pricing section.
+     Wraps the existing border with an animated gradient sweep. */
+  .pricing-featured {
+    position: relative;
+    isolation: isolate;
+  }
+  .pricing-featured::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(14, 165, 233, 0.8) 0%,
+      rgba(6, 182, 212, 0.55) 35%,
+      rgba(56, 189, 248, 0.75) 65%,
+      rgba(14, 165, 233, 0.8) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    z-index: -1;
+    pointer-events: none;
+    animation: pricing-shimmer 5s ease-in-out infinite alternate;
+  }
+  @keyframes pricing-shimmer {
+    from { background-position: 0% 0%;     opacity: 0.75; }
+    to   { background-position: 100% 100%; opacity: 1; }
+  }
+
+  /* ── Nav active bar entrance animation ──────────────────────────────────── */
+  /* Layered on top of the existing .nav-active-bar definition. */
+  .nav-active-bar {
+    animation: nav-bar-enter 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes nav-bar-enter {
+    from { transform: translateY(-50%) scaleY(0.25); opacity: 0; }
+    to   { transform: translateY(-50%) scaleY(1);    opacity: 1; }
+  }
+
+  /* ── Card inner shimmer on hover ─────────────────────────────────────────
+     Adds a glass-sweep highlight on hover for any card that opts in. */
+  .card-shimmer-hover {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-shimmer-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.055) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-shimmer-hover:hover::after {
+    transform: translateX(120%);
+  }
+
+  /* ── Glow card (more intense glass-card for hero surfaces) ───────────────
+     All the glass-card magic plus a branded inner rim. */
+  .glow-card {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(14, 165, 233, 0.12);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      0 0 0 1px rgba(14, 165, 233, 0.06),
+      0 2px 8px rgba(0, 0, 0, 0.35),
+      0 8px 32px rgba(0, 0, 0, 0.55),
+      0 0 60px rgba(14, 165, 233, 0.06);
+    transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glow-card:hover {
+    border-color: rgba(14, 165, 233, 0.32);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
+      0 0 0 1px rgba(14, 165, 233, 0.12),
+      0 4px 20px rgba(0, 0, 0, 0.5),
+      0 14px 50px rgba(0, 0, 0, 0.65),
+      0 0 80px rgba(14, 165, 233, 0.18);
+    transform: translateY(-4px) scale(1.006);
+  }
+
+  /* ── Tabs premium skin ───────────────────────────────────────────────────
+     Applied by adding className="tabs-premium" to <TabsList>.
+     Uses high-specificity chained selectors instead of !important to
+     avoid cascade conflicts. */
+  .tabs-premium.tabs-premium {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    gap: 2px;
+  }
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"] {
+    color: rgba(255, 255, 255, 0.45);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"][data-state="active"] {
+    background: rgba(14, 165, 233, 0.12);
+    color: #7dd3fc;
+    border-color: rgba(14, 165, 233, 0.18);
+    box-shadow:
+      inset 0 0 0 1px rgba(14, 165, 233, 0.2),
+      0 0 16px rgba(14, 165, 233, 0.08);
+  }
+
+  /* ── Page section ambient ────────────────────────────────────────────────
+     Adds a soft ambient glow centered above any section header.
+     Apply to the section container. */
+  .section-has-ambient {
+    position: relative;
+    overflow: visible;
+  }
+  .section-has-ambient > .section-ambient-glow {
+    pointer-events: none;
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 250px;
+    background: radial-gradient(ellipse, rgba(14, 165, 233, 0.055), transparent 70%);
+    filter: blur(50px);
+    z-index: 0;
+  }
+
+  /* ── Reduced motion guards for uplift layer ──────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .app-chrome::after,
+    .sidebar-top-accent,
+    .main-ambient-animate,
+    .pricing-featured::before,
+    .card-shimmer-hover::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .main-ambient-animate { opacity: 0.8; }
+    .sidebar-top-accent   { opacity: 0.75; }
+  }
+}
+
+/* ─── PageHeader accent line — upgrade from 1px to 2px ──────────────────────
+   This single global override thickens the bottom scan-line on all
+   page headers for a more dramatic "edge" at the section boundary. */
+.page-accent-line {
+  height: 1.5px;
 }

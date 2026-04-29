@@ -308,11 +308,13 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  // Both branches added platforms; we union both. Snapchat from main +
+  // Outlook/Slack/YouTube from Sprint 27.5 keep ad_campaigns wide
+  // enough for every channel the social bot drafts copy for.
   platform: mysqlEnum("platform", [
-    "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail",
-    // Sprint 27.5 — ad-copy generator now serves these channels too
-    // (organic posts, but persisted as draft "campaigns" so they
-    // appear in the same review queue as paid ads).
+    "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads",
+    "email", "sms", "gmail", "snapchat",
+    // Sprint 27.5 expansion
     "outlook", "slack", "youtube",
   ]).default("meta").notNull(),
   adCopy: text("adCopy"),
@@ -400,12 +402,12 @@ export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  // Expanded enum: google_ads is first-class value
+  // Expanded enum: google_ads + snapchat are first-class values; Sprint
+  // 27.5 added slack + youtube so drops and Shorts persist as posts.
+  // (Outlook lives on social_accounts but its sends go through the
+  // outbound delivery layer, not social_posts.)
   platform: mysqlEnum("platform", [
-    "tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads",
-    // Sprint 27.5 expansion — Slack drop messages, YouTube Shorts.
-    // (Outlook lives on social_accounts but its sends go through the
-    // outbound delivery layer, not the social_posts table.)
+    "tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "snapchat",
     "slack", "youtube",
   ]).notNull(),
   content: text("content"),
@@ -516,7 +518,7 @@ export const socialAccounts = mysqlTable("social_accounts", {
   orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
   platform: mysqlEnum("platform", [
-    "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail",
+    "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat",
     // Sprint 27.5 expansion: Microsoft inbox, community channel, video.
     "outlook", "slack", "youtube",
   ]).notNull(),

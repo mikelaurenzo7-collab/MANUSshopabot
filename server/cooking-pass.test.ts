@@ -64,8 +64,11 @@ describe("Design system: shared PageHeader sweeps the page surface", () => {
     for (const accent of ["sky", "cyan", "violet", "emerald", "fuchsia", "amber", "rose"]) {
       expect(src).toContain(`${accent}:`);
     }
-    // Signature scan-line under every header
-    expect(src).toContain("h-px bg-gradient-to-r");
+    // Signature scan-line under every header — main consolidated this
+    // into a `.page-accent-line` utility so the dimension lives in one
+    // place; we still require the gradient direction so the visual
+    // intent is encoded in the JSX.
+    expect(src).toContain("bg-gradient-to-r");
     // Ambient halo behind every header
     expect(src).toContain("blur-3xl");
   });

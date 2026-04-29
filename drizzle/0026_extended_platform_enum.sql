@@ -1,4 +1,4 @@
--- Migration 0025: extend `stores.platform` enum with 7 new ecommerce surfaces.
+-- Migration 0026: extend `stores.platform` enum with 7 new ecommerce surfaces.
 --
 -- Sprint 27 expansion: Depop, BigCommerce, Square, Faire, Bonanza,
 -- StockX, Reverb. Each has a fully-implemented adapter under

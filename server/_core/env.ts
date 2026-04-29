@@ -52,6 +52,11 @@ export const ENV = {
   pinterestAppSecret: process.env.PINTEREST_APP_SECRET ?? "",
   pinterestAccessToken: process.env.PINTEREST_ACCESS_TOKEN ?? "",
 
+  // Snapchat
+  snapchatClientId: process.env.SNAPCHAT_CLIENT_ID ?? "",
+  snapchatClientSecret: process.env.SNAPCHAT_CLIENT_SECRET ?? "",
+  snapchatApiToken: process.env.SNAPCHAT_API_TOKEN ?? "",
+
   // Etsy
   etsyApiKey: process.env.ETSY_API_KEY ?? "",
   etsySharedSecret: process.env.ETSY_SHARED_SECRET ?? "",
@@ -79,12 +84,10 @@ export const ENV = {
   // BigCommerce
   bigcommerceClientId: process.env.BIGCOMMERCE_CLIENT_ID ?? "",
   bigcommerceClientSecret: process.env.BIGCOMMERCE_CLIENT_SECRET ?? "",
-  // Square
-  // Square OAuth: prefer the dedicated SQUARE_CLIENT_* envs, then fall
-  // back to the SQUARE_OAUTH_APPLICATION_* / SQUARE_PRODUCTION_* names
-  // that Manus's Sprint 27 OAuth provisioning uses. This keeps a
-  // single canonical access pattern (`ENV.squareClientId`) while
-  // honoring whatever the operator actually set.
+  // Square — both OAuth credentials (for installs) and production
+  // first-party tokens (for direct API calls on the operator's own
+  // account). The fallback chain on squareClientId/Secret accepts
+  // whichever names the operator actually set in Manus secrets.
   squareClientId:
     process.env.SQUARE_CLIENT_ID
     ?? process.env.SQUARE_OAUTH_APPLICATION_ID
@@ -94,8 +97,11 @@ export const ENV = {
     process.env.SQUARE_CLIENT_SECRET
     ?? process.env.SQUARE_OAUTH_APPLICATION_SECRET
     ?? "",
+  squareProductionAccessToken: process.env.SQUARE_PRODUCTION_ACCESS_TOKEN ?? "",
+  squareProductionApplicationId: process.env.SQUARE_PRODUCTION_APPLICATION_ID ?? "",
   // Faire
-  faireApiKey: process.env.FAIRE_API_KEY ?? "",
+  faireClientId: process.env.FAIRE_CLIENT_ID ?? "",
+  faireClientSecret: process.env.FAIRE_CLIENT_SECRET ?? "",
   // Bonanza
   bonanzaDevId: process.env.BONANZA_DEV_ID ?? "",
   bonanzaCertId: process.env.BONANZA_CERT_ID ?? "",

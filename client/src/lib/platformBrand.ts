@@ -160,15 +160,22 @@ export const SOCIAL_BRANDS: Record<string, PlatformBrand> = {
   },
   gmail: {
     id: "gmail", name: "Gmail", icon: "📧",
-    color: "#EA4335", accent: "#FBBC04", category: "email",
-    tagline: "Transactional + lifecycle email at workspace scale",
+    // Gmail is a first-class social channel for the bot — it's how the
+    // Social bot drives lifecycle email + customer recovery, not an
+    // afterthought tool. Categorize as "social" so it groups with the
+    // other channels in every UI surface.
+    color: "#EA4335", accent: "#FBBC04", category: "social",
+    tagline: "Lifecycle email + recovery flows · Social bot's email arm",
   },
   // Sprint 27.5 social additions — newSince flags surface a NEW ribbon
   // on the connect tile + a "Just Landed" hero spotlight on the connect
   // page. The ribbon auto-hides 60 days after the date below.
   outlook: {
     id: "outlook", name: "Outlook", icon: "📨",
-    color: "#0078D4", accent: "#50E6FF", category: "email",
+    // Same rationale as Gmail — Outlook is the Microsoft-side social
+    // channel for B2B reach. Categorize as "social" so it groups with
+    // every other channel (and not relegated to a separate email tab).
+    color: "#0078D4", accent: "#50E6FF", category: "social",
     tagline: "Microsoft Graph · B2B inboxes · meetings on the same token",
     newSince: "2026-04-28",
   },

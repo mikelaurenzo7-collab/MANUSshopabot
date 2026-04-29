@@ -40,8 +40,10 @@ import {
   Plus,
   Bot,
   Zap,
+  GitBranch,
 } from "lucide-react";
 import SubscriptionGate from "@/components/SubscriptionGate";
+import { PageHeader } from "@/components/PageHeader";
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
@@ -359,21 +361,21 @@ export default function Workflows() {
 
   return (
     <div className="page-enter p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between page-header">
-        <div>
-          <p className="micro-label mb-0.5">Operations</p>
-          <h1 className="text-lg font-heading font-bold text-white leading-tight">Workflows</h1>
-          <p className="text-xs text-white/40 mt-0.5">Monitor and manage all bot workflows</p>
-        </div>
-        <SubscriptionGate feature="Workflow Automation" soft>
-          <LaunchWorkflowDialog onLaunched={() => {
-            utils.workflows.active.invalidate();
-            utils.workflows.list.invalidate();
-            utils.workflows.counts.invalidate();
-          }} />
-        </SubscriptionGate>
-      </div>
+      <PageHeader
+        icon={<GitBranch className="h-4 w-4" />}
+        title="Workflows"
+        subtitle="Monitor and manage all bot workflows"
+        accent="violet"
+        right={
+          <SubscriptionGate feature="Workflow Automation" soft>
+            <LaunchWorkflowDialog onLaunched={() => {
+              utils.workflows.active.invalidate();
+              utils.workflows.list.invalidate();
+              utils.workflows.counts.invalidate();
+            }} />
+          </SubscriptionGate>
+        }
+      />
 
       {/* Stats Row */}
       <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-2.5">

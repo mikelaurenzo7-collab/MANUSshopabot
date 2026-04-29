@@ -151,7 +151,7 @@ export default function Members() {
               <SelectTrigger className="w-full md:w-32 bg-white/[0.03] border-white/10 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0a0f] border-white/10">
+              <SelectContent className="bg-surface-overlay border-white/10">
                 <SelectItem value="member">Member</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>

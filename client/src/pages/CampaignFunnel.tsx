@@ -74,7 +74,7 @@ export default function CampaignFunnel() {
             className="bg-white/[0.04] border border-white/10 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-400/40"
           >
             {stores.map((s: any) => (
-              <option key={s.id} value={s.id} className="bg-[#0a0a0f]">
+              <option key={s.id} value={s.id} className="bg-surface-overlay">
                 {s.name}
               </option>
             ))}

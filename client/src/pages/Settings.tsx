@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { PageHeader } from "@/components/PageHeader";
 import ProfilePage from "./Profile";
 import BotSettingsPage from "./BotSettings";
 import PlatformHealthPage from "./PlatformHealth";
@@ -60,19 +61,13 @@ export default function SettingsPage() {
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(14,165,233,0.04),transparent_30%),radial-gradient(circle_at_10%_50%,rgba(168,85,247,0.03),transparent_25%)]" />
 
-      {/* Header */}
-      <div className="relative px-5 pt-4 pb-1.5 flex items-center gap-2.5">
-        <div className="relative">
-          <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_10px_rgba(14,165,233,0.06)]">
-            <SettingsIcon className="h-4 w-4 text-sky-400" />
-          </div>
-          <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 border-2 border-[#050505]" />
-        </div>
-        <div>
-          <h1 className="text-lg font-heading font-bold tracking-tight text-white leading-tight">Settings</h1>
-          <p className="text-xs text-white/35">Profile, bot configuration{isAdmin ? ", and platform health" : ""}</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={<SettingsIcon className="h-4 w-4" />}
+        title="Settings"
+        subtitle={`Profile, bot configuration${isAdmin ? ", and platform health" : ""}`}
+        accent="sky"
+        flushBottom
+      />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5 relative">
         <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">

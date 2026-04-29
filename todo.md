@@ -1047,3 +1047,20 @@
   - [ ] User.Read
   - [ ] Grant admin consent after adding permissions
   - Location: Azure Portal → App Registration → API permissions → Add a permission → Microsoft Graph → Delegated permissions
+
+## Secret Name Mismatch Fix Sprint
+- [x] Fix Square env mapping: SQUARE_CLIENT_ID → SQUARE_OAUTH_APPLICATION_ID, SQUARE_CLIENT_SECRET → SQUARE_OAUTH_APPLICATION_SECRET
+- [x] Fix Faire env mapping: FAIRE_API_KEY → FAIRE_CLIENT_ID + FAIRE_CLIENT_SECRET (OAuth, not API key)
+- [x] Update Faire platform config from api_key to oauth connection type
+- [x] Add SQUARE_PRODUCTION_ACCESS_TOKEN + SQUARE_PRODUCTION_APPLICATION_ID to env.ts
+- [x] Audit all remaining platform env var names against actual Manus secrets
+
+## Snapchat Social Integration
+- [x] Add Snapchat secrets (API token, OAuth client ID, OAuth client secret)
+- [x] Add Snapchat env vars to env.ts
+- [x] Add Snapchat to SOCIAL_PLATFORMS config in connectors.ts
+- [x] Add Snapchat to socialAvailability map
+- [x] Add Snapchat to social OAuth URL generation (clientIdMap + generateSocialOAuthUrl)
+- [x] Add Snapchat to social capability matrix
+- [x] Add Snapchat token exchange in socialOAuth.ts
+- [x] Verify TypeScript compiles and server restarts

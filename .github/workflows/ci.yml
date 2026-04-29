@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  ci:
+    name: Preflight + Check + Test + Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Preflight (Manus sync guard)
+        run: pnpm preflight
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

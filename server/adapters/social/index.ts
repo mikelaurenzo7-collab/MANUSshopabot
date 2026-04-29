@@ -18,6 +18,7 @@ export { TwitterAdapter } from "./twitterAdapter";
 export { PinterestAdapter } from "./pinterestAdapter";
 export { GoogleAdsAdapter } from "./googleAdsAdapter";
 export { GmailAdapter } from "./gmailAdapter";
+export { SnapchatAdapter } from "./snapchatAdapter";
 export { OutlookAdapter } from "./outlookAdapter";
 export { SlackAdapter } from "./slackAdapter";
 export { YouTubeAdapter } from "./youtubeAdapter";
@@ -30,6 +31,7 @@ import { TwitterAdapter } from "./twitterAdapter";
 import { PinterestAdapter } from "./pinterestAdapter";
 import { GoogleAdsAdapter } from "./googleAdsAdapter";
 import { GmailAdapter } from "./gmailAdapter";
+import { SnapchatAdapter } from "./snapchatAdapter";
 import { OutlookAdapter } from "./outlookAdapter";
 import { SlackAdapter } from "./slackAdapter";
 import { YouTubeAdapter } from "./youtubeAdapter";
@@ -45,6 +47,7 @@ const adapters: Record<string, SocialPlatformAdapter> = {
   pinterest: new PinterestAdapter(),
   google_ads: new GoogleAdsAdapter(),
   gmail: new GmailAdapter(),
+  snapchat: new SnapchatAdapter(),
   // Sprint 27.5 expansion — Outlook for B2B inboxes, Slack for VIP
   // community channels, YouTube for long-form + Shorts video.
   outlook: new OutlookAdapter(),
@@ -71,7 +74,7 @@ export function getSocialAdapter(platform: string): SocialPlatformAdapter {
  * List all supported social platform identifiers (no aliases).
  */
 export const SUPPORTED_SOCIAL_PLATFORMS = [
-  "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail",
+  "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat",
   // Sprint 27.5 expansion
   "outlook", "slack", "youtube",
 ];

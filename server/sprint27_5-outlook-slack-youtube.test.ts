@@ -44,11 +44,14 @@ function ctx(): TrpcContext {
 }
 
 describe("Sprint 27.5 — Outlook, Slack, YouTube", () => {
-  it("registry contains all 10 social surfaces", () => {
-    expect(SUPPORTED_SOCIAL_PLATFORMS).toHaveLength(10);
+  it("registry contains all 11 social surfaces (Sprint 27.5 + Snapchat from main)", () => {
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toHaveLength(11);
     for (const id of NEW_SOCIAL) {
       expect(SUPPORTED_SOCIAL_PLATFORMS).toContain(id);
     }
+    // Snapchat was added on main during the Sprint 27.5 merge — keep
+    // it asserted here so a future drop is caught immediately.
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("snapchat");
   });
 
   it("adapter classes wire correctly", () => {

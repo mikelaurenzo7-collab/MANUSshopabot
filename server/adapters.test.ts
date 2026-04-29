@@ -131,9 +131,9 @@ describe("E-Commerce Adapter Registry", () => {
 // ─── Social Adapter Registry Tests ────────────────────────────────────────
 
 describe("Social Adapter Registry", () => {
-  it("supports all 10 social media platforms (Sprint 27.5 expansion)", () => {
+  it("supports all 11 social media platforms (Sprint 27.5 + Snapchat)", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toBeInstanceOf(Array);
-    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(10);
+    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(11);
     // Original 7
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("meta");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("instagram");
@@ -142,6 +142,8 @@ describe("Social Adapter Registry", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("pinterest");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("google_ads");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("gmail");
+    // Snapchat (added on main while Sprint 27.5 was in flight).
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("snapchat");
     // Sprint 27.5 — Microsoft inbox, community channel, video.
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("outlook");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("slack");
