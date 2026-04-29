@@ -147,23 +147,36 @@ registerWorkflow("product_sourcing", (input): WorkflowStepDefinition[] => {
   const targetProducts = input.targetProducts ?? 10;
   return [
     {
-      stepType: "llm_call",
-      title: "Product Discovery",
-      description: `Finding ${targetProducts} winning products for ${niche}`,
+      stepType: "api_call",
+      title: "Search Real Products from Printful",
+      description: `Finding print-on-demand products for ${niche}`,
       input: {
-        systemPrompt: "You are a top-tier product sourcing specialist. You find winning products that generate 40%+ margins.",
-        userPrompt: `Find ${targetProducts} winning products for the "${niche}" niche. For each product provide:
-- Product name
-- Detailed description (50-100 words, optimized for e-commerce)
-- Suggested retail price in cents (USD)
-- Estimated cost price in cents
-- SKU suggestion
-- Category
-- Recommended supplier (AliExpress, Zendrop, Printful, etc.)
-- Supplier URL placeholder
-- Why this product is a winner
-
-Return as JSON array with keys: title, description, price, costPrice, sku, category, supplier, supplierUrl, rationale`,
+        endpoint: "suppliers.printful.search",
+        params: {
+          keyword: niche,
+          limit: Math.ceil(targetProducts / 2),
+        },
+      },
+    },
+    {
+      stepType: "api_call",
+      title: "Search Real Products from CJ Dropshipping",
+      description: `Finding dropshipping products for ${niche}`,
+      input: {
+        endpoint: "suppliers.cj.search",
+        params: {
+          keyword: niche,
+          limit: Math.ceil(targetProducts / 2),
+        },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Curate & Rank Products",
+      description: `Ranking and curating the best ${targetProducts} products from real suppliers`,
+      input: {
+        systemPrompt: "You are a top-tier product sourcing specialist. You curate winning products that generate 40%+ margins. You ONLY work with real supplier data provided.",
+        userPrompt: `You have real product data from Printful and CJ Dropshipping suppliers. Curate and rank the best ${targetProducts} products for the "${niche}" niche based on profit margin, market demand, and quality. For each selected product, provide: title, description (50-100 words), price in cents, costPrice in cents, sku, category, supplier name, supplierUrl, and rationale. Return as JSON array with keys: title, description, price, costPrice, sku, category, supplier, supplierUrl, rationale`,
         responseFormat: {
           type: "json_schema",
           json_schema: {
