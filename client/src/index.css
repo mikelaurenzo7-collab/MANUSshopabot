@@ -815,13 +815,18 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
   /* ── Improved table styling ─────────────────────────────────────────────────── */
   table tr:hover {
-    @apply bg-white/[0.02] transition-standard;
+    background-color: rgba(255, 255, 255, 0.02);
+    transition: background-color 300ms;
   }
   table th {
-    @apply font-semibold text-white/70 uppercase text-[10px] tracking-wider;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
   }
   table td {
-    @apply text-white/80;
+    color: rgba(255, 255, 255, 0.8);
   }
 
   /* ── Improved placeholder text color ─────────────────────────────────── */
