@@ -922,3 +922,16 @@
 - [x] Integrate new platforms into existing bot workflows
 - [x] Update frontend Integrations page for new platforms
 - [x] Create developer console redirect URI checklist for user
+
+
+## Production Ready: Full Platform Integration & Bot Workflows
+
+- [ ] Integrate all 28 platforms into Builder Bot workflows (niche research, product sourcing, store setup)
+- [ ] Integrate all 28 platforms into Merchant Bot workflows (fulfillment, inventory, pricing)
+- [ ] Integrate all 28 platforms into Social Bot workflows (ad campaigns, social posting, email)
+- [ ] Add platform-specific capabilities for each integration
+- [ ] Create expert-level bot handlers for each platform
+- [ ] Create comprehensive OAuth setup guide with all platforms
+- [ ] Test all integrations end-to-end
+- [ ] Verify bot workflows work with each platform
+- [ ] Deploy to production
