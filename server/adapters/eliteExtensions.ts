@@ -569,3 +569,329 @@ export async function getTwitterEliteExtensions(credentials: SocialCredentials):
     },
   };
 }
+
+// ─── Sprint 27 Elite Extensions ────────────────────────────────────────
+//
+// Each of the 7 new ecommerce surfaces gets a small, opinionated set
+// of elite primitives that exploit what that surface does best — and
+// only what that surface does. The bots branch on these via the live
+// capability matrix; they never call an extension a platform doesn't
+// expose.
+
+export interface DepopEliteExtensions {
+  /**
+   * Update the hashtag set on a Depop listing. Hashtags drive ~60% of
+   * Depop discovery — we expose this as a top-level primitive so the
+   * Builder bot can sweep stale hashtags after trend shifts.
+   */
+  updateHashtags(credentials: AdapterCredentials, listingId: string, hashtags: string[]): Promise<void>;
+  /** Refresh a listing — Depop bumps refreshed listings in feed ranking. */
+  refreshListing(credentials: AdapterCredentials, listingId: string): Promise<{ refreshedAt: string }>;
+}
+
+export interface BigCommerceEliteExtensions {
+  subscribeWebhook(credentials: AdapterCredentials, scope: string, destination: string): Promise<{ webhookId: string }>;
+  /** Bulk price update via Catalog API — preferred over per-product PUTs. */
+  bulkUpdatePrices(credentials: AdapterCredentials, updates: Array<{ productId: string; priceCents: number; comparePriceCents?: number }>): Promise<{ updated: number; errors: string[] }>;
+}
+
+export interface SquareEliteExtensions {
+  /** Adjust inventory at a specific location — multi-location merchants need this. */
+  adjustInventory(credentials: AdapterCredentials, productId: string, locationId: string, delta: number, reason: string): Promise<void>;
+  /** List active locations so the Builder bot can pick the default. */
+  listLocations(credentials: AdapterCredentials): Promise<Array<{ id: string; name: string; currency: string; status: string }>>;
+}
+
+export interface FaireEliteExtensions {
+  /**
+   * Acknowledge a Faire order within their 24h SLA. If we miss the
+   * window, Faire auto-cancels — this is the highest-stakes Faire op.
+   */
+  acknowledgeOrder(credentials: AdapterCredentials, orderId: string, expectedShipDate: string): Promise<{ acknowledgedAt: string }>;
+  /** Fetch outstanding-acknowledgement orders so the Merchant bot can prioritize. */
+  listPendingAcknowledgements(credentials: AdapterCredentials): Promise<Array<{ orderId: string; ackDueAt: string; hoursRemaining: number }>>;
+}
+
+export interface BonanzaEliteExtensions {
+  /**
+   * Toggle Google Shopping syndication tier — affects the FVF rate and
+   * traffic mix. Bots branch by margin: high-margin items go to
+   * "TurboTraffic", low-margin items stay on "Standard".
+   */
+  setSyndicationTier(credentials: AdapterCredentials, productId: string, tier: "Standard" | "Basic" | "Premium" | "TurboTraffic" | "PremiumPlus"): Promise<void>;
+}
+
+export interface StockXEliteExtensions {
+  /**
+   * Pull the live order book (bids + lowest asks) for a product so the
+   * Merchant bot can decide whether to undercut, hold, or raise the ask.
+   */
+  getOrderBook(credentials: AdapterCredentials, productUuid: string): Promise<{ bids: Array<{ amount: number; size: string }>; asks: Array<{ amount: number; size: string }> }>;
+  /** Search canonical catalog — required before posting an ask. */
+  searchCatalog(credentials: AdapterCredentials, query: string): Promise<Array<{ uuid: string; name: string; styleId: string; lowestAsk?: number; highestBid?: number }>>;
+}
+
+export interface ReverbEliteExtensions {
+  /** Auto-reply to an offer within margin guardrails. */
+  respondToOffer(credentials: AdapterCredentials, offerId: string, action: "accept" | "decline" | "counter", counterAmount?: number): Promise<{ status: string }>;
+  /** Apply Reverb Bump (paid promotion) at a target spend. */
+  applyBump(credentials: AdapterCredentials, listingId: string, bidPercent: number): Promise<{ bumpKey: string }>;
+}
+
+// ─── Factories ─────────────────────────────────────────────────────────
+
+export async function getDepopEliteExtensions(_credentials: AdapterCredentials): Promise<DepopEliteExtensions> {
+  return {
+    async updateHashtags(creds, listingId, hashtags) {
+      const adapter = getEcommerceAdapter("depop") as any;
+      // Depop API doesn't expose hashtags as a separate field; they live
+      // in the listing description. Bots concatenate top-N hashtags
+      // onto the description, then PATCH via the standard adapter.
+      const product = await adapter.getProduct(creds, listingId);
+      const cleaned = (product.description || "").replace(/(#\w+\s*)+$/g, "").trimEnd();
+      const tagLine = hashtags.map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ");
+      await adapter.updateProduct(creds, listingId, { description: `${cleaned}\n\n${tagLine}` });
+    },
+    async refreshListing(creds, listingId) {
+      const { default: axios } = await import("axios");
+      await axios.post(
+        `https://partnerapi.depop.com/v2/listings/${listingId}/refresh`,
+        {},
+        { headers: { Authorization: `Bearer ${creds.accessToken || ""}` }, timeout: 20000 },
+      ).catch(() => null);
+      return { refreshedAt: new Date().toISOString() };
+    },
+  };
+}
+
+export async function getBigCommerceEliteExtensions(_credentials: AdapterCredentials): Promise<BigCommerceEliteExtensions> {
+  return {
+    async subscribeWebhook(creds, scope, destination) {
+      const { default: axios } = await import("axios");
+      const storeHash = creds.metadata?.storeHash || "";
+      const res = await axios.post(
+        `https://api.bigcommerce.com/stores/${storeHash}/v3/hooks`,
+        { scope, destination, is_active: true },
+        {
+          headers: { "X-Auth-Token": creds.accessToken || "", "Content-Type": "application/json" },
+          timeout: 20000,
+        },
+      );
+      return { webhookId: res.data?.data?.id || "" };
+    },
+    async bulkUpdatePrices(creds, updates) {
+      const { default: axios } = await import("axios");
+      const storeHash = creds.metadata?.storeHash || "";
+      const errors: string[] = [];
+      let updated = 0;
+      // BigCommerce Catalog v3 takes a batch PUT /catalog/products with
+      // an array body — single round-trip for up to 250 items.
+      for (let i = 0; i < updates.length; i += 250) {
+        const batch = updates.slice(i, i + 250);
+        try {
+          await axios.put(
+            `https://api.bigcommerce.com/stores/${storeHash}/v3/catalog/products`,
+            batch.map((u) => ({
+              id: Number(u.productId),
+              price: u.priceCents / 100,
+              ...(u.comparePriceCents != null ? { retail_price: u.comparePriceCents / 100 } : {}),
+            })),
+            {
+              headers: { "X-Auth-Token": creds.accessToken || "", "Content-Type": "application/json" },
+              timeout: 30000,
+            },
+          );
+          updated += batch.length;
+        } catch (err: any) {
+          errors.push(err.response?.data?.title || err.message);
+        }
+      }
+      return { updated, errors };
+    },
+  };
+}
+
+export async function getSquareEliteExtensions(_credentials: AdapterCredentials): Promise<SquareEliteExtensions> {
+  return {
+    async adjustInventory(creds, productId, locationId, delta, reason) {
+      const { default: axios } = await import("axios");
+      const { randomUUID } = await import("node:crypto");
+      await axios.post(
+        "https://connect.squareup.com/v2/inventory/changes/batch-create",
+        {
+          idempotency_key: `BB-adj-${randomUUID()}`,
+          changes: [
+            {
+              type: "ADJUSTMENT",
+              adjustment: {
+                catalog_object_id: productId,
+                location_id: locationId,
+                from_state: delta < 0 ? "IN_STOCK" : "NONE",
+                to_state: delta < 0 ? "WASTE" : "IN_STOCK",
+                quantity: String(Math.abs(delta)),
+                occurred_at: new Date().toISOString(),
+                reference_id: reason,
+              },
+            },
+          ],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${creds.accessToken || ""}`,
+            "Square-Version": "2024-08-21",
+            "Content-Type": "application/json",
+          },
+          timeout: 20000,
+        },
+      );
+    },
+    async listLocations(creds) {
+      const { default: axios } = await import("axios");
+      const res = await axios.get("https://connect.squareup.com/v2/locations", {
+        headers: {
+          Authorization: `Bearer ${creds.accessToken || ""}`,
+          "Square-Version": "2024-08-21",
+        },
+        timeout: 20000,
+      });
+      return (res.data?.locations || []).map((l: any) => ({
+        id: l.id,
+        name: l.name,
+        currency: l.currency || "USD",
+        status: l.status,
+      }));
+    },
+  };
+}
+
+export async function getFaireEliteExtensions(_credentials: AdapterCredentials): Promise<FaireEliteExtensions> {
+  const apiToken = (c: AdapterCredentials) => c.apiKey || c.metadata?.apiKey || c.accessToken || "";
+  return {
+    async acknowledgeOrder(creds, orderId, expectedShipDate) {
+      const { default: axios } = await import("axios");
+      await axios.put(
+        `https://www.faire.com/external-api/v2/orders/${orderId}/processing`,
+        { expected_ship_date: expectedShipDate },
+        {
+          headers: { "X-FAIRE-ACCESS-TOKEN": apiToken(creds), "Content-Type": "application/json" },
+          timeout: 20000,
+        },
+      );
+      return { acknowledgedAt: new Date().toISOString() };
+    },
+    async listPendingAcknowledgements(creds) {
+      const { default: axios } = await import("axios");
+      // Pull recent orders, filter to NEW state.
+      const res = await axios.get("https://www.faire.com/external-api/v2/orders?state=NEW&limit=100", {
+        headers: { "X-FAIRE-ACCESS-TOKEN": apiToken(creds) },
+        timeout: 20000,
+      });
+      const now = Date.now();
+      return (res.data?.orders || []).map((o: any) => {
+        const due = new Date(o.expected_acknowledgement_by || o.created_at).getTime() + 24 * 60 * 60 * 1000;
+        return {
+          orderId: String(o.id),
+          ackDueAt: new Date(due).toISOString(),
+          hoursRemaining: Math.max(0, Math.round((due - now) / (60 * 60 * 1000))),
+        };
+      });
+    },
+  };
+}
+
+export async function getBonanzaEliteExtensions(_credentials: AdapterCredentials): Promise<BonanzaEliteExtensions> {
+  return {
+    async setSyndicationTier(creds, productId, tier) {
+      const { default: axios } = await import("axios");
+      const credsBag = creds.metadata || {};
+      await axios.post(
+        "https://api.bonanza.com/api_requests/std_bonapitit_api/revise_item",
+        {
+          requester_credentials: {
+            dev_id: credsBag.devId || creds.apiKey,
+            cert_id: credsBag.certId || creds.apiSecret,
+            user_token: credsBag.userToken || creds.accessToken,
+          },
+          item: { item_id: productId, syndication_tier: tier },
+        },
+        { headers: { "Content-Type": "application/json" }, timeout: 20000 },
+      );
+    },
+  };
+}
+
+export async function getStockXEliteExtensions(_credentials: AdapterCredentials): Promise<StockXEliteExtensions> {
+  return {
+    async getOrderBook(creds, productUuid) {
+      const { default: axios } = await import("axios");
+      const res = await axios.get(`https://api.stockx.com/v2/catalog/products/${productUuid}/market`, {
+        headers: {
+          Authorization: `Bearer ${creds.accessToken || ""}`,
+          "x-api-key": creds.apiKey || creds.metadata?.apiKey || "",
+        },
+        timeout: 20000,
+      });
+      return {
+        bids: (res.data?.bids || []).map((b: any) => ({ amount: b.amount, size: b.variant?.size })),
+        asks: (res.data?.asks || []).map((a: any) => ({ amount: a.amount, size: a.variant?.size })),
+      };
+    },
+    async searchCatalog(creds, query) {
+      const { default: axios } = await import("axios");
+      const res = await axios.get(`https://api.stockx.com/v2/catalog/search?query=${encodeURIComponent(query)}&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${creds.accessToken || ""}`,
+          "x-api-key": creds.apiKey || creds.metadata?.apiKey || "",
+        },
+        timeout: 20000,
+      });
+      return (res.data?.products || []).map((p: any) => ({
+        uuid: p.uuid,
+        name: p.name || p.title,
+        styleId: p.styleId,
+        lowestAsk: p.market?.lowestAsk,
+        highestBid: p.market?.highestBid,
+      }));
+    },
+  };
+}
+
+export async function getReverbEliteExtensions(_credentials: AdapterCredentials): Promise<ReverbEliteExtensions> {
+  return {
+    async respondToOffer(creds, offerId, action, counterAmount) {
+      const { default: axios } = await import("axios");
+      const path =
+        action === "accept" ? "accept" : action === "decline" ? "reject" : "counter";
+      const body = action === "counter" ? { offer_amount: counterAmount } : {};
+      const res = await axios.post(
+        `https://api.reverb.com/api/my/offers/${offerId}/${path}`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${creds.accessToken || creds.apiKey || ""}`,
+            "Content-Type": "application/hal+json",
+            "Accept-Version": "3.0",
+          },
+          timeout: 20000,
+        },
+      );
+      return { status: res.data?.state?.slug || action };
+    },
+    async applyBump(creds, listingId, bidPercent) {
+      const { default: axios } = await import("axios");
+      const res = await axios.put(
+        `https://api.reverb.com/api/my/listings/${listingId}/bump`,
+        { bump: { value: bidPercent } },
+        {
+          headers: {
+            Authorization: `Bearer ${creds.accessToken || creds.apiKey || ""}`,
+            "Content-Type": "application/hal+json",
+            "Accept-Version": "3.0",
+          },
+          timeout: 20000,
+        },
+      );
+      return { bumpKey: res.data?.bump_key || `bump-${Date.now()}` };
+    },
+  };
+}

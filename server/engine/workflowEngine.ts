@@ -86,6 +86,15 @@ export function registerWorkflow(workflowType: string, stepFactory: (input: Reco
   workflowRegistry.set(workflowType, stepFactory);
 }
 
+/**
+ * List every workflow type currently registered. Used by tests and the
+ * workflow-catalog router to verify the registry covers every public
+ * recipe surfaced in the UI.
+ */
+export function listWorkflowTypes(): string[] {
+  return Array.from(workflowRegistry.keys());
+}
+
 // ─── Engine Core ───────────────────────────────────────────────────────────
 
 /**

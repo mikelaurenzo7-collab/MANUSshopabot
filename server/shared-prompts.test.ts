@@ -68,7 +68,7 @@ describe("shared system-prompt bundle", () => {
     expect(prompt).toContain("CHANNEL DEPENDENCY SCORE");
   });
 
-  it("contains the integration capability primer with all 7 ecommerce + 7 social platforms", () => {
+  it("contains the integration capability primer with all 14 ecommerce + 7 social platforms", () => {
     const prompt = getSharedSystemPrompt();
     expect(prompt).toContain("INTEGRATION CAPABILITY PRIMER");
     // Spot-check one platform from each side renders with strengths.
@@ -76,6 +76,15 @@ describe("shared system-prompt bundle", () => {
     expect(prompt).toContain("### amazon");
     expect(prompt).toContain("### tiktok");
     expect(prompt).toContain("### gmail");
+    // Sprint 27 expansion — every new platform must show up so bots can
+    // plan against its capabilities/limitations honestly.
+    expect(prompt).toContain("### depop");
+    expect(prompt).toContain("### bigcommerce");
+    expect(prompt).toContain("### square");
+    expect(prompt).toContain("### faire");
+    expect(prompt).toContain("### bonanza");
+    expect(prompt).toContain("### stockx");
+    expect(prompt).toContain("### reverb");
   });
 
   it("contains the workflow-recipe catalog (so the bot can plan multi-step sagas)", () => {

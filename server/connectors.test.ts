@@ -40,13 +40,14 @@ function createAnonContext(): TrpcContext {
 
 describe("Connectors Router", () => {
   describe("ecommercePlatforms", () => {
-    it("returns all 7 e-commerce platforms", async () => {
+    it("returns all 14 e-commerce platforms with capability matrix", async () => {
       const ctx = createUserContext();
       const caller = appRouter.createCaller(ctx);
       const platforms = await caller.connectors.ecommercePlatforms();
       expect(platforms).toBeInstanceOf(Array);
-      expect(platforms.length).toBe(7);
+      expect(platforms.length).toBe(14);
       const ids = platforms.map((p: any) => p.id);
+      // Original 7
       expect(ids).toContain("shopify");
       expect(ids).toContain("woocommerce");
       expect(ids).toContain("amazon");
@@ -54,6 +55,19 @@ describe("Connectors Router", () => {
       expect(ids).toContain("ebay");
       expect(ids).toContain("tiktok_shop");
       expect(ids).toContain("walmart");
+      // Sprint 27 expansion
+      expect(ids).toContain("depop");
+      expect(ids).toContain("bigcommerce");
+      expect(ids).toContain("square");
+      expect(ids).toContain("faire");
+      expect(ids).toContain("bonanza");
+      expect(ids).toContain("stockx");
+      expect(ids).toContain("reverb");
+      // Each row carries a live capability matrix the bots branch on.
+      for (const p of platforms) {
+        expect(p.capabilityMatrix).toBeTruthy();
+        expect(typeof p.capabilityMatrix.recommendedBatchSize).toBe("number");
+      }
     });
 
     it("each platform has required fields", async () => {
@@ -89,7 +103,7 @@ describe("Connectors Router", () => {
   });
 
   describe("socialPlatforms", () => {
-    it("returns all social media platforms", async () => {
+    it("returns all social media platforms (google_ads moved to tools)", async () => {
       const ctx = createUserContext();
       const caller = appRouter.createCaller(ctx);
       const platforms = await caller.connectors.socialPlatforms();
@@ -97,10 +111,14 @@ describe("Connectors Router", () => {
       expect(platforms.length).toBeGreaterThanOrEqual(5);
       const ids = platforms.map((p: any) => p.id);
       expect(ids).toContain("meta");
+      expect(ids).toContain("instagram");
       expect(ids).toContain("tiktok");
       expect(ids).toContain("twitter");
       expect(ids).toContain("pinterest");
-      expect(ids).toContain("google_ads");
+      expect(ids).toContain("gmail");
+      // Google Ads relocated to the tools router (it's a marketing tool,
+      // not an organic posting surface).
+      expect(ids).not.toContain("google_ads");
     });
 
     it("each social platform has required fields", async () => {

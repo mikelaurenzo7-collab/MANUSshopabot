@@ -110,7 +110,10 @@ export const stores = mysqlTable("stores", {
    */
   userId: int("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]).default("shopify").notNull(),
+  platform: mysqlEnum("platform", [
+    "shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart",
+    "depop", "bigcommerce", "square", "faire", "bonanza", "stockx", "reverb",
+  ]).default("shopify").notNull(),
   platformDomain: varchar("platformDomain", { length: 255 }),
   platformAccessToken: text("platformAccessToken"),
   platformStoreId: varchar("platformStoreId", { length: 255 }),

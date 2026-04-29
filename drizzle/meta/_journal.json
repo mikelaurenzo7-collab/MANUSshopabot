@@ -176,6 +176,13 @@
       "when": 1777240000000,
       "tag": "0024_parallel_group_step_type",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1777250000000,
+      "tag": "0025_extended_platform_enum",
+      "breakpoints": true
     }
   ]
 }
