@@ -2331,6 +2331,12 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border-left: 2px solid rgba(var(--tile-color), 0.45);
   }
 
+  /* Hide scrollbars on chip strips while keeping overflow-x scrollable
+     by drag/wheel. Used by BotOperatingAcross so the chip row stays
+     visually clean even when the platform list overflows. */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
   /* Connected badge — the subtle pulse on the corner */
   .platform-connected-dot {
     position: relative;

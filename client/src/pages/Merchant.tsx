@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getBrand } from "@/lib/platformBrand";
+import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -99,7 +100,11 @@ export default function MerchantPage() {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
           <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
-            
+
+            {/* Operating-across strip — every commerce + social surface
+                Merchant is currently driving. */}
+            <BotOperatingAcross botId="merchant" />
+
             {/* Store Triage Selector */}
             <div className="border border-white/[0.08] bg-black/40 p-3 md:p-4 relative flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
               <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400/50" />

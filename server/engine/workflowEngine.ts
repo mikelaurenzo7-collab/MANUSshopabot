@@ -1023,6 +1023,26 @@ async function executeDataTransformStep(context: StepContext): Promise<any> {
   }
 }
 
+/**
+ * Walk the previousOutputs chain in reverse looking for the most-recent
+ * step whose result has the given key, and return that array. Used by
+ * the Sprint-27 elite store actions to consume the LLM's structured
+ * decisions without hard-coding the step index.
+ *
+ * Returns undefined when no prior output carries the key, which lets
+ * the caller short-circuit to a "no decisions, no-op" branch instead
+ * of crashing the workflow.
+ */
+function pluckPriorOutput<T>(context: StepContext, key: string): T | undefined {
+  for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+    const out = context.previousOutputs[i];
+    if (out && Array.isArray((out as any)[key])) {
+      return (out as any)[key] as T;
+    }
+  }
+  return undefined;
+}
+
 async function executeStoreActionStep(context: StepContext): Promise<any> {
   const { input, storeId, userId } = context;
   const action = input.action ?? "unknown";
@@ -1106,6 +1126,153 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
     case "social_analytics": {
       const analytics = await getCrossPlatformSocialAnalytics(userId);
       return { action, analytics };
+    }
+    // ─── Sprint 27 platform-elite actions ──────────────────────────────────
+    //
+    // Each pairs with a workflow registered in
+    // server/engine/platformEliteWorkflows.ts. The pattern is:
+    //  1. Walk previousOutputs for the LLM step's decisions array
+    //  2. Resolve the store's adapter + elite extension
+    //  3. Call the extension method per item; aggregate results.
+    case "depop_update_hashtags": {
+      if (!storeId) return { error: "Missing storeId" };
+      const updates = pluckPriorOutput<{ listingId: string; hashtags: string[] }[]>(context, "updates");
+      if (!updates || updates.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getDepopEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getDepopEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const u of updates) {
+        try {
+          await ext.updateHashtags(credentials, u.listingId, u.hashtags);
+          await ext.refreshListing(credentials, u.listingId);
+        } catch (err: any) {
+          errors.push(`${u.listingId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied: updates.length - errors.length, errors };
+    }
+    case "bigcommerce_subscribe_webhooks": {
+      if (!storeId) return { error: "Missing storeId" };
+      const scopes: string[] = Array.isArray(input.scopes) ? input.scopes : [];
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getBigCommerceEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getBigCommerceEliteExtensions(credentials);
+      const destination = `${process.env.PUBLIC_URL || ""}/api/webhooks/bigcommerce/${storeId}`;
+      const subscribed: string[] = [];
+      const errors: string[] = [];
+      for (const scope of scopes) {
+        try {
+          const r = await ext.subscribeWebhook(credentials, scope, destination);
+          if (r.webhookId) subscribed.push(scope);
+        } catch (err: any) {
+          errors.push(`${scope}: ${err.message}`);
+        }
+      }
+      return { action, storeId, subscribed, errors };
+    }
+    case "square_apply_transfers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const transfers = pluckPriorOutput<{ sku: string; fromLocationId: string; toLocationId: string; quantity: number; reason: string }[]>(context, "transfers");
+      if (!transfers || transfers.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getSquareEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getSquareEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const t of transfers) {
+        try {
+          // Simple model: decrement at source, increment at destination.
+          await ext.adjustInventory(credentials, t.sku, t.fromLocationId, -t.quantity, t.reason);
+          await ext.adjustInventory(credentials, t.sku, t.toLocationId, +t.quantity, t.reason);
+        } catch (err: any) {
+          errors.push(`${t.sku}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied: transfers.length - errors.length, errors };
+    }
+    case "faire_acknowledge_orders": {
+      if (!storeId) return { error: "Missing storeId" };
+      const acks = pluckPriorOutput<{ orderId: string; expectedShipDate: string }[]>(context, "acks");
+      if (!acks || acks.length === 0) return { action, storeId, acknowledged: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getFaireEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getFaireEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const a of acks) {
+        try {
+          await ext.acknowledgeOrder(credentials, a.orderId, a.expectedShipDate);
+        } catch (err: any) {
+          errors.push(`${a.orderId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, acknowledged: acks.length - errors.length, errors };
+    }
+    case "bonanza_set_tiers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const decisions = pluckPriorOutput<{ productId: string; tier: string }[]>(context, "decisions");
+      if (!decisions || decisions.length === 0) return { action, storeId, updated: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getBonanzaEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getBonanzaEliteExtensions(credentials);
+      const errors: string[] = [];
+      for (const d of decisions) {
+        try {
+          await ext.setSyndicationTier(credentials, d.productId, d.tier as any);
+        } catch (err: any) {
+          errors.push(`${d.productId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, updated: decisions.length - errors.length, errors };
+    }
+    case "stockx_apply_repricing": {
+      if (!storeId) return { error: "Missing storeId" };
+      const decisions = pluckPriorOutput<{ listingId: string; action: string; newAskCents?: number }[]>(context, "decisions");
+      if (!decisions || decisions.length === 0) return { action, storeId, applied: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { credentials } = await getStoreAdapter(storeId);
+      const { getEcommerceAdapter } = await import("../adapters/ecommerce");
+      const adapter = getEcommerceAdapter("stockx");
+      const errors: string[] = [];
+      let applied = 0;
+      for (const d of decisions) {
+        try {
+          if (d.action === "cancel") {
+            await adapter.deleteProduct(credentials, d.listingId);
+          } else if ((d.action === "undercut" || d.action === "raise") && d.newAskCents != null) {
+            await adapter.updateProduct(credentials, d.listingId, { priceCents: d.newAskCents });
+          }
+          // "hold" is intentionally a no-op.
+          applied++;
+        } catch (err: any) {
+          errors.push(`${d.listingId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, applied, errors };
+    }
+    case "reverb_respond_offers": {
+      if (!storeId) return { error: "Missing storeId" };
+      const responses = pluckPriorOutput<{ offerId: string; action: "accept" | "decline" | "counter"; counterCents?: number }[]>(context, "responses");
+      if (!responses || responses.length === 0) return { action, storeId, sent: 0 };
+      const { getStoreAdapter } = await import("./platformBridge");
+      const { getReverbEliteExtensions } = await import("../adapters/ecommerce");
+      const { credentials } = await getStoreAdapter(storeId);
+      const ext = await getReverbEliteExtensions(credentials);
+      const errors: string[] = [];
+      let sent = 0;
+      for (const r of responses) {
+        try {
+          await ext.respondToOffer(credentials, r.offerId, r.action, r.counterCents != null ? r.counterCents / 100 : undefined);
+          sent++;
+        } catch (err: any) {
+          errors.push(`${r.offerId}: ${err.message}`);
+        }
+      }
+      return { action, storeId, sent, errors };
     }
     default:
       return {

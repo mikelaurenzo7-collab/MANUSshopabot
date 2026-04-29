@@ -176,3 +176,43 @@ describe("Sprint 27 — tools registry now covers Google Ads", () => {
     expect(SUPPORTED_TOOL_CONNECTORS.length).toBe(9);
   });
 });
+
+describe("Sprint 27 — workflow engine actually executes the new actions", () => {
+  // The engine's executeStoreActionStep is the choke point — without
+  // case branches for each new action, the workflow registers but
+  // dead-ends at runtime. These tests guard that every action declared
+  // by a Sprint 27 workflow has a handler in the engine.
+  it("every Sprint-27 action has a case branch in executeStoreActionStep", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "engine/workflowEngine.ts"),
+      "utf-8",
+    );
+    const ACTIONS = [
+      "depop_update_hashtags",
+      "bigcommerce_subscribe_webhooks",
+      "square_apply_transfers",
+      "faire_acknowledge_orders",
+      "bonanza_set_tiers",
+      "stockx_apply_repricing",
+      "reverb_respond_offers",
+    ];
+    for (const a of ACTIONS) {
+      expect(src, `expected case "${a}" in executeStoreActionStep`).toContain(`case "${a}":`);
+    }
+  });
+
+  it("exposes a pluckPriorOutput helper used by the new handlers", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "engine/workflowEngine.ts"),
+      "utf-8",
+    );
+    expect(src).toContain("function pluckPriorOutput");
+    // The helper must walk previousOutputs in reverse so a later
+    // approval-gate step doesn't shadow the LLM step's data.
+    expect(src).toMatch(/for \(let i = context\.previousOutputs\.length - 1/);
+  });
+});

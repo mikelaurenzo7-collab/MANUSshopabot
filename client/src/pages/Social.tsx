@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getBrand } from "@/lib/platformBrand";
+import { BotOperatingAcross } from "@/components/BotOperatingAcross";
 import {
   Megaphone,
   Loader2,
@@ -258,8 +259,13 @@ function SocialContent({
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-3">
+      {/* Operating-across strip — every social channel + commerce
+          surface Social Bot is currently driving for this org. */}
+      <div className="px-3 md:px-5 pt-3">
+        <BotOperatingAcross botId="social" />
+      </div>
       {/* Store selector + tabs */}
-      <div className="px-3 md:px-5 pt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+      <div className="px-3 md:px-5 pt-2 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
