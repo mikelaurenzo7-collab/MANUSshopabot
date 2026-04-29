@@ -414,6 +414,14 @@ export const workflowRouter = router({
         { type: "walmart_performance_alarm", title: "Walmart Performance Alarm", description: "Monitor Walmart seller performance metrics and generate corrective action plans", icon: "AlertTriangle", scope: "specific_store" },
         { type: "margin_guard_audit", title: "Margin Guard Audit", description: "Scans every active SKU and flags products selling below your margin floor — with proposed price-fix or pause actions for owner approval", icon: "Shield", scope: "specific_store" },
         { type: "velocity_restock_predictor", title: "Velocity Restock Predictor", description: "Computes per-SKU sales velocity from real order data, projects stockout dates, and recommends reorder quantities tuned to supplier lead time", icon: "TrendingUp", scope: "specific_store" },
+        // Sprint 27 expansion — one elite recipe per new platform
+        { type: "depop_hashtag_refresh", title: "Depop Hashtag Refresh", description: "Audit + refresh hashtags on every active Depop listing using current trend data — drives 60% of Depop discovery", icon: "Hash", scope: "specific_store" },
+        { type: "bigcommerce_webhook_bootstrap", title: "BigCommerce Webhooks", description: "Subscribe order, product, and inventory webhooks so the Merchant bot reacts in real-time instead of polling", icon: "Webhook", scope: "specific_store" },
+        { type: "square_multilocation_sync", title: "Square Multi-Location Sync", description: "Rebalance inventory across Square retail locations and the warehouse hub based on per-SKU velocity", icon: "MapPin", scope: "specific_store" },
+        { type: "faire_ack_watcher", title: "Faire Acknowledgement Watcher", description: "Auto-acknowledge Faire orders within the 24h SLA with realistic ship dates — missed acks auto-cancel orders", icon: "ClockAlert", scope: "specific_store" },
+        { type: "bonanza_syndication_optimizer", title: "Bonanza Syndication Tier Optimizer", description: "Tune Google Shopping syndication tier per listing based on margin × velocity to maximize contribution margin", icon: "Layers", scope: "specific_store" },
+        { type: "stockx_ask_repricer", title: "StockX Ask Repricer", description: "Read the live StockX order book per ask and undercut/hold/raise within a margin floor", icon: "TrendingDown", scope: "specific_store" },
+        { type: "reverb_offer_responder", title: "Reverb Offer Auto-Responder", description: "Auto-handle open Reverb offers: accept strong, counter mid-range, decline lowballs — within margin guardrails", icon: "MessageSquare", scope: "specific_store" },
       ],
       social: [
         { type: "ad_campaign", title: "Ad Campaign", description: "Full campaign creation — audience research, copy variations, and AI-generated creatives", icon: "Megaphone", scope: "specific_store" },
@@ -434,6 +442,10 @@ export const workflowRouter = router({
         { type: "twitter_stream_monitor", title: "Twitter/X Brand Monitor", description: "Real-time brand mention tracking, sentiment analysis, and crisis detection", icon: "Radio", scope: "global" },
         { type: "subject_line_ab_test", title: "Subject-Line A/B Test", description: "Generates 5 subject-line variants using different psychological angles, predicts open-rate lift, and ranks the winner", icon: "Mail", scope: "global" },
         { type: "send_time_optimizer", title: "Send-Time Optimizer", description: "Builds a day-of-week × hour open-rate heatmap from your real SendGrid event data and recommends top 3 send windows for your audience", icon: "Clock", scope: "all_stores" },
+        // Sprint 27.5 — Outlook + Slack + YouTube native recipes
+        { type: "outlook_b2b_outreach", title: "Outlook B2B Outreach", description: "Personalized B2B outreach via Outlook — pulls leads from CRM/Sheets, drafts plain-text emails (no template smell), and books follow-up meetings on the same Microsoft Graph token", icon: "Send", scope: "global" },
+        { type: "slack_drop_announcement", title: "Slack Drop Announcement", description: "Schedule a product drop blast to a VIP Slack channel — Block Kit cards with image + buy link + reaction tracking for engagement signal", icon: "MessageSquare", scope: "specific_store" },
+        { type: "youtube_shorts_publisher", title: "YouTube Shorts Publisher", description: "Generate hook + caption + tags from a product, then upload as a YouTube Short with native scheduled-publish via publishAt", icon: "Video", scope: "specific_store" },
       ],
     };
   }),

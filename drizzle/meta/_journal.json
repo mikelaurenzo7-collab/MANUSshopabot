@@ -183,6 +183,20 @@
       "when": 1777439295260,
       "tag": "0025_talented_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1777450000000,
+      "tag": "0026_extended_platform_enum",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1777460000000,
+      "tag": "0027_social_accounts_outlook_slack_youtube",
+      "breakpoints": true
     }
   ]
 }

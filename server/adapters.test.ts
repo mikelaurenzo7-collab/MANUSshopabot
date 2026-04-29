@@ -41,9 +41,10 @@ function createAdminContext(): TrpcContext {
 // ─── E-Commerce Adapter Registry Tests ────────────────────────────────────
 
 describe("E-Commerce Adapter Registry", () => {
-  it("supports all 7 e-commerce platforms", () => {
+  it("supports all 14 e-commerce platforms", () => {
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toBeInstanceOf(Array);
-    expect(SUPPORTED_ECOMMERCE_PLATFORMS.length).toBe(7);
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS.length).toBe(14);
+    // Original 7
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("shopify");
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("woocommerce");
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("amazon");
@@ -51,6 +52,29 @@ describe("E-Commerce Adapter Registry", () => {
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("ebay");
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("tiktok_shop");
     expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("walmart");
+    // Sprint 27 expansion: vintage/POD/wholesale/specialty marketplaces
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("depop");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("bigcommerce");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("square");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("faire");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("bonanza");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("stockx");
+    expect(SUPPORTED_ECOMMERCE_PLATFORMS).toContain("reverb");
+  });
+
+  it("every adapter exposes a coherent capability matrix", () => {
+    for (const platform of SUPPORTED_ECOMMERCE_PLATFORMS) {
+      const adapter = getEcommerceAdapter(platform);
+      const caps = adapter.getCapabilities();
+      expect(typeof caps.recommendedBatchSize).toBe("number");
+      expect(caps.recommendedBatchSize).toBeGreaterThan(0);
+      expect(typeof caps.rateLimitTokensPerSec).toBe("number");
+      expect(["marketplace", "storefront", "social_commerce"]).toContain(caps.category);
+      expect(["subscription", "commission", "hybrid", "free"]).toContain(caps.feeStructure);
+      expect(Array.isArray(caps.strengths)).toBe(true);
+      expect(caps.strengths.length).toBeGreaterThan(0);
+      expect(Array.isArray(caps.limitations)).toBe(true);
+    }
   });
 
   it("returns an adapter for each supported platform", () => {
@@ -107,9 +131,10 @@ describe("E-Commerce Adapter Registry", () => {
 // ─── Social Adapter Registry Tests ────────────────────────────────────────
 
 describe("Social Adapter Registry", () => {
-  it("supports all 7 social media platforms", () => {
+  it("supports all 11 social media platforms (Sprint 27.5 + Snapchat)", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toBeInstanceOf(Array);
-    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(7);
+    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(11);
+    // Original 7
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("meta");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("instagram");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("tiktok");
@@ -117,6 +142,12 @@ describe("Social Adapter Registry", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("pinterest");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("google_ads");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("gmail");
+    // Snapchat (added on main while Sprint 27.5 was in flight).
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("snapchat");
+    // Sprint 27.5 — Microsoft inbox, community channel, video.
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("outlook");
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("slack");
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("youtube");
   });
 
   it("returns an adapter for each supported platform", () => {

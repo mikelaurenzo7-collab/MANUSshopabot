@@ -84,9 +84,19 @@ export const ENV = {
   // BigCommerce
   bigcommerceClientId: process.env.BIGCOMMERCE_CLIENT_ID ?? "",
   bigcommerceClientSecret: process.env.BIGCOMMERCE_CLIENT_SECRET ?? "",
-  // Square
-  squareClientId: process.env.SQUARE_OAUTH_APPLICATION_ID ?? "",
-  squareClientSecret: process.env.SQUARE_OAUTH_APPLICATION_SECRET ?? "",
+  // Square — both OAuth credentials (for installs) and production
+  // first-party tokens (for direct API calls on the operator's own
+  // account). The fallback chain on squareClientId/Secret accepts
+  // whichever names the operator actually set in Manus secrets.
+  squareClientId:
+    process.env.SQUARE_CLIENT_ID
+    ?? process.env.SQUARE_OAUTH_APPLICATION_ID
+    ?? process.env.SQUARE_PRODUCTION_APPLICATION_ID
+    ?? "",
+  squareClientSecret:
+    process.env.SQUARE_CLIENT_SECRET
+    ?? process.env.SQUARE_OAUTH_APPLICATION_SECRET
+    ?? "",
   squareProductionAccessToken: process.env.SQUARE_PRODUCTION_ACCESS_TOKEN ?? "",
   squareProductionApplicationId: process.env.SQUARE_PRODUCTION_APPLICATION_ID ?? "",
   // Faire
@@ -101,6 +111,31 @@ export const ENV = {
   // Reverb
   reverbClientId: process.env.REVERB_CLIENT_ID ?? "",
   reverbClientSecret: process.env.REVERB_CLIENT_SECRET ?? "",
+
+  // ── Sprint 27.5 platform additions ──────────────────────────────────────
+
+  // Outlook / Microsoft Graph (Mail + Calendar)
+  // App registered at portal.azure.com → Azure AD → App registrations.
+  // The same client id powers Mail.* and Calendars.* scopes; we ride
+  // the v2.0 endpoint so personal + work accounts are both supported.
+  azureClientId: process.env.AZURE_CLIENT_ID ?? "",
+  azureClientSecret: process.env.AZURE_CLIENT_SECRET ?? "",
+  azureTenantId: process.env.AZURE_TENANT_ID ?? "common",
+
+  // Slack — bot-token + OAuth v2. Set SLACK_CLIENT_ID and _SECRET to
+  // light up the social-router connect tile; signing secret + verification
+  // token are only needed when the operator turns on event subscriptions.
+  slackClientId: process.env.SLACK_CLIENT_ID ?? "",
+  slackClientSecret: process.env.SLACK_CLIENT_SECRET ?? "",
+  slackSigningSecret: process.env.SLACK_SIGNING_SECRET ?? "",
+  slackVerificationToken: process.env.SLACK_VERIFICATION_TOKEN ?? "",
+
+  // YouTube rides on the Google OAuth client (googleClientId/Secret) but
+  // gets its own dev key for the YouTube Data API v3 read endpoints when
+  // set. Without the key we still publish via OAuth; with it we can also
+  // fetch channel + video analytics without the user-consent overhead.
+  youtubeApiKey: process.env.YOUTUBE_API_KEY ?? "",
+
   // Facebook Page ID for bot notifications
   beastbotsPageId: process.env.BEASTBOTS_PAGE_ID ?? "",
 

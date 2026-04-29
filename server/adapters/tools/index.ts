@@ -15,6 +15,7 @@ export { PostscriptAdapter } from "./postscriptAdapter";
 export { PrintfulAdapter } from "./printfulAdapter";
 export { JudgeMeAdapter } from "./judgemeAdapter";
 export { GorgiasAdapter } from "./gorgiasAdapter";
+export { GoogleAdsAdapter } from "./googleAdsAdapter";
 
 import type { ToolConnectorAdapter, ToolCredentials } from "./types";
 import { GoogleSheetsAdapter } from "./googleSheetsAdapter";
@@ -25,6 +26,7 @@ import { PostscriptAdapter } from "./postscriptAdapter";
 import { PrintfulAdapter } from "./printfulAdapter";
 import { JudgeMeAdapter } from "./judgemeAdapter";
 import { GorgiasAdapter } from "./gorgiasAdapter";
+import { GoogleAdsAdapter } from "./googleAdsAdapter";
 
 const adapters: Record<string, ToolConnectorAdapter> = {
   google_sheets: new GoogleSheetsAdapter(),
@@ -35,6 +37,7 @@ const adapters: Record<string, ToolConnectorAdapter> = {
   printful: new PrintfulAdapter(),
   judgeme: new JudgeMeAdapter(),
   gorgias: new GorgiasAdapter(),
+  google_ads: new GoogleAdsAdapter(),
 };
 
 export function getToolAdapter(tool: string): ToolConnectorAdapter {

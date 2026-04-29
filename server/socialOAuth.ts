@@ -188,6 +188,141 @@ async function fetchGmailProfile(accessToken: string): Promise<UserProfile> {
   };
 }
 
+// ─── Outlook / Microsoft Graph ──────────────────────────────────────────
+// Same OAuth dance as Google, just at login.microsoftonline.com. The
+// tenant is pulled from AZURE_TENANT_ID; "common" supports both work
+// and personal accounts. Refresh tokens come back when the auth URL
+// included offline_access — see SOCIAL_PLATFORMS.outlook in
+// server/routers/connectors.ts.
+async function exchangeOutlookCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const tenant = ENV.azureTenantId || "common";
+  const res = await axios.post(
+    `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
+    new URLSearchParams({
+      client_id: ENV.azureClientId,
+      client_secret: ENV.azureClientSecret,
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri,
+      // Asking for offline_access here too is harmless — token endpoint
+      // mirrors whatever scopes the authorize URL requested.
+      scope: "Mail.Read Mail.Send Calendars.Read Calendars.ReadWrite User.Read offline_access",
+    }).toString(),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+  );
+  return {
+    access_token: res.data.access_token,
+    refresh_token: res.data.refresh_token,
+    expires_in: res.data.expires_in,
+    scope: res.data.scope,
+    token_type: res.data.token_type,
+  };
+}
+
+async function fetchOutlookProfile(accessToken: string): Promise<UserProfile> {
+  const { default: axios } = await import("axios");
+  const res = await axios.get("https://graph.microsoft.com/v1.0/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return {
+    accountId: res.data.id || res.data.userPrincipalName || res.data.mail,
+    accountName: res.data.displayName || res.data.userPrincipalName || res.data.mail,
+    profileUrl: res.data.userPrincipalName ? `mailto:${res.data.userPrincipalName}` : undefined,
+  };
+}
+
+// ─── Slack ──────────────────────────────────────────────────────────────
+// Slack OAuth v2 returns both a bot token and a user token. We persist
+// the bot token as access_token (chat.postMessage needs it) and stash
+// the user token + team id on metadata via the social-account record.
+async function exchangeSlackCode(
+  code: string,
+  redirectUri: string,
+): Promise<TokenResponse & { team?: { id: string; name: string }; bot_user_id?: string; authed_user?: { id: string; access_token?: string } }> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post(
+    "https://slack.com/api/oauth.v2.access",
+    new URLSearchParams({
+      client_id: ENV.slackClientId,
+      client_secret: ENV.slackClientSecret,
+      code,
+      redirect_uri: redirectUri,
+    }).toString(),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+  );
+  if (res.data?.ok === false) {
+    throw new Error(`Slack OAuth error: ${res.data.error}`);
+  }
+  return {
+    access_token: res.data.access_token, // bot token (xoxb-…)
+    refresh_token: res.data.refresh_token,
+    expires_in: res.data.expires_in,
+    scope: res.data.scope,
+    team: res.data.team,
+    bot_user_id: res.data.bot_user_id,
+    authed_user: res.data.authed_user,
+  };
+}
+
+async function fetchSlackProfile(accessToken: string): Promise<UserProfile> {
+  const { default: axios } = await import("axios");
+  // auth.test echoes the team + bot user info — we don't even need a
+  // separate `users.info` call to populate the account.
+  const res = await axios.post(
+    "https://slack.com/api/auth.test",
+    {},
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (res.data?.ok === false) {
+    throw new Error(`Slack auth.test failed: ${res.data.error}`);
+  }
+  return {
+    accountId: res.data.team_id || res.data.user_id,
+    accountName: res.data.team || res.data.user || "Slack Workspace",
+    profileUrl: res.data.url,
+  };
+}
+
+// ─── YouTube ────────────────────────────────────────────────────────────
+// Rides on the same Google OAuth client as Gmail. The only difference
+// is the scopes — set on the authorize URL, mirrored back here so the
+// token-exchange request is explicit about what was granted.
+async function exchangeYouTubeCode(code: string, redirectUri: string): Promise<TokenResponse> {
+  const { default: axios } = await import("axios");
+  const res = await axios.post(
+    "https://oauth2.googleapis.com/token",
+    new URLSearchParams({
+      client_id: ENV.googleClientId,
+      client_secret: ENV.googleClientSecret,
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: redirectUri,
+    }).toString(),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+  );
+  return {
+    access_token: res.data.access_token,
+    refresh_token: res.data.refresh_token,
+    expires_in: res.data.expires_in,
+    scope: res.data.scope,
+  };
+}
+
+async function fetchYouTubeProfile(accessToken: string): Promise<UserProfile> {
+  const { default: axios } = await import("axios");
+  const res = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params: { part: "snippet,statistics", mine: "true" },
+  });
+  const channel = res.data?.items?.[0];
+  return {
+    accountId: channel?.id || "youtube",
+    accountName: channel?.snippet?.title || "YouTube Channel",
+    profileImageUrl: channel?.snippet?.thumbnails?.default?.url,
+    followerCount: parseInt(channel?.statistics?.subscriberCount || "0"),
+  };
+}
 
 // ─── Snapchat ──────────────────────────────────────────────────────────
 async function exchangeSnapchatCode(code: string, redirectUri: string): Promise<TokenResponse> {
@@ -326,6 +461,19 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       case "snapchat":
         tokenData = await exchangeSnapchatCode(code, redirectUri);
         profile = await fetchSnapchatProfile(tokenData.access_token);
+        break;
+      // Sprint 27.5 expansion ────────────────────────────────────────────
+      case "outlook":
+        tokenData = await exchangeOutlookCode(code, redirectUri);
+        profile = await fetchOutlookProfile(tokenData.access_token);
+        break;
+      case "slack":
+        tokenData = await exchangeSlackCode(code, redirectUri);
+        profile = await fetchSlackProfile(tokenData.access_token);
+        break;
+      case "youtube":
+        tokenData = await exchangeYouTubeCode(code, redirectUri);
+        profile = await fetchYouTubeProfile(tokenData.access_token);
         break;
       default:
         return res.redirect(`${callbackOrigin}/integrations?error=unsupported_platform`);

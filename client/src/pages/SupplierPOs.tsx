@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { CountUp } from "@/components/CountUp";
+import { getBrand } from "@/lib/platformBrand";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,14 +98,18 @@ export default function SupplierPOs() {
                 <SelectValue placeholder="Select store" />
               </SelectTrigger>
               <SelectContent>
-                {storeList.map((s: any) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    <div className="flex items-center gap-2">
-                      <span>{s.name}</span>
-                      <Badge variant="outline" className="text-[9px] ml-1">{s.platform}</Badge>
-                    </div>
-                  </SelectItem>
-                ))}
+                {storeList.map((s: any) => {
+                  const brand = getBrand(s.platform);
+                  return (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm leading-none">{brand.icon}</span>
+                        <span>{s.name}</span>
+                        <Badge variant="outline" className="text-[9px] ml-1">{brand.name}</Badge>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

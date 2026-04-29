@@ -2090,6 +2090,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   from { transform: translateX(0); }
   to { transform: translateX(-33.33%); }
 }
+@keyframes ticker-reverse {
+  /* Mirrors the `ticker` keyframe but inverted so two adjacent marquees
+     drift in opposite directions (subtle parallax read). Pairs with
+     3x-content arrays — same -33.33% wraparound point as `ticker`. */
+  from { transform: translateX(-33.33%); }
+  to { transform: translateX(0); }
+}
 
 .reveal {
   opacity: 0;
@@ -2161,6 +2168,1032 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   
   /* Mobile-safe split layout */
   .mobile-split { @apply flex flex-col sm:flex-row gap-4 sm:gap-0; }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     PLATFORM TILE — Sprint 27 cinematic edition
+     The integrations grid is a discovery surface; every tile is a brand
+     ambassador. The primitives below let any platform card opt into:
+       1. A hero ribbon along the top edge in brand color → accent
+       2. A holographic seam that lights up on hover
+       3. A breathing glow that pulses at idle so the page feels alive
+       4. A magnetic lift on hover (subtle scale + ring + shadow)
+     A tile that wires its `--tile-color` and `--tile-accent` CSS vars
+     gets all four for free.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  .platform-tile {
+    --tile-color: 100, 116, 139;
+    --tile-accent: 148, 163, 184;
+    position: relative;
+    isolation: isolate;
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.045) 0%,
+        rgba(255, 255, 255, 0.018) 60%,
+        rgba(255, 255, 255, 0.01) 100%
+      );
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    transition: transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      border-color 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      background 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .platform-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 0.55) 0%,
+      rgba(var(--tile-accent), 0.18) 35%,
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000, #000) content-box,
+      linear-gradient(#000, #000);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    opacity: 0.55;
+    transition: opacity 320ms ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .platform-tile::after {
+    content: "";
+    position: absolute;
+    inset: -40% -10% auto auto;
+    width: 60%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.22) 0%,
+      transparent 65%
+    );
+    filter: blur(28px);
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0);
+    transition: opacity 380ms ease, transform 600ms ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .platform-tile > * { position: relative; z-index: 2; }
+
+  .platform-tile:hover {
+    border-color: rgba(var(--tile-color), 0.28);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(var(--tile-color), 0.05) 0%,
+        rgba(255, 255, 255, 0.02) 100%
+      );
+    box-shadow:
+      0 12px 40px -12px rgba(var(--tile-color), 0.45),
+      0 0 0 1px rgba(var(--tile-color), 0.18) inset;
+    transform: translateY(-2px);
+  }
+  .platform-tile:hover::before { opacity: 1; }
+  .platform-tile:hover::after { opacity: 0.85; transform: translate3d(-10%, 10%, 0); }
+
+  /* Hero ribbon along the top edge — picks up the brand colors. */
+  .platform-tile-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(var(--tile-color), 0.95),
+      rgba(var(--tile-accent), 0.6) 50%,
+      transparent
+    );
+    border-radius: inherit inherit 0 0;
+    z-index: 3;
+    opacity: 0.9;
+  }
+
+  /* Breathing glow under the icon — small, subliminal, says "alive". */
+  .platform-tile-icon-halo {
+    position: relative;
+  }
+  .platform-tile-icon-halo::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.35) 0%,
+      transparent 65%
+    );
+    border-radius: 50%;
+    filter: blur(10px);
+    opacity: 0.55;
+    animation: tile-icon-breathe 4.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @keyframes tile-icon-breathe {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.12); }
+  }
+
+  /* Capability halo — circular badge for connected count.  */
+  .platform-tile-status-pulse {
+    position: relative;
+  }
+  .platform-tile-status-pulse::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    border: 1px solid currentColor;
+    opacity: 0.5;
+    animation: tile-status-pulse 1.8s ease-out infinite;
+  }
+  @keyframes tile-status-pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  /* Holographic seam — drifts diagonally on hover only. */
+  .platform-tile-seam {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.06) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 1;
+  }
+  .platform-tile:hover .platform-tile-seam {
+    transform: translateX(100%);
+  }
+
+  /* "Connect" pill — brand-colored fill that subtly glows at rest. */
+  .platform-tile-cta {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 1),
+      rgba(var(--tile-accent), 0.85)
+    );
+    box-shadow:
+      0 6px 18px -6px rgba(var(--tile-color), 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+  }
+  .platform-tile-cta:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow:
+      0 10px 26px -6px rgba(var(--tile-color), 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  }
+  .platform-tile-cta::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .platform-tile-cta:hover::before {
+    transform: translateX(100%);
+  }
+
+  /* Capability chip — tiny pill that adopts the tile's color in
+     hover state but stays neutral at rest. */
+  .platform-cap-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgb(203, 213, 225);
+    transition: all 220ms ease;
+  }
+  .platform-tile:hover .platform-cap-chip {
+    background: rgba(var(--tile-color), 0.12);
+    border-color: rgba(var(--tile-color), 0.3);
+    color: rgb(255, 255, 255);
+  }
+
+  /* "Strength" highlight — a single-line bullet under the chips */
+  .platform-tile-strength {
+    color: rgba(255, 255, 255, 0.78);
+    background:
+      linear-gradient(
+        180deg,
+        rgba(var(--tile-color), 0.07),
+        rgba(var(--tile-accent), 0.04) 100%
+      );
+    border-left: 2px solid rgba(var(--tile-color), 0.45);
+  }
+
+  /* NEW ribbon — angled corner badge for freshly-shipped platforms.
+     Drives celebration on Sprint 27.5 launches without taking the
+     prime real estate of the platform CTA. Pulses gently so the eye
+     catches it on first scan. */
+  .platform-tile-new-ribbon {
+    position: absolute;
+    top: 10px;
+    right: -28px;
+    transform: rotate(35deg);
+    background: linear-gradient(
+      135deg,
+      rgba(var(--tile-color), 1) 0%,
+      rgba(var(--tile-accent), 0.95) 100%
+    );
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    padding: 3px 28px;
+    text-transform: uppercase;
+    box-shadow:
+      0 4px 12px -4px rgba(var(--tile-color), 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    z-index: 4;
+    pointer-events: none;
+    animation: tile-new-ribbon-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes tile-new-ribbon-pulse {
+    0%, 100% {
+      box-shadow:
+        0 4px 12px -4px rgba(var(--tile-color), 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    }
+    50% {
+      box-shadow:
+        0 6px 18px -4px rgba(var(--tile-color), 1),
+        0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    }
+  }
+
+  /* "Just Landed" hero card — a wider, deeper spotlight strip that
+     sits above the connect grid when at least one platform carries
+     `newSince`. Two soft brand-colored radial blooms drift in the
+     corners; the headline + chips ride on top. Reads as a launch
+     announcement, not a banner ad. */
+  .just-landed-hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 1.5rem;
+    padding: 1.75rem 1.5rem;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(14, 165, 233, 0.09) 0%,
+        rgba(6, 182, 212, 0.05) 35%,
+        rgba(249, 115, 22, 0.08) 100%
+      );
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 12px 36px -16px rgba(14, 165, 233, 0.4);
+  }
+  .just-landed-hero::before {
+    content: "";
+    position: absolute;
+    inset: -30% -10% auto auto;
+    width: 50%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(56, 189, 248, 0.28) 0%,
+      transparent 65%
+    );
+    filter: blur(50px);
+    pointer-events: none;
+    z-index: 0;
+    animation: just-landed-orb-1 14s ease-in-out infinite;
+  }
+  .just-landed-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto auto -40% -10%;
+    width: 55%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(251, 146, 60, 0.22) 0%,
+      transparent 65%
+    );
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: just-landed-orb-2 18s ease-in-out -7s infinite;
+  }
+  .just-landed-hero > * { position: relative; z-index: 1; }
+  @keyframes just-landed-orb-1 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-8%, 5%, 0) scale(1.1); }
+  }
+  @keyframes just-landed-orb-2 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(6%, -4%, 0) scale(1.08); }
+  }
+
+  /* Eyebrow tag inside the just-landed hero */
+  .just-landed-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.14);
+    border: 1px solid rgba(14, 165, 233, 0.32);
+    color: rgba(125, 211, 252, 0.95);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .just-landed-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgb(56, 189, 248);
+    box-shadow: 0 0 8px rgb(56, 189, 248);
+    animation: tile-status-pulse 2.2s ease-out infinite;
+  }
+
+  /* New-platform spotlight tile — used inside the just-landed hero. */
+  .just-landed-spot {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--tile-color), 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(var(--tile-color), 0.3);
+    transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    cursor: pointer;
+  }
+  .just-landed-spot:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 16px 36px -12px rgba(var(--tile-color), 0.55),
+      0 0 0 1px rgba(var(--tile-color), 0.4) inset;
+  }
+  .just-landed-spot::after {
+    content: "";
+    position: absolute;
+    inset: auto auto -50% -20%;
+    width: 80%;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle,
+      rgba(var(--tile-color), 0.35) 0%,
+      transparent 65%
+    );
+    filter: blur(28px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Hide scrollbars on chip strips while keeping overflow-x scrollable
+     by drag/wheel. Used by BotOperatingAcross so the chip row stays
+     visually clean even when the platform list overflows. */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ════════════════════════════════════════════════════════════════════
+     DAILY BRIEF — the morning report hero
+     Lives at the top of the Home dashboard. Three columns (one per
+     bot) of last-24h activity with drifting brand-tinted blooms and
+     a CountUp-animated headline. Auto-collapses to a single-line
+     summary that the user can re-expand.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .daily-brief {
+    position: relative;
+    isolation: isolate;
+    border-radius: 1.25rem;
+    padding: 1.4rem 1.5rem;
+    overflow: hidden;
+    background:
+      linear-gradient(
+        135deg,
+        rgba(14, 165, 233, 0.08) 0%,
+        rgba(6, 182, 212, 0.05) 45%,
+        rgba(249, 115, 22, 0.07) 100%
+      );
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 18px 44px -20px rgba(14, 165, 233, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .daily-brief-bloom {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(60px);
+    opacity: 0.55;
+  }
+  .daily-brief-bloom--top {
+    top: -100px;
+    right: -60px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.45), transparent 65%);
+    animation: daily-brief-orb-1 16s ease-in-out infinite;
+  }
+  .daily-brief-bloom--bottom {
+    bottom: -120px;
+    left: -80px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(251, 146, 60, 0.32), transparent 65%);
+    animation: daily-brief-orb-2 20s ease-in-out -8s infinite;
+  }
+  @keyframes daily-brief-orb-1 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-6%, 5%, 0) scale(1.08); }
+  }
+  @keyframes daily-brief-orb-2 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(5%, -4%, 0) scale(1.06); }
+  }
+
+  .daily-brief-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.14);
+    border: 1px solid rgba(14, 165, 233, 0.32);
+    color: rgb(125, 211, 252);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Per-bot card inside the brief */
+  .daily-brief-card {
+    --brief-color: 14, 165, 233;
+    position: relative;
+    display: block;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--brief-color), 0.07) 0%,
+      rgba(255, 255, 255, 0.018) 100%
+    );
+    border: 1px solid rgba(var(--brief-color), 0.18);
+    transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      border-color 280ms ease,
+      box-shadow 280ms ease;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .daily-brief-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -20% -50% auto;
+    width: 70%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(var(--brief-color), 0.25), transparent 65%);
+    filter: blur(28px);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.7;
+  }
+  .daily-brief-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--brief-color), 0.5);
+    box-shadow:
+      0 14px 36px -16px rgba(var(--brief-color), 0.55),
+      inset 0 0 0 1px rgba(var(--brief-color), 0.25);
+  }
+  .daily-brief-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Collapsed strip — single-line summary */
+  .daily-brief-collapsed {
+    cursor: pointer;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     PULSE STREAM — ambient EKG
+     A 96×24 SVG line that flows from left → right at a speed tuned to
+     the agent's status. Running: brisk + thicker + drop-shadow.
+     Ready: slow + soft. Idle: static at 0.45 opacity. Error: red.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .pulse-stream {
+    display: inline-block;
+    overflow: visible;
+  }
+  .pulse-stream-line {
+    stroke-dasharray: 220;
+    stroke-dashoffset: 220;
+    animation: pulse-stream-flow 2.4s linear infinite;
+  }
+  .pulse-stream[data-status="running"] .pulse-stream-line {
+    animation-duration: 1.1s;
+  }
+  .pulse-stream[data-status="ready"] .pulse-stream-line {
+    animation-duration: 3.4s;
+    opacity: 0.7;
+  }
+  .pulse-stream[data-status="idle"] .pulse-stream-line {
+    animation-duration: 6s;
+    opacity: 0.45;
+  }
+  .pulse-stream[data-status="error"] .pulse-stream-line {
+    animation-duration: 1.6s;
+  }
+  @keyframes pulse-stream-flow {
+    0% { stroke-dashoffset: 220; }
+    100% { stroke-dashoffset: -220; }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     OPERATION NODE — Home dashboard constellation
+     Replaces the postage-stamp-sized node cards with a real card
+     surface (≈300×120) so the dashboard graph reads as the
+     centerpiece. Each node has a brand-tinted halo, a metric footer,
+     and a status pulse on the edge handle.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .op-node {
+    position: relative;
+    min-width: 300px;
+    max-width: 340px;
+    border-radius: 1rem;
+    padding: 0.85rem 1rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    box-shadow:
+      0 12px 28px -16px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    isolation: isolate;
+  }
+
+  /* Per-kind brand-tinted accent — drives both the icon plate ring
+     and the soft halo behind the card. */
+  .op-node[data-kind="user"] {
+    --node-color: 14, 165, 233;     /* sky */
+    --node-accent: 56, 189, 248;
+  }
+  .op-node[data-kind="store"] {
+    --node-color: 16, 185, 129;     /* emerald */
+    --node-accent: 110, 231, 183;
+  }
+  .op-node[data-kind="bot"] {
+    --node-color: 168, 85, 247;     /* violet */
+    --node-accent: 196, 181, 253;
+  }
+  .op-node[data-kind="channel"] {
+    --node-color: 236, 72, 153;     /* pink */
+    --node-accent: 244, 114, 182;
+  }
+  .op-node[data-kind^="ghost"] {
+    --node-color: 255, 255, 255;
+    --node-accent: 255, 255, 255;
+  }
+
+  .op-node--ghost {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.18);
+    opacity: 0.78;
+  }
+  .op-node--ghost .op-node-icon { color: rgba(255, 255, 255, 0.6); }
+
+  .op-node--user {
+    min-width: 320px;
+    border: 1px solid rgba(var(--node-color), 0.45);
+    background:
+      linear-gradient(135deg, rgba(var(--node-color), 0.18), rgba(var(--node-accent), 0.04) 60%);
+    box-shadow:
+      0 16px 40px -16px rgba(var(--node-color), 0.6),
+      inset 0 0 0 1px rgba(var(--node-color), 0.25);
+  }
+
+  .op-node-halo {
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at 0% 0%,
+      rgba(var(--node-color), 0.25) 0%,
+      transparent 65%
+    );
+    opacity: 0.7;
+    filter: blur(8px);
+    z-index: -1;
+    transition: opacity 320ms ease;
+  }
+  .op-node[data-status="running"] .op-node-halo {
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(245, 158, 11, 0.4) 0%,
+      transparent 70%
+    );
+    animation: op-node-running-halo 2.4s ease-in-out infinite;
+  }
+  @keyframes op-node-running-halo {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  .op-node:hover {
+    border-color: rgba(var(--node-color), 0.45);
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 44px -12px rgba(var(--node-color), 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  .op-node:hover .op-node-halo {
+    opacity: 1;
+  }
+
+  .op-node--selected {
+    border-color: rgba(var(--node-color), 0.85);
+    box-shadow:
+      0 24px 60px -16px rgba(var(--node-color), 0.7),
+      0 0 0 1px rgba(var(--node-color), 0.6) inset,
+      0 0 24px rgba(var(--node-color), 0.35);
+  }
+
+  .op-node-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+  .op-node-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(var(--node-color), 0.2), rgba(var(--node-accent), 0.05));
+    color: rgb(var(--node-accent));
+    box-shadow:
+      inset 0 0 0 1px rgba(var(--node-color), 0.35),
+      0 8px 18px -8px rgba(var(--node-color), 0.5);
+  }
+  .op-node-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .op-node-eyebrow {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(var(--node-color), 0.95);
+    margin-bottom: 2px;
+  }
+  .op-node-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: rgb(255, 255, 255);
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .op-node-sublabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .op-node-status {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .op-node-status[data-status="ok"] { color: rgb(16, 185, 129); border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.12); }
+  .op-node-status[data-status="running"] { color: rgb(245, 158, 11); border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.15); }
+  .op-node-status[data-status="error"] { color: rgb(239, 68, 68); border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.15); }
+  .op-node-status[data-status="idle"] { color: rgba(255, 255, 255, 0.4); }
+  .op-node-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .op-node-status[data-status="running"] .op-node-status-dot {
+    animation: bot-page-status-blink 1s ease-in-out infinite;
+  }
+
+  .op-node-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 0.7rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .op-node-metric-key {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+  }
+  .op-node-metric-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--node-accent));
+  }
+
+  /* React Flow edge polish — fatter strokes + a flowing dash on
+     animated edges, plus a glow on running connections. The dash
+     velocity is tuned to read as "data flowing right" without
+     becoming visually noisy. */
+  .react-flow__edge-path {
+    transition: stroke-width 200ms ease;
+  }
+  .react-flow__edge:hover .react-flow__edge-path {
+    stroke-width: 3.2;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  .react-flow__edge.animated .react-flow__edge-path {
+    stroke-dasharray: 8 6;
+    animation: op-edge-dash-flow 0.9s linear infinite;
+  }
+  @keyframes op-edge-dash-flow {
+    to { stroke-dashoffset: -28; }
+  }
+
+  /* React Flow handle dots — invisible by default but pick up the
+     node's brand color on hover so connection points are obvious. */
+  .react-flow__handle {
+    background: rgba(var(--node-color), 0.45) !important;
+    border: 1px solid rgba(var(--node-color), 0.7) !important;
+    width: 9px !important;
+    height: 9px !important;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .op-node:hover .react-flow__handle { opacity: 1; }
+
+  /* ════════════════════════════════════════════════════════════════════
+     BOT PAGE HEADER — cinematic edition
+     Replaces the spartan ID bar that used to sit at the top of
+     /architect, /merchant, /social. Each bot gets its own brand
+     gradient, an animated glyph plate, and a status pill that breathes
+     with the agent's running state.
+     ════════════════════════════════════════════════════════════════════ */
+
+  .bot-page-header {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem 1.1rem;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.18) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .bot-page-header::before {
+    content: "";
+    position: absolute;
+    inset: -50% auto auto -10%;
+    width: 60%;
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(50px);
+  }
+  .bot-page-header::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 -1px 0;
+    height: 1px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .bot-page-header > * { position: relative; z-index: 2; }
+
+  .bot-page-header--builder::before { background: radial-gradient(circle, rgba(14, 165, 233, 0.35), transparent 65%); }
+  .bot-page-header--builder::after { background: linear-gradient(90deg, rgba(14, 165, 233, 0.7), rgba(14, 165, 233, 0.1) 60%, transparent); }
+  .bot-page-header--merchant::before { background: radial-gradient(circle, rgba(6, 182, 212, 0.35), transparent 65%); }
+  .bot-page-header--merchant::after { background: linear-gradient(90deg, rgba(6, 182, 212, 0.7), rgba(6, 182, 212, 0.1) 60%, transparent); }
+  .bot-page-header--social::before { background: radial-gradient(circle, rgba(249, 115, 22, 0.32), transparent 65%); }
+  .bot-page-header--social::after { background: linear-gradient(90deg, rgba(249, 115, 22, 0.7), rgba(249, 115, 22, 0.1) 60%, transparent); }
+
+  /* Animated glyph plate — squircle backdrop + animated pulse halo */
+  .bot-page-header-glyph {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    isolation: isolate;
+  }
+  .bot-page-header-glyph::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 0;
+  }
+  .bot-page-header-glyph--builder {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(14, 165, 233, 0.05));
+    color: rgb(56, 189, 248);
+    box-shadow: 0 8px 22px -10px rgba(14, 165, 233, 0.6), inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+  }
+  .bot-page-header-glyph--merchant {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.22), rgba(6, 182, 212, 0.05));
+    color: rgb(34, 211, 238);
+    box-shadow: 0 8px 22px -10px rgba(6, 182, 212, 0.6), inset 0 0 0 1px rgba(34, 211, 238, 0.25);
+  }
+  .bot-page-header-glyph--social {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
+    color: rgb(251, 146, 60);
+    box-shadow: 0 8px 22px -10px rgba(249, 115, 22, 0.6), inset 0 0 0 1px rgba(251, 146, 60, 0.25);
+  }
+  .bot-page-header-glyph-pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 14px;
+    border: 1px solid currentColor;
+    opacity: 0.35;
+    animation: bot-glyph-pulse 2.4s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes bot-glyph-pulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+
+  .bot-page-header-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 2px;
+  }
+  .bot-page-header-eyebrow-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    opacity: 0.7;
+    animation: tile-status-pulse 2.4s ease-out infinite;
+  }
+
+  /* Status pill */
+  .bot-page-header-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid;
+    backdrop-filter: blur(6px);
+  }
+  .bot-page-header-status--ready {
+    color: rgb(110, 231, 183);
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.32);
+  }
+  .bot-page-header-status--running {
+    color: rgb(252, 211, 77);
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+  .bot-page-header-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .bot-page-header-status--running .bot-page-header-status-dot {
+    animation: bot-page-status-blink 1.2s ease-in-out infinite;
+  }
+  @keyframes bot-page-status-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  /* Ambient page backdrop — soft brand light leaks + faint grid that
+     drift to make the page feel alive without distracting from the
+     content. Pointer-events:none so the layer is purely decorative. */
+  .bot-page-ambient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .bot-page-ambient-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 50% at 50% 0%, #000 30%, transparent 80%);
+  }
+  .bot-page-ambient-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.5;
+  }
+  .bot-page-ambient-orb--top { top: -120px; right: -80px; width: 320px; height: 320px; }
+  .bot-page-ambient-orb--bottom { bottom: -160px; left: -100px; width: 360px; height: 360px; opacity: 0.35; }
+  .bot-page-ambient--builder .bot-page-ambient-orb--top { background: rgba(14, 165, 233, 0.55); }
+  .bot-page-ambient--builder .bot-page-ambient-orb--bottom { background: rgba(56, 189, 248, 0.4); }
+  .bot-page-ambient--merchant .bot-page-ambient-orb--top { background: rgba(6, 182, 212, 0.55); }
+  .bot-page-ambient--merchant .bot-page-ambient-orb--bottom { background: rgba(34, 211, 238, 0.4); }
+  .bot-page-ambient--social .bot-page-ambient-orb--top { background: rgba(249, 115, 22, 0.5); }
+  .bot-page-ambient--social .bot-page-ambient-orb--bottom { background: rgba(251, 146, 60, 0.35); }
+
+  /* Connected badge — the subtle pulse on the corner */
+  .platform-connected-dot {
+    position: relative;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: rgb(110, 231, 183);
+  }
+  .platform-connected-dot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    animation: tile-status-pulse 2.2s ease-out infinite;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

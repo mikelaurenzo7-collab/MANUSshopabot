@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
 import { CountUp } from "@/components/CountUp";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -234,9 +235,29 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
                 <SelectValue placeholder="Select workflow..." />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0a0f] border-white/10 max-h-60">
-                {availableTypes.map((t: any) => (
-                  <SelectItem key={t.type} value={t.type}>{t.title}</SelectItem>
-                ))}
+                {availableTypes.map((t: any) => {
+                  // Prefix the workflow with the platform brand icon when
+                  // the workflow type is platform-specific
+                  // (e.g. "depop_hashtag_refresh" → 👗,
+                  //  "google_pmax_optimization" → 📊). Tries the first
+                  // token, then the first two joined ("google_ads",
+                  // "tiktok_shop"); falls back to ⚡ for cross-platform
+                  // recipes like "competitor_pricing_scan".
+                  const tokens = t.type.split("_");
+                  const lookup = (id: string) => ECOMMERCE_BRANDS[id] || SOCIAL_BRANDS[id] || TOOL_BRANDS[id];
+                  const brand =
+                    lookup(tokens.slice(0, 2).join("_")) ||
+                    lookup(tokens[0]);
+                  const icon = brand?.icon ?? "⚡";
+                  return (
+                    <SelectItem key={t.type} value={t.type}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-sm leading-none">{icon}</span>
+                        {t.title}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             {selectedType && (

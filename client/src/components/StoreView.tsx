@@ -13,14 +13,7 @@ import {
   ResponsiveContainer, BarChart, Bar
 } from "recharts";
 
-const PLATFORM_COLORS: Record<string, string> = {
-  shopify: "#96BF48", woocommerce: "#96588A", amazon: "#FF9900",
-  etsy: "#F1641E", ebay: "#E53238", tiktok_shop: "#000000", walmart: "#0071CE",
-};
-const PLATFORM_ICONS: Record<string, string> = {
-  shopify: "🛍️", woocommerce: "🌐", amazon: "📦", etsy: "🧡",
-  ebay: "🔨", tiktok_shop: "🎵", walmart: "🏪",
-};
+import { getBrand } from "@/lib/platformBrand";
 
 const TOOLTIP_STYLE = {
   backgroundColor: "rgba(15,23,42,0.95)",
@@ -62,8 +55,9 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
   );
 
   const store = overview?.store;
-  const platformColor = store ? (PLATFORM_COLORS[store.platform] || "#64748b") : "#64748b";
-  const platformIcon = store ? (PLATFORM_ICONS[store.platform] || "🏪") : "🏪";
+  const platformBrand = store ? getBrand(store.platform) : null;
+  const platformColor = platformBrand?.color || "#64748b";
+  const platformIcon = platformBrand?.icon || "🏪";
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "overview", label: "Overview", icon: <Activity className="w-3.5 h-3.5" /> },
@@ -472,8 +466,8 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
                       loading="lazy"
                     />
                     {/* Overlay hint */}
-                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white/50 text-xs px-2.5 py-1.5 rounded-lg border border-white/10 pointer-events-none">
-                      Live preview · {store.platform}
+                    <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white/55 text-xs px-2.5 py-1.5 rounded-lg border border-white/10 pointer-events-none flex items-center gap-1.5">
+                      Live preview · <span className="text-base leading-none">{platformIcon}</span> {platformBrand?.name ?? store.platform}
                     </div>
                   </div>
                   <p className="text-xs text-slate-500 text-center">

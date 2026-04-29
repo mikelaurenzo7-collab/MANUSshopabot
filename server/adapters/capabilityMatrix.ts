@@ -99,6 +99,11 @@ const AUTH_MODEL: Record<string, AuthModel> = {
   google_ads: "oauth",
   gmail: "oauth",
   snapchat: "oauth",
+  // Sprint 27.5 social additions — Outlook on Microsoft Graph, Slack
+  // on OAuth v2, YouTube on the same Google OAuth client as Gmail.
+  outlook: "oauth",
+  slack: "oauth",
+  youtube: "oauth",
   // Tools
   google_sheets: "oauth",
   google_analytics: "oauth",

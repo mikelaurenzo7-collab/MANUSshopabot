@@ -1116,3 +1116,683 @@ Return as JSON.`,
     },
   ];
 });
+
+// ─── Sprint 27 Platform Elite Workflows ────────────────────────────────────
+//
+// One workflow per new surface, each exploiting the single highest-
+// leverage capability of that platform. The Builder + Merchant bot
+// dispatchers pick these up through the same workflow registry as the
+// existing 13 elite recipes — `getEcommerceCapabilityMatrix()[platform]`
+// drives the selection.
+
+// 14. Depop Hashtag Refresh — refresh stale hashtags after trend shifts.
+registerWorkflow("depop_hashtag_refresh", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Audit Listing Hashtags",
+      description: "Pulling Depop listings + their current hashtag sets",
+      input: {
+        analysisPrompt: `Audit every active Depop listing on store ${storeId}:
+1. Extract the existing hashtag block from each description.
+2. Cross-reference against the current top Depop search terms in the listing's category (vintage, y2k, streetwear, etc.).
+3. Flag listings with <5 hashtags or hashtags that haven't trended in 90 days.
+4. Group findings by listing for the next step.`,
+        data: { storeId, platform: "depop" },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Generate Trend-Matched Hashtag Sets",
+      description: "Picking ~10 hashtags per listing matched to current Depop discovery",
+      input: {
+        systemPrompt: "You are a Depop discovery expert. Hashtags drive 60% of discovery; the right 10 hashtags beat 30 generic ones.",
+        userPrompt: `For each flagged listing produce a hashtag set of 8-12 entries that:
+- Front-loads the strongest niche tag (e.g. #y2k, #grunge, #vintagedenim)
+- Mixes 3 macro tags (>1M results) with 5 micro tags (<100K results) for balance
+- Uses brand tags only when authentic to the item
+- Skips tags already used elsewhere in the description
+Return JSON: { updates: [{ listingId, hashtags: string[] }], rationale: string }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "depop_hashtag_updates",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                updates: { type: "array", items: { type: "object", properties: { listingId: { type: "string" }, hashtags: { type: "array", items: { type: "string" } } }, required: ["listingId", "hashtags"], additionalProperties: false } },
+                rationale: { type: "string" },
+              },
+              required: ["updates", "rationale"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    { stepType: "approval_gate", title: "Approve Hashtag Updates", description: "Review hashtag sets before they overwrite descriptions", requiresApproval: true },
+    {
+      stepType: "store_action",
+      title: "Apply + Refresh Listings",
+      description: "Updating descriptions with new hashtags and refreshing each listing for feed bump",
+      input: { action: "depop_update_hashtags", storeId, platform: "depop" },
+    },
+    {
+      stepType: "notification",
+      title: "Depop Refresh Complete",
+      description: "Hashtags applied and listings refreshed",
+      input: {
+        title: "Depop Hashtag Refresh Complete",
+        message: "All flagged listings have refreshed hashtag sets. Watch for impressions to climb over 48 hours; Depop's feed bump fades within 5 days.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 15. BigCommerce Webhook Bootstrap — sets up the webhook subscriptions a
+//      brand-new connection needs so the rest of the engine doesn't poll.
+registerWorkflow("bigcommerce_webhook_bootstrap", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "List Existing Webhooks",
+      description: "Checking which BigCommerce webhook scopes are already subscribed",
+      input: { analysisPrompt: `Enumerate webhooks on BigCommerce store ${storeId} via /v3/hooks. Highlight missing core scopes.`, data: { storeId, platform: "bigcommerce" } },
+    },
+    {
+      stepType: "store_action",
+      title: "Subscribe Missing Webhooks",
+      description: "Subscribing the platform to order, product, and inventory events",
+      input: {
+        action: "bigcommerce_subscribe_webhooks",
+        storeId,
+        platform: "bigcommerce",
+        scopes: [
+          "store/order/created",
+          "store/order/updated",
+          "store/order/statusUpdated",
+          "store/product/updated",
+          "store/inventory/order/updated",
+        ],
+      },
+    },
+    {
+      stepType: "notification",
+      title: "BigCommerce Webhooks Live",
+      description: "Webhook subscriptions verified — bot reacts in real-time now",
+      input: {
+        title: "BigCommerce Webhooks Subscribed",
+        message: "Order, product, and inventory events now stream into Shop_a_Bot in real-time. The Merchant bot will react within seconds instead of the previous 5-min poll cycle.",
+        agentType: "architect",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 16. Square Multi-Location Inventory Sync — distinct from Shopify because
+//     Square's inventory is per-location, and most Square sellers ship from
+//     one warehouse but stock retail outlets too.
+registerWorkflow("square_multilocation_sync", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Square Locations",
+      description: "Listing every active Square location and its inventory snapshot",
+      input: { analysisPrompt: `For Square store ${storeId} list every ACTIVE location, then pull inventory counts grouped by SKU × location.`, data: { storeId, platform: "square" } },
+    },
+    {
+      stepType: "llm_call",
+      title: "Plan Stock Rebalancing",
+      description: "Recommending inventory transfers to even out stock across locations",
+      input: {
+        systemPrompt: "You are an operations expert for multi-location Square merchants. Your job is to balance inventory across retail + warehouse locations using sales velocity as the signal.",
+        userPrompt: `Given the per-location inventory map, recommend transfers that:
+- Move surplus stock from over-supplied retail locations to the warehouse hub
+- Replenish low-stock retail locations from the warehouse
+- Never trigger a transfer smaller than 5 units (handling cost > benefit)
+- Respect a soft cap of 30 transfers per cycle (operator fatigue)
+Return JSON { transfers: [{ sku, fromLocationId, toLocationId, quantity, reason }], summary }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "square_transfers",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                transfers: { type: "array", items: { type: "object", properties: { sku: { type: "string" }, fromLocationId: { type: "string" }, toLocationId: { type: "string" }, quantity: { type: "number" }, reason: { type: "string" } }, required: ["sku", "fromLocationId", "toLocationId", "quantity", "reason"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["transfers", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    { stepType: "approval_gate", title: "Approve Transfers", description: "Operator confirms transfer plan before adjustments are written", requiresApproval: true },
+    {
+      stepType: "store_action",
+      title: "Apply Inventory Adjustments",
+      description: "Writing transfer adjustments to Square via the Inventory API",
+      input: { action: "square_apply_transfers", storeId, platform: "square" },
+    },
+    {
+      stepType: "notification",
+      title: "Square Sync Complete",
+      description: "Multi-location inventory rebalanced",
+      input: {
+        title: "Square Multi-Location Sync Complete",
+        message: "Inventory adjustments applied across all active locations. Per-location stock levels now reflect the rebalance plan; the Merchant bot will monitor velocity and re-trigger if drift returns.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 17. Faire 24h Acknowledgement Watcher — the highest-stakes Faire op:
+//     missed acks auto-cancel the order. Runs hourly.
+registerWorkflow("faire_ack_watcher", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Pending Acknowledgements",
+      description: "Finding Faire orders inside the 24h acknowledgement window",
+      input: { analysisPrompt: `For Faire brand on store ${storeId} fetch every order in NEW state and compute hours-to-deadline. Sort by urgency.`, data: { storeId, platform: "faire" } },
+    },
+    {
+      stepType: "llm_call",
+      title: "Compute Realistic Ship Dates",
+      description: "Picking expected ship dates that respect actual lead time without over-promising",
+      input: {
+        systemPrompt: "You are an indie brand fulfillment ops lead. Faire requires acknowledgement within 24h of an order being placed; over-promising on ship date burns retailer trust faster than missing the ack.",
+        userPrompt: `For each pending Faire order pick an expected_ship_date that:
+- Falls between today + lead_time_days (from supplier metafield) and today + lead_time_days + 3 days of buffer
+- Respects weekends and US holidays
+- Is conservative enough that >95% of orders ship on or before
+Return JSON { acks: [{ orderId, expectedShipDate (ISO date), rationale }], anyAtRisk: boolean }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "faire_ack_plan",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                acks: { type: "array", items: { type: "object", properties: { orderId: { type: "string" }, expectedShipDate: { type: "string" }, rationale: { type: "string" } }, required: ["orderId", "expectedShipDate", "rationale"], additionalProperties: false } },
+                anyAtRisk: { type: "boolean" },
+              },
+              required: ["acks", "anyAtRisk"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "store_action",
+      title: "Acknowledge Orders",
+      description: "Acknowledging each order via Faire's processing endpoint",
+      input: { action: "faire_acknowledge_orders", storeId, platform: "faire" },
+    },
+    {
+      stepType: "notification",
+      title: "Faire Acks Posted",
+      description: "Acknowledgement window cleared",
+      input: {
+        title: "Faire Order Acknowledgements Sent",
+        message: "All NEW Faire orders acknowledged with realistic ship dates. The Merchant bot will re-check the queue every hour; orders within 6h of the deadline trigger an immediate alert.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 18. Bonanza Syndication Tier Optimizer — Bonanza monetizes via Google
+//     Shopping syndication tiers; the right tier per item depends on
+//     margin × velocity. This workflow tunes the tier per product.
+registerWorkflow("bonanza_syndication_optimizer", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Score Listings by Margin × Velocity",
+      description: "Pulling each Bonanza listing's recent velocity, margin, and current syndication tier",
+      input: { analysisPrompt: `For Bonanza booth on store ${storeId} score each listing on margin% and 30-day sell-through rate. Recommend a tier for each.`, data: { storeId, platform: "bonanza" } },
+    },
+    {
+      stepType: "llm_call",
+      title: "Pick Tier Per Listing",
+      description: "Cost-aware tier picker — TurboTraffic only when ROAS clears the higher fee",
+      input: {
+        systemPrompt: "You are a marketplace economics expert. Bonanza syndication tiers (Standard / Basic / Premium / TurboTraffic / PremiumPlus) trade Google Shopping reach for a higher final-value fee. Your job is to pick the tier that maximizes contribution margin.",
+        userPrompt: `Given each listing's margin% and 30-day units sold, pick a tier:
+- TurboTraffic: only when margin >50% AND velocity >5 units/30d
+- Premium / PremiumPlus: margin 30-50% AND velocity >2/30d
+- Basic / Standard: low-velocity items where the higher fee never pays for itself
+Return JSON { decisions: [{ productId, tier, expectedROAS, reasoning }], summary }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "bonanza_tier_decisions",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                decisions: { type: "array", items: { type: "object", properties: { productId: { type: "string" }, tier: { type: "string" }, expectedROAS: { type: "number" }, reasoning: { type: "string" } }, required: ["productId", "tier", "expectedROAS", "reasoning"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["decisions", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    { stepType: "approval_gate", title: "Approve Tier Changes", description: "Operator confirms tier moves before fees change", requiresApproval: true },
+    {
+      stepType: "store_action",
+      title: "Apply Tier Changes",
+      description: "Writing tier updates via Bonapitit revise_item",
+      input: { action: "bonanza_set_tiers", storeId, platform: "bonanza" },
+    },
+    {
+      stepType: "notification",
+      title: "Bonanza Tiers Optimized",
+      description: "Syndication tiers updated; ROAS visible in 7-14 days",
+      input: {
+        title: "Bonanza Syndication Tiers Updated",
+        message: "Per-listing syndication tiers have been re-tuned to maximize contribution margin. Expect to see Google Shopping impression shifts inside 7 days; the optimizer will re-run weekly.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 19. StockX Ask Repricer — read the order book, decide whether to undercut
+//     the lowest ask or hold, never breach a margin floor.
+registerWorkflow("stockx_ask_repricer", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Live Order Books",
+      description: "Reading the bid/ask order book for every active StockX listing",
+      input: { analysisPrompt: `For every active StockX ask on store ${storeId} fetch the live order book — lowest 5 asks, highest 5 bids — for each productId × variantId.`, data: { storeId, platform: "stockx" } },
+    },
+    {
+      stepType: "llm_call",
+      title: "Decide Undercut / Hold / Raise",
+      description: "Margin-aware repricer — never breaches the cost+12% floor",
+      input: {
+        systemPrompt: "You are a StockX seller doing real-time order-book repricing. The job: maximize the chance of selling within 7 days WITHOUT breaching the supplier_cost × 1.12 floor (StockX takes ~10% transaction + ~3% payment).",
+        userPrompt: `For each ask compute the optimal action:
+- If we already hold the lowest ask, hold.
+- If lowest ask < ours by ≤$5, undercut by $1 (only if floor allows).
+- If lowest ask < ours by >$5 AND highest bid > our floor, undercut to highest_bid+$1 (instant sale).
+- If our cost floor is above the lowest ask, raise to floor and accept slower turnover.
+Return JSON { decisions: [{ listingId, action: "undercut"|"hold"|"raise"|"cancel", newAskCents?, reasoning }], summary }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "stockx_repricer",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                decisions: { type: "array", items: { type: "object", properties: { listingId: { type: "string" }, action: { type: "string" }, newAskCents: { type: "number" }, reasoning: { type: "string" } }, required: ["listingId", "action", "reasoning"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["decisions", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "store_action",
+      title: "Apply Ask Updates",
+      description: "Writing new asks via the StockX selling/listings PATCH",
+      input: { action: "stockx_apply_repricing", storeId, platform: "stockx" },
+    },
+    {
+      stepType: "notification",
+      title: "StockX Asks Repriced",
+      description: "Margin-aware repricing complete",
+      input: {
+        title: "StockX Repricing Complete",
+        message: "Active asks have been repriced based on the live order book. The repricer respects the cost+12% margin floor; cancelled asks were below floor and moved to draft for re-review.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 20. Reverb Offer Auto-Responder — auto-handle lowball offers within
+//     guardrails, escalate the rest to the operator.
+registerWorkflow("reverb_offer_responder", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "all";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Open Offers",
+      description: "Listing every open Reverb offer with its proposed amount and the listing's asking price",
+      input: { analysisPrompt: `For Reverb shop on store ${storeId} list every offer in OPEN state. Compute (offer_amount / listing_price) and tag as lowball (<70%), reasonable (70-90%), or strong (>=90%).`, data: { storeId, platform: "reverb" } },
+    },
+    {
+      stepType: "llm_call",
+      title: "Decide Per-Offer Action",
+      description: "Decline lowballs, accept strong offers above floor, counter the middle band",
+      input: {
+        systemPrompt: "You are a Reverb seller-side negotiator. You honor the gear's market value but never breach the operator's stated margin floor. Lowballs get a polite decline + counter-anchor.",
+        userPrompt: `For each offer pick:
+- ACCEPT when offer_amount ≥ floor AND ratio ≥ 0.92
+- COUNTER when ratio is 0.70-0.92, countering at floor + 10% (or listing_price × 0.95, whichever is lower)
+- DECLINE when ratio < 0.70 (lowball) — NEVER counter, just decline
+Return JSON { responses: [{ offerId, action: "accept"|"decline"|"counter", counterCents?, message }], summary }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "reverb_offer_responses",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                responses: { type: "array", items: { type: "object", properties: { offerId: { type: "string" }, action: { type: "string" }, counterCents: { type: "number" }, message: { type: "string" } }, required: ["offerId", "action", "message"], additionalProperties: false } },
+                summary: { type: "string" },
+              },
+              required: ["responses", "summary"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "store_action",
+      title: "Send Responses",
+      description: "Posting accept/decline/counter via Reverb's offers API",
+      input: { action: "reverb_respond_offers", storeId, platform: "reverb" },
+    },
+    {
+      stepType: "notification",
+      title: "Reverb Offers Handled",
+      description: "Open offers cleared",
+      input: {
+        title: "Reverb Offer Auto-Responder Complete",
+        message: "Open offers have been triaged. Strong offers were accepted automatically; mid-range offers received margin-aware counters; lowballs were declined politely. Watch the Inbox for human-escalation cases.",
+        agentType: "merchant",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// ─── Sprint 27.5: Outlook + Slack + YouTube native recipes ──────────────────
+// Three workflows that take advantage of the new Sprint 27.5 channels.
+// Each pairs an LLM-generation step with a store_action handler that
+// the engine wires via switch-cases on `action`.
+
+// 21. Outlook B2B Outreach — pulls leads, drafts plain-text emails, books
+//     follow-up meetings on the same Microsoft Graph token.
+registerWorkflow("outlook_b2b_outreach", (input): WorkflowStepDefinition[] => {
+  const accountId = input.accountId ?? "active";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Lead List",
+      description: "Reading the lead source (CRM export / Google Sheet) into a structured list",
+      input: {
+        analysisPrompt: `Pull the lead list from input.leadSource. Each lead must have:
+- email (required)
+- firstName, lastName (preferred)
+- company (preferred)
+- niche / vertical (optional, helps personalize)
+Cap at 50 leads per run — Outlook's tenant throttling kicks in around 250/15min.`,
+        data: { accountId, leadSource: input.leadSource },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Draft Personalized Emails",
+      description: "Plain-text outreach that avoids template-smell — one draft per lead",
+      input: {
+        systemPrompt: "You are an outbound BDR. Your superpower: outreach that reads like a 1:1 message, never a marketing template. Specific, short, ends with a low-friction ask. Plain text only — no HTML, no signatures (the operator's signature lives in Outlook).",
+        userPrompt: `For each lead, draft a 60-90 word outreach email:
+- Subject line: under 7 words, no "RE:" or "FW:" tricks
+- Open with one specific observation (not "Hope you're well")
+- Connect that observation to a concrete way Shop_a_Bot helps their niche
+- Close with a single question — coffee chat OR a 15-min Loom OR "any chance you'd answer one question"
+- Never use the words: "synergy", "leverage", "circle back", "touch base"
+
+Return JSON: { drafts: [{ email, subject, body }], skipped: [{ email, reason }] }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "outlook_drafts",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                drafts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string" },
+                      subject: { type: "string" },
+                      body: { type: "string" },
+                    },
+                    required: ["email", "subject", "body"],
+                    additionalProperties: false,
+                  },
+                },
+                skipped: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string" },
+                      reason: { type: "string" },
+                    },
+                    required: ["email", "reason"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["drafts", "skipped"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Drafts",
+      description: "Operator skims the drafts before they hit real inboxes — high-stakes channel",
+      requiresApproval: true,
+    },
+    {
+      stepType: "store_action",
+      title: "Send via Outlook",
+      description: "Dispatching each draft through Microsoft Graph /me/sendMail",
+      input: { action: "outlook_send_drafts", accountId, platform: "outlook" },
+    },
+    {
+      stepType: "notification",
+      title: "Outreach Sent",
+      description: "B2B outreach batch dispatched",
+      input: {
+        title: "Outlook Outreach Complete",
+        message: "Drafts have been sent through your Outlook inbox. Replies will land in your normal mailbox; the bot will summarize the response queue tomorrow.",
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 22. Slack Drop Announcement — Block Kit announcement to a VIP channel
+//     with image + buy link + reaction tracking.
+registerWorkflow("slack_drop_announcement", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "active";
+  const channel = input.channel ?? "#announcements";
+  return [
+    {
+      stepType: "analysis",
+      title: "Resolve Drop Context",
+      description: "Pulling the product, hero image, and buy URL into the workflow context",
+      input: {
+        analysisPrompt: `Resolve drop context for store ${storeId}: pull product (input.productId), hero image, public storefront URL, target Slack channel (default #announcements).`,
+        data: { storeId, channel, productId: input.productId },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Draft Block Kit Announcement",
+      description: "Slack-native Block Kit payload — section + image + actions",
+      input: {
+        systemPrompt: "You are a community manager dropping a product to a VIP Slack channel. Tone is hype-but-honest, never sales-pitchy. The audience are insiders who already love the brand.",
+        userPrompt: `Draft a Slack Block Kit message for the drop:
+- One-line hype hook (8-12 words, ends with an emoji)
+- Two-line product description (what it is, why this batch is special)
+- Image block with the hero
+- Action button labeled "Get yours →" linking to the product URL
+- A footer mentioning channel-only early access
+
+Return JSON: { headline, body, blocks (Slack Block Kit array) }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "slack_drop",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                headline: { type: "string" },
+                body: { type: "string" },
+                blocks: { type: "array", items: { type: "object", additionalProperties: true } },
+              },
+              required: ["headline", "body", "blocks"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    { stepType: "approval_gate", title: "Approve Drop Announcement", description: "VIP channel — operator confirms before send", requiresApproval: true },
+    {
+      stepType: "store_action",
+      title: "Post to Slack",
+      description: "Posting the Block Kit message to the target channel",
+      input: { action: "slack_post_drop", storeId, platform: "slack", channel },
+    },
+    {
+      stepType: "notification",
+      title: "Drop Live in Slack",
+      description: "Reactions will be tracked over the next 6 hours",
+      input: {
+        title: "Drop Posted to Slack",
+        message: `The drop is live in ${channel}. The bot will collect reactions + replies over the next 6 hours and surface the top early-buyer interest signals in the Inbox.`,
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 23. YouTube Shorts Publisher — generate hook + caption + tags from a
+//     product, then upload as a YouTube Short with native scheduled publish.
+registerWorkflow("youtube_shorts_publisher", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "active";
+  return [
+    {
+      stepType: "analysis",
+      title: "Resolve Source Video",
+      description: "Pulling the source video URL + product info from the workflow context",
+      input: {
+        analysisPrompt: `Locate the source video (input.videoUrl). Confirm aspect ratio is 9:16 OR can be cropped without losing the subject. Pull the linked product (input.productId) for caption context.`,
+        data: { storeId, videoUrl: input.videoUrl, productId: input.productId, scheduleAt: input.scheduleAt },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Generate Hook + Caption + Tags",
+      description: "Shorts-native copy — sub-15-word hook, 200-char caption, 8-15 tags",
+      input: {
+        systemPrompt: "You write YouTube Shorts copy that hooks in the first 1.5 seconds. The Shorts feed punishes slow openings; you front-load curiosity.",
+        userPrompt: `Generate Shorts metadata for the product video:
+- title: under 100 chars; first 6 words must hook (curiosity gap, contrarian, or stat)
+- description: 200 chars max; ends with a single hashtag block (max 5 hashtags)
+- tags: 8-15 tags; first 3 are the most-searched terms in the niche
+- Do NOT include "#Shorts" in the description (YouTube auto-detects vertical video)
+
+Return JSON: { title, description, tags }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "yt_shorts_meta",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+              },
+              required: ["title", "description", "tags"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Approve Shorts Metadata",
+      description: "Operator skims the title + caption before upload begins",
+      requiresApproval: true,
+    },
+    {
+      stepType: "store_action",
+      title: "Upload + Schedule",
+      description: "Resumable upload to YouTube; if scheduleAt is set, the video stays private until that timestamp",
+      input: { action: "youtube_publish_short", storeId, platform: "youtube" },
+    },
+    {
+      stepType: "notification",
+      title: "Short Uploaded",
+      description: "YouTube Shorts upload complete — analytics will populate over 48 hours",
+      input: {
+        title: "YouTube Short Live",
+        message: "The Short is uploaded. YouTube's recommender will start serving it within the hour; impressions + retention curve land in the bot dashboard within 48 hours.",
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});

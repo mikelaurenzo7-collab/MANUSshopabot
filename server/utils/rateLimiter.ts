@@ -174,4 +174,12 @@ export const platformRateLimiters = {
   amazon: new ApiRateLimiter(15, 1000),        // Amazon SP-API: ~15 calls/sec (varies by endpoint)
   woocommerce: new ApiRateLimiter(25, 1000),   // WooCommerce: ~25 calls/sec (server-dependent)
   google_ads: new ApiRateLimiter(100, 60000),  // Google Ads: ~100 calls/min
+  // Sprint 27 expansion. Numbers tuned to public docs / community data.
+  depop: new ApiRateLimiter(10, 1000),         // Depop Partner API: ~10 calls/sec
+  bigcommerce: new ApiRateLimiter(450, 30000), // BigCommerce: ~15 req/sec, 450/30s window
+  square: new ApiRateLimiter(700, 60000),      // Square: ~700 req/min (sandbox 50/min)
+  faire: new ApiRateLimiter(60, 60000),        // Faire: ~1 req/sec sustained
+  bonanza: new ApiRateLimiter(30, 60000),      // Bonanza Bonapitit: ~30/min (rough)
+  stockx: new ApiRateLimiter(60, 60000),       // StockX: ~1 req/sec
+  reverb: new ApiRateLimiter(60, 60000),       // Reverb: ~1 req/sec
 };

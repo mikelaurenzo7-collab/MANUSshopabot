@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getBrand } from "@/lib/platformBrand";
+import { BotOperatingAcross } from "@/components/BotOperatingAcross";
+import { PulseStream } from "@/components/PulseStream";
 import {
   Megaphone,
   Loader2,
@@ -47,28 +50,44 @@ export default function SocialPage() {
 
   return (
     <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+      <div className="bot-page-ambient bot-page-ambient--social" aria-hidden="true">
+        <div className="bot-page-ambient-grid" />
+        <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />
+        <div className="bot-page-ambient-orb bot-page-ambient-orb--bottom" />
+      </div>
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full">
-        {/* Header Bar */}
-        <div className="h-10 md:h-11 flex items-center px-3 md:px-5 border-b border-white/[0.08] justify-between bg-black/40 shrink-0 gap-2">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="relative shrink-0">
-              <Megaphone className="text-amber-400 w-4 md:w-5 h-4 md:h-5" />
-              <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+      <div className="flex-1 flex flex-col h-full relative z-10">
+        <div className="bot-page-header bot-page-header--social">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+            <div className="bot-page-header-glyph bot-page-header-glyph--social">
+              <Megaphone className="w-5 h-5" strokeWidth={2.2} />
+              <span className="bot-page-header-glyph-pulse" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-heading text-xs md:text-sm font-bold text-white truncate tracking-tight">Social Bot</h1>
-              <p className="font-mono text-[8px] md:text-[9px] text-muted-foreground hidden sm:block">Ads · posts · campaigns · email flows</p>
+              <div className="bot-page-header-eyebrow">
+                <span className="bot-page-header-eyebrow-dot" />
+                Social · The Megaphone
+              </div>
+              <h1 className="font-heading text-base md:text-lg font-black tracking-tight text-white truncate leading-tight">
+                Make my store impossible to ignore.
+              </h1>
+              <p className="text-[11px] text-white/55 hidden sm:block leading-tight mt-0.5">
+                Ads · posts · campaigns · email flows · 10 channels wired
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-            <span className={`font-mono text-[9px] uppercase tracking-widest font-bold flex items-center gap-1.5 ${socialStatus.status === 'running' ? 'text-amber-400' : 'text-emerald-400'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${socialStatus.status === 'running' ? 'bg-amber-400 animate-pulse' : 'bg-amber-400'}`} />
-              {socialStatus.status === 'running' ? 'RUNNING' : 'READY'}
+          <div className="flex items-center gap-3 shrink-0">
+            <PulseStream
+              status={socialStatus.status === 'running' ? 'running' : 'ready'}
+              color="#fb923c"
+              label="Social bot pulse"
+            />
+            <span className={`bot-page-header-status ${socialStatus.status === 'running' ? 'bot-page-header-status--running' : 'bot-page-header-status--ready'}`}>
+              <span className="bot-page-header-status-dot" />
+              {socialStatus.status === 'running' ? 'Running' : 'Ready'}
             </span>
           </div>
         </div>
-        <div className="h-px bg-gradient-to-r from-amber-500/50 via-amber-500/10 to-transparent shrink-0" />
 
         <SocialContent
           isMobile={isMobile}
@@ -257,8 +276,13 @@ function SocialContent({
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-3">
+      {/* Operating-across strip — every social channel + commerce
+          surface Social Bot is currently driving for this org. */}
+      <div className="px-3 md:px-5 pt-3">
+        <BotOperatingAcross botId="social" />
+      </div>
       {/* Store selector + tabs */}
-      <div className="px-3 md:px-5 pt-3 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+      <div className="px-3 md:px-5 pt-2 flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
@@ -266,11 +290,17 @@ function SocialContent({
               <SelectValue placeholder="SELECT_TARGET_STORE" />
             </SelectTrigger>
             <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
-              {storeOptions.map((s: any) => (
-                <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
-                  {s.name} [{s.platform}]
-                </SelectItem>
-              ))}
+              {storeOptions.map((s: any) => {
+                const brand = getBrand(s.platform);
+                return (
+                  <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-sm leading-none">{brand.icon}</span>
+                      {s.name} <span className="text-white/40">[{brand.name}]</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
@@ -351,7 +381,10 @@ function SocialContent({
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="text-sm font-medium text-foreground">{c.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{c.platform} · {new Date(c.createdAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <span className="text-sm leading-none">{getBrand(c.platform).icon}</span>
+                            {getBrand(c.platform).name} · {new Date(c.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy ad copy" onClick={() => c.adCopy && copyToClipboard(typeof c.adCopy === "string" ? c.adCopy : JSON.stringify(c.adCopy))}>
                           <Copy className="h-3.5 w-3.5" />
@@ -529,7 +562,10 @@ function SocialContent({
                   <Card key={p.id} className="bento-card">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="text-[10px] capitalize">{p.platform}</Badge>
+                        <Badge variant="outline" className="text-[10px] inline-flex items-center gap-1">
+                          <span className="text-xs leading-none">{getBrand(p.platform).icon}</span>
+                          {getBrand(p.platform).name}
+                        </Badge>
                         <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Copy post content" onClick={() => copyToClipboard(p.content || "")}>
                           <Copy className="h-3.5 w-3.5" />
                         </Button>

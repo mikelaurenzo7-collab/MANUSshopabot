@@ -11,6 +11,7 @@ import {
   PrintfulAdapter,
   JudgeMeAdapter,
   GorgiasAdapter,
+  GoogleAdsAdapter,
 } from "./adapters/tools";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
@@ -37,7 +38,7 @@ function createUserContext(): TrpcContext {
 }
 
 describe("Tool Connector Adapters", () => {
-  it("registry returns all 8 expected tool ids", () => {
+  it("registry returns all 9 expected tool ids", () => {
     expect(SUPPORTED_TOOL_CONNECTORS.sort()).toEqual(
       [
         "google_sheets",
@@ -48,6 +49,7 @@ describe("Tool Connector Adapters", () => {
         "printful",
         "judgeme",
         "gorgias",
+        "google_ads",
       ].sort(),
     );
   });
@@ -61,6 +63,7 @@ describe("Tool Connector Adapters", () => {
     expect(getToolAdapter("printful")).toBeInstanceOf(PrintfulAdapter);
     expect(getToolAdapter("judgeme")).toBeInstanceOf(JudgeMeAdapter);
     expect(getToolAdapter("gorgias")).toBeInstanceOf(GorgiasAdapter);
+    expect(getToolAdapter("google_ads")).toBeInstanceOf(GoogleAdsAdapter);
   });
 
   it("getToolAdapter throws on unknown id", () => {
@@ -124,12 +127,12 @@ describe("Tool Connector Adapters", () => {
 });
 
 describe("Tools Router", () => {
-  it("list returns all 8 tools with required fields", async () => {
+  it("list returns all 9 tools with required fields", async () => {
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const tools = await caller.tools.list();
 
-    expect(tools.length).toBe(8);
+    expect(tools.length).toBe(9);
     for (const t of tools) {
       expect(t).toHaveProperty("id");
       expect(t).toHaveProperty("name");

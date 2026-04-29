@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { Command } from "cmdk";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
+import { getBrand } from "@/lib/platformBrand";
 import {
   Search,
   Home,
@@ -147,16 +148,19 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
 
   const searchItems: CommandItem[] = (productsQuery.data ?? [])
     .slice(0, 5)
-    .map((product: any) => ({
-      id: `product-${product.id}`,
-      label: product.title,
-      description: `${product.platform} • $${((product.price ?? 0) / 100).toFixed(2)}`,
-      icon: Package,
-      action: () => {
-        if (firstStore) go(`/stores/${firstStore.id}`);
-      },
-      group: "search" as const,
-    }));
+    .map((product: any) => {
+      const brand = getBrand(product.platform);
+      return {
+        id: `product-${product.id}`,
+        label: product.title,
+        description: `${brand.icon} ${brand.name} • $${((product.price ?? 0) / 100).toFixed(2)}`,
+        icon: Package,
+        action: () => {
+          if (firstStore) go(`/stores/${firstStore.id}`);
+        },
+        group: "search" as const,
+      };
+    });
 
   const allItems = [...navigationItems, ...workflowItems, ...actionItems, ...searchItems];
   const filtered = search

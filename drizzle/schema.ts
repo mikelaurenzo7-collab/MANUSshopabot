@@ -110,7 +110,10 @@ export const stores = mysqlTable("stores", {
    */
   userId: int("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]).default("shopify").notNull(),
+  platform: mysqlEnum("platform", [
+    "shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart",
+    "depop", "bigcommerce", "square", "faire", "bonanza", "stockx", "reverb",
+  ]).default("shopify").notNull(),
   platformDomain: varchar("platformDomain", { length: 255 }),
   platformAccessToken: text("platformAccessToken"),
   platformStoreId: varchar("platformStoreId", { length: 255 }),
@@ -305,7 +308,15 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail", "snapchat"]).default("meta").notNull(),
+  // Both branches added platforms; we union both. Snapchat from main +
+  // Outlook/Slack/YouTube from Sprint 27.5 keep ad_campaigns wide
+  // enough for every channel the social bot drafts copy for.
+  platform: mysqlEnum("platform", [
+    "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads",
+    "email", "sms", "gmail", "snapchat",
+    // Sprint 27.5 expansion
+    "outlook", "slack", "youtube",
+  ]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -391,8 +402,14 @@ export type InsertSeoKeyword = typeof seoKeywords.$inferInsert;
 export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
-  // Expanded enum: google_ads is first-class value
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "snapchat"]).notNull(),
+  // Expanded enum: google_ads + snapchat are first-class values; Sprint
+  // 27.5 added slack + youtube so drops and Shorts persist as posts.
+  // (Outlook lives on social_accounts but its sends go through the
+  // outbound delivery layer, not social_posts.)
+  platform: mysqlEnum("platform", [
+    "tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads", "snapchat",
+    "slack", "youtube",
+  ]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),
@@ -500,7 +517,11 @@ export const socialAccounts = mysqlTable("social_accounts", {
   /** Owning org. See platformCredentials for rationale. */
   orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat"]).notNull(),
+  platform: mysqlEnum("platform", [
+    "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail", "snapchat",
+    // Sprint 27.5 expansion: Microsoft inbox, community channel, video.
+    "outlook", "slack", "youtube",
+  ]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accountId: varchar("accountId", { length: 255 }), // platform-specific account/page ID
   accessToken: text("accessToken"),

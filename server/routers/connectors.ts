@@ -325,6 +325,52 @@ const SOCIAL_PLATFORMS = {
     },
     capabilities: ["snap_ads", "dynamic_product_ads", "story_ads", "analytics", "audience_targeting"],
   },
+  outlook: {
+    name: "Outlook",
+    icon: "📨",
+    color: "#0078D4",
+    connectionType: "oauth" as const,
+    description: "Microsoft Graph — Outlook mail + calendar for B2B inboxes and meeting scheduling",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) => {
+        const tenant = process.env.AZURE_TENANT_ID || "common";
+        return `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${encodeURIComponent(scopes)}&state=${state}`;
+      },
+      tokenUrl: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID || "common"}/oauth2/v2.0/token`,
+      // offline_access is required to receive a refresh token; without
+      // it, every send forces a re-consent.
+      scopes: "Mail.Read Mail.Send Calendars.Read Calendars.ReadWrite User.Read offline_access",
+    },
+    capabilities: ["email_sending", "calendar_scheduling", "b2b_outreach", "meeting_invites"],
+  },
+  slack: {
+    name: "Slack",
+    icon: "💬",
+    color: "#4A154B",
+    connectionType: "oauth" as const,
+    description: "Post announcements + product drops to your VIP customer or community Slack channels",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://slack.com/oauth/v2/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`,
+      tokenUrl: "https://slack.com/api/oauth.v2.access",
+      scopes: "chat:write,channels:read,channels:history,reactions:read,users:read,files:read,files:write",
+    },
+    capabilities: ["channel_posts", "scheduled_messages", "block_kit", "reactions_listening"],
+  },
+  youtube: {
+    name: "YouTube",
+    icon: "▶️",
+    color: "#FF0000",
+    connectionType: "oauth" as const,
+    description: "Upload Shorts + long-form video and pull view + retention analytics",
+    oauthConfig: {
+      authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
+        `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}&access_type=offline&prompt=consent`,
+      tokenUrl: "https://oauth2.googleapis.com/token",
+      scopes: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
+    },
+    capabilities: ["video_upload", "shorts_publishing", "scheduled_publish", "analytics"],
+  },
 };
 
 export const connectorsRouter = router({
@@ -385,6 +431,10 @@ export const connectorsRouter = router({
       pinterest: !!ENV.pinterestAppId && !!ENV.pinterestAppSecret,
       gmail: !!ENV.googleClientId && !!ENV.googleClientSecret,
       snapchat: !!ENV.snapchatClientId && !!ENV.snapchatClientSecret,
+      // Sprint 27.5 expansion. YouTube rides the Google OAuth client.
+      outlook: !!ENV.azureClientId && !!ENV.azureClientSecret,
+      slack: !!ENV.slackClientId && !!ENV.slackClientSecret,
+      youtube: !!ENV.googleClientId && !!ENV.googleClientSecret,
     };
     const matrix = getSocialCapabilityMatrix();
     return Object.entries(SOCIAL_PLATFORMS).map(([id, platform]) => ({
@@ -484,7 +534,11 @@ export const connectorsRouter = router({
   /** Connect a social media account (stores OAuth token after redirect) */
   connectSocialAccount: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat"]),
+      platform: z.enum([
+        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat",
+        // Sprint 27.5 expansion
+        "outlook", "slack", "youtube",
+      ]),
       accountName: z.string().optional(),
       accountId: z.string().optional(),
       accessToken: z.string(),
@@ -699,7 +753,11 @@ export const connectorsRouter = router({
   /** Generate OAuth URL for a social media platform */
   generateSocialOAuthUrl: protectedProcedure
     .input(z.object({
-      platform: z.enum(["meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat"]),
+      platform: z.enum([
+        "meta", "instagram", "tiktok", "twitter", "pinterest", "gmail", "snapchat",
+        // Sprint 27.5 expansion
+        "outlook", "slack", "youtube",
+      ]),
       origin: z.string(),
       returnTo: z.string().optional(),
     }))
@@ -718,6 +776,11 @@ export const connectorsRouter = router({
         pinterest: ENV.pinterestAppId,
         gmail: ENV.googleClientId,
         snapchat: ENV.snapchatClientId,
+        // Sprint 27.5: Outlook is on Azure; Slack has its own; YouTube
+        // shares the Google client with Gmail (same OAuth consent).
+        outlook: ENV.azureClientId,
+        slack: ENV.slackClientId,
+        youtube: ENV.googleClientId,
       };
 
       const clientId = clientIdMap[input.platform];
@@ -769,6 +832,9 @@ function getSetupInstructions(platform: string): string {
     tiktok: "1. Go to developers.tiktok.com\n2. Create a new app\n3. Add Login Kit and Content Posting API\n4. Copy Client Key and Client Secret\n5. Add them as TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET in Settings > Secrets",
     twitter: "1. Go to developer.twitter.com\n2. Create a new project and app\n3. Enable OAuth 2.0 with PKCE\n4. Copy Client ID and Client Secret\n5. Add them as TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET in Settings > Secrets",
     pinterest: "1. Go to developers.pinterest.com\n2. Create a new app\n3. Request access to Pins and Boards scopes\n4. Copy App ID and App Secret\n5. Add them as PINTEREST_APP_ID and PINTEREST_APP_SECRET in Settings > Secrets",
+    outlook: "1. Go to portal.azure.com → Azure Active Directory → App registrations → New registration\n2. Set the redirect URI to <your-domain>/api/social/oauth/callback (Web platform)\n3. Under API permissions, add Microsoft Graph delegated: Mail.Read, Mail.Send, Calendars.Read, Calendars.ReadWrite, User.Read, offline_access\n4. Click \"Grant admin consent\"\n5. Under Certificates & secrets, create a client secret\n6. Add AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID (or leave AZURE_TENANT_ID=common for personal accounts) in Settings > Secrets",
+    slack: "1. Go to api.slack.com/apps → Create New App → From scratch\n2. Under OAuth & Permissions, add bot scopes: chat:write, channels:read, channels:history, reactions:read, users:read\n3. Add the redirect URL <your-domain>/api/social/oauth/callback\n4. Install the app to your workspace\n5. Copy the Client ID + Client Secret from Basic Information\n6. Add them as SLACK_CLIENT_ID and SLACK_CLIENT_SECRET in Settings > Secrets",
+    youtube: "YouTube uses Google OAuth — set up Gmail/Sheets first, then click Connect on the YouTube tile.\n1. In console.cloud.google.com, enable the YouTube Data API v3\n2. Add the scope https://www.googleapis.com/auth/youtube.upload to your OAuth consent screen\n3. (Optional) Generate an API key for read-only analytics → set as YOUTUBE_API_KEY",
   };
   return instructions[platform] || "Contact support for setup instructions.";
 }

@@ -8,7 +8,12 @@ import { optimizeProductImage } from "../utils/imageOptimizer";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
 import { getStoreLimit } from "../stripe/products";
 
-const platformEnum = z.enum(["shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart"]);
+const platformEnum = z.enum([
+  // Original 7
+  "shopify", "woocommerce", "amazon", "etsy", "ebay", "tiktok_shop", "walmart",
+  // Sprint 27 expansion
+  "depop", "bigcommerce", "square", "faire", "bonanza", "stockx", "reverb",
+]);
 
 /**
  * Throw NOT_FOUND if the store doesn't exist OR doesn't belong to the
@@ -367,10 +372,18 @@ export const storesRouter = router({
       { id: "shopify", name: "Shopify", icon: "🛍️", color: "#96BF48", description: "Full store management via Admin API & OAuth", oauthSupported: true, capabilities: ["products", "orders", "fulfillment", "themes", "customers", "analytics"] },
       { id: "woocommerce", name: "WooCommerce", icon: "🌐", color: "#96588A", description: "Complete store control via REST API", oauthSupported: false, capabilities: ["products", "orders", "customers", "coupons", "settings", "reports"] },
       { id: "amazon", name: "Amazon", icon: "📦", color: "#FF9900", description: "Seller management via SP-API", oauthSupported: false, capabilities: ["listings", "orders", "fulfillment", "reports", "advertising"] },
-      { id: "etsy", name: "Etsy", icon: "🧡", color: "#F1641E", description: "Shop management via Open API v3", oauthSupported: false, capabilities: ["listings", "orders", "inventory", "reviews", "shipping"] },
-      { id: "ebay", name: "eBay", icon: "🔨", color: "#E53238", description: "Seller tools via REST APIs", oauthSupported: false, capabilities: ["listings", "orders", "marketing", "analytics", "fulfillment"] },
-      { id: "tiktok_shop", name: "TikTok Shop", icon: "🎵", color: "#000000", description: "Social commerce via Open API", oauthSupported: false, capabilities: ["products", "orders", "fulfillment", "promotions"] },
+      { id: "etsy", name: "Etsy", icon: "🧡", color: "#F1641E", description: "Shop management via Open API v3", oauthSupported: true, capabilities: ["listings", "orders", "inventory", "reviews", "shipping"] },
+      { id: "ebay", name: "eBay", icon: "🔨", color: "#E53238", description: "Seller tools via REST APIs", oauthSupported: true, capabilities: ["listings", "orders", "marketing", "analytics", "fulfillment"] },
+      { id: "tiktok_shop", name: "TikTok Shop", icon: "🎵", color: "#000000", description: "Social commerce via Open API", oauthSupported: true, capabilities: ["products", "orders", "fulfillment", "promotions"] },
       { id: "walmart", name: "Walmart", icon: "🏪", color: "#0071CE", description: "Marketplace via Seller API", oauthSupported: false, capabilities: ["products", "orders", "inventory", "pricing", "reports"] },
+      // Sprint 27 expansion — vintage/POD/wholesale/specialty marketplaces
+      { id: "depop", name: "Depop", icon: "👗", color: "#00D084", description: "Gen-Z vintage + streetwear marketplace", oauthSupported: true, capabilities: ["listings", "orders", "inventory", "shipping"] },
+      { id: "bigcommerce", name: "BigCommerce", icon: "🛒", color: "#003366", description: "Mid-market storefront on a managed SaaS", oauthSupported: true, capabilities: ["products", "orders", "customers", "inventory"] },
+      { id: "square", name: "Square Online", icon: "⬜", color: "#3E4348", description: "Square POS + Online Store with shared catalog", oauthSupported: true, capabilities: ["catalog", "orders", "inventory", "payments"] },
+      { id: "faire", name: "Faire", icon: "🏪", color: "#6B5B95", description: "Wholesale marketplace for indie brands", oauthSupported: false, capabilities: ["orders", "inventory", "wholesale"] },
+      { id: "bonanza", name: "Bonanza", icon: "🎪", color: "#FF6B35", description: "Long-tail collectibles marketplace (Bonapitit API)", oauthSupported: false, capabilities: ["listings", "orders", "inventory"] },
+      { id: "stockx", name: "StockX", icon: "📈", color: "#000000", description: "Bid/ask resale marketplace for sneakers + streetwear", oauthSupported: true, capabilities: ["listings", "orders", "resale"] },
+      { id: "reverb", name: "Reverb", icon: "🎸", color: "#2E7D32", description: "Music gear marketplace by Etsy", oauthSupported: true, capabilities: ["listings", "orders", "inventory"] },
     ];
   }),
 });

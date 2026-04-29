@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/context-menu";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
 import { ActivationCoach } from "@/components/ActivationCoach";
+import { DailyBrief } from "@/components/DailyBrief";
 import { FirstRunTour } from "@/components/FirstRunTour";
 import { RecommendedWorkflows } from "@/components/RecommendedWorkflows";
 
@@ -83,6 +84,23 @@ interface OperationNodeData {
 
 // ─── Node renderer ─────────────────────────────────────────────────────────────
 
+/**
+ * Short uppercase kind label that rides above the node label —
+ * gives the constellation a guidebook feel without a separate
+ * legend taking up canvas space.
+ */
+function kindLabel(kind: NodeKind): string {
+  switch (kind) {
+    case "user": return "Workspace";
+    case "bot": return "Bot";
+    case "store": return "Storefront";
+    case "channel": return "Channel";
+    case "ghost-store": return "Add storefront";
+    case "ghost-bot": return "Add bot";
+    case "ghost-channel": return "Add channel";
+  }
+}
+
 const KIND_THEME: Record<
   NodeKind,
   { border: string; bg: string; text: string; iconBg: string }
@@ -112,37 +130,62 @@ function OperationNode({ data, isConnectable }: { data: OperationNodeData; isCon
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
+  // The first detail line surfaces inline on the card so the graph
+  // reads as glanceable metrics, not just labels. We pick the first
+  // entry from the details bag and show it as a tabular footer.
+  const headlineMetric = data.details
+    ? Object.entries(data.details).find(([k]) => /revenue|orders|stores|approvals/i.test(k))
+    : undefined;
+
   const NodeContent = (
     <div
+      data-kind={data.kind}
+      data-status={data.status ?? "idle"}
       className={`
-        relative px-3.5 py-2.5 rounded-xl border backdrop-blur-sm transition-all duration-300 cursor-pointer
-        ${isUser ? "min-w-[220px]" : "min-w-[200px]"}
-        ${data.selected ? "border-sky-400/80 bg-sky-500/15 shadow-[0_0_24px_rgba(14,165,233,0.3)]" : `${theme.border} ${theme.bg}`}
+        op-node group relative cursor-pointer transition-all duration-300
+        ${isUser ? "op-node--user" : ""}
+        ${isGhost ? "op-node--ghost" : ""}
+        ${data.selected ? "op-node--selected" : ""}
       `}
     >
-      <Handle type="target" position={Position.Left} isConnectable={isConnectable}
-        style={{ background: "transparent", border: "none", width: 8, height: 8 }} />
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${theme.iconBg}`}>
-          {data.icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${theme.text} mb-0.5 truncate`}>
-            {data.label}
-          </p>
-          {data.sublabel && (
-            <p className="text-[10px] font-mono text-white/55 truncate">{data.sublabel}</p>
-          )}
+      {/* Pulsing brand halo behind the card — only visible on running
+          bots and active stores so the graph telegraphs liveness. */}
+      <div className="op-node-halo" aria-hidden="true" />
+
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectable={isConnectable}
+        style={{ background: "transparent", border: "none", width: 14, height: 14 }}
+      />
+
+      <div className="op-node-row">
+        <div className="op-node-icon">{data.icon}</div>
+        <div className="op-node-text">
+          <p className="op-node-eyebrow">{kindLabel(data.kind)}</p>
+          <p className="op-node-label">{data.label}</p>
+          {data.sublabel && <p className="op-node-sublabel">{data.sublabel}</p>}
         </div>
         {data.status && (
-          <span
-            className={`shrink-0 w-1.5 h-1.5 rounded-full ${STATUS_DOT[data.status]}`}
-            aria-label={`status ${data.status}`}
-          />
+          <span className="op-node-status" data-status={data.status} aria-label={`status ${data.status}`}>
+            <span className="op-node-status-dot" />
+          </span>
         )}
       </div>
-      <Handle type="source" position={Position.Right} isConnectable={isConnectable}
-        style={{ background: "transparent", border: "none", width: 8, height: 8 }} />
+
+      {headlineMetric && (
+        <div className="op-node-metric">
+          <span className="op-node-metric-key">{headlineMetric[0]}</span>
+          <span className="op-node-metric-value">{String(headlineMetric[1])}</span>
+        </div>
+      )}
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={isConnectable}
+        style={{ background: "transparent", border: "none", width: 14, height: 14 }}
+      />
     </div>
   );
 
@@ -244,16 +287,20 @@ function radialPosition(index: number, count: number, radius: number, originX = 
 }
 
 const PLATFORM_LABEL: Record<string, string> = {
+  // 14 e-commerce surfaces
   shopify: "Shopify", woocommerce: "WooCommerce", amazon: "Amazon", etsy: "Etsy",
   ebay: "eBay", tiktok_shop: "TikTok Shop", walmart: "Walmart",
+  depop: "Depop", bigcommerce: "BigCommerce", square: "Square", faire: "Faire",
+  bonanza: "Bonanza", stockx: "StockX", reverb: "Reverb",
+  // 7 social channels
   meta: "Meta", instagram: "Instagram", tiktok: "TikTok", twitter: "X",
   pinterest: "Pinterest", google_ads: "Google Ads", gmail: "Gmail",
 };
 
 const BOT_META: Record<AgentType, { label: string; href: string; icon: React.ReactNode; description: string }> = {
-  architect: { label: "Builder Bot",  href: "/architect", icon: <Bot className="w-4 h-4 text-sky-300" />,    description: "Niche research & store scaffolding" },
-  merchant:  { label: "Merchant Bot", href: "/merchant",  icon: <Package className="w-4 h-4 text-violet-300" />, description: "Inventory, pricing & fulfilment" },
-  social:    { label: "Social Bot",   href: "/social",    icon: <Megaphone className="w-4 h-4 text-amber-300" />, description: "Ads, posts & campaigns" },
+  architect: { label: "Builder Bot",  href: "/architect", icon: <Bot className="w-5 h-5" strokeWidth={2.2} />,    description: "Niche research & store scaffolding" },
+  merchant:  { label: "Merchant Bot", href: "/merchant",  icon: <Package className="w-5 h-5" strokeWidth={2.2} />, description: "Inventory, pricing & fulfilment" },
+  social:    { label: "Social Bot",   href: "/social",    icon: <Megaphone className="w-5 h-5" strokeWidth={2.2} />, description: "Ads, posts & campaigns" },
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -323,24 +370,32 @@ export default function Home() {
     return { tone: "ok" as const, text: `${enabledBots.length} bots green` };
   })();
 
-  // Build nodes/edges from data
+  // Build nodes/edges from data. The constellation reads as the
+  // dashboard's centerpiece — nodes are large + visually rich, so
+  // radii + offsets are tuned to keep neighbors clear of each other
+  // even at the larger node footprint (~ 280 × 100).
   const { initialNodes, initialEdges } = useMemo(() => {
     const ns: Node<OperationNodeData>[] = [];
     const es: Edge[] = [];
 
-    const center = { x: 600, y: 320 };
+    const center = { x: 720, y: 380 };
+    const NODE_HALF_W = 150; // half-width of the new op-node card
+    const NODE_HALF_H = 50;  // half-height
+    const STORE_RADIUS = 360;
+    const BOT_X_OFFSET = 420;
+    const CHANNEL_X_OFFSET = -420;
 
     // Center: user / workspace
     ns.push({
       id: "user",
       type: "op",
-      position: { x: center.x - 110, y: center.y - 26 },
+      position: { x: center.x - NODE_HALF_W, y: center.y - NODE_HALF_H },
       draggable: false,
       data: {
         kind: "user",
         label: "You",
         sublabel: user?.name ?? "Your workspace",
-        icon: <Sparkles className="w-4 h-4 text-sky-300" />,
+        icon: <Sparkles className="w-5 h-5" strokeWidth={2.2} />,
         details: {
           "Active stores": (stores ?? []).filter((s: any) => s.status === "active").length,
           "Pending approvals": pendingCount,
@@ -352,17 +407,17 @@ export default function Home() {
     const storeList = (stores ?? []).filter((s: any) => s);
     const hasStores = storeList.length > 0;
     if (!hasStores) {
-      const pos = radialPosition(0, 1, 280, center.x, center.y, -90);
+      const pos = radialPosition(0, 1, STORE_RADIUS, center.x, center.y, -90);
       ns.push({
         id: "ghost-store",
         type: "op",
-        position: { x: pos.x - 100, y: pos.y - 26 },
+        position: { x: pos.x - NODE_HALF_W, y: pos.y - NODE_HALF_H },
         draggable: false,
         data: {
           kind: "ghost-store",
           label: "Connect a store",
           sublabel: "Shopify, Etsy, Amazon…",
-          icon: <Plus className="w-4 h-4 text-white/45" />,
+          icon: <Plus className="w-5 h-5" strokeWidth={2.2} />,
           href: "/storefronts",
         },
       });
@@ -370,7 +425,7 @@ export default function Home() {
         id: "e-user-ghoststore",
         source: "user",
         target: "ghost-store",
-        style: { stroke: "rgba(255,255,255,0.18)", strokeDasharray: "4 4", strokeWidth: 1.2 },
+        style: { stroke: "rgba(255,255,255,0.28)", strokeDasharray: "6 6", strokeWidth: 2.4 },
       });
     } else {
       // place stores in upper arc (-150 .. -30 deg)
@@ -380,7 +435,7 @@ export default function Home() {
         const t = storeList.length === 1 ? 0.5 : i / (storeList.length - 1);
         const angle = arcStart + (arcEnd - arcStart) * t;
         const rad = (angle * Math.PI) / 180;
-        const r = 280;
+        const r = STORE_RADIUS;
         const x = center.x + r * Math.cos(rad);
         const y = center.y + r * Math.sin(rad);
         const id = `store-${s.id}`;
@@ -389,14 +444,14 @@ export default function Home() {
         ns.push({
           id,
           type: "op",
-          position: { x: x - 100, y: y - 26 },
+          position: { x: x - NODE_HALF_W, y: y - NODE_HALF_H },
           draggable: false,
           data: {
             kind: "store",
             label: s.name,
             sublabel: `${PLATFORM_LABEL[s.platform] ?? s.platform}${storeMetrics ? ` · $${((storeMetrics.revenue ?? 0) / 100).toFixed(0)}` : ""}`,
             status: isActive ? "ok" : "idle",
-            icon: <Store className="w-4 h-4 text-emerald-300" />,
+            icon: <Store className="w-5 h-5" strokeWidth={2.2} />,
             href: `/stores/${s.id}`,
             entityId: s.id,
             details: {
@@ -413,7 +468,7 @@ export default function Home() {
           source: "user",
           target: id,
           animated: isActive,
-          style: { stroke: isActive ? "rgba(16,185,129,0.45)" : "rgba(255,255,255,0.12)", strokeWidth: 1.4 },
+          style: { stroke: isActive ? "rgba(16,185,129,0.7)" : "rgba(255,255,255,0.22)", strokeWidth: 2.6 },
         });
       });
     }
@@ -422,13 +477,13 @@ export default function Home() {
     enabledBots.forEach((bot, i) => {
       const meta = BOT_META[bot];
       const status = botStatusFor(bot);
-      const x = center.x + 320;
-      const y = center.y - 110 + i * 110;
+      const x = center.x + BOT_X_OFFSET;
+      const y = center.y - 150 + i * 150;
       const id = `bot-${bot}`;
       ns.push({
         id,
         type: "op",
-        position: { x: x - 100, y: y - 26 },
+        position: { x: x - NODE_HALF_W, y: y - NODE_HALF_H },
         draggable: false,
         data: {
           kind: "bot",
@@ -452,7 +507,7 @@ export default function Home() {
         source: "user",
         target: id,
         animated: status === "running",
-        style: { stroke: status === "running" ? "rgba(245,158,11,0.55)" : "rgba(168,85,247,0.35)", strokeWidth: 1.4 },
+        style: { stroke: status === "running" ? "rgba(245,158,11,0.85)" : "rgba(168,85,247,0.55)", strokeWidth: 2.6 },
       });
       storeList.forEach((s: any) => {
         if (s.status !== "active") return;
@@ -462,9 +517,9 @@ export default function Home() {
           target: `store-${s.id}`,
           animated: status === "running",
           style: {
-            stroke: status === "running" ? "rgba(245,158,11,0.35)" : "rgba(168,85,247,0.18)",
-            strokeWidth: 1,
-            strokeDasharray: "4 3",
+            stroke: status === "running" ? "rgba(245,158,11,0.55)" : "rgba(168,85,247,0.32)",
+            strokeWidth: 2,
+            strokeDasharray: "6 4",
           },
         });
       });
@@ -473,17 +528,17 @@ export default function Home() {
     // Ring 3: channels (social accounts) — bottom arc
     const channels = (socialAccounts ?? []).filter((a: any) => a?.status === "active");
     if (channels.length === 0) {
-      const pos = radialPosition(0, 1, 280, center.x, center.y, 90);
+      const pos = radialPosition(0, 1, STORE_RADIUS, center.x, center.y, 90);
       ns.push({
         id: "ghost-channel",
         type: "op",
-        position: { x: pos.x - 100, y: pos.y - 26 },
+        position: { x: pos.x - NODE_HALF_W, y: pos.y - NODE_HALF_H },
         draggable: false,
         data: {
           kind: "ghost-channel",
           label: "Add a channel",
           sublabel: "TikTok, Meta, Pinterest…",
-          icon: <Plus className="w-4 h-4 text-white/45" />,
+          icon: <Plus className="w-5 h-5" strokeWidth={2.2} />,
           href: "/storefronts",
         },
       });
@@ -491,7 +546,7 @@ export default function Home() {
         id: "e-user-ghostchannel",
         source: "user",
         target: "ghost-channel",
-        style: { stroke: "rgba(255,255,255,0.18)", strokeDasharray: "4 4", strokeWidth: 1.2 },
+        style: { stroke: "rgba(255,255,255,0.28)", strokeDasharray: "6 6", strokeWidth: 2.4 },
       });
     } else {
       channels.forEach((c: any, i: number) => {
@@ -500,21 +555,21 @@ export default function Home() {
         const t = channels.length === 1 ? 0.5 : i / (channels.length - 1);
         const angle = arcStart + (arcEnd - arcStart) * t;
         const rad = (angle * Math.PI) / 180;
-        const r = 280;
+        const r = STORE_RADIUS;
         const x = center.x + r * Math.cos(rad);
         const y = center.y + r * Math.sin(rad);
         const id = `channel-${c.id}`;
         ns.push({
           id,
           type: "op",
-          position: { x: x - 100, y: y - 26 },
+          position: { x: x - NODE_HALF_W, y: y - NODE_HALF_H },
           draggable: false,
           data: {
             kind: "channel",
             label: c.accountName ?? PLATFORM_LABEL[c.platform] ?? c.platform,
             sublabel: PLATFORM_LABEL[c.platform] ?? c.platform,
             status: "ok",
-            icon: <Megaphone className="w-4 h-4 text-pink-300" />,
+            icon: <Megaphone className="w-5 h-5" strokeWidth={2.2} />,
             href: "/social",
             entityId: c.id,
             details: {
@@ -529,7 +584,7 @@ export default function Home() {
           source: "bot-social",
           target: id,
           animated: false,
-          style: { stroke: "rgba(236,72,153,0.35)", strokeWidth: 1, strokeDasharray: "4 3" },
+          style: { stroke: "rgba(236,72,153,0.55)", strokeWidth: 2, strokeDasharray: "6 4" },
         });
       });
     }
@@ -657,6 +712,12 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── Daily Brief ── morning report, auto-hides on empty data
+          and collapses to a single-line summary the user can re-expand */}
+      <div className="shrink-0 px-4 md:px-5 pt-3 z-20">
+        <DailyBrief />
+      </div>
+
       {/* ── Activation Coach ── (auto-dismisses once fully activated) */}
       <div className="shrink-0 px-4 md:px-5 pt-2 z-20">
         <ActivationCoach />
@@ -691,24 +752,52 @@ export default function Home() {
             connectionLineType={ConnectionLineType.SmoothStep}
             proOptions={{ hideAttribution: true }}
             fitView
-            fitViewOptions={{ padding: 0.2 }}
-            minZoom={0.4}
-            maxZoom={1.5}
-            className="bg-transparent"
+            // Tighter padding lets the bigger nodes fill more of the
+            // canvas, and the higher minZoom keeps the smallest
+            // viewport state still legible.
+            fitViewOptions={{ padding: 0.12, maxZoom: 1.0 }}
+            minZoom={0.55}
+            maxZoom={1.6}
+            className="bg-transparent op-flow"
           >
-            <Background color="rgba(255,255,255,0.03)" gap={28} size={1} />
+            <Background color="rgba(255,255,255,0.045)" gap={36} size={1.4} />
             <Controls
-              className="!bg-[#0a0b0f] !border-white/[0.08] !rounded-xl !shadow-none [&>button]:!border-b-white/[0.06] [&>button]:!bg-transparent [&>button>svg]:!fill-white/40 [&>button:hover]:!bg-white/[0.06]"
+              className="!bg-[#0a0b0f] !border-white/[0.08] !rounded-xl !shadow-none [&>button]:!border-b-white/[0.06] [&>button]:!bg-transparent [&>button>svg]:!fill-white/55 [&>button:hover]:!bg-white/[0.06] [&>button:hover>svg]:!fill-sky-300"
               position="bottom-left"
               showInteractive={false}
             />
             <MiniMap
-              className="!bg-[#0a0b0f] !border-white/[0.08] !rounded-xl"
-              nodeColor={() => "rgba(14,165,233,0.3)"}
-              maskColor="rgba(5,5,5,0.7)"
+              className="!bg-[#0a0b0f]/90 !border-white/[0.1] !rounded-xl !backdrop-blur-md"
+              nodeColor={(n) => {
+                const k = (n.data as any)?.kind;
+                if (k === "user") return "rgba(56, 189, 248, 0.7)";
+                if (k === "store") return "rgba(110, 231, 183, 0.7)";
+                if (k === "bot") return "rgba(196, 181, 253, 0.7)";
+                if (k === "channel") return "rgba(244, 114, 182, 0.7)";
+                return "rgba(255,255,255,0.25)";
+              }}
+              nodeStrokeColor="rgba(0,0,0,0.4)"
+              nodeStrokeWidth={2}
+              maskColor="rgba(5,5,5,0.78)"
               position="bottom-right"
             />
           </ReactFlow>
+
+          {/* Constellation legend — overlay in the top-right of the
+              canvas. Compact, glanceable, fades to muted on idle. */}
+          <div className="absolute top-3 right-3 z-10 hidden md:flex items-center gap-3 rounded-xl border border-white/[0.07] bg-black/55 backdrop-blur-md px-3 py-2 text-[10px] font-medium pointer-events-none">
+            <span className="inline-flex items-center gap-1.5 text-white/65">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.7)]" /> Storefronts
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-white/65">
+              <span className="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_6px_rgba(168,85,247,0.7)]" /> Bots
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-white/65">
+              <span className="w-2 h-2 rounded-full bg-pink-400 shadow-[0_0_6px_rgba(236,72,153,0.7)]" /> Channels
+            </span>
+            <span className="text-white/30">·</span>
+            <span className="text-white/40 hidden lg:inline">click a node to inspect</span>
+          </div>
         </div>
 
         {/* Inspector — slide-over, opens on node click. Click pane to dismiss. */}
