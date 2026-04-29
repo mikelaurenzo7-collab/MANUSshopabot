@@ -106,7 +106,7 @@ function ReviewDialog({ approval, decision, open, onClose, onConfirm, isPending 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setNote(""); } }}>
-      <DialogContent className="bg-[#0a0a0f] border-white/10 text-white max-w-md">
+      <DialogContent className="bg-surface-overlay border-white/10 text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {decision === "approved" ? (

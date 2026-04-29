@@ -6,7 +6,7 @@ export default function NotFound() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050507] relative overflow-hidden grain">
+    <div className="min-h-screen w-full flex items-center justify-center bg-surface-base relative overflow-hidden grain">
       {/* Background effects — match landing/hero cinematic feel */}
       <div className="aurora-mesh" aria-hidden="true" />
       <div className="absolute inset-0 grid-bg-dense opacity-30 pointer-events-none" />
