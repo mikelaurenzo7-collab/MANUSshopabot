@@ -54,8 +54,8 @@ type AgentType = "architect" | "merchant" | "social";
 
 interface NavItem {
   title: string;
-  path: string;
-  icon: any;
+  path?: string;
+  icon?: any;
   badge?: number;
   /** Live colored dot rendered to the right of the label (e.g. bot status). */
   dot?: "ok" | "running" | "error" | null;
@@ -63,6 +63,8 @@ interface NavItem {
   brand?: "sky" | "cyan" | "amber";
   /** Sub-item: indented under parent, smaller style */
   sub?: boolean;
+  /** Section header (e.g. "BOTS", "OPERATIONS") */
+  section?: boolean;
 }
 
 function statusDotClass(status: NavItem["dot"]): string | null {
@@ -205,22 +207,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems: NavItem[] = [
     { title: "Command Center", path: "/", icon: LayoutDashboard },
     { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
-    // ── divider before bots ──
+    // ── BOTS section ──
+    { title: "BOTS", section: true },
     { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
     { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
     { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
     { title: "Communicator", path: "/communicator", icon: Mail, brand: "amber", dot: statusByAgent.social ?? "ok" },
-    // ── divider before operate ──
+    // ── OPERATIONS section ──
+    { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
-    { title: "Build", path: "/workflow-builder", icon: Zap, sub: true },
-    { title: "Storefronts", path: "/storefronts", icon: Globe },
-    { title: "Insights", path: "/insights", icon: BarChart3 },
+    { title: "Workflow Builder", path: "/workflow-builder", icon: Zap },
+    { title: "Integrations", path: "/storefronts", icon: Globe },
+    { title: "Analytics", path: "/insights", icon: BarChart3 },
+    // ── ACCOUNT section ──
+    { title: "ACCOUNT", section: true },
     { title: "Settings", path: "/settings", icon: SettingsIcon },
   ];
-
-  // Index in navItems where a thin divider sits ABOVE the row.
-  // Workflows=6, Build=7(sub), Storefronts=8 → divider before index 2 and 6
-  const dividerIndices = new Set<number>([2, 6]);
 
   const handleLogout = () => {
     window.location.href = getLoginUrl() + "?action=logout";
@@ -229,6 +231,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Determine which top-level path is "active" so legacy deep links also
   // highlight the consolidated entry point (e.g. /activity → Inbox).
   const activePathFor = (path: string): boolean => {
+    if (!path) return false; // Section headers have no path
     if (path === "/") return location === "/";
     if (path === "/inbox") {
       return (
@@ -264,7 +267,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const renderNavItem = (item: NavItem, rail: boolean = false) => {
-    const isActive = activePathFor(item.path);
+    // Section headers
+    if (item.section) {
+      if (rail) return null; // Hide section headers on rail
+      return (
+        <div key={item.title} className="px-2.5 py-2 mt-1 mb-0.5">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-white/30 font-bold">
+            {item.title}
+          </span>
+        </div>
+      );
+    }
+    const isActive = activePathFor(item.path ?? "");
     // For bots we collapse brand-dot + status-dot into a single dot. When
     // the bot is healthy we paint with brand color; when it changes state
     // (running/error) we let status take over so the user notices.
@@ -273,7 +287,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       return (
         <Link
           key={item.title}
-          href={item.path}
+          href={item.path ?? "#"}
           onClick={() => isMobile && setMobileMenuOpen(false)}
           title={item.title + (item.badge && item.badge > 0 ? ` (${item.badge})` : "")}
           aria-label={item.title}
@@ -313,7 +327,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       return (
         <Link
           key={item.title}
-          href={item.path}
+          href={item.path ?? "#"}
           onClick={() => isMobile && setMobileMenuOpen(false)}
           className={`flex items-center h-6 pl-7 pr-2.5 rounded-md transition-all duration-200 group relative ${
             isActive
@@ -342,7 +356,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <Link
         key={item.title}
-        href={item.path}
+        href={item.path ?? "#"}
         onClick={() => isMobile && setMobileMenuOpen(false)}
         className={`flex items-center h-7 pl-3 pr-2.5 rounded-md transition-standard group relative ${
           isActive
@@ -447,11 +461,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </button>
 
       <div className="space-y-px">
-        {navItems.map((item, i) => (
+        {navItems.map((item) => (
           <div key={item.title}>
-            {dividerIndices.has(i) && (
-              <div className="my-1.5 mx-2 nav-group-rule" aria-hidden="true" />
-            )}
             {renderNavItem(item, false)}
           </div>
         ))}
@@ -473,11 +484,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         <Search className="w-4 h-4" />
       </button>
-      {navItems.map((item, i) => (
+      {navItems.map((item) => (
         <div key={item.title} className="w-full flex flex-col items-center">
-          {dividerIndices.has(i) && (
-            <div className="my-1 w-6 h-px bg-white/[0.08]" aria-hidden="true" />
-          )}
           {renderNavItem(item, true)}
         </div>
       ))}

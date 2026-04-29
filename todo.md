@@ -1337,3 +1337,14 @@
 - [ ] Add connection status indicators for email accounts
 - [ ] Save checkpoint with new bot architecture
 
+## Sprint 23: Navigation Reorganization
+- [x] Audit current navigation structure
+- [x] Add section headers (BOTS, OPERATIONS, ACCOUNT)
+- [x] Rename "Build" to "Workflow Builder" for clarity
+- [x] Rename "Storefronts" to "Integrations" for clarity
+- [x] Rename "Insights" to "Analytics" for clarity
+- [x] Remove divider-based grouping in favor of section headers
+- [x] Update DashboardLayout with new nav structure
+- [ ] Test navigation flows across all pages
+- [ ] Save checkpoint with reorganized navigation
+
