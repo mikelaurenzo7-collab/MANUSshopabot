@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Plug, Layers, Puzzle, Truck, Mail, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -28,7 +29,18 @@ function readTabFromHash(): StorefrontsTab {
 }
 
 export default function StorefrontsPage() {
+  const [, setLocation] = useLocation();
   const [tab, setTab] = useState<StorefrontsTab>(() => readTabFromHash());
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+
+  // Extract returnTo from query params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const rt = params.get("returnTo");
+      if (rt) setReturnTo(rt);
+    }
+  }, []);
 
   // Live counts surface in tab pills so the user sees their footprint
   // before clicking. tRPC handles caching — these queries are also fired

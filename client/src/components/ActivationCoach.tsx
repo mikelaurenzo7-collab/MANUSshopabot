@@ -61,7 +61,7 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     description:
       "Builder Bot needs a connected storefront before it can research your niche, source products, and ship a catalog.",
     cta: "Connect a store",
-    href: "/storefronts",
+    href: "/storefronts#integrations?returnTo=/",
   },
   RUN_BUILDER: {
     step: 2,
@@ -89,7 +89,7 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     description:
       "Meta, TikTok, Pinterest — pick any. The Social Bot will start drafting ad creatives and content the moment a channel is live.",
     cta: "Connect a channel",
-    href: "/storefronts",
+    href: "/storefronts#integrations?returnTo=/",
   },
   SEND_CAMPAIGN: {
     step: 4,

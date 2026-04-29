@@ -364,7 +364,7 @@ export default function Home() {
                   icon={<Store className="w-5 h-5 text-white/20" />}
                   title="No stores connected"
                   description="Connect your first Shopify, Etsy, or Amazon store to get started."
-                  action={{ label: "Connect a store", href: "/storefronts#integrations" }}
+                  action={{ label: "Connect a store", href: "/storefronts#integrations?returnTo=/" }}
                 />
               ) : (
                 <div className="space-y-2">

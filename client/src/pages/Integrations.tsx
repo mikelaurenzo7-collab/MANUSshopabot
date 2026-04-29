@@ -263,25 +263,28 @@ export default function IntegrationsPage() {
   };
 
   const tabs = [
+    { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
     { id: "stores" as const, label: "My Stores", icon: <Store className="w-3.5 h-3.5" />, count: stores?.length || 0 },
     { id: "social" as const, label: "Social Accounts", icon: <Share2 className="w-3.5 h-3.5" />, count: socialAccounts?.length || 0 },
     { id: "tools" as const, label: "Tools", icon: <Wrench className="w-3.5 h-3.5" />, count: connectedTools?.length || 0 },
-    { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
   ];
 
   return (
     <div className="flex flex-col h-full bg-transparent text-slate-200 overflow-hidden">
       {/* Compact summary bar */}
-      <div className="px-3 py-2 border-b border-white/8 flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[11px] text-slate-400">
-          {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
-        </p>
+      <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between flex-wrap gap-3 bg-white/[0.02]">
+        <div>
+          <p className="text-xs font-semibold text-white mb-1">Integrations & Connections</p>
+          <p className="text-[11px] text-slate-400">
+            {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           {summary && (
             <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
-              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400" /> {summary.credentials} platforms</span>
-              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400" /> {summary.stores} stores</span>}
-              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> {summary.socialAccounts} social</span>}
+              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400" /> {summary.credentials} active</span>
+              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400" /> {summary.stores} warning</span>}
+              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> {summary.socialAccounts} error</span>}
             </div>
           )}
         </div>
@@ -552,6 +555,64 @@ export default function IntegrationsPage() {
         {/* ── CONNECT NEW TAB ── */}
         {mainTab === "connect" && (
           <div className="space-y-6">
+            {/* STORES SECTION — PROMINENT AT TOP */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Store className="w-5 h-5 text-sky-400" />
+                <h3 className="text-sm font-heading font-bold text-white">Connect a Store</h3>
+                <span className="text-xs text-slate-500 ml-auto">{stores?.length || 0} connected</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {ecommercePlatforms?.filter((p: any) => ["shopify", "woocommerce", "bigcommerce", "square"].includes(p.id)).map((platform: any) => {
+                  const isConnected = connectedPlatformIds.has(platform.id);
+                  const brand = getBrand(platform.id);
+                  return (
+                    <div
+                      key={platform.id}
+                      className="platform-tile p-4 flex flex-col gap-2"
+                      style={tileVars(brand)}
+                    >
+                      <span className="platform-tile-ribbon" />
+                      <span className="platform-tile-seam" />
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="platform-tile-icon-halo text-2xl leading-none">{brand.icon}</div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-white tracking-tight">{brand.name}</div>
+                            <div className="text-[10px] text-slate-400/90 truncate">{brand.tagline}</div>
+                          </div>
+                        </div>
+                        {isConnected && (
+                          <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Live
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={`w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-md transition-all duration-200 ${
+                          isConnected
+                            ? "bg-white/6 text-slate-200 hover:bg-white/10 border border-white/10"
+                            : "platform-tile-cta text-white"
+                        }`}
+                        onClick={() => handleEcommerceConnect(platform)}
+                        disabled={generateOAuth.isPending}
+                      >
+                        {generateOAuth.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : isConnected ? (
+                          <RefreshCw className="w-3 h-3" />
+                        ) : (
+                          <Plug className="w-3 h-3" />
+                        )}
+                        {isConnected ? "Reconnect" : "Connect"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Just Landed spotlight — auto-hides past the 60-day grace
                 window. Surfaces every freshly-shipped integration so
                 operators see the new options before scrolling the grid. */}
@@ -564,7 +625,7 @@ export default function IntegrationsPage() {
               <div className="relative flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <h2 className="text-lg font-heading font-bold tracking-tight text-white">
-                    Plug into the universe ✦
+                    Connect More Platforms ✦
                   </h2>
                   <p className="text-[12px] text-slate-300/85 max-w-xl leading-snug">
                     {(ecommercePlatforms?.length || 0)} commerce surfaces · {(socialPlatforms?.length || 0)} social channels · cross-cutting tools.

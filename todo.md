@@ -1389,3 +1389,34 @@
 - [x] Final visual audit and refinements
 - [x] Production readiness check
 - [x] Save final checkpoint
+
+
+## Sprint 26: Integrations Page Perfection
+- [ ] Audit Integrations page structure and identify disorganization
+- [ ] Fix Shopify redirect bug in OAuth flow
+- [ ] Move stores section to top of page
+- [ ] Reorganize integrations into clear categories
+- [ ] Improve visual hierarchy and section grouping
+- [ ] Add connection status indicators for all integrations
+- [ ] Create clear "Connect Store" vs "Connect Integration" distinction
+- [ ] Test all OAuth flows (Shopify, BigCommerce, etc.)
+- [ ] Test all integration connections
+- [ ] Verify no redirect loops or bugs
+- [ ] Perfect page layout and spacing
+- [ ] Save checkpoint with perfected Integrations page
+
+
+## Sprint 27: Comprehensive Routing & OAuth Fix
+- [ ] Audit all pages for "Connect Store" buttons and OAuth entry points
+- [ ] Find where OAuth flow is initiated from (Architect, Merchant, etc.)
+- [ ] Fix OAuth returnTo parameter to return to original page
+- [ ] Consolidate Shopify OAuth flow with proper redirect handling
+- [ ] Update all OAuth flows to include returnTo parameter
+- [ ] Fix Storefronts/Integrations routing and naming confusion
+- [ ] Remove stale redirects (/gmail-bot -> #email)
+- [ ] Reorganize Integrations page with stores at top
+- [ ] Add success state after OAuth completion
+- [ ] Test OAuth flows from all entry points
+- [ ] Test returnTo redirects work correctly
+- [ ] Perfect design and visual hierarchy
+- [ ] Save checkpoint with perfected routing and design
