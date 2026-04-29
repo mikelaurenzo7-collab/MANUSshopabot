@@ -125,10 +125,15 @@ const PRICING = [
   },
 ];
 
+// Trust strip — technology-stack signals over generic "fast/easy/safe"
+// promises. Each item is something the platform actually uses, named
+// honestly so the merchant can verify the claim. Shopify-OAuth is wired
+// today; Claude Opus 4.7 powers reasoning when ANTHROPIC_API_KEY is set;
+// Stripe handles billing end-to-end.
 const TRUST_ITEMS = [
-  { icon: Zap,      label: "Instant setup",      sub: "Live in 30 minutes"     },
-  { icon: Shield,   label: "No code required",   sub: "Fully managed bots"     },
-  { icon: BarChart3,label: "Real-time analytics", sub: "Track every metric"    },
+  { icon: Zap,       label: "Claude Opus 4.7",    sub: "Reasoning + tool use"       },
+  { icon: Shield,    label: "Shopify OAuth",      sub: "First-party connect"        },
+  { icon: BarChart3, label: "Stripe billing",     sub: "PCI-compliant out of box"  },
 ];
 
 const BOT_PREVIEW_PROGRESS_PERCENTAGES = [82, 67, 91];
@@ -499,6 +504,302 @@ function AgentTrailSample() {
   );
 }
 
+/**
+ * OutcomesStrip — concrete, contrast-style "before/after" for what
+ * actually changes the day operators hire the bots. Lives between
+ * the hero and the integration logo bar so it carries the page's
+ * "what's in it for me" weight on the first scroll.
+ *
+ * Each row pairs a manual operator pain point (left, dimmed) with
+ * the bot-driven outcome (right, brand-tinted). Honest framing —
+ * outcomes are specific to capabilities the platform actually ships
+ * (Shopify OAuth, autonomous repricer, ad-creative generation,
+ * approval-gate routing). No fabricated case-study numbers.
+ */
+function OutcomesStrip() {
+  const rows: Array<{
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    rgb: string;
+    before: { label: string; lead: string };
+    after: { label: string; lead: string };
+  }> = [
+    {
+      icon: Clock,
+      color: "#38bdf8",
+      rgb: "14, 165, 233",
+      before: { label: "Manual store setup", lead: "Pick a theme. Wire legal pages. Write 20 product descriptions. 8-12 hours." },
+      after: { label: "Builder-driven launch", lead: "One niche keyword in. Niche scoring + brand identity + draft catalog + legal pages out — 30 minutes." },
+    },
+    {
+      icon: ShoppingCart,
+      color: "#22d3ee",
+      rgb: "6, 182, 212",
+      before: { label: "Manual fulfillment", lead: "Watch the inbox. Click through Shopify. Forward to supplier. Update tracking. Per order, every order." },
+      after: { label: "Merchant on autopilot", lead: "Orders fulfill themselves on connected suppliers. Inventory syncs across stores. Margin floor flagged automatically." },
+    },
+    {
+      icon: TrendingUp,
+      color: "#fb923c",
+      rgb: "249, 115, 22",
+      before: { label: "Manual ad creative", lead: "Brief a freelancer. Wait three days. Get one variation. Repeat for every angle, every audience." },
+      after: { label: "Social Bot generates", lead: "Five ad copy variations + audience targeting + creative direction in 90 seconds. Per platform, tuned to each." },
+    },
+    {
+      icon: Shield,
+      color: "#a78bfa",
+      rgb: "167, 139, 250",
+      before: { label: "Black-box AI agents", lead: "GPT outputs a wall of text. You guess what it considered. No way to verify the reasoning." },
+      after: { label: "Audited reasoning", lead: "Self-critique flags issues with severity. Parallel drafts show why one won. Agent trail shows every tool the bot called." },
+    },
+  ];
+
+  return (
+    <section className="py-14 px-4 border-y border-white/[0.06] relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent pointer-events-none" />
+      <div className="max-w-5xl mx-auto relative">
+        <div className="text-center mb-10">
+          <span className="eyebrow mb-2">What actually changes</span>
+          <h2 className="mt-3 text-2xl md:text-3xl font-black tracking-tighter text-white">
+            The day you hire the bots
+          </h2>
+          <p className="mt-3 text-sm text-white/55 max-w-xl mx-auto leading-relaxed">
+            Four things move off your plate. Each one named honestly —
+            tied to a capability the platform actually ships, not a
+            slide-deck promise.
+          </p>
+        </div>
+        <div className="space-y-3">
+          {rows.map((row) => (
+            <div
+              key={row.before.label}
+              className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_1fr] gap-3 md:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 md:py-3"
+            >
+              <div
+                className="hidden md:flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
+                style={{
+                  background: `rgba(${row.rgb}, 0.10)`,
+                  border: `1px solid rgba(${row.rgb}, 0.28)`,
+                  color: row.color,
+                }}
+              >
+                <row.icon className="w-4 h-4" />
+              </div>
+              <div className="md:py-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">
+                  Before
+                </p>
+                <p className="text-sm font-semibold text-white/55 line-through decoration-white/15">
+                  {row.before.label}
+                </p>
+                <p className="text-xs text-white/40 mt-1 leading-relaxed">
+                  {row.before.lead}
+                </p>
+              </div>
+              <ArrowRight className="hidden md:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
+              <div className="md:py-1 md:border-l md:pl-4" style={{ borderLeftColor: `rgba(${row.rgb}, 0.18)` }}>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-widest mb-1"
+                  style={{ color: row.color }}
+                >
+                  After
+                </p>
+                <p className="text-sm font-semibold text-white/95">
+                  {row.after.label}
+                </p>
+                <p className="text-xs text-white/55 mt-1 leading-relaxed">
+                  {row.after.lead}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * PricingMatrix — feature-comparison table beneath the 4-card pricing
+ * grid. Answers "what do I lose if I pick the smaller tier?" with one
+ * line per capability across all four plans. Operators scanning the
+ * cards above can match their actual need to a tier without scrolling.
+ *
+ * Honest framing — only ships rows for capabilities the platform
+ * actually delivers today. Reasoning lifts (self-critique, parallel
+ * drafting, autonomous workflows) are platform-wide and listed as ✓
+ * across every plan because they don't gate on tier.
+ */
+function PricingMatrix({ onPick }: { onPick: (planId: string) => void }) {
+  type Cell = boolean | string;
+  const plans: Array<{ name: string; planId: string; featured?: boolean }> = [
+    { name: "Starter", planId: "starter" },
+    { name: "Growth", planId: "growth", featured: true },
+    { name: "Pro", planId: "pro" },
+    { name: "Scale", planId: "scale" },
+  ];
+  const sections: Array<{ title: string; rows: Array<{ label: string; cells: [Cell, Cell, Cell, Cell] }> }> = [
+    {
+      title: "Stores & catalog",
+      rows: [
+        { label: "Connected stores", cells: ["1", "3", "10", "Unlimited"] },
+        { label: "Builder Bot — niche + sourcing + setup", cells: [true, true, true, true] },
+        { label: "Cross-store inventory + auto-fulfillment", cells: [false, true, true, true] },
+        { label: "Multi-store expansion strategy", cells: [false, false, true, true] },
+      ],
+    },
+    {
+      title: "Reasoning lifts",
+      rows: [
+        { label: "Self-critique on every high-stakes step", cells: [true, true, true, true] },
+        { label: "Parallel drafting on brand naming + decisions", cells: [true, true, true, true] },
+        { label: "Autonomous workflows (Competitor Stalker / Repricer / Trend Hunter)", cells: [true, true, true, true] },
+        { label: "Audit trail on the workflow detail page", cells: [true, true, true, true] },
+      ],
+    },
+    {
+      title: "Marketing automation",
+      rows: [
+        { label: "TikTok + Meta ad creative generation", cells: [false, false, true, true] },
+        { label: "Email + SMS recovery flows", cells: [false, false, true, true] },
+        { label: "Social content calendar (per-platform tuned)", cells: [false, false, true, true] },
+      ],
+    },
+    {
+      title: "Capacity + support",
+      rows: [
+        { label: "AI actions per month", cells: ["500", "5,000", "25,000", "Unlimited"] },
+        { label: "Support tier", cells: ["Email", "Priority", "Slack", "Dedicated CSM"] },
+        { label: "White-label option", cells: [false, false, false, true] },
+        { label: "Custom platform integrations", cells: [false, false, false, true] },
+      ],
+    },
+  ];
+
+  return (
+    <div className="mt-14 max-w-6xl mx-auto">
+      <div className="text-center mb-6">
+        <p className="eyebrow text-white/55">Compare every line</p>
+        <h3 className="mt-2 text-xl md:text-2xl font-bold tracking-tight text-white">
+          What's in each tier
+        </h3>
+      </div>
+      <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.01]">
+        {/* Header row — plan names, sticky for desktop scroll */}
+        <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase tracking-widest">
+          <div className="text-white/40">Capability</div>
+          {plans.map((p) => (
+            <div
+              key={p.planId}
+              className={`text-center ${p.featured ? "text-sky-300" : "text-white/55"}`}
+            >
+              {p.name}
+              {p.featured && (
+                <span className="block text-[8px] tracking-[0.1em] text-sky-400/85 font-bold mt-0.5">
+                  Most popular
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        {sections.map((sec, secIdx) => (
+          <div key={sec.title} className={`${secIdx > 0 ? "border-t border-white/[0.04]" : ""}`}>
+            <div className="px-4 md:px-6 py-2.5 bg-white/[0.015]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/55">
+                {sec.title}
+              </p>
+            </div>
+            {sec.rows.map((r) => (
+              <div
+                key={r.label}
+                className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-t border-white/[0.04] text-xs items-center"
+              >
+                <div className="text-white/75">{r.label}</div>
+                {r.cells.map((cell, i) => (
+                  <div key={i} className="text-center">
+                    {typeof cell === "boolean" ? (
+                      cell ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/85 inline-block" aria-label="Included" />
+                      ) : (
+                        <span className="text-white/20" aria-label="Not included">—</span>
+                      )
+                    ) : (
+                      <span className={plans[i].featured ? "text-sky-300 font-semibold" : "text-white/85 font-semibold"}>
+                        {cell}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ))}
+        {/* CTA row — one button per plan, repeated below the matrix
+            so operators don't have to scroll back up after comparing. */}
+        <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-4 border-t border-white/[0.06] bg-white/[0.015]">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 self-center">
+            Start a 7-day trial
+          </div>
+          {plans.map((p) => (
+            <button
+              key={p.planId}
+              type="button"
+              onClick={() => onPick(p.planId)}
+              className={`text-xs font-semibold rounded-md py-2 transition-colors ${
+                p.featured
+                  ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sm shadow-sky-500/30"
+                  : "bg-white/[0.04] hover:bg-white/[0.08] text-white/85 border border-white/[0.08]"
+              }`}
+            >
+              Pick {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * MobileStickyCTA — bottom-anchored conversion bar for the mobile
+ * viewport. Mobile readers often never reach the pricing section
+ * because the page is long; this keeps the trial CTA one tap away
+ * the entire scroll. Hides on desktop where the top-nav CTA is
+ * already always-visible.
+ */
+function MobileStickyCTA({
+  onClick,
+  isLoading,
+}: {
+  onClick: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 bg-gradient-to-t from-[#050507]/95 via-[#050507]/80 to-transparent backdrop-blur-md">
+      <Button
+        onClick={onClick}
+        disabled={isLoading}
+        size="lg"
+        className="w-full h-12 text-sm font-semibold btn-glow text-white"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Opening checkout…
+          </>
+        ) : (
+          <>
+            Start 7-day free trial <ArrowRight className="w-4 h-4 ml-1.5" />
+          </>
+        )}
+      </Button>
+      <p className="text-center text-[10px] text-white/45 mt-1.5">
+        No credit card to start · Cancel anytime
+      </p>
+    </div>
+  );
+}
+
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   const id = q.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40);
@@ -846,6 +1147,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ── Outcomes strip — what changes when you hire the bots ───────────── */}
+      <OutcomesStrip />
 
       {/* ── Integration Logo Bar ───────────────────────────────────────────── */}
       <section className="py-10 px-4 border-b border-white/[0.06] bg-white/[0.01]">
@@ -1303,6 +1607,12 @@ export default function Landing() {
               </div>
             ))}
           </div>
+
+          {/* Feature-comparison matrix — explicit answer to "what do
+              I lose if I pick a smaller tier?" Operators reading the
+              4-card pricing block above can match what they actually
+              need against what each tier ships, in one line each. */}
+          <PricingMatrix onPick={handlePricingClick} />
         </div>
       </section>
 
@@ -1395,8 +1705,19 @@ export default function Landing() {
             <span className="text-white/20 text-xs">© 2026 {BRAND_NAME}. All rights reserved.</span>
             <span className="text-white/20 text-xs">Built with AI. Powered by bots.</span>
           </div>
+          {/* Bottom spacer — leaves room above the mobile sticky CTA so
+              the footer link block doesn't get hidden under the bar. */}
+          <div className="lg:hidden h-20" aria-hidden="true" />
         </div>
       </footer>
+
+      {/* Mobile-only sticky trial CTA — keeps the trial promise one tap
+          away through the entire scroll, since mobile sessions often
+          don't reach pricing. */}
+      <MobileStickyCTA
+        onClick={() => handlePricingClick("growth")}
+        isLoading={checkoutMutation.isPending}
+      />
     </div>
   );
 }

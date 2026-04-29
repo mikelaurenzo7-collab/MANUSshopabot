@@ -227,3 +227,59 @@ describe("Landing — existing-store operator lane", () => {
     expect(src).toContain("Approval queue");
   });
 });
+
+describe("Landing — outcomes strip + pricing matrix + sticky CTA", () => {
+  it("outcomes strip names four concrete before/after pairs grounded in real capabilities", () => {
+    const src = read(LANDING);
+    expect(src).toContain("function OutcomesStrip");
+    // Section title — "what changes" framing, not "save 10 hours" lies.
+    expect(src).toContain("The day you hire the bots");
+    // Before/after pairs are ordered Builder → Merchant → Social → Audited reasoning.
+    expect(src).toContain("Manual store setup");
+    expect(src).toContain("Builder-driven launch");
+    expect(src).toContain("Manual fulfillment");
+    expect(src).toContain("Merchant on autopilot");
+    expect(src).toContain("Manual ad creative");
+    expect(src).toContain("Social Bot generates");
+    // Reasoning lift framing — operator-facing, no internal "cookbook" word.
+    expect(src).toContain("Black-box AI agents");
+    expect(src).toContain("Audited reasoning");
+  });
+
+  it("pricing matrix surfaces a comparison table with all four tiers + reasoning-lift parity", () => {
+    const src = read(LANDING);
+    expect(src).toContain("function PricingMatrix");
+    // Reasoning lifts are platform-wide and listed across every plan —
+    // they don't gate on tier. The matrix says so explicitly so operators
+    // don't think they have to upgrade for the audit trail.
+    expect(src).toContain("Self-critique on every high-stakes step");
+    expect(src).toContain("Parallel drafting on brand naming + decisions");
+    expect(src).toContain("Autonomous workflows");
+    expect(src).toContain("Audit trail on the workflow detail page");
+    // CTA row at the bottom — one button per plan so operators don't
+    // have to scroll back up after comparing.
+    expect(src).toContain("Pick {p.name}");
+  });
+
+  it("trust strip names the real technology stack, not generic promises", () => {
+    const src = read(LANDING);
+    // Old generic content out, real stack in.
+    expect(src).not.toContain('"Instant setup"');
+    expect(src).not.toContain('"No code required"');
+    expect(src).toContain("Claude Opus 4.7");
+    expect(src).toContain("Shopify OAuth");
+    expect(src).toContain("Stripe billing");
+  });
+
+  it("mobile-only sticky CTA bar is wired to the trial flow", () => {
+    const src = read(LANDING);
+    expect(src).toContain("function MobileStickyCTA");
+    // lg:hidden hides on desktop where the top-nav CTA is already visible.
+    expect(src).toMatch(/lg:hidden\s+fixed\s+bottom-0/);
+    expect(src).toContain("Start 7-day free trial");
+    expect(src).toContain("No credit card to start");
+    // The footer adds a bottom spacer on mobile so its content doesn't
+    // get hidden under the sticky bar.
+    expect(src).toContain('lg:hidden h-20');
+  });
+});
