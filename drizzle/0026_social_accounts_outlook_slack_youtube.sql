@@ -21,3 +21,40 @@ ALTER TABLE `social_accounts`
     'slack',
     'youtube'
   ) NOT NULL;
+
+-- social_posts also gets Slack + YouTube as first-class platforms so
+-- the Social bot can persist Slack drops + YouTube Shorts uploads
+-- through the standard social-post pipeline. Outlook sends ride
+-- through the outbound delivery layer (sendgridWebhooks.ts equivalent
+-- for Microsoft Graph) and don't write to social_posts.
+ALTER TABLE `social_posts`
+  MODIFY COLUMN `platform` enum(
+    'tiktok',
+    'instagram',
+    'facebook',
+    'meta',
+    'twitter',
+    'pinterest',
+    'google_ads',
+    'slack',
+    'youtube'
+  ) NOT NULL;
+
+-- ad_campaigns also gets the new channels so the LLM generateAdCopy
+-- output can persist a draft entry per Outlook / Slack / YouTube
+-- variant alongside the existing platforms.
+ALTER TABLE `ad_campaigns`
+  MODIFY COLUMN `platform` enum(
+    'tiktok',
+    'meta',
+    'instagram',
+    'twitter',
+    'pinterest',
+    'google_ads',
+    'email',
+    'sms',
+    'gmail',
+    'outlook',
+    'slack',
+    'youtube'
+  ) NOT NULL DEFAULT 'meta';

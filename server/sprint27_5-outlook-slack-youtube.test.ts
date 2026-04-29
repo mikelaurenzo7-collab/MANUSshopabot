@@ -145,3 +145,70 @@ describe("Sprint 27.5 — Outlook, Slack, YouTube", () => {
     expect(src).toContain("gmail: ENV.googleClientId");
   });
 });
+
+describe("Sprint 27.5 — OAuth callback dispatch", () => {
+  // The dispatcher in server/socialOAuth.ts must include a case for
+  // every social platform that the connectors router accepts. Without
+  // these branches, users can authorize but the callback returns
+  // ?error=unsupported_platform.
+  it("server/socialOAuth.ts has case branches + token exchangers + profile fetchers for the new platforms", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "socialOAuth.ts"),
+      "utf-8",
+    );
+    for (const p of NEW_SOCIAL) {
+      expect(src, `missing case "${p}" in dispatch`).toContain(`case "${p}":`);
+    }
+    expect(src).toContain("exchangeOutlookCode");
+    expect(src).toContain("fetchOutlookProfile");
+    expect(src).toContain("exchangeSlackCode");
+    expect(src).toContain("fetchSlackProfile");
+    expect(src).toContain("exchangeYouTubeCode");
+    expect(src).toContain("fetchYouTubeProfile");
+    // Outlook OAuth must request offline_access so refresh tokens come
+    // back — without it, every send forces a re-consent.
+    expect(src).toContain("offline_access");
+  });
+});
+
+describe("Sprint 27.5 — workflow catalog + engine wiring", () => {
+  // The engine's executeStoreActionStep must include cases for the
+  // three new actions; the workflow catalog must register all three
+  // recipes; and each LLM step must produce the structured output the
+  // engine expects.
+  const NEW_WORKFLOWS = [
+    "outlook_b2b_outreach",
+    "slack_drop_announcement",
+    "youtube_shorts_publisher",
+  ];
+
+  it.each(NEW_WORKFLOWS)("registers %s with the workflow engine", async (name) => {
+    // Trigger the registry side-effects.
+    await import("./engine/platformEliteWorkflows");
+    const { listWorkflowTypes } = await import("./engine/workflowEngine");
+    expect(listWorkflowTypes()).toContain(name);
+  });
+
+  it("engine has store-action handlers for all three new actions", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "engine/workflowEngine.ts"),
+      "utf-8",
+    );
+    expect(src).toContain('case "outlook_send_drafts"');
+    expect(src).toContain('case "slack_post_drop"');
+    expect(src).toContain('case "youtube_publish_short"');
+  });
+
+  it("connectors workflow catalog surfaces all three to the social bot", async () => {
+    const caller = appRouter.createCaller(ctx());
+    const types = await caller.workflows.availableTypes();
+    const socialTypes = types.social.map((t: any) => t.type);
+    expect(socialTypes).toContain("outlook_b2b_outreach");
+    expect(socialTypes).toContain("slack_drop_announcement");
+    expect(socialTypes).toContain("youtube_shorts_publisher");
+  });
+});

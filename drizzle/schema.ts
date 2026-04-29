@@ -308,7 +308,13 @@ export const adCampaigns = mysqlTable("ad_campaigns", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  platform: mysqlEnum("platform", ["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail"]).default("meta").notNull(),
+  platform: mysqlEnum("platform", [
+    "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms", "gmail",
+    // Sprint 27.5 — ad-copy generator now serves these channels too
+    // (organic posts, but persisted as draft "campaigns" so they
+    // appear in the same review queue as paid ads).
+    "outlook", "slack", "youtube",
+  ]).default("meta").notNull(),
   adCopy: text("adCopy"),
   imageUrl: text("imageUrl"),
   targetAudience: text("targetAudience"),
@@ -395,7 +401,13 @@ export const socialPosts = mysqlTable("social_posts", {
   id: int("id").autoincrement().primaryKey(),
   storeId: int("storeId").notNull(),
   // Expanded enum: google_ads is first-class value
-  platform: mysqlEnum("platform", ["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads"]).notNull(),
+  platform: mysqlEnum("platform", [
+    "tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads",
+    // Sprint 27.5 expansion — Slack drop messages, YouTube Shorts.
+    // (Outlook lives on social_accounts but its sends go through the
+    // outbound delivery layer, not the social_posts table.)
+    "slack", "youtube",
+  ]).notNull(),
   content: text("content"),
   imageUrl: text("imageUrl"),
   scheduledAt: timestamp("scheduledAt"),

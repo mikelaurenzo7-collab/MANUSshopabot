@@ -442,6 +442,10 @@ export const workflowRouter = router({
         { type: "twitter_stream_monitor", title: "Twitter/X Brand Monitor", description: "Real-time brand mention tracking, sentiment analysis, and crisis detection", icon: "Radio", scope: "global" },
         { type: "subject_line_ab_test", title: "Subject-Line A/B Test", description: "Generates 5 subject-line variants using different psychological angles, predicts open-rate lift, and ranks the winner", icon: "Mail", scope: "global" },
         { type: "send_time_optimizer", title: "Send-Time Optimizer", description: "Builds a day-of-week × hour open-rate heatmap from your real SendGrid event data and recommends top 3 send windows for your audience", icon: "Clock", scope: "all_stores" },
+        // Sprint 27.5 — Outlook + Slack + YouTube native recipes
+        { type: "outlook_b2b_outreach", title: "Outlook B2B Outreach", description: "Personalized B2B outreach via Outlook — pulls leads from CRM/Sheets, drafts plain-text emails (no template smell), and books follow-up meetings on the same Microsoft Graph token", icon: "Send", scope: "global" },
+        { type: "slack_drop_announcement", title: "Slack Drop Announcement", description: "Schedule a product drop blast to a VIP Slack channel — Block Kit cards with image + buy link + reaction tracking for engagement signal", icon: "MessageSquare", scope: "specific_store" },
+        { type: "youtube_shorts_publisher", title: "YouTube Shorts Publisher", description: "Generate hook + caption + tags from a product, then upload as a YouTube Short with native scheduled-publish via publishAt", icon: "Video", scope: "specific_store" },
       ],
     };
   }),

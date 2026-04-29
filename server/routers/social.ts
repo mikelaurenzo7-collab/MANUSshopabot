@@ -23,7 +23,14 @@ export const socialRouter = router({
       storeId: z.number(),
       productName: z.string(),
       productDescription: z.string().optional(),
-      platform: z.enum(["tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads", "email", "sms"]).default("meta"),
+      platform: z.enum([
+        "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads",
+        "email", "sms",
+        // Sprint 27.5 expansion — ad-copy generator now serves the new
+        // channels too, even though Outlook/Slack don't run paid ads
+        // (the copy is reused as in-channel announcement text).
+        "outlook", "slack", "youtube",
+      ]).default("meta"),
       tone: z.string().default("engaging and persuasive"),
     }))
     .mutation(async ({ input }) => {
@@ -240,7 +247,13 @@ export const socialRouter = router({
   generateSocialPost: protectedProcedure
     .input(z.object({
       storeId: z.number(),
-      platform: z.enum(["tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads"]),
+      platform: z.enum([
+        "tiktok", "instagram", "facebook", "meta", "twitter", "pinterest", "google_ads",
+        // Sprint 27.5 — Slack drops + YouTube Shorts run through the
+        // generic generateSocialPost surface (Outlook is email-shaped
+        // and uses generateAdCopy / outlook_b2b_outreach instead).
+        "slack", "youtube",
+      ]),
       topic: z.string(),
       productName: z.string().optional(),
     }))

@@ -1274,6 +1274,97 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
       }
       return { action, storeId, sent, errors };
     }
+    // ─── Sprint 27.5: Outlook + Slack + YouTube ──────────────────────────
+    //
+    // These are social-account actions (no commerce store). The engine
+    // resolves the right account by walking the active org's social
+    // accounts and matching the platform. If the operator hasn't
+    // connected the channel yet, the action returns a clear error
+    // instead of crashing.
+    case "outlook_send_drafts": {
+      const drafts = pluckPriorOutput<{ email: string; subject: string; body: string }[]>(context, "drafts");
+      if (!drafts || drafts.length === 0) return { action, sent: 0 };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "outlook" && a.status === "active");
+      if (!account) return { action, error: "No active Outlook account connected for this org" };
+      const { getSocialAccountAdapter, publishSocialPost } = await import("./platformBridge");
+      const { account: acc } = await getSocialAccountAdapter(account.id);
+      const errors: string[] = [];
+      let sent = 0;
+      for (const d of drafts) {
+        try {
+          await publishSocialPost(acc.id, {
+            content: d.body,
+            metadata: { to: d.email, subject: d.subject },
+          });
+          sent++;
+        } catch (err: any) {
+          errors.push(`${d.email}: ${err.message}`);
+        }
+      }
+      return { action, sent, total: drafts.length, errors };
+    }
+    case "slack_post_drop": {
+      // The LLM step returns `{ blocks }` (plus headline/body); we
+      // forward the Block Kit payload via createPost's metadata.blocks
+      // hook so the SlackAdapter renders the rich card natively.
+      const drop = (() => {
+        for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+          const out = context.previousOutputs[i];
+          if (out && Array.isArray((out as any).blocks)) return out as { headline?: string; body?: string; blocks: any[] };
+        }
+        return null;
+      })();
+      if (!drop) return { action, posted: 0, error: "Slack drop payload missing from prior step" };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "slack" && a.status === "active");
+      if (!account) return { action, error: "No active Slack account connected for this org" };
+      const channel = (input.channel as string) || "#announcements";
+      const { publishSocialPost } = await import("./platformBridge");
+      try {
+        const post = await publishSocialPost(account.id, {
+          content: drop.body || drop.headline || "",
+          metadata: { channel, blocks: drop.blocks, subject: drop.headline },
+        }, storeId);
+        return { action, posted: 1, channel, ts: post.platformId };
+      } catch (err: any) {
+        return { action, posted: 0, error: err.message };
+      }
+    }
+    case "youtube_publish_short": {
+      const meta = (() => {
+        for (let i = context.previousOutputs.length - 1; i >= 0; i--) {
+          const out = context.previousOutputs[i];
+          if (out && typeof (out as any).title === "string" && Array.isArray((out as any).tags)) {
+            return out as { title: string; description: string; tags: string[] };
+          }
+        }
+        return null;
+      })();
+      if (!meta) return { action, error: "YouTube Shorts metadata missing from prior step" };
+      const dbModule = await import("../db");
+      const accounts = await dbModule.getSocialAccounts(userId);
+      const account = accounts.find((a: any) => a.platform === "youtube" && a.status === "active");
+      if (!account) return { action, error: "No active YouTube account connected for this org" };
+      const videoUrl = input.videoUrl as string | undefined;
+      const scheduleAt = input.scheduleAt as string | undefined;
+      if (!videoUrl) return { action, error: "Missing input.videoUrl for YouTube upload" };
+      const { publishSocialPost, scheduleSocialPost } = await import("./platformBridge");
+      try {
+        const postInput = {
+          content: meta.description,
+          metadata: { title: meta.title, tags: meta.tags, videoUrl, privacy: scheduleAt ? "private" : "public" },
+        };
+        const post = scheduleAt
+          ? await scheduleSocialPost(account.id, postInput, new Date(scheduleAt), storeId)
+          : await publishSocialPost(account.id, postInput, storeId);
+        return { action, videoId: post.platformId, scheduled: !!scheduleAt };
+      } catch (err: any) {
+        return { action, error: err.message };
+      }
+    }
     default:
       return {
         action,

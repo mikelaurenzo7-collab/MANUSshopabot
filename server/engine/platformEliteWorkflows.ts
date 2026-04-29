@@ -1547,3 +1547,252 @@ Return JSON { responses: [{ offerId, action: "accept"|"decline"|"counter", count
     },
   ];
 });
+
+// ─── Sprint 27.5: Outlook + Slack + YouTube native recipes ──────────────────
+// Three workflows that take advantage of the new Sprint 27.5 channels.
+// Each pairs an LLM-generation step with a store_action handler that
+// the engine wires via switch-cases on `action`.
+
+// 21. Outlook B2B Outreach — pulls leads, drafts plain-text emails, books
+//     follow-up meetings on the same Microsoft Graph token.
+registerWorkflow("outlook_b2b_outreach", (input): WorkflowStepDefinition[] => {
+  const accountId = input.accountId ?? "active";
+  return [
+    {
+      stepType: "analysis",
+      title: "Pull Lead List",
+      description: "Reading the lead source (CRM export / Google Sheet) into a structured list",
+      input: {
+        analysisPrompt: `Pull the lead list from input.leadSource. Each lead must have:
+- email (required)
+- firstName, lastName (preferred)
+- company (preferred)
+- niche / vertical (optional, helps personalize)
+Cap at 50 leads per run — Outlook's tenant throttling kicks in around 250/15min.`,
+        data: { accountId, leadSource: input.leadSource },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Draft Personalized Emails",
+      description: "Plain-text outreach that avoids template-smell — one draft per lead",
+      input: {
+        systemPrompt: "You are an outbound BDR. Your superpower: outreach that reads like a 1:1 message, never a marketing template. Specific, short, ends with a low-friction ask. Plain text only — no HTML, no signatures (the operator's signature lives in Outlook).",
+        userPrompt: `For each lead, draft a 60-90 word outreach email:
+- Subject line: under 7 words, no "RE:" or "FW:" tricks
+- Open with one specific observation (not "Hope you're well")
+- Connect that observation to a concrete way Shop_a_Bot helps their niche
+- Close with a single question — coffee chat OR a 15-min Loom OR "any chance you'd answer one question"
+- Never use the words: "synergy", "leverage", "circle back", "touch base"
+
+Return JSON: { drafts: [{ email, subject, body }], skipped: [{ email, reason }] }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "outlook_drafts",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                drafts: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string" },
+                      subject: { type: "string" },
+                      body: { type: "string" },
+                    },
+                    required: ["email", "subject", "body"],
+                    additionalProperties: false,
+                  },
+                },
+                skipped: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string" },
+                      reason: { type: "string" },
+                    },
+                    required: ["email", "reason"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["drafts", "skipped"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Review Drafts",
+      description: "Operator skims the drafts before they hit real inboxes — high-stakes channel",
+      requiresApproval: true,
+    },
+    {
+      stepType: "store_action",
+      title: "Send via Outlook",
+      description: "Dispatching each draft through Microsoft Graph /me/sendMail",
+      input: { action: "outlook_send_drafts", accountId, platform: "outlook" },
+    },
+    {
+      stepType: "notification",
+      title: "Outreach Sent",
+      description: "B2B outreach batch dispatched",
+      input: {
+        title: "Outlook Outreach Complete",
+        message: "Drafts have been sent through your Outlook inbox. Replies will land in your normal mailbox; the bot will summarize the response queue tomorrow.",
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 22. Slack Drop Announcement — Block Kit announcement to a VIP channel
+//     with image + buy link + reaction tracking.
+registerWorkflow("slack_drop_announcement", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "active";
+  const channel = input.channel ?? "#announcements";
+  return [
+    {
+      stepType: "analysis",
+      title: "Resolve Drop Context",
+      description: "Pulling the product, hero image, and buy URL into the workflow context",
+      input: {
+        analysisPrompt: `Resolve drop context for store ${storeId}: pull product (input.productId), hero image, public storefront URL, target Slack channel (default #announcements).`,
+        data: { storeId, channel, productId: input.productId },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Draft Block Kit Announcement",
+      description: "Slack-native Block Kit payload — section + image + actions",
+      input: {
+        systemPrompt: "You are a community manager dropping a product to a VIP Slack channel. Tone is hype-but-honest, never sales-pitchy. The audience are insiders who already love the brand.",
+        userPrompt: `Draft a Slack Block Kit message for the drop:
+- One-line hype hook (8-12 words, ends with an emoji)
+- Two-line product description (what it is, why this batch is special)
+- Image block with the hero
+- Action button labeled "Get yours →" linking to the product URL
+- A footer mentioning channel-only early access
+
+Return JSON: { headline, body, blocks (Slack Block Kit array) }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "slack_drop",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                headline: { type: "string" },
+                body: { type: "string" },
+                blocks: { type: "array", items: { type: "object", additionalProperties: true } },
+              },
+              required: ["headline", "body", "blocks"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    { stepType: "approval_gate", title: "Approve Drop Announcement", description: "VIP channel — operator confirms before send", requiresApproval: true },
+    {
+      stepType: "store_action",
+      title: "Post to Slack",
+      description: "Posting the Block Kit message to the target channel",
+      input: { action: "slack_post_drop", storeId, platform: "slack", channel },
+    },
+    {
+      stepType: "notification",
+      title: "Drop Live in Slack",
+      description: "Reactions will be tracked over the next 6 hours",
+      input: {
+        title: "Drop Posted to Slack",
+        message: `The drop is live in ${channel}. The bot will collect reactions + replies over the next 6 hours and surface the top early-buyer interest signals in the Inbox.`,
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
+
+// 23. YouTube Shorts Publisher — generate hook + caption + tags from a
+//     product, then upload as a YouTube Short with native scheduled publish.
+registerWorkflow("youtube_shorts_publisher", (input): WorkflowStepDefinition[] => {
+  const storeId = input.storeId ?? "active";
+  return [
+    {
+      stepType: "analysis",
+      title: "Resolve Source Video",
+      description: "Pulling the source video URL + product info from the workflow context",
+      input: {
+        analysisPrompt: `Locate the source video (input.videoUrl). Confirm aspect ratio is 9:16 OR can be cropped without losing the subject. Pull the linked product (input.productId) for caption context.`,
+        data: { storeId, videoUrl: input.videoUrl, productId: input.productId, scheduleAt: input.scheduleAt },
+      },
+    },
+    {
+      stepType: "llm_call",
+      title: "Generate Hook + Caption + Tags",
+      description: "Shorts-native copy — sub-15-word hook, 200-char caption, 8-15 tags",
+      input: {
+        systemPrompt: "You write YouTube Shorts copy that hooks in the first 1.5 seconds. The Shorts feed punishes slow openings; you front-load curiosity.",
+        userPrompt: `Generate Shorts metadata for the product video:
+- title: under 100 chars; first 6 words must hook (curiosity gap, contrarian, or stat)
+- description: 200 chars max; ends with a single hashtag block (max 5 hashtags)
+- tags: 8-15 tags; first 3 are the most-searched terms in the niche
+- Do NOT include "#Shorts" in the description (YouTube auto-detects vertical video)
+
+Return JSON: { title, description, tags }`,
+        responseFormat: {
+          type: "json_schema",
+          json_schema: {
+            name: "yt_shorts_meta",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+              },
+              required: ["title", "description", "tags"],
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      stepType: "approval_gate",
+      title: "Approve Shorts Metadata",
+      description: "Operator skims the title + caption before upload begins",
+      requiresApproval: true,
+    },
+    {
+      stepType: "store_action",
+      title: "Upload + Schedule",
+      description: "Resumable upload to YouTube; if scheduleAt is set, the video stays private until that timestamp",
+      input: { action: "youtube_publish_short", storeId, platform: "youtube" },
+    },
+    {
+      stepType: "notification",
+      title: "Short Uploaded",
+      description: "YouTube Shorts upload complete — analytics will populate over 48 hours",
+      input: {
+        title: "YouTube Short Live",
+        message: "The Short is uploaded. YouTube's recommender will start serving it within the hour; impressions + retention curve land in the bot dashboard within 48 hours.",
+        agentType: "social",
+        notificationType: "success",
+        notifyOwner: true,
+      },
+    },
+  ];
+});
