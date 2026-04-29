@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getBrand } from "@/lib/platformBrand";
 
 export default function MerchantPage() {
   const isMobile = useIsMobile();
@@ -118,15 +119,21 @@ export default function MerchantPage() {
                       <SelectValue placeholder={storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"} />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
-                      {stores?.map((s: any) => (
-                        <SelectItem
-                          key={s.id}
-                          value={String(s.id)}
-                          className="text-white font-mono text-[10px] uppercase focus:bg-cyan-500/10 focus:text-cyan-300"
-                        >
-                          {s.name} [{s.platform}]
-                        </SelectItem>
-                      ))}
+                      {stores?.map((s: any) => {
+                        const brand = getBrand(s.platform);
+                        return (
+                          <SelectItem
+                            key={s.id}
+                            value={String(s.id)}
+                            className="text-white font-mono text-[10px] uppercase focus:bg-cyan-500/10 focus:text-cyan-300"
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="text-sm leading-none">{brand.icon}</span>
+                              {s.name} <span className="text-white/40">[{brand.name}]</span>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

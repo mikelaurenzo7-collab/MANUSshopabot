@@ -2012,6 +2012,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   from { transform: translateX(0); }
   to { transform: translateX(-33.33%); }
 }
+@keyframes ticker-reverse {
+  /* Mirrors the `ticker` keyframe but inverted so two adjacent marquees
+     drift in opposite directions (subtle parallax read). Pairs with
+     3x-content arrays — same -33.33% wraparound point as `ticker`. */
+  from { transform: translateX(-33.33%); }
+  to { transform: translateX(0); }
+}
 
 .reveal {
   opacity: 0;

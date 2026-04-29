@@ -11,6 +11,7 @@ import {
   ChevronDown, KeyRound, Loader2, Rocket, Store, Gauge, RefreshCw,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
 
 const BOT_COLORS = {
   "Builder Bot":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
@@ -186,7 +187,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Which platforms does Shop_a_Bot support?",
-    a: "Shopify is live today via OAuth. Amazon, Etsy, TikTok Shop, Meta (Instagram + Facebook), Pinterest, and several other adapters are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
+    a: "Shopify is live today via OAuth and is the deepest integration. 14 e-commerce surfaces are wired in total (Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, Walmart, plus Sprint 27's Depop, BigCommerce, Square, Faire, Bonanza, StockX, Reverb), alongside 7 social channels (Meta, Instagram, TikTok, X, Pinterest, Google Ads, Gmail) and 9 cross-cutting tools (Sheets, GA4, Klaviyo, ShipStation, Postscript, Printful, Judge.me, Gorgias). Each adapter has a published capability matrix the bots branch on, so they never recommend a tactic the platform doesn't support. Adapters beyond Shopify are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
   },
   {
     q: "How does the Builder Bot source products?",
@@ -421,7 +422,7 @@ export default function Landing() {
             {/* Announcement pill — honest about platform readiness */}
             <div className="mb-6 inline-flex items-center gap-2 announcement-banner">
               <span className="eyebrow">Live</span>
-              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out</span>
+              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 surfaces wired</span>
               <ArrowRight className="w-3 h-3 text-white/35" />
             </div>
 
@@ -612,6 +613,101 @@ export default function Landing() {
               {item}
             </span>
           ))}
+        </div>
+      </section>
+
+      {/* ── Platform Constellation ─────────────────────────────────────────── */}
+      {/* Every adapter the bots can drive — surfaced honestly. The cards are
+          marquee-scrolled so the section reads as alive even on the 90% of
+          page-loads where the user doesn't scroll past the fold. */}
+      <section className="py-16 px-4 border-b border-white/[0.06] overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sky-500/[0.02] to-transparent pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative">
+          <div className="text-center mb-8">
+            <p className="eyebrow text-cyan-300/85 mb-2">Plug into the universe</p>
+            <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-white mb-2">
+              {Object.keys(ECOMMERCE_BRANDS).length} commerce surfaces. {Object.keys(SOCIAL_BRANDS).length} social channels. {Object.keys(TOOL_BRANDS).length} tools.
+            </h2>
+            <p className="text-sm text-white/55 max-w-2xl mx-auto">
+              Every adapter ships with a real capability matrix the bots branch on. No dead tiles, no "coming soon"
+              for tactics the platform doesn't actually support.
+            </p>
+          </div>
+
+          {/* Marquee row — e-commerce */}
+          <div className="relative mb-3">
+            <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="flex gap-3 animate-[ticker_42s_linear_infinite] whitespace-nowrap">
+              {[
+                ...Object.values(ECOMMERCE_BRANDS),
+                ...Object.values(ECOMMERCE_BRANDS),
+                ...Object.values(ECOMMERCE_BRANDS),
+              ].map((b, i) => (
+                <div
+                  key={`ecom-${b.id}-${i}`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/15 transition-all"
+                  style={{
+                    boxShadow: `0 0 0 1px ${b.color}25 inset, 0 4px 18px -8px ${b.color}55`,
+                  }}
+                >
+                  <span className="text-lg">{b.icon}</span>
+                  <span className="text-sm font-semibold text-white tracking-tight">{b.name}</span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: b.color,
+                      boxShadow: `0 0 8px ${b.color}aa`,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Marquee row — social, scrolls in opposite direction */}
+          <div className="relative mb-3">
+            <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="flex gap-3 animate-[ticker-reverse_36s_linear_infinite] whitespace-nowrap">
+              {(() => {
+                const items = Object.values(SOCIAL_BRANDS).filter((b) => b.id !== "facebook");
+                return [...items, ...items, ...items];
+              })().map((b, i) => (
+                <div
+                  key={`social-${b.id}-${i}`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] transition-all"
+                  style={{
+                    boxShadow: `0 0 0 1px ${b.color}25 inset, 0 4px 18px -8px ${b.color}55`,
+                  }}
+                >
+                  <span className="text-lg">{b.icon}</span>
+                  <span className="text-sm font-semibold text-white tracking-tight">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Marquee row — tools */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="flex gap-3 animate-[ticker_50s_linear_infinite] whitespace-nowrap">
+              {[
+                ...Object.values(TOOL_BRANDS),
+                ...Object.values(TOOL_BRANDS),
+                ...Object.values(TOOL_BRANDS),
+              ].map((b, i) => (
+                <div
+                  key={`tool-${b.id}-${i}`}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-white/[0.05] bg-white/[0.02] text-white/75"
+                >
+                  <span className="text-base">{b.icon}</span>
+                  <span className="text-xs font-medium tracking-tight">{b.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

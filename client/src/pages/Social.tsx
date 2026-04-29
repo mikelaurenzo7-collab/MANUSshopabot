@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getBrand } from "@/lib/platformBrand";
 import {
   Megaphone,
   Loader2,
@@ -266,11 +267,17 @@ function SocialContent({
               <SelectValue placeholder="SELECT_TARGET_STORE" />
             </SelectTrigger>
             <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
-              {storeOptions.map((s: any) => (
-                <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
-                  {s.name} [{s.platform}]
-                </SelectItem>
-              ))}
+              {storeOptions.map((s: any) => {
+                const brand = getBrand(s.platform);
+                return (
+                  <SelectItem key={s.id} value={String(s.id)} className="text-white font-mono text-[10px] uppercase focus:bg-amber-500/10 focus:text-amber-300">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-sm leading-none">{brand.icon}</span>
+                      {s.name} <span className="text-white/40">[{brand.name}]</span>
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

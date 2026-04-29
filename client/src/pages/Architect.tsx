@@ -8,6 +8,7 @@ import {
   ImageIcon, Wand2, Camera, Copy, Upload, Tag
 } from "lucide-react";
 import { Streamdown } from "streamdown";
+import { getBrand } from "@/lib/platformBrand";
 
 export default function Architect() {
   const [activeTab, setActiveTab] = useState("niche");
@@ -456,7 +457,7 @@ function VisionListingPanel() {
               >
                 <option value="">No store context</option>
                 {storeList.map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.platform})</option>
+                  <option key={s.id} value={s.id}>{getBrand(s.platform).icon} {s.name} ({getBrand(s.platform).name})</option>
                 ))}
               </select>
               <select
