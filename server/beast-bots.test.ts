@@ -317,7 +317,8 @@ describe("stores", () => {
     expect(oauthIds).toContain("bigcommerce");
     expect(oauthIds).toContain("square");
     expect(oauthIds).toContain("stockx");
-    expect(oauthIds).toContain("reverb");
+    // Reverb deprecated OAuth in 2025 — now uses Personal Access Tokens.
+    expect(oauthIds).not.toContain("reverb");
     // API-key only — must not advertise OAuth.
     expect(oauthIds).not.toContain("woocommerce");
     expect(oauthIds).not.toContain("walmart");

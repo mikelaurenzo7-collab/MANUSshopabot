@@ -45,7 +45,7 @@ function tileVars(brand: PlatformBrand): React.CSSProperties {
 }
 
 /* ─── API-key field definitions per platform ─── */
-const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: string; secret?: boolean }[]> = {
+const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: string; secret?: boolean; helpLink?: string; helpText?: string }[]> = {
   woocommerce: [
     { label: "Store URL", key: "storeUrl", placeholder: "https://your-store.com" },
     { label: "Consumer Key", key: "consumerKey", placeholder: "ck_xxxxxxxxxxxx", secret: true },
@@ -63,6 +63,16 @@ const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: 
     { label: "Developer ID", key: "devId", placeholder: "Your Bonanza dev_id" },
     { label: "Certificate ID", key: "certId", placeholder: "Your Bonanza cert_id", secret: true },
     { label: "User Token", key: "userToken", placeholder: "Bonanza user_token", secret: true },
+  ],
+  reverb: [
+    {
+      label: "Personal Access Token",
+      key: "accessToken",
+      placeholder: "Paste your Reverb Personal Access Token here",
+      secret: true,
+      helpLink: "https://reverb.com/my/api_settings",
+      helpText: "Get it at reverb.com/my/api_settings → \"Create a Personal Access Token\"",
+    },
   ],
 };
 
@@ -801,13 +811,27 @@ export default function IntegrationsPage() {
                 ? "Enter your Faire API token from the Faire brand portal → Integrations → API."
                 : apiKeyPlatform === "bonanza"
                 ? "Enter your Bonanza Bonapitit dev_id, cert_id, and user_token from the Bonanza Developer Portal."
+                : apiKeyPlatform === "reverb"
+                ? "Reverb no longer supports OAuth. Generate a Personal Access Token from your Reverb account settings to connect your store."
                 : "Enter your API credentials to connect."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             {apiKeyPlatform && API_KEY_FIELDS[apiKeyPlatform]?.map((field) => (
               <div key={field.key} className="space-y-2">
-                <Label htmlFor={`api-${field.key}`} className="text-slate-300">{field.label}</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`api-${field.key}`} className="text-slate-300">{field.label}</Label>
+                  {field.helpLink && (
+                    <a
+                      href={field.helpLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-sky-400 hover:text-sky-300 underline underline-offset-2"
+                    >
+                      Where to find it ↗
+                    </a>
+                  )}
+                </div>
                 <div className="relative">
                   <Input
                     id={`api-${field.key}`}
@@ -827,6 +851,9 @@ export default function IntegrationsPage() {
                     </button>
                   )}
                 </div>
+                {field.helpText && (
+                  <p className="text-[11px] text-slate-500">{field.helpText}</p>
+                )}
               </div>
             ))}
           </div>

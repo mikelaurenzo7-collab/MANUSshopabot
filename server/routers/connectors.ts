@@ -207,14 +207,12 @@ const ECOMMERCE_PLATFORMS = {
     name: "Reverb",
     icon: "🎸",
     color: "#2E7D32",
-    connectionType: "oauth" as const,
-    description: "Music gear marketplace — manage listings and orders",
-    oauthConfig: {
-      authUrl: (_: string, clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://reverb.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&state=${state}`,
-      tokenUrl: () => "https://api.reverb.com/oauth/token",
-      scopes: "listings:read listings:write orders:read orders:write",
-    },
+    connectionType: "api_key" as const,
+    description: "Music gear marketplace — manage listings and orders via Personal Access Token",
+    requiredFields: ["accessToken"],
+    fieldLabels: { accessToken: "Personal Access Token" },
+    fieldDescriptions: { accessToken: "Generate your token at reverb.com/my/api_settings → 'Create a Personal Access Token'" },
+    fieldLinks: { accessToken: "https://reverb.com/my/api_settings" },
     capabilities: ["listings", "orders", "inventory"],
   },
   printful: {
@@ -424,7 +422,7 @@ export const connectorsRouter = router({
       faire: !!ENV.faireClientId && !!ENV.faireClientSecret,
       bonanza: true, // API-key based
       stockx: !!ENV.stockxClientId && !!ENV.stockxClientSecret,
-      reverb: !!ENV.reverbClientId && !!ENV.reverbClientSecret,
+      reverb: true, // PAT-based — always available
     };
     const matrix = getEcommerceCapabilityMatrix();
     return Object.entries(ECOMMERCE_PLATFORMS).map(([id, platform]) => ({

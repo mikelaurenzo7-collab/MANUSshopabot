@@ -383,7 +383,7 @@ export const storesRouter = router({
       { id: "faire", name: "Faire", icon: "🏪", color: "#6B5B95", description: "Wholesale marketplace for indie brands", oauthSupported: false, capabilities: ["orders", "inventory", "wholesale"] },
       { id: "bonanza", name: "Bonanza", icon: "🎪", color: "#FF6B35", description: "Long-tail collectibles marketplace (Bonapitit API)", oauthSupported: false, capabilities: ["listings", "orders", "inventory"] },
       { id: "stockx", name: "StockX", icon: "📈", color: "#000000", description: "Bid/ask resale marketplace for sneakers + streetwear", oauthSupported: true, capabilities: ["listings", "orders", "resale"] },
-      { id: "reverb", name: "Reverb", icon: "🎸", color: "#2E7D32", description: "Music gear marketplace by Etsy", oauthSupported: true, capabilities: ["listings", "orders", "inventory"] },
+      { id: "reverb", name: "Reverb", icon: "🎸", color: "#2E7D32", description: "Music gear marketplace — connect via Personal Access Token", oauthSupported: false, capabilities: ["listings", "orders", "inventory"] },
     ];
   }),
 });

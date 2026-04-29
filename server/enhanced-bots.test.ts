@@ -17,6 +17,7 @@ function createUserContext(role: "user" | "admin" = "user"): TrpcContext {
       updatedAt: new Date(),
       lastSignedIn: new Date(),
     },
+    activeOrg: { id: 1, role: "owner" },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: () => {} } as TrpcContext["res"],
   };

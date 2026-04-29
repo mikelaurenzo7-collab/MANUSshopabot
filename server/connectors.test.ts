@@ -19,14 +19,19 @@ function createUserContext(overrides?: Partial<AuthenticatedUser>): TrpcContext 
   };
   return {
     user,
-    activeOrg: { id: 1, role: "owner" },
+    // Use "member" org role so orgAdminProcedure correctly rejects non-admin users.
+    activeOrg: { id: 1, role: "member" },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };
 }
 
 function createAdminContext(): TrpcContext {
-  return createUserContext({ role: "admin" });
+  return {
+    ...createUserContext({ role: "admin" }),
+    // Must be owner/admin at the org level to pass orgAdminProcedure.
+    activeOrg: { id: 1, role: "owner" },
+  };
 }
 
 function createAnonContext(): TrpcContext {
