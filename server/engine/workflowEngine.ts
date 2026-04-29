@@ -1426,9 +1426,19 @@ async function executeStoreActionStep(context: StepContext): Promise<any> {
 
 async function executeApiCallStep(context: StepContext): Promise<any> {
   const { input } = context;
-  // Generic API call step — for external service integrations
+  const endpoint = input.endpoint as string | undefined;
+
+  // ── Supplier endpoint routing ─────────────────────────────────────────────
+  // Workflows declare supplier calls as `endpoint: "suppliers.printful.search"`
+  // etc. rather than raw URLs so the engine can inject auth, handle retries,
+  // and apply graceful fallbacks without each workflow knowing the API details.
+  if (endpoint?.startsWith("suppliers.")) {
+    return executeSupplierApiCall(endpoint, input.params ?? {});
+  }
+
+  // ── Generic HTTP call ─────────────────────────────────────────────────────
   if (!input.url) {
-    return { error: "No URL provided for API call" };
+    return { error: "No URL provided for API call", endpoint };
   }
 
   try {
@@ -1442,6 +1452,105 @@ async function executeApiCallStep(context: StepContext): Promise<any> {
     return { statusCode: response.status, data };
   } catch (error: any) {
     return { error: error.message };
+  }
+}
+
+/**
+ * Route supplier API calls to the correct adapter.
+ * All supplier calls return graceful empty arrays on failure so
+ * downstream LLM steps can still run with partial data.
+ */
+async function executeSupplierApiCall(
+  endpoint: string,
+  params: Record<string, any>,
+): Promise<any> {
+  const { printfulAdapter } = await import("../adapters/suppliers/printfulAdapter");
+  const { cjAdapter } = await import("../adapters/suppliers/cjAdapter");
+
+  const keyword = (params.keyword as string) ?? "";
+  const limit = Number(params.limit ?? 20);
+  const category = params.category as string | undefined;
+  const productId = params.productId as string | number | undefined;
+
+  switch (endpoint) {
+    // ── Printful ──────────────────────────────────────────────────────────
+    case "suppliers.printful.search":
+      return {
+        supplier: "printful",
+        products: await printfulAdapter.searchProducts(keyword, limit),
+      };
+
+    case "suppliers.printful.trending":
+      return {
+        supplier: "printful",
+        products: await printfulAdapter.getTrendingProducts(limit),
+      };
+
+    case "suppliers.printful.category":
+      return {
+        supplier: "printful",
+        products: await printfulAdapter.browseByCategory(category ?? keyword, limit),
+      };
+
+    case "suppliers.printful.product":
+      return {
+        supplier: "printful",
+        product: productId ? await printfulAdapter.getProduct(Number(productId)) : null,
+      };
+
+    // ── CJ Dropshipping ───────────────────────────────────────────────────
+    case "suppliers.cj.search":
+      return {
+        supplier: "cjdropshipping",
+        products: await cjAdapter.searchProducts(keyword, limit, category),
+      };
+
+    case "suppliers.cj.trending":
+      return {
+        supplier: "cjdropshipping",
+        products: await cjAdapter.getTrendingProducts(limit),
+      };
+
+    case "suppliers.cj.category":
+      return {
+        supplier: "cjdropshipping",
+        products: await cjAdapter.browseByCategory(category ?? keyword, limit),
+      };
+
+    case "suppliers.cj.product":
+      return {
+        supplier: "cjdropshipping",
+        product: productId ? await cjAdapter.getProduct(String(productId)) : null,
+      };
+
+    // ── Both suppliers (parallel) ─────────────────────────────────────────
+    case "suppliers.all.search": {
+      const [printfulResults, cjResults] = await Promise.all([
+        printfulAdapter.searchProducts(keyword, Math.ceil(limit / 2)),
+        cjAdapter.searchProducts(keyword, Math.ceil(limit / 2), category),
+      ]);
+      return {
+        printful: printfulResults,
+        cjdropshipping: cjResults,
+        total: printfulResults.length + cjResults.length,
+      };
+    }
+
+    case "suppliers.all.trending": {
+      const [printfulTrending, cjTrending] = await Promise.all([
+        printfulAdapter.getTrendingProducts(Math.ceil(limit / 2)),
+        cjAdapter.getTrendingProducts(Math.ceil(limit / 2)),
+      ]);
+      return {
+        printful: printfulTrending,
+        cjdropshipping: cjTrending,
+        total: printfulTrending.length + cjTrending.length,
+      };
+    }
+
+    default:
+      console.warn(`[WorkflowEngine] Unknown supplier endpoint: ${endpoint}`);
+      return { error: `Unknown supplier endpoint: ${endpoint}`, products: [] };
   }
 }
 

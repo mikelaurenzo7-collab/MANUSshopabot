@@ -1078,3 +1078,29 @@
 - [ ] Add supplier management UI (configure preferred suppliers per store)
 - [ ] Add supplier credentials to secrets management
 - [ ] Test end-to-end product sourcing with real API data
+
+## Sprint 11: Supplier Workflow Perfection (Printful + CJ Dropshipping)
+
+- [x] Rewrite CJ Dropshipping adapter with correct email/password → JWT auth (POST /authentication/getAccessToken)
+- [x] CJ adapter: auto-refresh token 5 min before expiry, retry once on 401
+- [x] CJ adapter: graceful empty-array fallback when credentials missing (no throw)
+- [x] CJ adapter: correct CJ API v2 base URL (developers.cjdropshipping.com/api2.0/v1)
+- [x] CJ adapter: CJ-Access-Token header (not Bearer), correct /product/list endpoint
+- [x] CJ adapter: platform routing guard (etsy/faire excluded, 9 supported platforms)
+- [x] Printful adapter: full catalog cache (1hr TTL, paginated fetch of all 300+ products)
+- [x] Printful adapter: relevance-scored keyword search (title=3pts, type=2pts, desc=1pt)
+- [x] Printful adapter: graceful empty-array fallback when token missing
+- [x] Printful adapter: platform routing (9 supported platforms including etsy)
+- [x] Workflow engine: add executeSupplierApiCall() routing function
+- [x] Workflow engine: route suppliers.printful.search/trending/category/product endpoints
+- [x] Workflow engine: route suppliers.cj.search/trending/category/product endpoints
+- [x] Workflow engine: route suppliers.all.search/trending (parallel both suppliers)
+- [x] catalog_generation: fetch real Printful + CJ products before LLM enrichment
+- [x] catalog_generation: platform-aware (skip CJ for Etsy, use compare-at only when supported)
+- [x] catalog_generation: LLM enriches real supplier data (SEO copy, pricing, tags) instead of hallucinating
+- [x] complete_store_buildout: inject real Printful + CJ supplier data into catalog generation step
+- [x] complete_store_buildout: LLM curation uses actual supplier URLs and product IDs
+- [x] inventory_audit: fetch trending supplier products to identify catalog gaps
+- [x] pricing_optimization: fetch real supplier cost benchmarks before LLM margin analysis
+- [x] pricing_optimization: LLM uses actual wholesale prices to ground margin floor calculations
+- [ ] AliExpress IOP adapter: evaluate production readiness of generateSecurityToken API
