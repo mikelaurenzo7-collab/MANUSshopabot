@@ -664,7 +664,7 @@ export default function Landing() {
               return (
                 <div
                   key={bot.name}
-                  className="bento-card spotlight-card p-8 group relative overflow-hidden hover-lift"
+                  className="bento-card spotlight-card card-shimmer-hover p-8 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
@@ -838,7 +838,7 @@ export default function Landing() {
                 text: "Every bot action is logged in the Activity feed in real time. Pause, override, or roll back any workflow at any moment — your bots run with full audit trail.",
               },
             ].map(({ step, accent, Icon, title, text }) => (
-              <div key={step} className="bento-card spotlight-card lift-on-hover p-7 flex flex-col gap-4">
+              <div key={step} className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 flex flex-col gap-4">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: `${accent}1a`, border: `1px solid ${accent}40`, boxShadow: `0 0 16px ${accent}33` }}
@@ -867,9 +867,9 @@ export default function Landing() {
             {PRICING.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl p-6 transition-all duration-500 lift-on-hover ${
+                className={`relative rounded-xl p-6 transition-all duration-500 lift-on-hover card-shimmer-hover ${
                   tier.featured
-                    ? "tier-popular bg-gradient-to-b from-sky-500/[0.08] via-sky-500/[0.03] to-transparent shadow-[0_0_40px_rgba(14,165,233,0.15)]"
+                    ? "pricing-featured tier-popular bg-gradient-to-b from-sky-500/[0.08] via-sky-500/[0.03] to-transparent shadow-[0_0_40px_rgba(14,165,233,0.15)]"
                     : "bento-card spotlight-card"
                 }`}
               >
