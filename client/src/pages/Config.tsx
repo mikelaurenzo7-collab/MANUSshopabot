@@ -28,6 +28,7 @@ import {
   Activity,
 } from "lucide-react";
 import { CountUp } from "@/components/CountUp";
+import { PageHeader } from "@/components/PageHeader";
 
 type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 
@@ -293,26 +294,22 @@ export default function ConfigPage() {
       {/* Light leaks */}
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Bot Configuration</h1>
-            <p className="text-sm text-muted-foreground">Automation rules, autonomy levels, and bot controls</p>
-          </div>
-        </div>
-        <Button onClick={handleSave} disabled={upsertConfig.isPending}>
-          {upsertConfig.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-          ) : (
-            <Save className="h-4 w-4 mr-1" />
-          )}
-          Save All
-        </Button>
-      </div>
+      <PageHeader
+        icon={<Settings className="h-4 w-4" />}
+        title="Bot Configuration"
+        subtitle="Automation rules, autonomy levels, and bot controls"
+        accent="sky"
+        right={
+          <Button onClick={handleSave} disabled={upsertConfig.isPending} size="sm">
+            {upsertConfig.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
+            Save All
+          </Button>
+        }
+      />
 
       {/* Info banner: settings are global */}
       <div className="flex items-start gap-2 p-3 rounded-lg bg-sky-500/[0.06] border border-primary/20">
