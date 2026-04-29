@@ -156,6 +156,22 @@ export const SOCIAL_BRANDS: Record<string, PlatformBrand> = {
     color: "#EA4335", accent: "#FBBC04", category: "email",
     tagline: "Transactional + lifecycle email at workspace scale",
   },
+  // Sprint 27.5 social additions
+  outlook: {
+    id: "outlook", name: "Outlook", icon: "📨",
+    color: "#0078D4", accent: "#50E6FF", category: "email",
+    tagline: "Microsoft Graph · B2B inboxes · meetings on the same token",
+  },
+  slack: {
+    id: "slack", name: "Slack", icon: "💬",
+    color: "#4A154B", accent: "#ECB22E", category: "messaging",
+    tagline: "VIP customer + community channel · Block Kit announcements",
+  },
+  youtube: {
+    id: "youtube", name: "YouTube", icon: "▶️",
+    color: "#FF0000", accent: "#282828", category: "social",
+    tagline: "Shorts feed + long-form · SEO-compounding video distribution",
+  },
 };
 
 /* ─── Tool surfaces (9) ────────────────────────────────────────────── */

@@ -503,7 +503,11 @@ export const socialAccounts = mysqlTable("social_accounts", {
   /** Owning org. See platformCredentials for rationale. */
   orgId: int("orgId").notNull(),
   userId: int("userId").notNull(),
-  platform: mysqlEnum("platform", ["meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail"]).notNull(),
+  platform: mysqlEnum("platform", [
+    "meta", "instagram", "tiktok", "twitter", "pinterest", "google_ads", "gmail",
+    // Sprint 27.5 expansion: Microsoft inbox, community channel, video.
+    "outlook", "slack", "youtube",
+  ]).notNull(),
   accountName: varchar("accountName", { length: 255 }),
   accountId: varchar("accountId", { length: 255 }), // platform-specific account/page ID
   accessToken: text("accessToken"),

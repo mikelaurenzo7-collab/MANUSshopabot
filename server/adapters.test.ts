@@ -131,9 +131,10 @@ describe("E-Commerce Adapter Registry", () => {
 // ─── Social Adapter Registry Tests ────────────────────────────────────────
 
 describe("Social Adapter Registry", () => {
-  it("supports all 7 social media platforms", () => {
+  it("supports all 10 social media platforms (Sprint 27.5 expansion)", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toBeInstanceOf(Array);
-    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(7);
+    expect(SUPPORTED_SOCIAL_PLATFORMS.length).toBe(10);
+    // Original 7
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("meta");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("instagram");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("tiktok");
@@ -141,6 +142,10 @@ describe("Social Adapter Registry", () => {
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("pinterest");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("google_ads");
     expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("gmail");
+    // Sprint 27.5 — Microsoft inbox, community channel, video.
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("outlook");
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("slack");
+    expect(SUPPORTED_SOCIAL_PLATFORMS).toContain("youtube");
   });
 
   it("returns an adapter for each supported platform", () => {

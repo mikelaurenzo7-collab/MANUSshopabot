@@ -187,7 +187,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Which platforms does Shop_a_Bot support?",
-    a: "Shopify is live today via OAuth and is the deepest integration. 14 e-commerce surfaces are wired in total (Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, Walmart, plus Sprint 27's Depop, BigCommerce, Square, Faire, Bonanza, StockX, Reverb), alongside 7 social channels (Meta, Instagram, TikTok, X, Pinterest, Google Ads, Gmail) and 9 cross-cutting tools (Sheets, GA4, Klaviyo, ShipStation, Postscript, Printful, Judge.me, Gorgias). Each adapter has a published capability matrix the bots branch on, so they never recommend a tactic the platform doesn't support. Adapters beyond Shopify are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
+    a: "Shopify is live today via OAuth and is the deepest integration. 14 e-commerce surfaces are wired in total (Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, Walmart, plus Sprint 27's Depop, BigCommerce, Square, Faire, Bonanza, StockX, Reverb), alongside 10 social + messaging channels (Meta, Instagram, TikTok, X, Pinterest, Google Ads, Gmail, plus Outlook for Microsoft inboxes, Slack for VIP community channels, and YouTube for Shorts + long-form video) and 9 cross-cutting tools (Sheets, GA4, Klaviyo, ShipStation, Postscript, Printful, Judge.me, Gorgias). Each adapter has a published capability matrix the bots branch on, so they never recommend a tactic the platform doesn't support. Adapters beyond Shopify are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
   },
   {
     q: "How does the Builder Bot source products?",
@@ -422,7 +422,7 @@ export default function Landing() {
             {/* Announcement pill — honest about platform readiness */}
             <div className="mb-6 inline-flex items-center gap-2 announcement-banner">
               <span className="eyebrow">Live</span>
-              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 surfaces wired</span>
+              <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 commerce + 10 social wired</span>
               <ArrowRight className="w-3 h-3 text-white/35" />
             </div>
 
