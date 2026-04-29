@@ -1104,3 +1104,22 @@
 - [x] pricing_optimization: fetch real supplier cost benchmarks before LLM margin analysis
 - [x] pricing_optimization: LLM uses actual wholesale prices to ground margin floor calculations
 - [ ] AliExpress IOP adapter: evaluate production readiness of generateSecurityToken API
+
+## Sprint 12: Critical Bug Fixes
+
+### Store Cleanup
+- [x] Delete stores id=1 (laurienzogolf), id=30001 (laurenzogolf), id=30002 (duplicate laurenzo-4) from DB
+- [x] Delete all related workflow_steps, agent_workflows, agent_tasks, platform_credentials for those stores
+
+### Shopify OAuth Fix (CRITICAL)
+- [x] Audit current Shopify store connection flow — verify it redirects to real Shopify OAuth login
+- [x] Shopify OAuth confirmed correct: domain input triggers real redirect to Shopify admin/oauth/authorize
+- [x] Access token obtained via proper OAuth code exchange after Shopify login
+- [x] Access token stored in stores.platformAccessToken after successful OAuth
+
+### Builder Bot Chat Fix (CRITICAL)
+- [x] Audit Builder Bot chat system prompt — it must tell the bot to EXECUTE workflows, not give instructions
+- [x] Rewrote chat router v2 with LLM function-calling tools (launch_workflow, get_store_status, list_recent_workflows)
+- [x] Bot now calls launch_workflow tool when user says "build my store" or similar — executes autonomously
+- [x] Bot reports workflow ID and what it launched, not generic instructions
+- [x] All 6 agentic chat tests passing
