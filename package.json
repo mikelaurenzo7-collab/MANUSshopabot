@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "preflight": "node scripts/preflight-sync.mjs",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "bot:selftest": "tsx scripts/bot-selftest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
