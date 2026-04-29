@@ -38,56 +38,56 @@ const ACCENT_STYLES: Record<AccentColor, { bg: string; border: string; text: str
     bg: "bg-sky-500/10",
     border: "border-sky-500/20",
     text: "text-sky-400",
-    glow: "shadow-[0_0_10px_rgba(14,165,233,0.1)]",
-    line: "from-sky-500/50 via-sky-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(14,165,233,0.18),0_0_32px_rgba(14,165,233,0.08)]",
+    line: "from-sky-500/60 via-sky-500/15 to-transparent",
     halo: "bg-sky-500/[0.08]",
   },
   cyan: {
     bg: "bg-cyan-500/10",
     border: "border-cyan-500/20",
     text: "text-cyan-400",
-    glow: "shadow-[0_0_10px_rgba(6,182,212,0.1)]",
-    line: "from-cyan-500/50 via-cyan-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(6,182,212,0.18),0_0_32px_rgba(6,182,212,0.08)]",
+    line: "from-cyan-500/60 via-cyan-500/15 to-transparent",
     halo: "bg-cyan-500/[0.08]",
   },
   violet: {
     bg: "bg-violet-500/10",
     border: "border-violet-500/20",
     text: "text-violet-400",
-    glow: "shadow-[0_0_10px_rgba(139,92,246,0.12)]",
-    line: "from-violet-500/50 via-violet-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(139,92,246,0.18),0_0_32px_rgba(139,92,246,0.08)]",
+    line: "from-violet-500/60 via-violet-500/15 to-transparent",
     halo: "bg-violet-500/[0.08]",
   },
   emerald: {
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/20",
     text: "text-emerald-400",
-    glow: "shadow-[0_0_10px_rgba(16,185,129,0.12)]",
-    line: "from-emerald-500/50 via-emerald-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(16,185,129,0.18),0_0_32px_rgba(16,185,129,0.08)]",
+    line: "from-emerald-500/60 via-emerald-500/15 to-transparent",
     halo: "bg-emerald-500/[0.08]",
   },
   fuchsia: {
     bg: "bg-fuchsia-500/10",
     border: "border-fuchsia-500/20",
     text: "text-fuchsia-400",
-    glow: "shadow-[0_0_10px_rgba(217,70,239,0.12)]",
-    line: "from-fuchsia-500/50 via-fuchsia-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(217,70,239,0.18),0_0_32px_rgba(217,70,239,0.08)]",
+    line: "from-fuchsia-500/60 via-fuchsia-500/15 to-transparent",
     halo: "bg-fuchsia-500/[0.08]",
   },
   amber: {
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
     text: "text-amber-400",
-    glow: "shadow-[0_0_10px_rgba(245,158,11,0.12)]",
-    line: "from-amber-500/50 via-amber-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(245,158,11,0.18),0_0_32px_rgba(245,158,11,0.08)]",
+    line: "from-amber-500/60 via-amber-500/15 to-transparent",
     halo: "bg-amber-500/[0.08]",
   },
   rose: {
     bg: "bg-rose-500/10",
     border: "border-rose-500/20",
     text: "text-rose-400",
-    glow: "shadow-[0_0_10px_rgba(244,63,94,0.12)]",
-    line: "from-rose-500/50 via-rose-500/10 to-transparent",
+    glow: "shadow-[0_0_16px_rgba(244,63,94,0.18),0_0_32px_rgba(244,63,94,0.08)]",
+    line: "from-rose-500/60 via-rose-500/15 to-transparent",
     halo: "bg-rose-500/[0.08]",
   },
 };
@@ -118,30 +118,39 @@ export function PageHeader({
       {/* keyed to the page accent. Adds depth without cost.            */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute -top-12 -left-6 h-32 w-64 ${styles.halo} blur-3xl opacity-50`}
+        className={`pointer-events-none absolute -top-16 -left-8 h-48 w-80 ${styles.halo} blur-3xl opacity-60`}
       />
-      <div className={`relative px-5 pt-4 ${flushBottom ? "pb-1.5" : "pb-3"} flex items-center gap-2.5`}>
+      {/* Secondary halo — a smaller, more focused glow behind the icon */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute top-0 left-4 h-16 w-28 ${styles.halo} blur-2xl opacity-40`}
+      />
+      <div className={`relative px-6 pt-5 ${flushBottom ? "pb-2" : "pb-4"} flex items-center gap-3`}>
+        {/* Icon plate — 36×36, slightly larger than before for more presence */}
         <div
-          className={`h-8 w-8 rounded-lg ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0`}
+          className={`h-9 w-9 rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-all duration-300`}
         >
           <span className={`${styles.text} flex items-center justify-center`} aria-hidden="true">
             {icon}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-heading font-bold tracking-tight text-foreground leading-tight truncate">
+          <h1 className="text-[17px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+            <p className="text-[11px] text-muted-foreground truncate mt-0.5">{subtitle}</p>
           )}
         </div>
         {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
       </div>
-      {/* Signature accent line — the canonical scan-line under every  */}
-      {/* page header. Subtle gradient that reinforces the page's      */}
-      {/* identity color in one pixel of vertical real estate.          */}
-      <div className={`h-px bg-gradient-to-r ${styles.line}`} aria-hidden="true" />
+      {/* Signature accent line — upgraded to 1.5px for a sharper edge.   */}
+      {/* The gradient now starts more opaque so the color reads clearly. */}
+      <div
+        className={`page-accent-line bg-gradient-to-r ${styles.line}`}
+        style={{ height: "1.5px" }}
+        aria-hidden="true"
+      />
     </div>
   );
 }
