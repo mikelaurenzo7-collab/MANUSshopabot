@@ -148,7 +148,6 @@ export function PageHeader({
       {/* The gradient now starts more opaque so the color reads clearly. */}
       <div
         className={`page-accent-line bg-gradient-to-r ${styles.line}`}
-        style={{ height: "1.5px" }}
         aria-hidden="true"
       />
     </div>

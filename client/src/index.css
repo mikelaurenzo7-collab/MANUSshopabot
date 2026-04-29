@@ -2408,30 +2408,32 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   }
 
   /* ── Tabs premium skin ───────────────────────────────────────────────────
-     Applied by adding className="tabs-premium" to <TabsList>. */
-  .tabs-premium {
-    background: rgba(255, 255, 255, 0.025) !important;
-    border: 1px solid rgba(255, 255, 255, 0.07) !important;
-    padding: 4px !important;
-    border-radius: var(--radius-md) !important;
-    gap: 2px !important;
+     Applied by adding className="tabs-premium" to <TabsList>.
+     Uses high-specificity chained selectors instead of !important to
+     avoid cascade conflicts. */
+  .tabs-premium.tabs-premium {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    gap: 2px;
   }
-  .tabs-premium [data-slot="tabs-trigger"] {
-    color: rgba(255, 255, 255, 0.45) !important;
-    border-radius: var(--radius-sm) !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"] {
+    color: rgba(255, 255, 255, 0.45);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .tabs-premium [data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
-    color: rgba(255, 255, 255, 0.75) !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"]:hover:not([data-state="active"]) {
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
   }
-  .tabs-premium [data-slot="tabs-trigger"][data-state="active"] {
-    background: rgba(14, 165, 233, 0.12) !important;
-    color: #7dd3fc !important;
-    border-color: rgba(14, 165, 233, 0.18) !important;
+  .tabs-premium.tabs-premium [data-slot="tabs-trigger"][data-state="active"] {
+    background: rgba(14, 165, 233, 0.12);
+    color: #7dd3fc;
+    border-color: rgba(14, 165, 233, 0.18);
     box-shadow:
       inset 0 0 0 1px rgba(14, 165, 233, 0.2),
-      0 0 16px rgba(14, 165, 233, 0.08) !important;
+      0 0 16px rgba(14, 165, 233, 0.08);
   }
 
   /* ── Page section ambient ────────────────────────────────────────────────
