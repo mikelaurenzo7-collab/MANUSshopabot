@@ -300,7 +300,7 @@ export default function ConfigPage() {
         subtitle="Automation rules, autonomy levels, and bot controls"
         accent="sky"
         right={
-          <Button onClick={handleSave} disabled={upsertConfig.isPending} size="sm">
+          <Button onClick={handleSave} disabled={upsertConfig.isPending}>
             {upsertConfig.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-1" />
             ) : (

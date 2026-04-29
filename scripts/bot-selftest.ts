@@ -23,6 +23,7 @@
 import { config } from "dotenv";
 config();
 
+import type { EcommercePlatformAdapter, AdapterCredentials } from "../server/adapters/ecommerce/types";
 import { ShopifyAdapter } from "../server/adapters/ecommerce/shopifyAdapter";
 import { WooCommerceAdapter } from "../server/adapters/ecommerce/woocommerceAdapter";
 import { AmazonAdapter } from "../server/adapters/ecommerce/amazonAdapter";
@@ -37,7 +38,6 @@ import { TwitterAdapter } from "../server/adapters/social/twitterAdapter";
 import { PinterestAdapter } from "../server/adapters/social/pinterestAdapter";
 import { GoogleAdsAdapter } from "../server/adapters/social/googleAdsAdapter";
 import { GmailAdapter } from "../server/adapters/social/gmailAdapter";
-import type { AdapterCredentials } from "../server/adapters/ecommerce/types";
 import type { SocialCredentials } from "../server/adapters/social/types";
 
 // ─── ANSI colours ─────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
 
   const adapters: Array<{
     name: string;
-    adapter: InstanceType<typeof ShopifyAdapter>;
+    adapter: EcommercePlatformAdapter;
     configured: boolean;
     creds: AdapterCredentials;
   }> = [
@@ -94,7 +94,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "woocommerce",
-      adapter: new WooCommerceAdapter() as any,
+      adapter: new WooCommerceAdapter(),
       configured: hasEnv("WOOCOMMERCE_CONSUMER_KEY", "WOOCOMMERCE_CONSUMER_SECRET"),
       creds: {
         platform: "woocommerce",
@@ -105,7 +105,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "amazon",
-      adapter: new AmazonAdapter() as any,
+      adapter: new AmazonAdapter(),
       configured: hasEnv("AMAZON_SP_CLIENT_ID", "AMAZON_SP_CLIENT_SECRET"),
       creds: {
         platform: "amazon",
@@ -115,7 +115,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "etsy",
-      adapter: new EtsyAdapter() as any,
+      adapter: new EtsyAdapter(),
       configured: hasEnv("ETSY_API_KEY"),
       creds: {
         platform: "etsy",
@@ -126,7 +126,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "ebay",
-      adapter: new EbayAdapter() as any,
+      adapter: new EbayAdapter(),
       configured: hasEnv("EBAY_APP_ID", "EBAY_CERT_ID"),
       creds: {
         platform: "ebay",
@@ -136,7 +136,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "tiktok_shop",
-      adapter: new TikTokShopAdapter() as any,
+      adapter: new TikTokShopAdapter(),
       configured: hasEnv("TIKTOK_CLIENT_KEY", "TIKTOK_CLIENT_SECRET"),
       creds: {
         platform: "tiktok_shop",
@@ -146,7 +146,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
     },
     {
       name: "walmart",
-      adapter: new WalmartAdapter() as any,
+      adapter: new WalmartAdapter(),
       configured: hasEnv("WALMART_CLIENT_ID", "WALMART_CLIENT_SECRET"),
       creds: {
         platform: "walmart",
@@ -162,7 +162,7 @@ async function testEcommerce(): Promise<AdapterResult[]> {
       continue;
     }
     try {
-      const health = await (adapter as any).healthCheck(creds);
+      const health = await adapter.healthCheck(creds);
       results.push({
         family: "ecommerce",
         platform: name,
