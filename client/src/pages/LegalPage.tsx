@@ -49,7 +49,7 @@ export default function LegalPage({ kind }: LegalPageProps) {
   const { eyebrow, title, body } = COPY[kind];
 
   return (
-    <div className="min-h-screen w-full bg-[#050507] text-white relative overflow-hidden grain">
+    <div className="min-h-screen w-full bg-surface-base text-white relative overflow-hidden grain">
       <div className="aurora-mesh" aria-hidden="true" />
       <div className="absolute inset-0 grid-bg-dense opacity-30 pointer-events-none" />
 

@@ -168,7 +168,7 @@ export default function Chat() {
                 <Store className="h-3.5 w-3.5 mr-1.5 text-white/40 shrink-0" />
                 <SelectValue placeholder="Store context…" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0a0f] border-white/10">
+              <SelectContent className="bg-surface-overlay border-white/10">
                 <SelectItem value="none">All stores</SelectItem>
                 {storesQuery.data?.map((s: any) => (
                   <SelectItem key={s.id} value={s.id.toString()}>

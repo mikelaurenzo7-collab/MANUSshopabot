@@ -66,7 +66,7 @@ export default function InviteAccept() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050507] text-white relative overflow-hidden grain">
+    <div className="min-h-screen w-full flex items-center justify-center bg-surface-base text-white relative overflow-hidden grain">
       <div className="aurora-mesh" aria-hidden="true" />
       <div className="absolute inset-0 grid-bg-dense opacity-30 pointer-events-none" />
       <div className="light-leak-blue absolute -top-32 left-1/3 opacity-50" />

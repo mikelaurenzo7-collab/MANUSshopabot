@@ -41,6 +41,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Semantic surface aliases — pixel-identical to recurring literals so
+     pages/components can reference them via Tailwind utilities
+     (`bg-surface-base`, `bg-surface-overlay`) instead of `bg-[#050507]`. */
+  --color-surface-base: var(--surface-base);
+  --color-surface-overlay: var(--surface-overlay);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -123,6 +128,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+  --destructive-raw: 239, 68, 68;
+
+  /* ── Surface aliases ───────────────────────────────────────────────────── */
+  /* Semantic names for the two recurring page/overlay backdrops. Values are
+     intentionally identical to existing literals so this is purely a
+     consolidation, not a visual change. */
+  --surface-base: #050507;
+  --surface-overlay: #0a0a0f;
 
   /* ── Motion tokens ─────────────────────────────────────────────────────── */
   /* Single source of truth for transitions. Primitives & components should
@@ -147,6 +160,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
   --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
   --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+
+  /* ── Button hover shadows (soft drop, brand-tinted) ────────────────────── */
+  --shadow-button-hover-primary: 0 8px 20px -8px rgba(var(--blue-raw), 0.3);
+  --shadow-button-hover-secondary: 0 8px 20px -8px rgba(255, 255, 255, 0.1);
+  --shadow-button-hover-destructive: 0 8px 20px -8px rgba(var(--destructive-raw), 0.3);
 
   /* ── Focus ring token ──────────────────────────────────────────────────── */
   --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
@@ -188,6 +206,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --blue-raw: 14, 165, 233;
   --cyan-raw: 6, 182, 212;
   --orange-raw: 249, 115, 22;
+  --destructive-raw: 239, 68, 68;
+
+  /* Surface aliases — see :root for documentation */
+  --surface-base: #050507;
+  --surface-overlay: #0a0a0f;
 
   /* Motion / shadow / glow tokens — see :root for documentation */
   --duration-fast: 150ms;
@@ -206,6 +229,9 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --glow-primary-md: 0 0 0 1px rgba(var(--blue-raw), 0.4), 0 6px 20px rgba(var(--blue-raw), 0.4);
   --glow-secondary-sm: 0 0 0 1px rgba(var(--cyan-raw), 0.25), 0 4px 12px rgba(var(--cyan-raw), 0.2);
   --glow-accent-sm: 0 0 0 1px rgba(var(--orange-raw), 0.25), 0 4px 12px rgba(var(--orange-raw), 0.2);
+  --shadow-button-hover-primary: 0 8px 20px -8px rgba(var(--blue-raw), 0.3);
+  --shadow-button-hover-secondary: 0 8px 20px -8px rgba(255, 255, 255, 0.1);
+  --shadow-button-hover-destructive: 0 8px 20px -8px rgba(var(--destructive-raw), 0.3);
   --focus-ring: 0 0 0 3px rgba(var(--blue-raw), 0.35);
 }
 
