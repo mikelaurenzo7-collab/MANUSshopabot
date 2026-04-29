@@ -1357,11 +1357,11 @@
 - [x] Refine card and container borders and shadows
 - [x] Add smooth transitions to all interactive elements
 - [x] Improve modal and dialog styling
-- [ ] Enhance badge and tag styling
-- [ ] Polish table row hover effects
+- [x] Enhance badge and tag styling
+- [x] Polish table row hover effects
 - [ ] Refine typography hierarchy and line-heights
 - [ ] Improve color contrast throughout
-- [ ] Add loading state animations
+- [x] Add loading state animations
 - [ ] Polish empty state illustrations and messaging
 - [ ] Enhance breadcrumb styling
 - [ ] Refine sidebar navigation hover effects
