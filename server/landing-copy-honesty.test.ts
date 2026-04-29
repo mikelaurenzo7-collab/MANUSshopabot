@@ -282,4 +282,24 @@ describe("Landing — outcomes strip + pricing matrix + sticky CTA", () => {
     // get hidden under the sticky bar.
     expect(src).toContain('lg:hidden h-20');
   });
+
+  it("pricing matrix horizontally scrolls on mobile + shows a swipe hint", () => {
+    const src = read(LANDING);
+    // The 5-column grid is unreadable below ~640px; outer overflow-x
+    // lets users swipe instead of squinting.
+    expect(src).toContain("overflow-x-auto pricing-matrix-scroll");
+    expect(src).toContain("min-w-[640px]");
+    // Visible-on-mobile-only hint so users know the table extends past
+    // the viewport.
+    expect(src).toContain("swipe to compare every tier");
+    expect(src).toMatch(/className="md:hidden[\s\S]*?"\s*>\s*←\s*swipe/);
+  });
+
+  it("OutcomesStrip After block shows a top divider on mobile + left divider on desktop", () => {
+    const src = read(LANDING);
+    // Top border kicks in on mobile (when the After stacks under the
+    // Before) so the two halves are visually distinct without the
+    // arrow connector that's hidden below md.
+    expect(src).toMatch(/border-t md:border-t-0/);
+  });
 });

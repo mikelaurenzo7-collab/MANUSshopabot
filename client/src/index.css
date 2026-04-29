@@ -1016,6 +1016,23 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     border-color: rgba(14, 165, 233, 0.3);
     background: rgba(14, 165, 233, 0.05);
   }
+  /* Pricing-matrix horizontal scroll — slim styled scrollbar so the
+   * mobile swipe affordance feels intentional rather than accidental. */
+  .pricing-matrix-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  }
+  .pricing-matrix-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .pricing-matrix-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+  .pricing-matrix-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
   /* Violet variant for the reasoning-lifts pill — distinct from the
    * standard sky banner so the two stack visually without competing. */
   .announcement-banner-violet {
@@ -2696,6 +2713,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(var(--spotlight-rgb), 0.45);
   }
+  .bot-cookbook-spotlight-cta:focus-visible {
+    outline: 2px solid rgba(var(--spotlight-rgb), 0.5);
+    outline-offset: 2px;
+  }
   .bot-cookbook-spotlight-cta:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -3093,6 +3114,21 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     padding: 0.05rem 0.35rem;
     line-height: 1.5;
     cursor: help;
+    /* Subtle entrance — when a step's output arrives mid-stream the
+     * badge appears next to its title; without an animation it just
+     * pops in, which reads as a glitch. Brief opacity + translateY
+     * fade so the eye registers it as "new info" without being
+     * distracting. Disabled under prefers-reduced-motion. */
+    animation: cookbook-pill-enter 240ms ease-out;
+  }
+  @keyframes cookbook-pill-enter {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-workflow-runner-cookbook-pill {
+      animation: none;
+    }
   }
   .live-workflow-runner-cookbook-pill.is-reflect {
     color: rgb(125, 211, 252);
@@ -3136,6 +3172,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     color: rgba(255, 255, 255, 0.85);
     border-color: rgba(255, 255, 255, 0.35);
   }
+  .live-workflow-runner-cookbook-toggle:focus-visible {
+    outline: 2px solid rgba(167, 139, 250, 0.5);
+    outline-offset: 2px;
+    color: rgba(255, 255, 255, 0.95);
+  }
   .live-workflow-runner-cookbook-toggle svg {
     transition: transform 180ms ease;
   }
@@ -3154,6 +3195,19 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 0.65rem;
+    /* Smooth expand on open so the panel feels deliberate rather
+     * than popping in. Slightly longer than the badge entrance so
+     * the eye tracks badge → toggle → panel in sequence. */
+    animation: cookbook-detail-enter 280ms ease-out;
+  }
+  @keyframes cookbook-detail-enter {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-workflow-runner-cookbook-detail {
+      animation: none;
+    }
   }
   .live-workflow-runner-cookbook-block {
     border-radius: 6px;

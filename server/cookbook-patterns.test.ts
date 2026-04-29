@@ -566,6 +566,29 @@ describe("CookbookDetail polish — max-height scroll on long trails", () => {
   });
 });
 
+describe("Cookbook polish — entrance animations + accessibility", () => {
+  it("badges + detail panel both have a subtle entrance animation", () => {
+    const css = read("../client/src/index.css");
+    expect(css).toContain("@keyframes cookbook-pill-enter");
+    expect(css).toContain("@keyframes cookbook-detail-enter");
+    // Both must respect prefers-reduced-motion — a flicker on every
+    // step output isn't fun for users who opted out of motion.
+    expect(css).toMatch(/prefers-reduced-motion: reduce[^}]*\.live-workflow-runner-cookbook-pill[^}]*animation: none/s);
+    expect(css).toMatch(/prefers-reduced-motion: reduce[^}]*\.live-workflow-runner-cookbook-detail[^}]*animation: none/s);
+  });
+
+  it("show-details toggle has a visible focus ring for keyboard users", () => {
+    const css = read("../client/src/index.css");
+    expect(css).toMatch(/\.live-workflow-runner-cookbook-toggle:focus-visible/);
+  });
+
+  it("BotCookbookSpotlight CTA has a brand-tinted focus ring", () => {
+    const css = read("../client/src/index.css");
+    expect(css).toMatch(/\.bot-cookbook-spotlight-cta:focus-visible/);
+    expect(css).toMatch(/\.bot-cookbook-spotlight-cta:focus-visible[^}]*outline: 2px solid rgba\(var\(--spotlight-rgb\)/s);
+  });
+});
+
 describe("Cookbook autonomous workflows — surfaced everywhere a launcher exists", () => {
   it("chat router enum includes all three autonomous workflows", () => {
     const src = read("routers/chat.ts");

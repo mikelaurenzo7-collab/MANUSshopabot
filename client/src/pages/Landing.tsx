@@ -597,7 +597,13 @@ function OutcomesStrip() {
                 </p>
               </div>
               <ArrowRight className="hidden md:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
-              <div className="md:py-1 md:border-l md:pl-4" style={{ borderLeftColor: `rgba(${row.rgb}, 0.18)` }}>
+              <div
+                className="md:py-1 md:border-l md:pl-4 pt-3 mt-1 border-t md:border-t-0 md:mt-0 md:pt-1"
+                style={{
+                  borderLeftColor: `rgba(${row.rgb}, 0.18)`,
+                  borderTopColor: `rgba(${row.rgb}, 0.18)`,
+                }}
+              >
                 <p
                   className="text-[10px] font-bold uppercase tracking-widest mb-1"
                   style={{ color: row.color }}
@@ -684,78 +690,90 @@ function PricingMatrix({ onPick }: { onPick: (planId: string) => void }) {
           What's in each tier
         </h3>
       </div>
+      {/* Outer wrapper allows horizontal scroll on small screens —
+          the 5-column grid is unreadable below ~640px otherwise. The
+          inner table keeps a fixed minimum width so columns stay
+          legible; users swipe on mobile, see everything on desktop. */}
       <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.01]">
-        {/* Header row — plan names, sticky for desktop scroll */}
-        <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase tracking-widest">
-          <div className="text-white/40">Capability</div>
-          {plans.map((p) => (
-            <div
-              key={p.planId}
-              className={`text-center ${p.featured ? "text-sky-300" : "text-white/55"}`}
-            >
-              {p.name}
-              {p.featured && (
-                <span className="block text-[8px] tracking-[0.1em] text-sky-400/85 font-bold mt-0.5">
-                  Most popular
-                </span>
-              )}
+        <div className="overflow-x-auto pricing-matrix-scroll">
+          <div className="min-w-[640px]">
+            {/* Header row — plan names */}
+            <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase tracking-widest">
+              <div className="text-white/40">Capability</div>
+              {plans.map((p) => (
+                <div
+                  key={p.planId}
+                  className={`text-center ${p.featured ? "text-sky-300" : "text-white/55"}`}
+                >
+                  {p.name}
+                  {p.featured && (
+                    <span className="block text-[8px] tracking-[0.1em] text-sky-400/85 font-bold mt-0.5">
+                      Most popular
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {sections.map((sec, secIdx) => (
-          <div key={sec.title} className={`${secIdx > 0 ? "border-t border-white/[0.04]" : ""}`}>
-            <div className="px-4 md:px-6 py-2.5 bg-white/[0.015]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/55">
-                {sec.title}
-              </p>
-            </div>
-            {sec.rows.map((r) => (
-              <div
-                key={r.label}
-                className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-t border-white/[0.04] text-xs items-center"
-              >
-                <div className="text-white/75">{r.label}</div>
-                {r.cells.map((cell, i) => (
-                  <div key={i} className="text-center">
-                    {typeof cell === "boolean" ? (
-                      cell ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/85 inline-block" aria-label="Included" />
-                      ) : (
-                        <span className="text-white/20" aria-label="Not included">—</span>
-                      )
-                    ) : (
-                      <span className={plans[i].featured ? "text-sky-300 font-semibold" : "text-white/85 font-semibold"}>
-                        {cell}
-                      </span>
-                    )}
+            {sections.map((sec, secIdx) => (
+              <div key={sec.title} className={`${secIdx > 0 ? "border-t border-white/[0.04]" : ""}`}>
+                <div className="px-4 md:px-6 py-2.5 bg-white/[0.015]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/55">
+                    {sec.title}
+                  </p>
+                </div>
+                {sec.rows.map((r) => (
+                  <div
+                    key={r.label}
+                    className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-t border-white/[0.04] text-xs items-center"
+                  >
+                    <div className="text-white/75">{r.label}</div>
+                    {r.cells.map((cell, i) => (
+                      <div key={i} className="text-center">
+                        {typeof cell === "boolean" ? (
+                          cell ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/85 inline-block" aria-label="Included" />
+                          ) : (
+                            <span className="text-white/20" aria-label="Not included">—</span>
+                          )
+                        ) : (
+                          <span className={plans[i].featured ? "text-sky-300 font-semibold" : "text-white/85 font-semibold"}>
+                            {cell}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
             ))}
+            {/* CTA row — one button per plan, repeated below the matrix
+                so operators don't have to scroll back up after comparing. */}
+            <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-4 border-t border-white/[0.06] bg-white/[0.015]">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 self-center">
+                Start a 7-day trial
+              </div>
+              {plans.map((p) => (
+                <button
+                  key={p.planId}
+                  type="button"
+                  onClick={() => onPick(p.planId)}
+                  className={`text-xs font-semibold rounded-md py-2 transition-colors ${
+                    p.featured
+                      ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sm shadow-sky-500/30"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] text-white/85 border border-white/[0.08]"
+                  }`}
+                >
+                  Pick {p.name}
+                </button>
+              ))}
+            </div>
           </div>
-        ))}
-        {/* CTA row — one button per plan, repeated below the matrix
-            so operators don't have to scroll back up after comparing. */}
-        <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-4 border-t border-white/[0.06] bg-white/[0.015]">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 self-center">
-            Start a 7-day trial
-          </div>
-          {plans.map((p) => (
-            <button
-              key={p.planId}
-              type="button"
-              onClick={() => onPick(p.planId)}
-              className={`text-xs font-semibold rounded-md py-2 transition-colors ${
-                p.featured
-                  ? "bg-sky-500 hover:bg-sky-400 text-white shadow-sm shadow-sky-500/30"
-                  : "bg-white/[0.04] hover:bg-white/[0.08] text-white/85 border border-white/[0.08]"
-              }`}
-            >
-              Pick {p.name}
-            </button>
-          ))}
         </div>
       </div>
+      {/* Swipe-hint for mobile users — the table extends past the viewport. */}
+      <p className="md:hidden text-center text-[10px] text-white/35 mt-2">
+        ← swipe to compare every tier →
+      </p>
     </div>
   );
 }
