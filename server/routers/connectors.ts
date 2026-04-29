@@ -5,6 +5,7 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 import { getSocialCapabilityMatrix } from "../adapters/social";
+import { getCapabilityRows } from "../adapters/capabilityMatrix";
 
 /**
  * Legacy in-memory fallback for pre-deployment OAuth callbacks.
@@ -409,6 +410,12 @@ export const connectorsRouter = router({
     return {
       ecommerce: getEcommerceCapabilityMatrix(),
       social: getSocialCapabilityMatrix(),
+      // Flat, machine-readable matrix
+      // ({ platform, capability, supported, requires_auth, rate_limit,
+      //    idempotent }) projected from the live adapter registries.
+      // Consumed by the /PlatformHealth page and (in subsequent PRs)
+      // by the orchestrator's tool-dispatch gate.
+      flat: getCapabilityRows(),
     };
   }),
 
