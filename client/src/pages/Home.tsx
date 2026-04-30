@@ -395,7 +395,7 @@ export default function Home() {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setLocation("/merchant"); }}
+                            onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
                             className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[9px] font-mono text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <Package className="w-3 h-3" /> Manage

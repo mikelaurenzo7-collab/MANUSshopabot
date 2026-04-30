@@ -59,7 +59,7 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     eyebrow: "Step 1 / 4",
     title: "Connect your first store",
     description:
-      "Builder Bot needs a connected storefront before it can research your niche, source products, and ship a catalog.",
+      "Store Bot needs a connected storefront before it can research your niche, source products, and ship a catalog.",
     cta: "Connect a store",
     href: "/storefronts#integrations?returnTo=/",
   },
@@ -71,11 +71,11 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     iconBg: "bg-sky-500/12",
     iconBorder: "border-sky-500/30",
     eyebrow: "Step 2 / 4",
-    title: "Wake the Builder Bot",
+    title: "Wake the Store Bot",
     description:
-      "Run a niche research workflow. The Builder will analyse your category, draft purchase orders, and prep your store for launch.",
-    cta: "Launch Builder",
-    href: "/architect",
+      "Run a niche research workflow. Store Bot will analyse your category, draft purchase orders, and prep your store for launch.",
+    cta: "Launch Store Bot",
+    href: "/chat",
   },
   CONNECT_SOCIAL: {
     step: 3,
@@ -87,7 +87,7 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     eyebrow: "Step 3 / 4",
     title: "Connect a social channel",
     description:
-      "Meta, TikTok, Pinterest — pick any. The Social Bot will start drafting ad creatives and content the moment a channel is live.",
+      "Meta, TikTok, Pinterest — pick any. Store Bot will start drafting ad creatives and content the moment a channel is live.",
     cta: "Connect a channel",
     href: "/storefronts#integrations?returnTo=/",
   },
@@ -102,8 +102,8 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     title: "Send your first email campaign",
     description:
       "Generate a recovery flow or promotional email. Once it ships, the Insights → Campaigns funnel starts tracking opens and clicks in real time.",
-    cta: "Open the Social Bot",
-    href: "/social",
+    cta: "Open Store Bot",
+    href: "/chat",
   },
 };
 

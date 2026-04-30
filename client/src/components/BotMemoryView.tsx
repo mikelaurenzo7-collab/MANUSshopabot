@@ -127,11 +127,11 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
         </div>
         <p className="text-sm font-medium text-foreground">No memories yet</p>
         <p className="text-xs text-muted-foreground mt-1 text-center max-w-md">
-          The {agentType === "architect" ? "Builder" : agentType === "merchant" ? "Merchant" : "Social"} bot will accumulate
+          Store Bot will accumulate
           durable learnings — supplier lead times, winning niches, audience hooks — as it runs workflows. Launch one to
           start filling this view.
         </p>
-        <Link href="/architect">
+        <Link href="/chat">
           <button className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/30 text-xs font-semibold text-fuchsia-200 hover:bg-fuchsia-500/25 hover:border-fuchsia-400/40 transition-colors">
             <Sparkles className="h-3.5 w-3.5" />
             Launch a workflow

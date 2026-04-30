@@ -203,7 +203,7 @@ export default function SupplierPOs() {
             </div>
             <p className="font-semibold mb-1.5 text-foreground">Connect a store first</p>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Purchase orders are scoped to a store. Connect Shopify (or any supported platform) and the Merchant Bot will start drafting POs the moment it spots low inventory.
+              Purchase orders are scoped to a store. Connect Shopify (or any supported platform) and Store Bot will start drafting POs the moment it spots low inventory.
             </p>
             <Link href="/storefronts#integrations">
               <Button size="sm" className="bg-sky-600 hover:bg-sky-500">
@@ -221,7 +221,7 @@ export default function SupplierPOs() {
             </div>
             <p className="font-semibold mb-1.5 text-foreground">No purchase orders yet</p>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-              The Merchant Bot drafts POs automatically when stock dips below threshold. You can also draft one manually or scan an existing supplier receipt.
+              Store Bot drafts POs automatically when stock dips below threshold. You can also draft one manually or scan an existing supplier receipt.
             </p>
             {/* Three concrete next-actions instead of a dead-end */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
@@ -241,7 +241,7 @@ export default function SupplierPOs() {
                 <p className="text-xs font-semibold text-foreground mb-0.5">Draft manually</p>
                 <p className="text-[10.5px] text-muted-foreground leading-tight">Pick supplier + line items by hand.</p>
               </button>
-              <Link href="/merchant">
+              <Link href="/chat">
                 <div className="group p-3 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/20 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-all text-left h-full">
                   <Package className="w-4 h-4 text-emerald-300 mb-1.5" />
                   <p className="text-xs font-semibold text-foreground mb-0.5">Run inventory check</p>

@@ -192,14 +192,10 @@ export function RecommendedWorkflows() {
                   )}
                 </button>
                 <Link
-                  href={
-                    rec.agentType === "architect" ? "/architect"
-                      : rec.agentType === "merchant" ? "/merchant"
-                        : "/social"
-                  }
+                  href="/chat"
                   className="inline-flex items-center justify-center px-2.5 py-2 rounded-lg border border-white/[0.08] text-white/55 hover:text-white hover:border-white/20 hover:bg-white/[0.03] transition-colors text-xs"
-                  aria-label={`Open ${rec.agentType} bot details`}
-                  title="See bot details"
+                  aria-label="Open Store Bot workspace"
+                  title="Open Store Bot workspace"
                 >
                   <ArrowRight className="h-3 w-3" aria-hidden="true" />
                 </Link>
