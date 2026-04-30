@@ -1404,6 +1404,49 @@ function WorkflowsTab({
   onLaunch: () => void;
   onOpen: () => void;
 }) {
+  const STATUS_ORDER = [
+    "running",
+    "pending",
+    "awaiting_approval",
+    "completed",
+    "failed",
+    "cancelled",
+  ] as const;
+  type WorkflowStatus = (typeof STATUS_ORDER)[number];
+
+  const [statusFilter, setStatusFilter] = useState<"all" | WorkflowStatus>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Newest first so fresh runs surface at the top, mirroring MemoryTab.
+  const sortedWorkflows = useMemo(() => {
+    return [...workflows].sort((a: any, b: any) => {
+      const ta = new Date(a.updatedAt ?? a.createdAt ?? a.startedAt ?? 0).getTime();
+      const tb = new Date(b.updatedAt ?? b.createdAt ?? b.startedAt ?? 0).getTime();
+      return tb - ta;
+    });
+  }, [workflows]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: workflows.length };
+    for (const s of STATUS_ORDER) c[s] = 0;
+    for (const w of workflows) {
+      const k = (w.status as string) in c ? (w.status as string) : "completed";
+      c[k] = (c[k] ?? 0) + 1;
+    }
+    return c;
+  }, [workflows]);
+
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    return sortedWorkflows.filter((w: any) => {
+      if (statusFilter !== "all" && w.status !== statusFilter) return false;
+      if (!term) return true;
+      const haystack =
+        `${w.title ?? ""} ${w.workflowType ?? ""} ${w.description ?? ""}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [sortedWorkflows, statusFilter, term]);
+
   const grouped = useMemo(() => {
     const buckets: Record<string, any[]> = {
       running: [],
@@ -1413,16 +1456,19 @@ function WorkflowsTab({
       failed: [],
       cancelled: [],
     };
-    for (const w of workflows) {
+    for (const w of filtered) {
       const k = (w.status as string) in buckets ? (w.status as string) : "completed";
       buckets[k].push(w);
     }
     return buckets;
-  }, [workflows]);
+  }, [filtered]);
+
+  const activeCount = counts.running + counts.pending + counts.awaiting_approval;
+  const isFiltering = statusFilter !== "all" || term.length > 0;
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-heading font-bold text-foreground">
             Workflows for {workspaceName}
@@ -1431,7 +1477,21 @@ function WorkflowsTab({
             Every run the Store Bot kicks off here lives in this workspace.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge className="border border-amber-500/20 bg-amber-500/[0.06] px-2 py-0.5 text-[10px] text-amber-200">
+            <Loader2 className="mr-1 h-3 w-3" />
+            Active {activeCount}
+          </Badge>
+          <Badge className="border border-emerald-500/20 bg-emerald-500/[0.06] px-2 py-0.5 text-[10px] text-emerald-200">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            Completed {counts.completed}
+          </Badge>
+          {counts.failed > 0 && (
+            <Badge className="border border-red-500/25 bg-red-500/[0.06] px-2 py-0.5 text-[10px] text-red-200">
+              <XCircle className="mr-1 h-3 w-3" />
+              Failed {counts.failed}
+            </Badge>
+          )}
           <Button size="sm" variant="outline" className="h-8 border-white/10 bg-white/[0.04] text-xs" onClick={onOpen}>
             <ExternalLink className="mr-1 h-3 w-3" />
             Open workflows hub
@@ -1440,6 +1500,34 @@ function WorkflowsTab({
             <Plus className="mr-1 h-3 w-3" />
             Build workflow
           </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-white/35" />
+          <Input
+            className="h-8 w-[220px] border-white/10 bg-white/[0.04] pl-7 text-xs"
+            placeholder="Search workflows…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <FilterChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
+            All <span className="ml-1 text-white/45">{counts.all}</span>
+          </FilterChip>
+          {STATUS_ORDER.map((s) => {
+            if (counts[s] === 0 && statusFilter !== s) return null;
+            const tone = WORKFLOW_TONE[s];
+            return (
+              <FilterChip key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+                <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full align-middle ${tone.dot}`} />
+                {tone.label}
+                {counts[s] > 0 && <span className="ml-1 text-white/45">{counts[s]}</span>}
+              </FilterChip>
+            );
+          })}
         </div>
       </div>
 
@@ -1452,9 +1540,27 @@ function WorkflowsTab({
           body="Ask the Store Bot to launch one from the Chat tab, or build one in the workflow builder."
           action={{ label: "Build workflow", onClick: onLaunch }}
         />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={GitBranch}
+          title={term ? "No matches" : "Nothing in this status yet"}
+          body={
+            term
+              ? `Nothing matches “${term}”. Try a different keyword or clear the filter.`
+              : statusFilter !== "all"
+                ? `No ${WORKFLOW_TONE[statusFilter].label.toLowerCase()} workflows right now.`
+                : "No workflows match the current filter."
+          }
+        />
+      ) : isFiltering ? (
+        // When the user has narrowed things down, a flat list reads cleaner
+        // than re-grouping into a single status section.
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+          {filtered.map((w: any) => <WorkflowCard key={w.id} workflow={w} />)}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-          {(["running", "pending", "awaiting_approval", "completed", "failed", "cancelled"] as const).map((status) => {
+          {STATUS_ORDER.map((status) => {
             if (grouped[status].length === 0) return null;
             const tone = WORKFLOW_TONE[status];
             return (
@@ -1467,7 +1573,9 @@ function WorkflowsTab({
                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
                     {tone.label}
                   </span>
-                  <span className="ml-auto text-[10px] text-white/35">{grouped[status].length}</span>
+                  <span className="ml-auto rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-white/55">
+                    {grouped[status].length}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   {grouped[status].map((w: any) => <WorkflowCard key={w.id} workflow={w} />)}
@@ -2290,16 +2398,92 @@ function SuppliersTab({
   onLaunch: () => void;
   onOpenSupplier: () => void;
 }) {
+  // Tiles double as workflowType filters — clicking one narrows the run
+  // list below to just that supplier capability, mirroring how the
+  // Connectors tab pivots on category.
+  const TILE_DEFS = [
+    {
+      id: "product_sourcing",
+      icon: Package,
+      label: "Product sourcing",
+      hint: "Find products + suppliers that fit this store.",
+    },
+    {
+      id: "fulfillment_automation",
+      icon: Truck,
+      label: "Fulfillment automation",
+      hint: "Auto-route orders to the right supplier.",
+    },
+    {
+      id: "supply_chain_intelligence",
+      icon: Brain,
+      label: "Supply chain intel",
+      hint: "Lead times, stockouts, vendor risk.",
+    },
+    {
+      id: "velocity_restock_predictor",
+      icon: Zap,
+      label: "Velocity restock",
+      hint: "Predict restock SKUs before they go OOS.",
+    },
+  ] as const;
+
+  const [typeFilter, setTypeFilter] = useState<"all" | (typeof TILE_DEFS)[number]["id"]>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const sortedWorkflows = useMemo(() => {
+    return [...workflows].sort((a: any, b: any) => {
+      const ta = new Date(a.updatedAt ?? a.createdAt ?? a.startedAt ?? 0).getTime();
+      const tb = new Date(b.updatedAt ?? b.createdAt ?? b.startedAt ?? 0).getTime();
+      return tb - ta;
+    });
+  }, [workflows]);
+
+  const tileCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const t of TILE_DEFS) c[t.id] = 0;
+    for (const w of workflows) {
+      if (typeof w.workflowType === "string" && w.workflowType in c) {
+        c[w.workflowType] = (c[w.workflowType] ?? 0) + 1;
+      }
+    }
+    return c;
+  }, [workflows]);
+
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    return sortedWorkflows.filter((w: any) => {
+      if (typeFilter !== "all" && w.workflowType !== typeFilter) return false;
+      if (!term) return true;
+      const haystack =
+        `${w.title ?? ""} ${w.workflowType ?? ""} ${w.description ?? ""}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [sortedWorkflows, typeFilter, term]);
+
+  const activeCount = workflows.filter(
+    (w: any) =>
+      w.status === "running" || w.status === "pending" || w.status === "awaiting_approval",
+  ).length;
+
   return (
     <div className="space-y-4 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-heading font-bold text-foreground">Suppliers for {workspaceName}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Sourcing, fulfillment, and restock runs scoped to this workspace.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge className="border border-amber-500/20 bg-amber-500/[0.06] px-2 py-0.5 text-[10px] text-amber-200">
+            <Loader2 className="mr-1 h-3 w-3" />
+            Active {activeCount}
+          </Badge>
+          <Badge className="border border-sky-500/20 bg-sky-500/[0.06] px-2 py-0.5 text-[10px] text-sky-200">
+            <Truck className="mr-1 h-3 w-3" />
+            Total {workflows.length}
+          </Badge>
           <Button size="sm" variant="outline" className="h-8 border-white/10 bg-white/[0.04] text-xs" onClick={onOpenSupplier}>
             <Truck className="mr-1 h-3 w-3" />
             Supplier POs
@@ -2312,10 +2496,50 @@ function SuppliersTab({
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <SupplierTile icon={Package} label="Product sourcing" hint="Find products + suppliers that fit this store." />
-        <SupplierTile icon={Truck} label="Fulfillment automation" hint="Auto-route orders to the right supplier." />
-        <SupplierTile icon={Brain} label="Supply chain intel" hint="Lead times, stockouts, vendor risk." />
-        <SupplierTile icon={Zap} label="Velocity restock" hint="Predict restock SKUs before they go OOS." />
+        {TILE_DEFS.map((tile) => (
+          <SupplierTile
+            key={tile.id}
+            icon={tile.icon}
+            label={tile.label}
+            hint={tile.hint}
+            count={tileCounts[tile.id] ?? 0}
+            active={typeFilter === tile.id}
+            onClick={() =>
+              setTypeFilter((cur) => (cur === tile.id ? "all" : tile.id))
+            }
+          />
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-white/35" />
+          <Input
+            className="h-8 w-[220px] border-white/10 bg-white/[0.04] pl-7 text-xs"
+            placeholder="Search supplier workflows…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <FilterChip active={typeFilter === "all"} onClick={() => setTypeFilter("all")}>
+          All <span className="ml-1 text-white/45">{workflows.length}</span>
+        </FilterChip>
+        {TILE_DEFS.map((tile) => {
+          const n = tileCounts[tile.id] ?? 0;
+          if (n === 0 && typeFilter !== tile.id) return null;
+          return (
+            <FilterChip
+              key={tile.id}
+              active={typeFilter === tile.id}
+              onClick={() =>
+                setTypeFilter((cur) => (cur === tile.id ? "all" : tile.id))
+              }
+            >
+              {tile.label}
+              {n > 0 && <span className="ml-1 text-white/45">{n}</span>}
+            </FilterChip>
+          );
+        })}
       </div>
 
       {isLoading ? (
@@ -2326,22 +2550,68 @@ function SuppliersTab({
           title="No supplier workflows yet"
           body="Ask the Store Bot to source products, audit fulfillment, or predict restocks — runs will appear here."
         />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={Truck}
+          title={term ? "No matches" : "Nothing for this capability yet"}
+          body={
+            term
+              ? `Nothing matches “${term}”. Try a different keyword or clear the filter.`
+              : "Pick a different tile or kick off a new run from the Chat tab."
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
-          {workflows.map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
+          {filtered.map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
         </div>
       )}
     </div>
   );
 }
 
-function SupplierTile({ icon: Icon, label, hint }: { icon: typeof Bot; label: string; hint: string }) {
+function SupplierTile({
+  icon: Icon,
+  label,
+  hint,
+  count,
+  active,
+  onClick,
+}: {
+  icon: typeof Bot;
+  label: string;
+  hint: string;
+  count?: number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const base =
+    "group rounded-xl border p-3 text-left transition-colors w-full focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500/40";
+  const tone = active
+    ? "border-sky-500/30 bg-sky-500/[0.06] hover:border-sky-500/45"
+    : "border-white/[0.06] bg-white/[0.025] hover:border-white/15";
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
-      <Icon className="h-4 w-4 text-sky-300" />
+    <button type="button" onClick={onClick} className={`${base} ${tone}`} aria-pressed={active}>
+      <div className="flex items-start justify-between gap-2">
+        <Icon className={`h-4 w-4 ${active ? "text-sky-200" : "text-sky-300"}`} />
+        {typeof count === "number" && count > 0 && (
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
+              active ? "bg-sky-500/20 text-sky-100" : "bg-white/[0.05] text-white/55"
+            }`}
+          >
+            {count}
+          </span>
+        )}
+      </div>
       <p className="mt-2 text-[12px] font-semibold text-white/85">{label}</p>
       <p className="mt-0.5 text-[10px] leading-relaxed text-white/40">{hint}</p>
-    </div>
+      {active && (
+        <p className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-sky-200/85">
+          <Check className="h-2.5 w-2.5" />
+          Filtering runs
+        </p>
+      )}
+    </button>
   );
 }
 
@@ -2442,19 +2712,74 @@ function WorkflowCard({ workflow }: { workflow: any }) {
   const tone = WORKFLOW_TONE[workflow.status] ?? WORKFLOW_TONE.cancelled;
   const Icon = tone.icon;
   const output = previewJson(workflow.output);
+  const ts = formatRelativeTimestamp(
+    workflow.completedAt ?? workflow.startedAt ?? workflow.updatedAt ?? workflow.createdAt,
+  );
+  const totalSteps = typeof workflow.totalSteps === "number" ? workflow.totalSteps : 0;
+  const currentStep = typeof workflow.currentStepIndex === "number" ? workflow.currentStepIndex : 0;
+  const showProgress =
+    totalSteps > 0 && (workflow.status === "running" || workflow.status === "pending");
+  const progressPct =
+    totalSteps > 0 ? Math.min(100, Math.max(0, Math.round((currentStep / totalSteps) * 100))) : 0;
+
+  // Status-aware edge tint mirrors the paused-row treatment in ConnectorsTab —
+  // failures pull the eye, awaiting-approval reads as a soft prompt to act.
+  const edgeTint =
+    workflow.status === "failed"
+      ? "border-red-500/25 bg-red-500/[0.025] hover:border-red-500/40"
+      : workflow.status === "awaiting_approval"
+        ? "border-violet-500/25 bg-violet-500/[0.03] hover:border-violet-500/40"
+        : workflow.status === "running"
+          ? "border-amber-500/20 bg-amber-500/[0.025] hover:border-amber-500/35"
+          : "border-white/[0.06] bg-white/[0.025] hover:border-white/15";
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+    <div className={`group rounded-xl border p-3 transition-colors ${edgeTint}`}>
       <div className="flex items-start gap-2.5">
         <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-semibold text-white/85">{workflow.title}</p>
-          <div className="mt-1 flex items-center gap-2 text-[9px] uppercase tracking-widest text-white/30">
-            <Icon className={`h-3 w-3 ${workflow.status === "running" ? "animate-spin" : ""}`} />
-            {tone.label}
-            <span>·</span>
-            <span>{workflow.workflowType?.replace(/_/g, " ")}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] uppercase tracking-widest text-white/30">
+            <span className="inline-flex items-center gap-1">
+              <Icon className={`h-3 w-3 ${workflow.status === "running" ? "animate-spin" : ""}`} />
+              {tone.label}
+            </span>
+            {workflow.workflowType && (
+              <>
+                <span>·</span>
+                <span className="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[9px] font-medium normal-case tracking-normal text-white/55">
+                  {workflow.workflowType.replace(/_/g, " ")}
+                </span>
+              </>
+            )}
+            {ts && (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1 normal-case tracking-normal text-white/45">
+                  <Clock className="h-2.5 w-2.5" />
+                  {ts}
+                </span>
+              </>
+            )}
           </div>
+
+          {showProgress && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-white/35">
+                <span>
+                  Step {Math.min(currentStep + 1, totalSteps)} / {totalSteps}
+                </span>
+                <span>{progressPct}%</span>
+              </div>
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[0.05]">
+                <div
+                  className="h-full rounded-full bg-amber-400/70 transition-all"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {workflow.status === "completed" && output && (
             <pre className="mt-2 max-h-24 overflow-hidden whitespace-pre-wrap rounded-lg border border-emerald-500/10 bg-emerald-500/[0.035] p-2 text-[10px] leading-relaxed text-emerald-100/65">
               {output.length > 360 ? `${output.slice(0, 360)}…` : output}
