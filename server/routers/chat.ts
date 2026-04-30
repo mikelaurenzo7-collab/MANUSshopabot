@@ -480,6 +480,8 @@ export const chatRouter = router({
       agentType: z.enum(["store", "architect", "merchant", "social"]),
       messages: z.array(MessageSchema).min(1).max(50),
       storeId: z.number().optional(),
+      /** Workspace ID — when provided, persists messages to workspace_chat_messages */
+      workspaceId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const systemBase = BOT_SYSTEM_PROMPTS[input.agentType];
@@ -528,6 +530,26 @@ export const chatRouter = router({
       if (!firstMessage.tool_calls || firstMessage.tool_calls.length === 0) {
         const reply = firstMessage.content;
         if (!reply || typeof reply !== "string") throw new Error("Empty response from AI");
+
+        // Persist to workspace chat history when a workspace is scoped
+        if (input.workspaceId) {
+          const lastUserMsg = [...input.messages].reverse().find((m) => m.role === "user");
+          if (lastUserMsg) {
+            await db.createWorkspaceChatMessage({
+              workspaceId: input.workspaceId,
+              userId: ctx.user.id,
+              role: "user",
+              content: lastUserMsg.content,
+            });
+          }
+          await db.createWorkspaceChatMessage({
+            workspaceId: input.workspaceId,
+            userId: ctx.user.id,
+            role: "assistant",
+            content: reply,
+          });
+        }
+
         return { reply, toolsUsed: [] };
       }
 
@@ -580,6 +602,26 @@ export const chatRouter = router({
 
       const reply = finalResult.choices?.[0]?.message?.content;
       if (!reply || typeof reply !== "string") throw new Error("Empty response from AI");
+
+      // Persist to workspace chat history when a workspace is scoped
+      if (input.workspaceId) {
+        const lastUserMsg = [...input.messages].reverse().find((m) => m.role === "user");
+        if (lastUserMsg) {
+          await db.createWorkspaceChatMessage({
+            workspaceId: input.workspaceId,
+            userId: ctx.user.id,
+            role: "user",
+            content: lastUserMsg.content,
+          });
+        }
+        await db.createWorkspaceChatMessage({
+          workspaceId: input.workspaceId,
+          userId: ctx.user.id,
+          role: "assistant",
+          content: reply,
+          toolCalls: toolsUsed.length ? toolsUsed : undefined,
+        });
+      }
 
       return { reply, toolsUsed };
     }),
