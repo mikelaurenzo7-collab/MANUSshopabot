@@ -22,6 +22,7 @@ import {
   verifyHmacSha256,
   verifyTikTokShopSignature,
 } from "./utils/webhookVerify";
+import { logger } from "./utils/logger";
 
 // ─── Shared HMAC Utilities ────────────────────────────────────────────────────
 // Centralised in `server/utils/webhookVerify.ts` (audit P1 #10).
@@ -60,7 +61,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
   // Verify HMAC if secret is configured
   const secret = ENV.etsySharedSecret;
   if (secret && signature && !verifyHmacSha256(rawBody, signature, secret)) {
-    console.warn("[Etsy Webhook] HMAC verification failed");
+    logger.warn("etsy_webhook_hmac_failed", { module: "platformWebhooks", shopId });
     return res.status(401).json({ error: "HMAC verification failed" });
   }
 
@@ -71,7 +72,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
   try {
     payload = JSON.parse(rawBody.toString("utf8"));
   } catch {
-    console.error("[Etsy Webhook] Failed to parse payload");
+    logger.error("etsy_webhook_payload_parse_failed", { module: "platformWebhooks", shopId });
     return;
   }
 
@@ -79,7 +80,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
   const store = await findStoreByPlatformAndShop("etsy", shopId).catch(() => null);
   const eventStart = Date.now();
 
-  console.log(`[Etsy Webhook] Processing ${topic} for shop ${shopId}`);
+  logger.info("etsy_webhook_received", { module: "platformWebhooks", topic, shopId });
 
   try {
     // Handle specific Etsy events
@@ -108,7 +109,12 @@ async function handleEtsyWebhook(req: Request, res: Response) {
       case "LISTING_CHANGED": {
         // Product listing updated on Etsy
         if (store) {
-          console.log(`[Etsy Webhook] Listing ${payload.listing_id} changed in shop ${shopId}`);
+          logger.info("etsy_webhook_listing_changed", {
+            module: "platformWebhooks",
+            storeId: store.id,
+            listingId: payload.listing_id,
+            shopId,
+          });
         }
         break;
       }
@@ -122,7 +128,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
         break;
       }
       default:
-        console.log(`[Etsy Webhook] Unhandled topic: ${topic}`);
+        logger.info("etsy_webhook_unhandled_topic", { module: "platformWebhooks", topic, shopId });
     }
 
     // Log to webhook_events table
@@ -138,7 +144,12 @@ async function handleEtsyWebhook(req: Request, res: Response) {
       }).catch(() => {});
     }
   } catch (err: any) {
-    console.error(`[Etsy Webhook] Error processing ${topic}:`, err.message);
+    logger.error("etsy_webhook_processing_failed", {
+      module: "platformWebhooks",
+      topic,
+      shopId,
+      error: err.message,
+    });
     addToDeadLetterQueue(topic, payload, "etsy", err.message);
     if (store) {
       logWebhookEvent({
@@ -170,7 +181,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
   const appSecret = ENV.tiktokClientSecret;
   if (appSecret && timestamp && nonce && signature) {
     if (!verifyTikTokShopSignature(rawBody, timestamp, nonce, signature, appSecret)) {
-      console.warn("[TikTok Shop Webhook] Signature verification failed");
+      logger.warn("tiktok_shop_webhook_signature_failed", { module: "platformWebhooks" });
       return res.status(401).json({ error: "Signature verification failed" });
     }
   }
@@ -182,7 +193,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
   try {
     payload = JSON.parse(rawBody.toString("utf8"));
   } catch {
-    console.error("[TikTok Shop Webhook] Failed to parse payload");
+    logger.error("tiktok_shop_webhook_payload_parse_failed", { module: "platformWebhooks" });
     return;
   }
 
@@ -194,7 +205,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
     : null;
   const eventStart = Date.now();
 
-  console.log(`[TikTok Shop Webhook] Processing ${topic} for shop ${shopId}`);
+  logger.info("tiktok_shop_webhook_received", { module: "platformWebhooks", topic, shopId });
 
   try {
     switch (topic) {
@@ -223,7 +234,11 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
       }
       case "PRODUCT_STATUS_CHANGE": {
         const productId = String(payload.data?.product_id ?? "");
-        console.log(`[TikTok Shop Webhook] Product ${productId} status changed in shop ${shopId}`);
+        logger.info("tiktok_shop_webhook_product_changed", {
+          module: "platformWebhooks",
+          productId,
+          shopId,
+        });
         break;
       }
       case "REFUND_STATUS_CHANGE": {
@@ -236,7 +251,11 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
         break;
       }
       default:
-        console.log(`[TikTok Shop Webhook] Unhandled topic: ${topic}`);
+        logger.info("tiktok_shop_webhook_unhandled_topic", {
+          module: "platformWebhooks",
+          topic,
+          shopId,
+        });
     }
 
     // Log to webhook_events table
@@ -252,7 +271,12 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
       }).catch(() => {});
     }
   } catch (err: any) {
-    console.error(`[TikTok Shop Webhook] Error processing ${topic}:`, err.message);
+    logger.error("tiktok_shop_webhook_processing_failed", {
+      module: "platformWebhooks",
+      topic,
+      shopId,
+      error: err.message,
+    });
     addToDeadLetterQueue(topic, payload, "tiktok_shop", err.message);
     if (store) {
       logWebhookEvent({
@@ -275,7 +299,10 @@ export function registerPlatformWebhookRoutes(app: Express) {
   app.post("/api/webhooks/tiktok-shop", rawBodyMiddleware, handleTikTokShopWebhook);
   app.post("/api/webhooks/amazon", rawBodyMiddleware, handleAmazonWebhook);
   app.post("/api/webhooks/ebay", rawBodyMiddleware, handleEbayWebhook);
-  console.log("[PlatformWebhooks] Registered: POST /api/webhooks/{etsy,tiktok-shop,amazon,ebay}");
+  logger.info("platform_webhooks_registered", {
+    module: "platformWebhooks",
+    routes: ["POST /api/webhooks/etsy", "POST /api/webhooks/tiktok-shop", "POST /api/webhooks/amazon", "POST /api/webhooks/ebay"],
+  });
 }
 
 // ─── Amazon Webhook Handler ──────────────────────────────────────────────────
@@ -296,7 +323,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
   const store = await findStoreByPlatformAndShop("amazon", shopId).catch(() => null);
   const eventStart = Date.now();
 
-  console.log(`[Amazon Webhook] Processing ${topic} for shop ${shopId}`);
+  logger.info("amazon_webhook_received", { module: "platformWebhooks", topic, shopId });
 
   let message: any;
   let eventType = "unknown";
@@ -331,7 +358,12 @@ async function handleAmazonWebhook(req: Request, res: Response) {
       }).catch(() => {});
     }
   } catch (err: any) {
-    console.error(`[Amazon Webhook] Error processing:`, err.message);
+    logger.error("amazon_webhook_processing_failed", {
+      module: "platformWebhooks",
+      eventType,
+      shopId,
+      error: err.message,
+    });
     addToDeadLetterQueue(eventType, message ?? payload, "amazon", err.message);
     if (store) {
       logWebhookEvent({
@@ -365,7 +397,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
   const eventStart = Date.now();
   const eventType = payload.eventType ?? "unknown";
 
-  console.log(`[eBay Webhook] Processing ${eventType} for shop ${shopId}`);
+  logger.info("ebay_webhook_received", { module: "platformWebhooks", eventType, shopId });
 
   try {
     // Handle specific eBay events
@@ -410,7 +442,12 @@ async function handleEbayWebhook(req: Request, res: Response) {
       }).catch(() => {});
     }
   } catch (err: any) {
-    console.error(`[eBay Webhook] Error processing ${eventType}:`, err.message);
+    logger.error("ebay_webhook_processing_failed", {
+      module: "platformWebhooks",
+      eventType,
+      shopId,
+      error: err.message,
+    });
     addToDeadLetterQueue(eventType, payload, "ebay", err.message);
     if (store) {
       logWebhookEvent({

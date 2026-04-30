@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import * as db from "./db";
+import { logger } from "./utils/logger";
 
 /**
  * Shopify OAuth 2.0 flow for connecting user stores to ShopBot.
@@ -154,7 +155,10 @@ export function registerShopifyOAuthRoutes(app: Express) {
 
       res.redirect(302, installUrl);
     } catch (error) {
-      console.error("[Shopify OAuth] Install error:", error);
+      logger.error("shopify_oauth_install_failed", {
+        module: "shopifyOAuth",
+        error: error instanceof Error ? error.message : String(error),
+      });
       res.status(500).json({ error: "Failed to initiate Shopify connection" });
     }
   });
@@ -208,7 +212,10 @@ export function registerShopifyOAuthRoutes(app: Express) {
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
-        console.error("[Shopify OAuth] Token exchange failed:", errorText);
+        logger.error("shopify_oauth_token_exchange_failed", {
+          module: "shopifyOAuth",
+          response: errorText,
+        });
         res.status(500).json({ error: "Failed to exchange code for access token" });
         return;
       }
@@ -309,7 +316,11 @@ export function registerShopifyOAuthRoutes(app: Express) {
         : `${returnPath}?connected=true`;
       res.redirect(302, successUrl);
     } catch (error) {
-      console.error("[Shopify OAuth] Callback error:", error);
+      logger.error("shopify_oauth_callback_failed", {
+        module: "shopifyOAuth",
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Best-effort: use the protocol/host from the incoming request for error redirect
       const protocol = req.headers["x-forwarded-proto"] || req.protocol;
       const host = req.headers["x-forwarded-host"] || req.headers.host;
@@ -352,7 +363,11 @@ export function registerShopifyOAuthRoutes(app: Express) {
             },
           });
         } catch (e) {
-          console.warn("[Shopify OAuth] Token revocation failed (non-critical):", e);
+          logger.warn("shopify_oauth_revoke_failed", {
+            module: "shopifyOAuth",
+            error: e instanceof Error ? e.message : String(e),
+            note: "non-critical — local credential is being deleted regardless",
+          });
         }
       }
 
@@ -373,7 +388,10 @@ export function registerShopifyOAuthRoutes(app: Express) {
 
       res.json({ success: true });
     } catch (error) {
-      console.error("[Shopify OAuth] Disconnect error:", error);
+      logger.error("shopify_oauth_disconnect_failed", {
+        module: "shopifyOAuth",
+        error: error instanceof Error ? error.message : String(error),
+      });
       res.status(500).json({ error: "Failed to disconnect store" });
     }
   });

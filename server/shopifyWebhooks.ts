@@ -22,6 +22,7 @@ import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
 import { logAgentAction, logTimeToFulfill } from "./telemetry";
 import { rawBodyMiddleware, verifyShopifyHmac } from "./utils/webhookVerify";
+import { logger } from "./utils/logger";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
 // Shopify-specific verification + the raw-body middleware live in
@@ -48,7 +49,11 @@ async function findStoreByDomain(shopDomain: string) {
 async function handleOrderCreate(shopDomain: string, payload: any) {
   const store = await findStoreByDomain(shopDomain);
   if (!store) {
-    console.warn(`[Webhook] orders/create: No store found for domain ${shopDomain}`);
+    logger.warn("shopify_webhook_unknown_store", {
+      module: "shopifyWebhooks",
+      topic: "orders/create",
+      shopDomain,
+    });
     return;
   }
 
@@ -110,7 +115,12 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
       },
       { orgId: store.orgId },
     );
-    console.log(`[Webhook] Zero-Touch: Launched fulfillment_automation for order ${orderId} (store ${store.id})`);
+    logger.info("shopify_webhook_zero_touch_launched", {
+      module: "shopifyWebhooks",
+      agentType: "merchant",
+      storeId: store.id,
+      platformOrderId: orderId,
+    });
 
     // Telemetry: log zero-touch fulfillment trigger
     logAgentAction({
@@ -123,7 +133,12 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
       success: true,
       metadata: { shopDomain, orderNumber: payload.order_number },
     }).catch((telemetryErr: any) => {
-      console.error(`[Webhook] Failed to log telemetry for order creation ${orderId}:`, telemetryErr.message);
+      logger.error("shopify_webhook_telemetry_failed", {
+        module: "shopifyWebhooks",
+        topic: "orders/create",
+        platformOrderId: orderId,
+        error: telemetryErr.message,
+      });
     });
   } else {
     // Queue for approval
@@ -131,7 +146,12 @@ async function handleOrderCreate(shopDomain: string, payload: any) {
       title: "New Order Requires Fulfillment Approval",
       content: `Order #${payload.order_number} for ${payload.total_price} ${payload.currency} from ${payload.customer?.first_name || "a customer"} is waiting for your approval to fulfill. Go to Activity > Approval Queue.`,
     });
-    console.log(`[Webhook] Supervised mode: Order ${orderId} queued for approval`);
+    logger.info("shopify_webhook_supervised_queued", {
+      module: "shopifyWebhooks",
+      agentType: "merchant",
+      storeId: store.id,
+      platformOrderId: orderId,
+    });
   }
 }
 
@@ -152,7 +172,12 @@ async function handleOrderPaid(shopDomain: string, payload: any) {
 
   if (existing.length > 0) {
     await updateOrder(existing[0].id, { status: "processing" });
-    console.log(`[Webhook] orders/paid: Order ${platformOrderId} marked as processing`);
+    logger.info("shopify_webhook_order_paid", {
+      module: "shopifyWebhooks",
+      agentType: "merchant",
+      storeId: store.id,
+      platformOrderId,
+    });
 
     // Telemetry: log order status update
     logAgentAction({
@@ -164,7 +189,12 @@ async function handleOrderPaid(shopDomain: string, payload: any) {
       output: { newStatus: "processing" },
       success: true,
     }).catch((telemetryErr: any) => {
-      console.error(`[Webhook] Failed to log telemetry for order status update ${platformOrderId}:`, telemetryErr.message);
+      logger.error("shopify_webhook_telemetry_failed", {
+        module: "shopifyWebhooks",
+        topic: "orders/paid",
+        platformOrderId,
+        error: telemetryErr.message,
+      });
     });
   }
 }
@@ -197,7 +227,13 @@ async function handleOrderFulfilled(shopDomain: string, payload: any) {
       title: `Order #${payload.order_number} Fulfilled`,
       content: `Order for ${payload.total_price} ${payload.currency} has been fulfilled.${trackingNumber ? ` Tracking: ${trackingNumber}` : ""}`,
     });
-    console.log(`[Webhook] orders/fulfilled: Order ${platformOrderId} fulfilled`);
+    logger.info("shopify_webhook_order_fulfilled", {
+      module: "shopifyWebhooks",
+      agentType: "merchant",
+      storeId: store.id,
+      platformOrderId,
+      trackingNumber,
+    });
 
     // Telemetry: log fulfillment completion
     logAgentAction({
@@ -208,13 +244,25 @@ async function handleOrderFulfilled(shopDomain: string, payload: any) {
       input: { platformOrderId, topic: "orders/fulfilled" },
       output: { trackingNumber, trackingUrl },
       success: true,
-    }).catch((err) => console.error("[Telemetry] order_fulfilled log failed:", err));
+    }).catch((err) =>
+      logger.error("shopify_webhook_telemetry_failed", {
+        module: "shopifyWebhooks",
+        topic: "orders/fulfilled",
+        platformOrderId,
+        error: err instanceof Error ? err.message : String(err),
+      }),
+    );
 
     // Business metric: time-to-fulfill
     const orderCreatedAt = existing[0].createdAt ? new Date(existing[0].createdAt) : null;
     if (orderCreatedAt) {
-      logTimeToFulfill(store.id, platformOrderId, orderCreatedAt).catch(
-        (err) => console.error("[Telemetry] time_to_fulfill log failed:", err)
+      logTimeToFulfill(store.id, platformOrderId, orderCreatedAt).catch((err) =>
+        logger.error("shopify_webhook_time_to_fulfill_failed", {
+          module: "shopifyWebhooks",
+          storeId: store.id,
+          platformOrderId,
+          error: err instanceof Error ? err.message : String(err),
+        }),
       );
     }
 
@@ -264,7 +312,11 @@ async function handleProductUpdate(shopDomain: string, payload: any) {
       updates.stockLevel = variant.inventory_quantity ?? null;
     }
     await db.update(products).set(updates).where(eq(products.id, existing[0].id));
-    console.log(`[Webhook] products/update: Synced product ${platformProductId}`);
+    logger.info("shopify_webhook_product_synced", {
+      module: "shopifyWebhooks",
+      storeId: store.id,
+      platformProductId,
+    });
   }
 }
 
@@ -306,7 +358,13 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
       },
       { orgId: store.orgId },
     );
-    console.log(`[Webhook] inventory_levels/update: Low stock alert triggered (${available} units)`);
+    logger.info("shopify_webhook_low_stock_alert", {
+      module: "shopifyWebhooks",
+      agentType: "merchant",
+      storeId: store.id,
+      available,
+      threshold,
+    });
   }
 }
 
@@ -352,7 +410,11 @@ async function handleShopifyWebhook(req: Request, res: Response) {
   // Verify HMAC using the Shopify Partner App secret
   const secret = ENV.shopifyPartnerClientSecret;
   if (secret && !verifyShopifyHmac(rawBody, hmacHeader, secret)) {
-    console.warn(`[Webhook] HMAC verification failed for ${topic} from ${shopDomain}`);
+    logger.warn("shopify_webhook_hmac_failed", {
+      module: "shopifyWebhooks",
+      topic,
+      shopDomain,
+    });
     return res.status(401).json({ error: "HMAC verification failed" });
   }
 
@@ -364,16 +426,29 @@ async function handleShopifyWebhook(req: Request, res: Response) {
   try {
     payload = JSON.parse(rawBody.toString("utf8"));
   } catch {
-    console.error(`[Webhook] Failed to parse payload for ${topic}`);
+    logger.error("shopify_webhook_payload_parse_failed", {
+      module: "shopifyWebhooks",
+      topic,
+      shopDomain,
+    });
     return;
   }
 
-  console.log(`[Webhook] Processing ${topic} from ${shopDomain}`);
+  logger.info("shopify_webhook_received", {
+    module: "shopifyWebhooks",
+    topic,
+    shopDomain,
+  });
 
   // ── Deduplication: prevent duplicate processing on retries ──
   const resourceId = String(payload.id || payload.inventory_item_id || "unknown");
   if (isWebhookDuplicate(shopDomain, topic, resourceId)) {
-    console.log(`[Webhook] Duplicate webhook skipped: ${topic} ${resourceId} from ${shopDomain}`);
+    logger.info("shopify_webhook_duplicate_skipped", {
+      module: "shopifyWebhooks",
+      topic,
+      shopDomain,
+      resourceId,
+    });
     return;
   }
 
@@ -399,7 +474,11 @@ async function handleShopifyWebhook(req: Request, res: Response) {
         await handleInventoryUpdate(shopDomain, payload);
         break;
       default:
-        console.log(`[Webhook] Unhandled topic: ${topic}`);
+        logger.info("shopify_webhook_unhandled_topic", {
+          module: "shopifyWebhooks",
+          topic,
+          shopDomain,
+        });
     }
     // Log processed event
     if (store) {
@@ -414,7 +493,13 @@ async function handleShopifyWebhook(req: Request, res: Response) {
       }).catch(() => {});
     }
   } catch (err: any) {
-    console.error(`[Webhook] Error processing ${topic}:`, err.message);
+    logger.error("shopify_webhook_processing_failed", {
+      module: "shopifyWebhooks",
+      topic,
+      shopDomain,
+      error: err.message,
+      stack: err.stack,
+    });
     // Add to DLQ for retry
     addToDeadLetterQueue(topic, payload, "shopify", err.message);
     // Log failed event
@@ -437,5 +522,8 @@ async function handleShopifyWebhook(req: Request, res: Response) {
 export function registerShopifyWebhookRoutes(app: Express) {
   // Raw body middleware for HMAC verification — must come before JSON parser
   app.post("/api/webhooks/shopify", rawBodyMiddleware, handleShopifyWebhook);
-  console.log("[ShopifyWebhooks] Webhook route registered: POST /api/webhooks/shopify");
+  logger.info("shopify_webhook_route_registered", {
+    module: "shopifyWebhooks",
+    route: "POST /api/webhooks/shopify",
+  });
 }
