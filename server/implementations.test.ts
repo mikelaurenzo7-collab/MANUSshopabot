@@ -239,10 +239,15 @@ describe("Frontend Error Handling", () => {
     const path = await import("path");
     const filePath = path.join(process.cwd(), "client/src/pages/Workflows.tsx");
     const content = fs.readFileSync(filePath, "utf-8");
-    
+
     expect(content).toContain(".length === 0");
-    // Migrated to the shared .empty-state class (aurora drift); accept either.
-    expect(content).toMatch(/border-dashed|className="empty-state"/);
+    // Empty-state shape has evolved: legacy border-dashed → shared
+    // .empty-state class → bento-card hero with next-action CTAs.
+    // Accept any of the three so the assertion tracks intent (a
+    // guided empty state exists) rather than a specific class name.
+    expect(content).toMatch(
+      /border-dashed|className="empty-state"|className="bento-card"/,
+    );
   });
 });
 

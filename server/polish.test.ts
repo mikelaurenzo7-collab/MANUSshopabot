@@ -31,11 +31,16 @@ describe("Frontend Error Handling", () => {
     const path = await import("path");
     const filePath = path.join(process.cwd(), "client/src/pages/Workflows.tsx");
     const content = fs.readFileSync(filePath, "utf-8");
-    
+
     expect(content).toContain(".length === 0");
-    // Empty states moved from inline `border-dashed` divs to the
-    // shared .empty-state class (with aurora drift) — assert either.
-    expect(content).toMatch(/border-dashed|className="empty-state"/);
+    // Empty-state shape has evolved over time: legacy border-dashed
+    // divs → shared .empty-state class → bento-card hero with halo
+    // glow + next-action CTAs. Assert any of the three so the test
+    // tracks intent (a guided empty state exists) instead of a
+    // specific class name.
+    expect(content).toMatch(
+      /border-dashed|className="empty-state"|className="bento-card"/,
+    );
   });
 });
 
