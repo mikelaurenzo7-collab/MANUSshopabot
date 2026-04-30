@@ -348,6 +348,24 @@ const platformIntegrations = {
     }
   },
 
+  snapchat: {
+    builder: {
+      niche_research: 'Analyze Snapchat audience interests and AR/lens trends',
+      product_sourcing: 'N/A',
+      store_setup: 'Set up Snapchat business account'
+    },
+    merchant: {
+      fulfillment_automation: 'N/A',
+      inventory_sync: 'Sync product catalog to Snapchat catalog ads',
+      price_optimization: 'N/A'
+    },
+    social: {
+      ad_campaign_creation: 'Create Snapchat Ads campaigns and creatives',
+      social_posting: 'N/A',
+      email_recovery: 'N/A'
+    }
+  },
+
   // TOOL PLATFORMS
   google_sheets: {
     builder: {

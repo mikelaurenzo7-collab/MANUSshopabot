@@ -1,6 +1,62 @@
 # SHOPaBOT Platform Credentials Guide
 
-This guide documents all API credentials needed for the 14 platform integrations. Each platform has specific setup requirements and credential types.
+This guide documents the API credentials needed for every platform integration shipped in the codebase. Each platform has specific setup requirements and credential types.
+
+> **Inventory** — refreshed against the live adapter registries
+> (`server/adapters/{ecommerce,social,tools}/`):
+>
+> - **Ecommerce: 14 adapters, all live** — shopify, woocommerce, amazon, etsy,
+>   ebay, tiktok_shop, walmart, bigcommerce, square, faire, bonanza, depop,
+>   stockx, reverb. (The seven previously-stub adapters now make real HTTP
+>   calls; see §1.x below for credential format.)
+> - **Social: 8 adapters, all live** — meta, instagram, tiktok (business),
+>   twitter, pinterest, gmail, snapchat, googleAds.
+> - **Tools: 8 adapters, all live** — googleAnalytics, googleSheets, klaviyo,
+>   shipstation, printful, postscript, judgeme, gorgias.
+>
+> Per-adapter contract tests are still pending (audit P1 #8 in
+> `AUDIT_2026_04.md`); only the registry/interface check in
+> `server/adapters.test.ts` runs in CI today.
+
+---
+
+## Quick reference matrix
+
+| Category | Adapter | Auth | Status | Section |
+| --- | --- | --- | --- | --- |
+| Ecommerce | Shopify | OAuth (Bearer) | live | §1.1 |
+| Ecommerce | WooCommerce | Consumer key/secret | live | §1.2 |
+| Ecommerce | Amazon | OAuth (LWA refresh) | live | §1.3 |
+| Ecommerce | Etsy | OAuth + key | live | §1.4 |
+| Ecommerce | eBay | OAuth | live | §1.5 |
+| Ecommerce | TikTok Shop | OAuth + HMAC | live | §1.6 |
+| Ecommerce | Walmart | Key (token-exchange) | live | §1.7 |
+| Ecommerce | BigCommerce | OAuth (X-Auth-Token) | live | §1.8 |
+| Ecommerce | Square | OAuth/Key | live | §1.9 |
+| Ecommerce | Faire | API key | live | §1.10 |
+| Ecommerce | Bonanza | API key | live | §1.11 |
+| Ecommerce | Depop | OAuth/Key | live | §1.12 |
+| Ecommerce | StockX | OAuth | live | §1.13 |
+| Ecommerce | Reverb | OAuth | live | §1.14 |
+| Social | Meta | OAuth | live | §2.1 |
+| Social | Instagram (Graph) | OAuth | live | §2.2 |
+| Social | TikTok Business | OAuth | live | §2.3 |
+| Social | Twitter / X | OAuth2 + Bearer | live | §2.4 |
+| Social | Pinterest | OAuth (Bearer) | live | §2.5 |
+| Social | Google Ads | OAuth + dev token | live | §2.6 |
+| Social | Gmail | OAuth (refresh) | live | §2.7 |
+| Social | Snapchat | OAuth (Bearer) | live | §2.8 |
+| Tools | Google Analytics 4 | OAuth | live | §3.1 |
+| Tools | Google Sheets | OAuth | live | §3.2 |
+| Tools | Klaviyo | API key | live | §3.3 |
+| Tools | ShipStation | Key + secret (Basic) | live | §3.4 |
+| Tools | Printful | API key (Bearer) | live | §3.5 |
+| Tools | Postscript | API key (Bearer) | live | §3.6 |
+| Tools | Judge.me | API key | live | §3.7 |
+| Tools | Gorgias | Key (HTTP Basic) | live | §3.8 |
+
+Section numbers below use the same scheme; everything previously in this
+file is preserved with its original wording.
 
 ---
 
@@ -289,6 +345,75 @@ This guide documents all API credentials needed for the 14 platform integrations
 
 ---
 
+### 15. Snapchat (Marketing API)
+**Status**: ✅ Adapter live (`server/adapters/social/snapchatAdapter.ts`); add credentials to enable
+
+**Credentials Needed**:
+- `SNAPCHAT_CLIENT_ID` — OAuth Client ID
+- `SNAPCHAT_CLIENT_SECRET` — OAuth Client Secret
+- Per-account refresh token captured during the standard `/integrations` OAuth flow
+
+**How to Get Them**:
+1. Visit **https://business.snapchat.com** → register a Snap Business account
+2. Open the **Snap Developer Portal** → create a Marketing API app
+3. Add redirect URI: `<your-domain>/api/social/oauth/callback`
+4. Request the `snapchat-marketing-api` scope
+5. Copy **Client ID** + **Client Secret** into env vars
+
+**Action**: User triggers the OAuth flow from the Integrations page. The
+existing connectors router (`SOCIAL_PLATFORMS.snapchat` in
+`server/routers/connectors.ts`) handles the rest.
+
+---
+
+## Tool Integrations (8 total)
+
+Tool integrations cover analytics, ESPs, fulfillment, and CX. Every adapter
+in `server/adapters/tools/` is live; only credentials are required.
+
+### 3.1. Google Analytics 4
+- **Adapter**: `server/adapters/tools/googleAnalyticsAdapter.ts`
+- **Auth**: OAuth (shares the standard `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` pair).
+- **Per-account inputs**: GA4 property ID (entered in the Connect dialog).
+- **Setup**: enable the GA4 Data API in Google Cloud, then connect via the Integrations page.
+
+### 3.2. Google Sheets
+- **Adapter**: `server/adapters/tools/googleSheetsAdapter.ts`
+- **Auth**: OAuth (same Google client; `https://www.googleapis.com/auth/spreadsheets` scope).
+- **Per-account inputs**: spreadsheet ID(s); sheet tabs created on demand.
+
+### 3.3. Klaviyo
+- **Adapter**: `server/adapters/tools/klaviyoAdapter.ts`
+- **Auth**: API key (`Klaviyo-API-Key` header).
+- **Setup**: Klaviyo dashboard → Account → Settings → API keys → create a Private API key with `lists:read`, `lists:write`, `profiles:read`, `profiles:write`, `campaigns:read`, `campaigns:write`.
+
+### 3.4. ShipStation
+- **Adapter**: `server/adapters/tools/shipstationAdapter.ts`
+- **Auth**: HTTP Basic — API key + API secret.
+- **Setup**: ShipStation account settings → Account → API Settings → generate API Keys.
+
+### 3.5. Printful (Print-on-demand)
+- **Adapter**: `server/adapters/tools/printfulAdapter.ts`
+- **Auth**: Bearer token.
+- **Setup**: Printful dashboard → Stores → API tokens → create a token with read/write access.
+
+### 3.6. Postscript (SMS)
+- **Adapter**: `server/adapters/tools/postscriptAdapter.ts`
+- **Auth**: Bearer token (Postscript private API key).
+- **Setup**: Postscript admin → Settings → API → generate a key.
+
+### 3.7. Judge.me (Reviews)
+- **Adapter**: `server/adapters/tools/judgemeAdapter.ts`
+- **Auth**: API token + shop domain.
+- **Setup**: Judge.me dashboard → Account → API & Webhooks → copy the token.
+
+### 3.8. Gorgias (Customer support)
+- **Adapter**: `server/adapters/tools/gorgiasAdapter.ts`
+- **Auth**: HTTP Basic with email + API key.
+- **Setup**: Gorgias admin → Settings → REST API → generate a key tied to a service account.
+
+---
+
 ## Outbound Delivery (Email + SMS)
 
 Shop_a_Bot routes all outbound email and SMS through a unified delivery layer at `server/delivery/*`. Three providers fan in; the layer auto-selects based on intent + which env vars are set.
@@ -376,7 +501,8 @@ await sendSms({ to: '+14155551234', body: 'Twilio works.' });
 ## Summary: What I Can Do vs. What You Need to Do
 
 ### ✅ I Can Do (Browser Access Available)
-- Create apps on: Etsy, eBay, TikTok Shop, Walmart, Meta, TikTok Business, Twitter/X, Pinterest, Google Cloud (OAuth), LinkedIn
+- Create apps on: Etsy, eBay, TikTok Shop, Walmart, Meta, TikTok Business, Twitter/X, Pinterest, Google Cloud (OAuth), LinkedIn, Snapchat
+- Configure tool API keys (Klaviyo, ShipStation, Printful, Postscript, Judge.me, Gorgias) once the user provides them
 - Navigate all developer portals
 - Extract credentials once apps are created
 - Configure secrets in SHOPaBOT
