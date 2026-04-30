@@ -26,6 +26,8 @@ import {
   Sparkles,
   Store,
   ArrowRight,
+  ShieldCheck,
+  GitBranch,
 } from "lucide-react";
 
 const agentIcons: Record<string, any> = {
@@ -361,11 +363,39 @@ export default function ActivityPage() {
               ))}
             </div>
           ) : (
+            // "All clear" state for the Approvals tab — matches the
+            // halo-glow + next-action pattern from the page-level
+            // /inbox#approvals shell. Same emerald confidence treatment
+            // so the user perceives one consistent "nothing to do" look
+            // wherever pending approvals can land empty.
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CheckCircle2 className="h-10 w-10 text-emerald-400/30 mb-3" />
-                <p className="text-sm text-muted-foreground">No pending approvals</p>
-                <p className="text-xs text-white/30 mt-1">All bot decisions are up to date</p>
+              <CardContent className="flex flex-col items-center py-12 px-6">
+                <div className="relative mb-3">
+                  <div className="absolute inset-0 rounded-2xl bg-emerald-500/20 blur-xl" aria-hidden="true" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+                    <ShieldCheck className="h-6 w-6 text-emerald-300" />
+                  </div>
+                </div>
+                <h3 className="text-base font-heading font-bold tracking-tight text-foreground">All caught up</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
+                  No bot decisions need your review right now. Anything
+                  the bots did autonomously is in the live activity
+                  feed — keep an eye out, or let them run on autopilot.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center mt-5">
+                  <Link href="/settings#agents">
+                    <Button variant="outline" size="sm" className="border-white/10 hover:border-emerald-400/30 hover:bg-emerald-500/5 gap-1.5">
+                      <Filter className="h-3.5 w-3.5 text-emerald-300" />
+                      <span className="text-xs font-medium">Tune autonomy thresholds</span>
+                    </Button>
+                  </Link>
+                  <Link href="#activity">
+                    <Button variant="outline" size="sm" className="border-white/10 hover:border-violet-400/30 hover:bg-violet-500/5 gap-1.5">
+                      <GitBranch className="h-3.5 w-3.5 text-violet-300" />
+                      <span className="text-xs font-medium">View live activity</span>
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}
