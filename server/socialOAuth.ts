@@ -16,6 +16,7 @@ import {
 import { socialAccounts } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
+import { encryptSecret } from "./_core/secrets";
 import { logAgentAction } from "./telemetry";
 import { logger } from "./utils/logger";
 
@@ -499,11 +500,19 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
         ))
         .limit(1);
 
+      // Tokens are encrypted at rest with AES-256-GCM. Going through
+      // encryptSecret is idempotent for already-encrypted values, so
+      // this is safe whether the existing row was written by the
+      // previous (plaintext) inline path or by the helper that
+      // already encrypts.
+      const encryptedAccessToken = encryptSecret(tokenData.access_token) ?? null;
+      const encryptedRefreshToken = encryptSecret(tokenData.refresh_token || null) ?? null;
+
       if (existing.length > 0) {
         await db.update(socialAccounts)
           .set({
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token || null,
+            accessToken: encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: tokenExpiresAt || null,
             scopes: tokenData.scope || null,
             accountName: profile.accountName,
@@ -527,8 +536,8 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
           platform: platform as any,
           accountId: profile.accountId,
           accountName: profile.accountName,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token || null,
+          accessToken: encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
           tokenExpiresAt: tokenExpiresAt || null,
           scopes: tokenData.scope || null,
           profileUrl: profile.profileUrl || null,

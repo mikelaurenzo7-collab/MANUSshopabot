@@ -20,6 +20,7 @@ import {
 } from "./db";
 import { platformCredentials } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { encryptSecret } from "./_core/secrets";
 import { logAgentAction } from "./telemetry";
 import { logger } from "./utils/logger";
 
@@ -89,12 +90,22 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
         .where(and(eq(platformCredentials.userId, userId), eq(platformCredentials.platform, tool)))
         .limit(1);
 
+      // Tokens are encrypted at rest with AES-256-GCM. Without going
+      // through encryptSecret, the read paths in db.ts (which call
+      // decryptSecret as a no-op for plaintext) silently kept the
+      // tokens in cleartext at rest, breaking the at-rest-encryption
+      // guarantee documented in the privacy policy.
+      const encryptedAccessToken = encryptSecret(tokenData.access_token) ?? null;
+      const refreshTokenPlain =
+        tokenData.refresh_token || (existing[0]?.refreshToken ?? null);
+      const encryptedRefreshToken = encryptSecret(refreshTokenPlain) ?? null;
+
       if (existing.length > 0) {
         await db
           .update(platformCredentials)
           .set({
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token || existing[0].refreshToken || null,
+            accessToken: encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: tokenExpiresAt || null,
             status: "active",
             lastHealthCheck: new Date(),
@@ -111,8 +122,8 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
           orgId,
           userId,
           platform: tool,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token || null,
+          accessToken: encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
           tokenExpiresAt: tokenExpiresAt || null,
           status: "active",
           lastHealthCheck: new Date(),
