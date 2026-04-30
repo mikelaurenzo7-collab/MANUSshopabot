@@ -1827,6 +1827,13 @@ function InstructionsTab({ workspaceId }: { workspaceId: number }) {
             className="h-8 text-xs"
             onClick={handleSave}
             disabled={updateSettings.isPending || settingsQuery.isLoading || !isDirty}
+            title={
+              updateSettings.isPending
+                ? "Saving…"
+                : !isDirty
+                  ? "No unsaved changes"
+                  : "Save instructions for this workspace"
+            }
           >
             {updateSettings.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Save className="mr-1 h-3 w-3" />}
             Save changes
