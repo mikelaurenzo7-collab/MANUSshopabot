@@ -78,11 +78,15 @@ function logEventSafely(args: WebhookEventArgs): void {
 async function findStoreByPlatformAndShop(platform: "etsy" | "tiktok_shop" | "amazon" | "ebay", shopId: string) {
   const db = await getDb();
   if (!db) return null;
-  // Try platformStoreId first, fall back to platformDomain
+  // Try platformStoreId first, fall back to platformDomain. The
+  // original code accidentally queried `platformDomain` in BOTH
+  // branches — the "byStoreId" lookup was dead code and stores
+  // registered with only a platformStoreId silently never matched any
+  // webhook event.
   const byStoreId = await db
     .select()
     .from(stores)
-    .where(and(eq(stores.platform, platform), eq(stores.platformDomain, shopId)))
+    .where(and(eq(stores.platform, platform), eq(stores.platformStoreId, shopId)))
     .limit(1);
   if (byStoreId[0]) return byStoreId[0];
   const byDomain = await db
