@@ -143,7 +143,7 @@ export default function BotSettings() {
                   <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Bot Name</label>
                   <Input
                     defaultValue={profileQuery.data.name}
-                    placeholder="e.g., My launch mode bot"
+                    placeholder="e.g., My Store Bot"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20"
                   />
                 </div>
