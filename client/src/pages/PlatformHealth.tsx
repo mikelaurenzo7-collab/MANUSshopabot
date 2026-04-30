@@ -112,10 +112,22 @@ function WebhookEventLog() {
             ))}
           </div>
         ) : !events || events.length === 0 ? (
-          <div className="text-center py-10">
-            <Radio className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No webhook events yet</p>
-            <p className="text-xs text-white/25 mt-1">Events will appear here as your stores send webhooks to Shop_a_Bot.</p>
+          // Patient empty state — operator is already on the health
+          // page so the next-action isn't "go connect a store", it's
+          // "wait + watch". Halo glow signals the channel is ready;
+          // the row pulses on the underlying Radio icon.
+          <div className="flex flex-col items-center justify-center py-10 px-6">
+            <div className="relative mb-3">
+              <div className="absolute inset-0 rounded-2xl bg-sky-500/15 blur-xl" aria-hidden="true" />
+              <div className="relative h-12 w-12 rounded-2xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.15)]">
+                <Radio className="h-5 w-5 text-sky-300" />
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-foreground">Listening for webhooks</p>
+            <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
+              The channel is live — the next event from any of your
+              connected stores will land here within seconds.
+            </p>
           </div>
         ) : (
           <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
