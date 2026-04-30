@@ -40,14 +40,14 @@ const PLAN_LABEL: Record<PlanId, string> = {
 const TIER_HIGHLIGHTS: Record<PlanId, string[]> = {
   starter: [
     "1 connected store",
-    "Builder Bot — niche research + store setup",
-    "Merchant Bot — basic fulfillment",
+    "Launch mode — niche research + store setup",
+    "Operator mode — basic fulfillment",
     "500 AI actions / month",
     "Email support",
   ],
   growth: [
     "3 connected stores",
-    "All 3 Bots — Builder + Merchant + Social",
+    "All three modes — Launch, Operator & Growth",
     "5,000 AI actions / month",
     "Meta + TikTok ad automation",
     "Priority support",

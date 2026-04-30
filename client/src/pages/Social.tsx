@@ -1102,7 +1102,7 @@ function SocialContent({
             {/* New Workflow Capabilities */}
             <Card className="bento-card">
               <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Social Bot Power Features</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Growth mode power features</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 p-2 rounded-md bg-white/[0.03]">
                     <Zap className="h-4 w-4 text-rose-400" />

@@ -479,7 +479,7 @@ export default function IntegrationsPage() {
                     No social accounts connected
                   </h3>
                   <p className="text-sm text-slate-400 max-w-md mx-auto mb-5">
-                    Six platforms plus Gmail. The Social Bot picks the channel by content type and tunes copy to each
+                    Six platforms plus Gmail. Store Bot growth mode picks the channel by content type and tunes copy to each
                     surface's audience automatically.
                   </p>
 
