@@ -371,10 +371,10 @@ function WorkflowCard({ workflow }: { workflow: any }) {
   const output = previewJson(workflow.output);
 
   return (
-    <div className={`rounded-xl border ${style.border} ${style.bg} p-3 transition-all hover:brightness-110`}>
+    <div className={`relative rounded-xl border ${style.border} ${style.bg} p-3 transition-all hover:brightness-110 overflow-hidden`}>
       {/* Top accent line for running workflows */}
       {workflow.status === "running" && (
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent rounded-t-xl" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
       )}
       <div className="flex items-start gap-2.5">
         <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
