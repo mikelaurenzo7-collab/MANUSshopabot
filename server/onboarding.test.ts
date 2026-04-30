@@ -74,4 +74,19 @@ describe("Onboarding Wizard Route Registration", () => {
     const content = fs.readFileSync(filePath, "utf-8");
     expect(content).toContain("shopbot_onboarded");
   });
+
+  it("OnboardingGuard mirrors server onboardedAt into localStorage so the next login on the same device short-circuits without waiting on auth.me", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const filePath = path.join(process.cwd(), "client/src/App.tsx");
+    const content = fs.readFileSync(filePath, "utf-8");
+    // The guard must read the server signal first…
+    expect(content).toContain("onboardedAt");
+    // …and persist it locally once observed, so a returning user on this
+    // device is never re-prompted even if a future auth.me is slow/fails.
+    expect(content).toContain("writeLocalOnboardedFlag");
+    expect(content).toMatch(
+      /onboardedFromServer\s*&&\s*!hasOnboardedLocally[\s\S]*writeLocalOnboardedFlag\(\)/,
+    );
+  });
 });
