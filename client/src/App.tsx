@@ -1,3 +1,26 @@
+/**
+ * App.tsx — top-level router.
+ *
+ * Shell-tab architecture (see `AUDIT_2026_04.md` §4): only the *shell*
+ * pages (Home, Architect, Merchant, Social, Communicator, Storefronts,
+ * Inbox, Insights, Settings, Workflows, Onboarding, Landing, …) are
+ * registered here. Tabbed sub-pages live inside each shell:
+ *
+ * - `Inbox.tsx`       → mounts `Activity.tsx`, `Approvals.tsx`
+ * - `Insights.tsx`    → mounts `Analytics.tsx`, `Intelligence.tsx`,
+ *                       `CampaignFunnel.tsx`
+ * - `Settings.tsx`    → mounts `Profile.tsx`, `Members.tsx`,
+ *                       `BotSettings.tsx`, `PlatformHealth.tsx`
+ * - `Storefronts.tsx` → mounts `Integrations.tsx`, `PluginStore.tsx`,
+ *                       `SupplierPOs.tsx`, `GmailBot.tsx`
+ *
+ * Tab pages are imported directly by their parent shell and are
+ * therefore *not* lazy-loaded here. Legacy deep links resolve through
+ * `Redirect` rules below. When adding a new feature page, decide first
+ * whether it deserves a top-level route (rare) or a tab inside an
+ * existing shell (default).
+ */
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Redirect, Route, Switch, useLocation } from "wouter";
@@ -13,11 +36,7 @@ import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-// Lazy-loaded pages for code splitting. Pages that only render inside hub
-// shell tabs (Activity, Approvals, Profile, Members, BotSettings,
-// PlatformHealth, Analytics, Intelligence, Integrations, PluginStore,
-// SupplierPOs, GmailBot) are imported directly by their parent shell —
-// not lazy-loaded here — and reach via Redirect for legacy URLs.
+// Lazy-loaded shell pages (top-level routes only — see comment block above).
 const Home = lazy(() => import("./pages/Home"));
 const ArchitectPage = lazy(() => import("./pages/Architect"));
 const MerchantPage = lazy(() => import("./pages/Merchant"));

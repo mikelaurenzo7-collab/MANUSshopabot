@@ -12,7 +12,6 @@
  */
 
 import type { Express, Request, Response } from "express";
-import crypto from "crypto";
 import { getDb } from "./db";
 import { stores, orders, products } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -22,30 +21,12 @@ import { addToDeadLetterQueue } from "./engine/eliteOrchestrator";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
 import { logAgentAction, logTimeToFulfill } from "./telemetry";
+import { rawBodyMiddleware, verifyShopifyHmac } from "./utils/webhookVerify";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
-
-function verifyShopifyHmac(rawBody: Buffer, hmacHeader: string, secret: string): boolean {
-  const computed = crypto
-    .createHmac("sha256", secret)
-    .update(rawBody)
-    .digest("base64");
-  try {
-    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hmacHeader));
-  } catch {
-    return false;
-  }
-}
-
-// Middleware to capture raw body for HMAC verification
-function rawBodyMiddleware(req: Request, _res: Response, next: () => void) {
-  const chunks: Buffer[] = [];
-  req.on("data", (chunk: Buffer) => chunks.push(chunk));
-  req.on("end", () => {
-    (req as any).rawBody = Buffer.concat(chunks);
-    next();
-  });
-}
+// Shopify-specific verification + the raw-body middleware live in
+// `server/utils/webhookVerify.ts` so every webhook surface uses the same
+// constant-time comparison + buffering pattern. (Audit P1 #10.)
 
 // ─── Store Lookup ─────────────────────────────────────────────────────────
 

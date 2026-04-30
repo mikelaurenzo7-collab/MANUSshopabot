@@ -10,7 +10,6 @@
  */
 
 import type { Express, Request, Response } from "express";
-import crypto from "crypto";
 import { getDb } from "./db";
 import { stores } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -18,26 +17,14 @@ import { logWebhookEvent, createBotEvent, updateOrder } from "./db";
 import { addToDeadLetterQueue } from "./engine/eliteOrchestrator";
 import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
+import {
+  rawBodyMiddleware,
+  verifyHmacSha256,
+  verifyTikTokShopSignature,
+} from "./utils/webhookVerify";
 
 // ─── Shared HMAC Utilities ────────────────────────────────────────────────────
-
-function rawBodyMiddleware(req: Request, _res: Response, next: () => void) {
-  const chunks: Buffer[] = [];
-  req.on("data", (chunk: Buffer) => chunks.push(chunk));
-  req.on("end", () => {
-    (req as any).rawBody = Buffer.concat(chunks);
-    next();
-  });
-}
-
-function verifyHmacSha256(rawBody: Buffer, signature: string, secret: string): boolean {
-  const computed = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-  try {
-    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signature));
-  } catch {
-    return false;
-  }
-}
+// Centralised in `server/utils/webhookVerify.ts` (audit P1 #10).
 
 // ─── Store Lookup ─────────────────────────────────────────────────────────────
 
@@ -168,28 +155,6 @@ async function handleEtsyWebhook(req: Request, res: Response) {
 }
 
 // ─── TikTok Shop Webhook Handler ──────────────────────────────────────────────
-
-/**
- * TikTok Shop uses HMAC-SHA256 with the app secret.
- * Signature is in the `x-tts-timestamp` + `x-tts-nonce` + body pattern.
- * Ref: https://partner.tiktokshop.com/docv2/page/650a3f6a4a0bb702c0093333
- */
-function verifyTikTokShopSignature(
-  rawBody: Buffer,
-  timestamp: string,
-  nonce: string,
-  signature: string,
-  appSecret: string,
-): boolean {
-  // TikTok Shop signature: HMAC-SHA256(appSecret, timestamp + nonce + body)
-  const payload = `${timestamp}${nonce}${rawBody.toString("utf8")}`;
-  const computed = crypto.createHmac("sha256", appSecret).update(payload).digest("hex");
-  try {
-    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signature));
-  } catch {
-    return false;
-  }
-}
 
 async function handleTikTokShopWebhook(req: Request, res: Response) {
   const rawBody = (req as any).rawBody as Buffer;
