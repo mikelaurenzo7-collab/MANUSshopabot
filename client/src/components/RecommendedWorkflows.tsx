@@ -153,7 +153,7 @@ export function RecommendedWorkflows() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className={`text-[9px] font-bold uppercase tracking-widest ${accent.text}`}>
-                      {idx + 1} · {rec.agentType === "architect" ? "Builder" : rec.agentType === "merchant" ? "Merchant" : "Social"}
+                      {idx + 1} · {rec.agentType === "architect" ? "Launch" : rec.agentType === "merchant" ? "Operator" : "Growth"}
                     </p>
                     {(rec as any).autonomous && (
                       <span

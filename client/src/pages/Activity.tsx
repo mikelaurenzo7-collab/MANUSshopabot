@@ -39,9 +39,9 @@ const agentColors: Record<string, string> = {
   social: "text-amber-400",
 };
 const agentNames: Record<string, string> = {
-  architect: "Builder Bot",
-  merchant: "Merchant Bot",
-  social: "Social Bot",
+  architect: "Launch mode",
+  merchant: "Operator mode",
+  social: "Growth mode",
 };
 
 const PAGE_SIZE = 20;
@@ -118,10 +118,10 @@ export default function ActivityPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Bots</SelectItem>
-                <SelectItem value="architect">Builder Bot</SelectItem>
-                <SelectItem value="merchant">Merchant Bot</SelectItem>
-                <SelectItem value="social">Social Bot</SelectItem>
+                <SelectItem value="all">All workflows</SelectItem>
+                <SelectItem value="architect">Launch mode</SelectItem>
+                <SelectItem value="merchant">Operator mode</SelectItem>
+                <SelectItem value="social">Growth mode</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -220,12 +220,12 @@ export default function ActivityPage() {
                   Activity flows in here once your bots run a workflow, push a listing, or post to a channel.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 w-full max-w-2xl">
-                  <Link href="/architect">
+                   <Link href="/chat">
                     <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-sky-400/30 hover:bg-sky-500/5">
                       <Bot className="h-4 w-4 text-sky-400 shrink-0 mr-2" />
                       <div className="flex-1 text-left min-w-0">
                         <div className="text-xs font-medium text-foreground">Launch a workflow</div>
-                        <div className="text-[10px] text-muted-foreground truncate">Builder Bot · niche research</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Launch mode · niche research</div>
                       </div>
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
                     </Button>
@@ -240,12 +240,12 @@ export default function ActivityPage() {
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
                     </Button>
                   </Link>
-                  <Link href="/merchant">
+                  <Link href="/chat">
                     <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-amber-400/30 hover:bg-amber-500/5">
                       <Sparkles className="h-4 w-4 text-amber-400 shrink-0 mr-2" />
                       <div className="flex-1 text-left min-w-0">
                         <div className="text-xs font-medium text-foreground">Run an inventory check</div>
-                        <div className="text-[10px] text-muted-foreground truncate">Merchant Bot · low-stock scan</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Operator mode · low-stock scan</div>
                       </div>
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
                     </Button>

@@ -212,15 +212,15 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div>
-            <Label className="text-xs text-slate-400 mb-1 block">Bot Agent</Label>
+            <Label className="text-xs text-slate-400 mb-1 block">Store Bot mode</Label>
             <Select value={agentType} onValueChange={(v) => { setAgentType(v as any); setWorkflowType(""); }}>
               <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0a0a0f] border-white/10">
-                <SelectItem value="architect">Architect Bot</SelectItem>
-                <SelectItem value="merchant">Merchant Bot</SelectItem>
-                <SelectItem value="social">Social Bot</SelectItem>
+                <SelectItem value="architect">Launch mode</SelectItem>
+                <SelectItem value="merchant">Operator mode</SelectItem>
+                <SelectItem value="social">Growth mode</SelectItem>
               </SelectContent>
             </Select>
           </div>

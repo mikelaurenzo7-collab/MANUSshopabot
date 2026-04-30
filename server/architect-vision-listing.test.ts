@@ -132,9 +132,9 @@ describe("Activity page — actionable empty states", () => {
     expect(src).toContain("Launch a workflow");
     expect(src).toContain("Connect a store");
     expect(src).toContain("Run an inventory check");
-    expect(src).toContain('href="/architect"');
+    // Both launch-workflow and inventory-check CTA link to the unified Store Bot workspace.
+    expect(src).toContain('href="/chat"');
     expect(src).toContain('href="/storefronts"');
-    expect(src).toContain('href="/merchant"');
   });
 
   it("Decision History empty state offers a tune-thresholds + launch CTA", async () => {

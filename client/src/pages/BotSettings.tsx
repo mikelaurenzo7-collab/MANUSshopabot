@@ -33,9 +33,9 @@ import { BotMemoryView } from "@/components/BotMemoryView";
 type AgentType = "architect" | "merchant" | "social";
 
 const BOT_CONFIG: Record<AgentType, { name: string; icon: React.ElementType; color: string; accent: string }> = {
-  architect: { name: "Builder Bot", icon: Bot, color: "text-cyan-400", accent: "bg-cyan-500/10 border-cyan-500/20" },
-  merchant: { name: "Merchant Bot", icon: Package, color: "text-violet-400", accent: "bg-violet-500/10 border-violet-500/20" },
-  social: { name: "Social Bot", icon: Megaphone, color: "text-pink-400", accent: "bg-pink-500/10 border-pink-500/20" },
+  architect: { name: "Launch mode", icon: Bot, color: "text-cyan-400", accent: "bg-cyan-500/10 border-cyan-500/20" },
+  merchant: { name: "Operator mode", icon: Package, color: "text-violet-400", accent: "bg-violet-500/10 border-violet-500/20" },
+  social: { name: "Growth mode", icon: Megaphone, color: "text-pink-400", accent: "bg-pink-500/10 border-pink-500/20" },
 };
 
 export default function BotSettings() {
@@ -143,7 +143,7 @@ export default function BotSettings() {
                   <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Bot Name</label>
                   <Input
                     defaultValue={profileQuery.data.name}
-                    placeholder="e.g., My Builder Bot"
+                    placeholder="e.g., My launch mode bot"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20"
                   />
                 </div>
