@@ -49,7 +49,7 @@ const ACCENT_STYLES: Record<string, { bg: string; border: string; text: string; 
 };
 
 const STAGE_COPY: Record<string, { eyebrow: string; lead: string }> = {
-  fresh:     { eyebrow: "Recommended for you · Fresh start",       lead: "You haven't connected a store yet — start with discovery." },
+  fresh:     { eyebrow: "Recommended for you · New store owner",    lead: "Start with discovery, then let Store Bot turn it into a launch plan." },
   launching: { eyebrow: "Recommended for you · Launching",          lead: "Your store is connected and the catalog is filling up." },
   operating: { eyebrow: "Recommended for you · Operating",          lead: "Your store has products and orders. Time to tighten operations." },
   scaling:   { eyebrow: "Recommended for you · Scaling",            lead: "You're past the operating threshold. Expand and squeeze every margin." },

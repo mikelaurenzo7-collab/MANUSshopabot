@@ -88,12 +88,12 @@ describe("Onboarding — consequence-aware skip copy", () => {
     const src = read(SRC);
     // Pre-fix: "Skip for now — I'll connect later" (vague)
     // Post-fix: explicit consequence
-    expect(src).toContain("Builder Bot stays paused until a store is connected");
+    expect(src).toContain("Store Bot stays paused until a store is connected");
   });
 
   it("Connect-Socials skip toggles consequence copy when nothing is connected", () => {
     const src = read(SRC);
-    expect(src).toMatch(/connectedCount === 0\s*\?\s*"Skip — Social Bot stays paused"/);
+    expect(src).toMatch(/connectedCount === 0\s*\?\s*"Skip — growth mode stays paused"/);
   });
 
   it("Launch step skip is explicit about what 'skip' means", () => {
@@ -130,8 +130,8 @@ describe("Onboarding — OAuth success card", () => {
     const src = read(SRC);
     // Pre-fix: just "Builder Bot now has read & write access. We'll keep…"
     // Post-fix: two concrete consequence lines
-    expect(src).toContain("Builder Bot has read &amp; write access on your products and orders");
-    expect(src).toContain("Merchant Bot will start watching inventory the moment onboarding finishes");
+    expect(src).toContain("Store Bot has read &amp; write access on your products and orders");
+    expect(src).toContain("Operator mode starts watching inventory the moment onboarding finishes");
   });
 
   it("Connect-Shopify CTA is honest about what happens (OAuth redirect)", () => {
