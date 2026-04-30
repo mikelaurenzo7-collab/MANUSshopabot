@@ -267,9 +267,9 @@ export default function Profile() {
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {[
-                { name: "Builder Bot", type: "architect", icon: Bot, color: "bg-sky-500/8 border-sky-500/20 text-sky-400" },
-                { name: "Merchant Bot", type: "merchant", icon: Package, color: "bg-cyan-500/8 border-cyan-500/20 text-cyan-400" },
-                { name: "Social Bot", type: "social", icon: Megaphone, color: "bg-amber-500/8 border-amber-500/20 text-amber-400" },
+                { name: "Launch mode", type: "architect", icon: Bot, color: "bg-sky-500/8 border-sky-500/20 text-sky-400" },
+                { name: "Operator mode", type: "merchant", icon: Package, color: "bg-cyan-500/8 border-cyan-500/20 text-cyan-400" },
+                { name: "Growth mode", type: "social", icon: Megaphone, color: "bg-amber-500/8 border-amber-500/20 text-amber-400" },
               ].map(bot => {
                 const stats = agentStatus?.find((s: any) => s.agentType === bot.type);
                 return (

@@ -318,7 +318,7 @@ export default function GmailBot() {
                 <EmptyState
                   icon={<MailPlus className="w-5 h-5 text-white/40" />}
                   title="No templates yet"
-                  description="Save reusable email templates to speed up replies and abandoned-cart flows. Templates you create here are available to the Social Bot too."
+                description="Save reusable email templates to speed up replies and abandoned-cart flows. Templates you create here are available to Store Bot growth mode too."
                 />
               )}
               <div className="grid grid-cols-1 gap-4">

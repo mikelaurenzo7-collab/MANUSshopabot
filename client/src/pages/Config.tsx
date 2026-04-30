@@ -38,7 +38,7 @@ type AutonomyLevel = "fully_autonomous" | "supervised" | "manual";
 const agents = [
   {
     key: "architect" as const,
-    name: "Builder Bot",
+    name: "Launch mode",
     description: "Niche research, product sourcing, and store setup",
     icon: Bot,
     color: "text-sky-400",
@@ -46,7 +46,7 @@ const agents = [
   },
   {
     key: "merchant" as const,
-    name: "Merchant Bot",
+    name: "Operator mode",
     description: "Inventory monitoring, pricing, and fulfillment",
     icon: Package,
     color: "text-cyan-400",
@@ -54,7 +54,7 @@ const agents = [
   },
   {
     key: "social" as const,
-    name: "Social Bot",
+    name: "Growth mode",
     description: "Ad copy, social media, SEO, and email campaigns",
     icon: Megaphone,
     color: "text-amber-400",

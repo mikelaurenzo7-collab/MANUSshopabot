@@ -297,7 +297,7 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
               ) : (
                 <div className="text-center py-16 text-slate-500">
                   <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No products found. The Merchant Bot will sync your catalog once connected.</p>
+                  <p className="text-sm">No products found. Store Bot will sync your catalog once connected.</p>
                 </div>
               )}
             </div>

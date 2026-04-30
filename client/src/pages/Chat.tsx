@@ -214,7 +214,7 @@ export default function Chat() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <WorkspaceBadge icon={Bot} label="Unified bot" value="Builder + operator + social" />
+          <WorkspaceBadge icon={Bot} label="Unified bot" value="Launch · Operator · Growth" />
           <WorkspaceBadge icon={Brain} label="Memory" value={activeStore ? activeStore.name : "workspace scoped"} />
           <WorkspaceBadge icon={Plug} label="Connectors" value={String(connectorCount)} />
           <WorkspaceBadge icon={Wrench} label="Tools" value={String(toolCount)} />
