@@ -23,8 +23,38 @@ import {
   verifyTikTokShopSignature,
 } from "./utils/webhookVerify";
 import { logger } from "./utils/logger";
+import { WebhookDedup, type ClaimResult } from "./utils/webhookDedup";
 
 type WebhookEventArgs = Parameters<typeof logWebhookEvent>[0];
+
+// ─── Webhook Deduplication ────────────────────────────────────────────────────
+// Etsy / TikTok Shop / Amazon / eBay all deliver at-least-once. Without
+// a dedup layer the same RECEIPT_CREATED, ORDER_STATUS_CHANGE, etc.
+// would re-launch workflows on every vendor retry — duplicate orders,
+// duplicate fulfillment notifications, the works. We use the same
+// three-state claim-on-entry / mark-on-success / release-on-failure
+// helper as the Shopify path so a transient failure doesn't get
+// silently suppressed by the dedup mark.
+const dedup = new WebhookDedup();
+setInterval(() => dedup.prune(), 2 * 60 * 1000).unref?.();
+
+function dedupKey(platform: string, topic: string, resourceId: string): string {
+  return `${platform}:${topic}:${resourceId}`;
+}
+
+function logDedupSkip(
+  platform: string,
+  topic: string,
+  resourceId: string,
+  claim: Exclude<ClaimResult, "claim">,
+): void {
+  logger.info(`${platform}_webhook_duplicate_skipped`, {
+    module: "platformWebhooks",
+    topic,
+    resourceId,
+    claim,
+  });
+}
 
 /** Best-effort write to `webhook_events`. A telemetry failure must not
  *  fail the user-facing flow, but we *do* want a warning log so the
@@ -93,6 +123,13 @@ async function handleEtsyWebhook(req: Request, res: Response) {
   }
 
   const topic: string = payload.type ?? payload.event_type ?? "unknown";
+  const resourceId = String(payload.receipt_id ?? payload.listing_id ?? "unknown");
+  const key = dedupKey("etsy", topic, resourceId);
+  const claim = dedup.tryClaim(key);
+  if (claim !== "claim") {
+    logDedupSkip("etsy", topic, resourceId, claim);
+    return;
+  }
   const store = await findStoreByPlatformAndShop("etsy", shopId).catch(() => null);
   const eventStart = Date.now();
 
@@ -147,6 +184,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
         logger.info("etsy_webhook_unhandled_topic", { module: "platformWebhooks", topic, shopId });
     }
 
+    dedup.markCompleted(key);
     // Log to webhook_events table
     if (store) {
       logEventSafely({
@@ -160,6 +198,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
       });
     }
   } catch (err: any) {
+    dedup.releaseClaim(key);
     logger.error("etsy_webhook_processing_failed", {
       module: "platformWebhooks",
       topic,
@@ -216,6 +255,15 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
   const topic: string = payload.type ?? "unknown";
   // TikTok Shop sends shop_id in the payload body
   const shopId = String(payload.shop_id ?? payload.data?.shop_id ?? "");
+  const resourceId = String(
+    payload.data?.order_id ?? payload.data?.product_id ?? payload.data?.refund_id ?? "unknown",
+  );
+  const key = dedupKey("tiktok_shop", topic, `${shopId}:${resourceId}`);
+  const claim = dedup.tryClaim(key);
+  if (claim !== "claim") {
+    logDedupSkip("tiktok_shop", topic, resourceId, claim);
+    return;
+  }
   const store = shopId
     ? await findStoreByPlatformAndShop("tiktok_shop", shopId).catch(() => null)
     : null;
@@ -274,6 +322,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
         });
     }
 
+    dedup.markCompleted(key);
     // Log to webhook_events table
     if (store) {
       logEventSafely({
@@ -287,6 +336,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
       });
     }
   } catch (err: any) {
+    dedup.releaseClaim(key);
     logger.error("tiktok_shop_webhook_processing_failed", {
       module: "platformWebhooks",
       topic,
@@ -336,19 +386,32 @@ async function handleAmazonWebhook(req: Request, res: Response) {
   // Acknowledge immediately
   res.status(200).json({ received: true });
 
+  // Parse SNS message FIRST — failures here are payload bugs and
+  // shouldn't trigger the dedup-then-fail trap on retry.
+  let message: any;
+  try {
+    message = JSON.parse(payload.Message ?? "{}");
+  } catch {
+    logger.error("amazon_webhook_payload_parse_failed", { module: "platformWebhooks", shopId });
+    return;
+  }
+  const eventType = message.eventType ?? "unknown";
+  const resourceId = String(
+    message.orderId ?? message.asin ?? message.notificationId ?? "unknown",
+  );
+  const key = dedupKey("amazon", eventType, `${shopId}:${resourceId}`);
+  const claim = dedup.tryClaim(key);
+  if (claim !== "claim") {
+    logDedupSkip("amazon", eventType, resourceId, claim);
+    return;
+  }
+
   const store = await findStoreByPlatformAndShop("amazon", shopId).catch(() => null);
   const eventStart = Date.now();
 
   logger.info("amazon_webhook_received", { module: "platformWebhooks", topic, shopId });
 
-  let message: any;
-  let eventType = "unknown";
-
   try {
-    // Parse SNS message
-    message = JSON.parse(payload.Message ?? "{}");
-    eventType = message.eventType ?? "unknown";
-
     if (store) {
       await createBotEvent({
         fromBot: "merchant",
@@ -361,6 +424,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
       });
     }
 
+    dedup.markCompleted(key);
     // Log to webhook_events table
     if (store) {
       logEventSafely({
@@ -374,6 +438,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
       });
     }
   } catch (err: any) {
+    dedup.releaseClaim(key);
     logger.error("amazon_webhook_processing_failed", {
       module: "platformWebhooks",
       eventType,
@@ -409,9 +474,19 @@ async function handleEbayWebhook(req: Request, res: Response) {
   // Acknowledge immediately
   res.status(200).json({ received: true });
 
+  const eventType = payload.eventType ?? "unknown";
+  const resourceId = String(
+    payload.itemId ?? payload.orderId ?? payload.notificationId ?? "unknown",
+  );
+  const key = dedupKey("ebay", eventType, `${shopId}:${resourceId}`);
+  const claim = dedup.tryClaim(key);
+  if (claim !== "claim") {
+    logDedupSkip("ebay", eventType, resourceId, claim);
+    return;
+  }
+
   const store = await findStoreByPlatformAndShop("ebay", shopId).catch(() => null);
   const eventStart = Date.now();
-  const eventType = payload.eventType ?? "unknown";
 
   logger.info("ebay_webhook_received", { module: "platformWebhooks", eventType, shopId });
 
@@ -445,6 +520,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
       }
     }
 
+    dedup.markCompleted(key);
     // Log to webhook_events table
     if (store) {
       logEventSafely({
@@ -458,6 +534,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
       });
     }
   } catch (err: any) {
+    dedup.releaseClaim(key);
     logger.error("ebay_webhook_processing_failed", {
       module: "platformWebhooks",
       eventType,
