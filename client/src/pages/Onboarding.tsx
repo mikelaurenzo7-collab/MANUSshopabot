@@ -244,9 +244,9 @@ function WelcomeStep({
       name: "Launch mode",
       icon: Bot,
       color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-      description: "Researches niches, sources products, and stands up your first storefront end-to-end.",
+      description: "Researches niches, sources products, and sets up your first storefront end-to-end.",
       // Item 8 — animated 1-line "live" message previews so Store Bot
-      // feel alive instead of static product copy. Plain text — no
+      // modes feel alive instead of static product copy. Plain text — no
       // decorative emoji in production UI.
       preview: "Store Bot: I'll have your first store mapped by morning.",
       previewTone: "text-sky-200/90",

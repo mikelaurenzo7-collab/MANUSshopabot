@@ -25,7 +25,7 @@ const BOTS = [
     icon: Bot,
     name: "Launch mode" as const,
     tagline: "Builds your first store — Day 1",
-    description: "The Store Bot researches a winning niche, sources products, configures your storefront, and writes product copy for a new owner launching from zero.",
+    description: "The Store Bot researches a winning niche, sources products, configures your storefront, and writes product copy for new owners launching their first store.",
     features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
     autonomous: { label: "Competitor Stalker", note: "Agent decides which competitors to inspect, when it has enough triangulation." },
   },
@@ -1320,7 +1320,7 @@ export default function Landing() {
             <span className="eyebrow mb-4">The Platform</span>
             <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">One autonomous expert. One store lifecycle.</h2>
             <p className="mt-4 text-white/55 max-w-2xl mx-auto leading-relaxed">
-              Store Bot starts as your launch expert for a first store, then shifts into operator and growth mode the moment you go live. One expert wakes up at the right moment — and remembers what worked last time.
+              Store Bot starts as your launch expert for your first store, then shifts into operator and growth mode the moment you go live. One expert wakes up at the right moment — and remembers what worked last time.
             </p>
           </div>
 
