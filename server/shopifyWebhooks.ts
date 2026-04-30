@@ -390,6 +390,13 @@ async function handleShopifyWebhook(req: Request, res: Response) {
   const topic = req.headers["x-shopify-topic"] as string;
   const shopDomain = req.headers["x-shopify-shop-domain"] as string;
   const hmacHeader = req.headers["x-shopify-hmac-sha256"] as string;
+  // X-Shopify-Webhook-Id is unique per delivery — Shopify added it in
+  // 2022 specifically for at-least-once dedup. Two distinct events on
+  // the same resource (e.g. consecutive inventory_levels/update bumps)
+  // get distinct ids; vendor retries of one event share an id. This is
+  // strictly more accurate than dedup-by-resource, which would silently
+  // collapse legitimate distinct updates that arrived within the TTL.
+  const webhookId = req.headers["x-shopify-webhook-id"] as string | undefined;
   const rawBody = (req as any).rawBody as Buffer;
 
   if (!topic || !shopDomain || !hmacHeader || !rawBody) {
@@ -430,8 +437,14 @@ async function handleShopifyWebhook(req: Request, res: Response) {
   });
 
   // ── Deduplication: claim before processing, release on failure ──
+  // Prefer X-Shopify-Webhook-Id (per-delivery unique) over the resource
+  // id; the resource-id fallback exists for older Shopify webhook
+  // payloads (pre-2022) and for tests that synthesize requests without
+  // the header.
   const resourceId = String(payload.id || payload.inventory_item_id || "unknown");
-  const key = dedupKey(shopDomain, topic, resourceId);
+  const key = webhookId
+    ? dedupKey(shopDomain, "delivery", webhookId)
+    : dedupKey(shopDomain, topic, resourceId);
   const claim = dedup.tryClaim(key);
   if (claim !== "claim") {
     logger.info("shopify_webhook_duplicate_skipped", {
@@ -439,6 +452,7 @@ async function handleShopifyWebhook(req: Request, res: Response) {
       topic,
       shopDomain,
       resourceId,
+      webhookId,
       claim, // "in_flight" | "completed" — distinguishes a concurrent
              // retry from a successfully-processed-and-cached one.
     });
