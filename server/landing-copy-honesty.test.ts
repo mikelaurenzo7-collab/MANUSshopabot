@@ -154,7 +154,7 @@ describe("Landing — existing-store operator lane", () => {
     const src = read(LANDING);
     // Two segments, two paths. New stores → /lifecycle.
     // Existing stores → /existing-store.
-    expect(src).toContain("Starting from scratch");
+    expect(src).toContain("Start my first store");
     expect(src).toContain("I already have a store");
     expect(src).toContain('document.getElementById("existing-store")?.scrollIntoView');
     expect(src).toContain('document.getElementById("lifecycle")?.scrollIntoView');
