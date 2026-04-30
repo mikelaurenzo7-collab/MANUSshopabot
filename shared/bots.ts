@@ -1,10 +1,10 @@
 /**
  * Shop_a_Bot — Canonical Bot Taxonomy
  *
- * Single source of truth for the three-bot model. The internal enum
+ * One autonomous Store Bot with three operating modes. The internal enum
  * (`agentType`) uses `architect | merchant | social` for historical
- * DB compatibility; user-facing copy uses "The Builder", "The Merchant",
- * and "The Social Bot". Map between the two ONLY through this module.
+ * DB compatibility; user-facing copy uses "Launch mode", "Operator mode",
+ * and "Growth mode". Map between the two ONLY through this module.
  *
  * Imported by both client and server, so keep it dependency-free.
  */
@@ -29,7 +29,7 @@ export interface BotProfile {
 export const BOTS: ReadonlyArray<BotProfile> = [
   {
     id: "architect",
-    name: "The Builder",
+    name: "Launch mode",
     tagline: "Store live in 30 minutes",
     description:
       "Researches winning niches, sources products, configures your storefront, and writes all product copy — fully automated.",
@@ -38,7 +38,7 @@ export const BOTS: ReadonlyArray<BotProfile> = [
   },
   {
     id: "merchant",
-    name: "The Merchant",
+    name: "Operator mode",
     tagline: "Zero-touch fulfillment",
     description:
       "Processes every order, optimizes pricing, syncs inventory, and triages support tickets so you never touch the warehouse.",
@@ -47,7 +47,7 @@ export const BOTS: ReadonlyArray<BotProfile> = [
   },
   {
     id: "social",
-    name: "The Social Bot",
+    name: "Growth mode",
     tagline: "Marketing on autopilot",
     description:
       "Generates ads, schedules posts, runs email/SMS flows, and optimizes SEO — turns customer signals into demand.",
@@ -66,20 +66,20 @@ export function botName(id: string): string {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* Store Lifecycle — the Builder → Merchant handoff                            */
+/* Store Lifecycle — the Launch → Operator mode handoff                        */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Every store moves through three phases. The Builder leads the first; the
- * Merchant leads the third; the second is the celebration in between.
+ * Every store moves through three phases. Launch mode leads the first;
+ * Operator mode leads the third; the second is the celebration in between.
  *
- * - `building`     The Builder is in the cockpit. Merchant is on the bench.
+ * - `building`     Launch mode is in the cockpit. Operator mode is on the bench.
  * - `transitioning` Setup is done. The user has not yet acknowledged the
  *                  handoff — we want a celebration moment, not a silent
  *                  hand-off, because this is the most emotional milestone
  *                  in the customer journey.
- * - `operating`    The Merchant is in the cockpit. Builder is on call for
- *                  redesigns. Social Bot is fully unblocked.
+ * - `operating`    Operator mode is in the cockpit. Launch mode is on call for
+ *                  redesigns. Growth mode is fully unblocked.
  */
 export type LifecycleStage = "building" | "transitioning" | "operating";
 
@@ -105,9 +105,9 @@ export const LIFECYCLE_STAGES: ReadonlyArray<LifecycleStageProfile> = [
     label: "Building",
     leadBotId: "architect",
     visibleBotIds: ["architect"],
-    headline: "Builder is bringing your store to life.",
+    headline: "Store Bot is in launch mode, bringing your store to life.",
     subhead:
-      "Niche research, product sourcing, copy, theme — all hands on deck. The Merchant is on standby until launch day.",
+      "Niche research, product sourcing, copy, theme — all hands on deck. Operator mode is on standby until launch day.",
     color: "#38bdf8",
   },
   {
@@ -115,9 +115,9 @@ export const LIFECYCLE_STAGES: ReadonlyArray<LifecycleStageProfile> = [
     label: "Launch Day",
     leadBotId: "merchant",
     visibleBotIds: ["architect", "merchant", "social"],
-    headline: "Your store is live. Time to hand the keys to the Merchant.",
+    headline: "Your store is live. Time to hand the keys to operator mode.",
     subhead:
-      "The Builder did its job. From here, the Merchant runs your daily operation — orders, pricing, inventory, support — and the Social Bot starts pulling demand.",
+      "Launch mode did its job. From here, operator mode runs your daily operation — orders, pricing, inventory, support — and growth mode starts pulling demand.",
     color: "#22d3ee",
   },
   {
@@ -127,7 +127,7 @@ export const LIFECYCLE_STAGES: ReadonlyArray<LifecycleStageProfile> = [
     visibleBotIds: ["merchant", "social", "architect"],
     headline: "Your store runs itself.",
     subhead:
-      "Merchant fulfills, Social grows, and Builder is one click away whenever you want to redesign or expand.",
+      "Operator mode fulfills, growth mode scales, and launch mode is one click away whenever you want to redesign or expand.",
     color: "#22d3ee",
   },
 ] as const;
@@ -142,26 +142,26 @@ export const LIFECYCLE_BY_ID: Record<LifecycleStage, LifecycleStageProfile> = Ob
  */
 export const HANDOFF_NARRATIVE = {
   eyebrow: "Launch Day",
-  title: "The Builder did its job.",
-  subtitle: "Time to hand the keys to the Merchant.",
+  title: "Store Bot has built your store.",
+  subtitle: "Time to switch to operator mode.",
   body:
-    "Your store is live. From here, the Merchant takes over the daily operation — orders, inventory, pricing, support — while the Social Bot manufactures demand. The Builder stays on call for whenever you want to redesign or expand.",
-  /** What the merchant takes over, by name. Order matters — reads like a list. */
+    "Your store is live. From here, Store Bot shifts into operator mode for the daily operation — orders, inventory, pricing, support — while growth mode manufactures demand. Launch mode stays on call for whenever you want to redesign or expand.",
+  /** What operator mode takes over, by name. Order matters — reads like a list. */
   merchantTakesOver: [
     "Order processing",
     "Inventory & restocks",
     "Dynamic pricing",
     "Support triage",
   ],
-  /** What the builder remains available for. */
+  /** What launch mode remains available for. */
   builderRemains: [
     "Redesigns & rebrands",
     "New collections",
     "Theme overhauls",
     "Niche pivots",
   ],
-  primaryCta: "Hand over the keys",
-  secondaryCta: "Stay in builder mode for now",
+  primaryCta: "Switch to operator mode",
+  secondaryCta: "Stay in launch mode for now",
 } as const;
 
 /**
