@@ -20,9 +20,21 @@ import { sanitizeName, sanitizeText } from "../utils/sanitize";
 const workspaceTypeEnum = z.enum(["store", "general", "campaign", "channel"]);
 
 const integrationTypeEnum = z.enum([
-  "gmail", "outlook", "twitter", "facebook", "instagram", "tiktok",
-  "linkedin", "pinterest", "youtube", "slack", "discord", "telegram",
-  "whatsapp", "shopify", "stripe", "mailchimp", "klaviyo", "zapier",
+  // Email
+  "gmail", "outlook",
+  // Social
+  "twitter", "facebook", "instagram", "tiktok", "linkedin", "pinterest",
+  "youtube", "snapchat",
+  // Messaging
+  "slack", "discord", "telegram", "whatsapp",
+  // Commerce
+  "shopify", "stripe",
+  // Marketing / lifecycle
+  "mailchimp", "klaviyo", "zapier",
+  // Ads
+  "google_ads", "meta_ads", "tiktok_ads",
+  // Calendar
+  "google_calendar", "outlook_calendar",
 ]);
 
 const memoryTypeEnum = z.enum(["fact", "pattern", "decision", "outcome", "context", "preference"]);
@@ -205,6 +217,31 @@ export const workspacesRouter = router({
       });
 
       return message;
+    }),
+
+  /**
+   * List workflows scoped to a workspace (via workspace.storeId).
+   *
+   * Each workspace usually represents one store, so filtering workflows by
+   * the workspace's storeId gives us a workspace-scoped workflow list
+   * without needing to backfill workspaceId on every workflow row.
+   */
+  listWorkflows: orgProcedure
+    .input(z.object({
+      workspaceId: z.number(),
+      status: z.string().optional(),
+      limit: z.number().min(1).max(200).default(50),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const workspace = await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
+      const { getWorkflowsByOrg } = await import("../db");
+      return getWorkflowsByOrg(ctx.org.id, {
+        storeId: workspace.storeId ?? undefined,
+        status: input.status,
+        limit: input.limit,
+        offset: input.offset,
+      });
     }),
 
   /**

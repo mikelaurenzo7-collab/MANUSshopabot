@@ -1233,9 +1233,21 @@ export const workspaceIntegrations = mysqlTable("workspace_integrations", {
   
   // Integration Identity
   integrationType: mysqlEnum("integrationType", [
-    "gmail", "outlook", "twitter", "facebook", "instagram", "tiktok", 
-    "linkedin", "pinterest", "youtube", "slack", "discord", "telegram",
-    "whatsapp", "shopify", "stripe", "mailchimp", "klaviyo", "zapier",
+    // Email
+    "gmail", "outlook",
+    // Social
+    "twitter", "facebook", "instagram", "tiktok", "linkedin", "pinterest",
+    "youtube", "snapchat",
+    // Messaging
+    "slack", "discord", "telegram", "whatsapp",
+    // Commerce
+    "shopify", "stripe",
+    // Marketing / lifecycle
+    "mailchimp", "klaviyo", "zapier",
+    // Ads
+    "google_ads", "meta_ads", "tiktok_ads",
+    // Calendar
+    "google_calendar", "outlook_calendar",
   ]).notNull(),
   
   // Credentials
