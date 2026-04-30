@@ -159,7 +159,7 @@ export default function Home() {
   ].slice(0, 8);
 
   return (
-    <div className="page-enter flex flex-col w-full bg-[#050505]/70 relative">
+    <div className="page-enter flex flex-col w-full bg-terminal-bg/70 relative">
       {/* Builder→Merchant handoff celebration */}
       {handoffStore && (
         <HandoffMoment
@@ -193,7 +193,7 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/85 via-[#050507]/75 to-[#040406]/85 backdrop-blur-xl px-4 md:px-5 py-3 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-4 md:px-5 py-3 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
         <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
         <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />

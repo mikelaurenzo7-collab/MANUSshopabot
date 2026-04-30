@@ -203,7 +203,7 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
           Launch Workflow
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-[#0a0a0f] border-white/10 text-white max-w-md">
+      <DialogContent className="bg-surface-overlay border-white/10 text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-cyan-400" />
@@ -217,7 +217,7 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
               <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0a0f] border-white/10">
+              <SelectContent className="bg-surface-overlay border-white/10">
                 <SelectItem value="architect">Launch mode</SelectItem>
                 <SelectItem value="merchant">Operator mode</SelectItem>
                 <SelectItem value="social">Growth mode</SelectItem>
@@ -235,7 +235,7 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
               <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue placeholder="Select workflow..." />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0a0f] border-white/10 max-h-60">
+              <SelectContent className="bg-surface-overlay border-white/10 max-h-60">
                 {availableTypes.map((t: any) => {
                   // Prefix the workflow with the platform brand icon when
                   // the workflow type is platform-specific
@@ -296,7 +296,7 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
               <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0a0f] border-white/10">
+              <SelectContent className="bg-surface-overlay border-white/10">
                 <SelectItem value="global">Global</SelectItem>
                 <SelectItem value="all_stores">All Stores</SelectItem>
                 <SelectItem value="specific_store">Specific Store</SelectItem>

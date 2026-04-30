@@ -91,7 +91,7 @@ export default function InviteAccept() {
               <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center mb-5">
                 <AlertTriangle className="w-5 h-5 text-red-400" aria-hidden="true" />
               </div>
-              <span className="eyebrow mb-3" style={{ color: "#f87171" }}>Invitation problem</span>
+              <span className="eyebrow mb-3 text-red-400">Invitation problem</span>
               <h1 className="mt-2 text-xl font-heading font-bold text-white mb-3">
                 We couldn't load this invitation
               </h1>

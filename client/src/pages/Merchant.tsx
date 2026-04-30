@@ -93,7 +93,7 @@ export default function MerchantPage() {
   }, [selectedEntity]);
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] text-white flex-col min-h-0">
+    <div className="flex h-full w-full relative bg-terminal-bg text-white flex-col min-h-0">
       <div className="bot-page-ambient bot-page-ambient--merchant" aria-hidden="true">
         <div className="bot-page-ambient-grid" />
         <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />
@@ -133,7 +133,7 @@ export default function MerchantPage() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-terminal-bg">
           <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
 
             {/* Operating-across strip — every commerce + social surface
@@ -169,10 +169,10 @@ export default function MerchantPage() {
                     }}
                     disabled={storesLoading}
                   >
-                    <SelectTrigger className="w-full bg-[#050505] border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-cyan-400/20 focus:border-cyan-400">
+                    <SelectTrigger className="w-full bg-terminal-bg border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-cyan-400/20 focus:border-cyan-400">
                       <SelectValue placeholder={storesLoading ? "LOADING_STORES..." : "SELECT_TARGET_STORE"} />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+                    <SelectContent className="bg-surface-overlay border-white/[0.08]">
                       {stores?.map((s: any) => {
                         const brand = getBrand(s.platform);
                         return (
@@ -209,28 +209,28 @@ export default function MerchantPage() {
                 <button
                   onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "inventory_audit", title: "Inventory Audit", scope: "all_stores", input: { scope: "all" } })}
                   disabled={launchWorkflow.isPending}
-                  className="bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="bg-terminal-bg border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   <Package className="w-3 h-3" /> Inventory Audit
                 </button>
                 <button
                   onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "pricing_optimization", title: "Pricing Optimization", scope: "all_stores", input: { targetMargin: 40, strategy: "competitive" } })}
                   disabled={launchWorkflow.isPending}
-                  className="bg-[#050505] border border-white/[0.08] hover:border-emerald-400 hover:text-emerald-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="bg-terminal-bg border border-white/[0.08] hover:border-emerald-400 hover:text-emerald-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   <DollarSign className="w-3 h-3" /> Pricing Sweep
                 </button>
                 <button
                   onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "fulfillment_automation", title: "Fulfillment Automation", scope: "all_stores", input: {} })}
                   disabled={launchWorkflow.isPending}
-                  className="bg-[#050505] border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="bg-terminal-bg border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   <Truck className="w-3 h-3" /> Auto-Fulfill
                 </button>
                 <button
                   onClick={() => launchWorkflow.mutate({ agentType: "merchant", workflowType: "competitor_analysis", title: "Competitor Analysis", scope: "all_stores", input: {} })}
                   disabled={launchWorkflow.isPending}
-                  className="bg-[#050505] border border-white/[0.08] hover:border-violet-400 hover:text-violet-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="bg-terminal-bg border border-white/[0.08] hover:border-violet-400 hover:text-violet-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   <TrendingUp className="w-3 h-3" /> Competitor Scan
                 </button>
@@ -238,7 +238,7 @@ export default function MerchantPage() {
                   <button
                     onClick={() => syncProductsMutation.mutate({ storeId: storeId! })}
                     disabled={syncProductsMutation.isPending}
-                    className="bg-[#050505] border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50 ml-auto"
+                    className="bg-terminal-bg border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2 transition-colors flex items-center gap-2 disabled:opacity-50 ml-auto"
                   >
                     {syncProductsMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
                     Sync Store
@@ -258,7 +258,7 @@ export default function MerchantPage() {
                  
                  {/* Product DB */}
                  <div className="border border-white/[0.08] bg-black/40 flex flex-col min-h-[400px]">
-                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-terminal-bg">
                       <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Layers className="w-3 h-3 text-cyan-400 mr-2" /> Data: Products</h2>
                       <Badge count={products?.length || 0} />
                     </div>
@@ -286,7 +286,7 @@ export default function MerchantPage() {
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
-                            <tr className="border-b border-white/[0.08] bg-[#050505]">
+                            <tr className="border-b border-white/[0.08] bg-terminal-bg">
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal w-1/2">Product Title</th>
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal">Stock</th>
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal text-right">Price</th>
@@ -320,7 +320,7 @@ export default function MerchantPage() {
 
                  {/* Order Stream */}
                  <div className="border border-white/[0.08] bg-black/40 flex flex-col min-h-[400px]">
-                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-[#050505]">
+                    <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-terminal-bg">
                       <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white flex items-center"><Activity className="w-3 h-3 text-amber-400 mr-2" /> Stream: Orders</h2>
                       <Badge count={orders?.length || 0} />
                     </div>
@@ -348,7 +348,7 @@ export default function MerchantPage() {
                       ) : (
                         <table className="w-full text-left font-mono border-collapse">
                           <thead>
-                            <tr className="border-b border-white/[0.08] bg-[#050505]">
+                            <tr className="border-b border-white/[0.08] bg-terminal-bg">
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal w-1/3">Order ID</th>
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal">Status</th>
                               <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal text-right">Total</th>
@@ -402,7 +402,7 @@ export default function MerchantPage() {
         }`}
         aria-hidden={!selectedEntity}
       >
-        <div className="h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
+        <div className="h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-terminal-bg">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
             <Cpu className="w-3 h-3 text-cyan-400" />
             Merchant Inspector
@@ -443,7 +443,7 @@ export default function MerchantPage() {
                   <button
                     onClick={() => storeId && syncProductsMutation.mutate({ storeId })}
                     disabled={syncProductsMutation.isPending || !storeId}
-                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 disabled:opacity-50 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                    className="w-full bg-terminal-bg border border-white/[0.08] hover:border-cyan-400 hover:text-cyan-400 disabled:opacity-50 text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >
                     {syncProductsMutation.isPending ? "Syncing..." : "Force DB Sync"} <RotateCcw className="w-3 h-3 group-hover:text-cyan-400" />
                   </button>
@@ -475,7 +475,7 @@ export default function MerchantPage() {
                   <button 
                     onClick={() => autoFulfill.mutate({ orderId: selectedEntity.id, storeId: storeId! })}
                     disabled={autoFulfill.isPending || selectedEntity.fulfillmentStatus === 'fulfilled'}
-                    className="w-full bg-[#050505] border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:border-white/[0.08] disabled:text-muted-foreground text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
+                    className="w-full bg-terminal-bg border border-white/[0.08] hover:border-amber-400 hover:text-amber-400 disabled:opacity-50 disabled:border-white/[0.08] disabled:text-muted-foreground text-slate-400 font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group"
                   >
                      {autoFulfill.isPending ? "PROCESSING..." : "Override & Fulfill"} <Truck className="w-3 h-3 group-hover:text-amber-400" />
                   </button>

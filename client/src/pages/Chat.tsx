@@ -172,7 +172,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="page-enter flex h-full min-h-0 flex-col bg-[#050505]/70">
+    <div className="page-enter flex h-full min-h-0 flex-col bg-terminal-bg/70">
       {/* ── Header ── */}
       <div className="shrink-0 border-b border-white/[0.06] relative overflow-hidden">
         {/* Ambient gradient behind header */}

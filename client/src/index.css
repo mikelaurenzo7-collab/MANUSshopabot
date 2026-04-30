@@ -46,6 +46,10 @@
      (`bg-surface-base`, `bg-surface-overlay`) instead of `bg-[#050507]`. */
   --color-surface-base: var(--surface-base);
   --color-surface-overlay: var(--surface-overlay);
+  --color-surface-deep: var(--surface-deep);
+  --color-terminal-bg: var(--terminal-bg);
+  --color-terminal-accent: var(--terminal-accent);
+  --color-terminal-muted: var(--terminal-muted);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -131,11 +135,19 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --destructive-raw: 239, 68, 68;
 
   /* ── Surface aliases ───────────────────────────────────────────────────── */
-  /* Semantic names for the two recurring page/overlay backdrops. Values are
+  /* Semantic names for the recurring page/overlay backdrops. Values are
      intentionally identical to existing literals so this is purely a
      consolidation, not a visual change. */
   --surface-base: #050507;
   --surface-overlay: #0a0a0f;
+  --surface-deep: #030305;
+
+  /* Terminal aesthetic — Architect page is a deliberate "operator console"
+     surface. These are NOT general-purpose tokens; only Architect.tsx and
+     direct descendants should consume them. */
+  --terminal-bg: #050505;
+  --terminal-accent: #00ff41;
+  --terminal-muted: #94a3b8;
 
   /* ── Motion tokens ─────────────────────────────────────────────────────── */
   /* Single source of truth for transitions. Primitives & components should
@@ -211,6 +223,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   /* Surface aliases — see :root for documentation */
   --surface-base: #050507;
   --surface-overlay: #0a0a0f;
+  --surface-deep: #030305;
+  --terminal-bg: #050505;
+  --terminal-accent: #00ff41;
+  --terminal-muted: #94a3b8;
 
   /* Motion / shadow / glow tokens — see :root for documentation */
   --duration-fast: 150ms;

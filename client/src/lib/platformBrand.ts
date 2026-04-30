@@ -159,6 +159,11 @@ export const SOCIAL_BRANDS: Record<string, PlatformBrand> = {
     color: "#E60023", accent: "#BD081C", category: "social",
     tagline: "Visual discovery · evergreen · 6-mo planning horizon",
   },
+  snapchat: {
+    id: "snapchat", name: "Snapchat", icon: "👻",
+    color: "#FFFC00", accent: "#FFE600", category: "social",
+    tagline: "Snap Ads + Dynamic Product Ads · gen-Z reach + AR/lens audiences",
+  },
   google_ads: {
     id: "google_ads", name: "Google Ads", icon: "📊",
     color: "#4285F4", accent: "#34A853", category: "ads",

@@ -793,7 +793,7 @@ function MobileStickyCTA({
   isLoading: boolean;
 }) {
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 bg-gradient-to-t from-[#050507]/95 via-[#050507]/80 to-transparent backdrop-blur-md">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 bg-gradient-to-t from-surface-base/95 via-surface-base/80 to-transparent backdrop-blur-md">
       <Button
         onClick={onClick}
         disabled={isLoading}
@@ -913,7 +913,7 @@ export default function Landing() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-surface-base text-white overflow-x-hidden">
 
       {/* ── Subscription Success Banner ─────────────────────────────────────── */}
       {subscriptionSuccess && (
@@ -1696,7 +1696,7 @@ export default function Landing() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] bg-[#030305] py-10 px-4">
+      <footer className="border-t border-white/[0.06] bg-surface-deep py-10 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div>

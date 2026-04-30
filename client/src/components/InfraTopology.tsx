@@ -45,7 +45,7 @@ const CustomNode = ({ data, isConnectable }: any) => {
   const colors = NODE_COLORS[data.status] ?? NODE_COLORS.idle;
   return (
     <div className={`
-      relative px-4 py-3 rounded-xl border bg-[#0a0b0f]/90 backdrop-blur-sm
+      relative px-4 py-3 rounded-xl border bg-surface-overlay/90 backdrop-blur-sm
       min-w-[200px] flex items-center gap-3
       transition-all duration-300 cursor-pointer
       ${data.selected ? "border-sky-400/60 shadow-[0_0_20px_rgba(14,165,233,0.25)]" : `${colors.border} ${colors.glow}`}
@@ -75,11 +75,15 @@ const CustomNode = ({ data, isConnectable }: any) => {
 
 const nodeTypes = { custom: CustomNode };
 
+// Edge palette tied to the design-token chart palette (audit P2 #12).
+// ReactFlow renders these as raw SVG `stroke` attributes — modern
+// browsers resolve `var(--chart-N)` inside SVG attributes the same way
+// as CSS, so the topology adopts the global theme automatically.
 const EDGE_STYLES = {
-  active:  { stroke: "#f59e0b", strokeWidth: 1.5, strokeDasharray: "6 3" },
-  ok:      { stroke: "#10b981", strokeWidth: 1.5 },
-  cyan:    { stroke: "#0ea5e9", strokeWidth: 1.5, strokeDasharray: "6 3" },
-  muted:   { stroke: "rgba(255,255,255,0.08)", strokeWidth: 1.5 },
+  active: { stroke: "var(--chart-3)", strokeWidth: 1.5, strokeDasharray: "6 3" },
+  ok:     { stroke: "var(--chart-4)", strokeWidth: 1.5 },
+  cyan:   { stroke: "var(--chart-1)", strokeWidth: 1.5, strokeDasharray: "6 3" },
+  muted:  { stroke: "var(--border)",  strokeWidth: 1.5 },
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -178,7 +182,7 @@ export default function InfraTopology() {
 
   if (metricsError || agentError) {
     return (
-      <div className="flex items-center justify-center bg-[#050505] py-16 rounded-2xl">
+      <div className="flex items-center justify-center bg-terminal-bg py-16 rounded-2xl">
         <div className="text-center rounded-2xl border border-red-500/20 bg-red-500/[0.03] px-8 py-7 shadow-[0_0_40px_rgba(239,68,68,0.08)]">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/25 bg-red-500/10">
             <AlertCircle className="h-5 w-5 text-red-400" />
@@ -201,11 +205,11 @@ export default function InfraTopology() {
   }
 
   return (
-    <div className="flex flex-col h-[680px] bg-[#050505]/70 overflow-hidden relative rounded-2xl border border-white/[0.06]">
+    <div className="flex flex-col h-[680px] bg-terminal-bg/70 overflow-hidden relative rounded-2xl border border-white/[0.06]">
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-25" />
 
       {/* Status Bar */}
-      <div className="shrink-0 h-11 border-b border-white/[0.06] bg-[#040406]/70 backdrop-blur-xl flex items-center px-4 gap-6 z-20">
+      <div className="shrink-0 h-11 border-b border-white/[0.06] bg-surface-deep/70 backdrop-blur-xl flex items-center px-4 gap-6 z-20">
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">System Online</span>
@@ -247,12 +251,12 @@ export default function InfraTopology() {
             className="bg-transparent"
           >
             <Background color="rgba(255,255,255,0.03)" gap={28} size={1} />
-            <Controls className="!bg-[#0a0b0f] !border-white/[0.08] !rounded-xl !shadow-none [&>button]:!border-b-white/[0.06] [&>button]:!bg-transparent [&>button>svg]:!fill-white/40 [&>button:hover]:!bg-white/[0.06]" position="bottom-left" showInteractive={false} />
-            <MiniMap className="!bg-[#0a0b0f] !border-white/[0.08] !rounded-xl" nodeColor={() => "rgba(14,165,233,0.3)"} maskColor="rgba(5,5,5,0.7)" position="bottom-right" />
+            <Controls className="!bg-surface-overlay !border-white/[0.08] !rounded-xl !shadow-none [&>button]:!border-b-white/[0.06] [&>button]:!bg-transparent [&>button>svg]:!fill-white/40 [&>button:hover]:!bg-white/[0.06]" position="bottom-left" showInteractive={false} />
+            <MiniMap className="!bg-surface-overlay !border-white/[0.08] !rounded-xl" nodeColor={() => "rgba(14,165,233,0.3)"} maskColor="rgba(5,5,5,0.7)" position="bottom-right" />
           </ReactFlow>
         </div>
 
-        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-[#040406]/82 backdrop-blur-2xl flex flex-col z-20">
+        <aside className="w-[300px] h-full shrink-0 border-l border-white/[0.06] bg-surface-deep/82 backdrop-blur-2xl flex flex-col z-20">
           <div className="h-11 flex items-center px-4 border-b border-white/[0.05] justify-between">
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Inspector</span>
             <span className="flex items-center gap-1.5">

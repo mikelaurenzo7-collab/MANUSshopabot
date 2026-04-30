@@ -53,7 +53,7 @@ export default function SocialPage() {
   const socialStatus: any = status?.find?.((s: any) => s.agentType === 'social') || { status: 'idle' };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-terminal-bg overflow-hidden text-white flex-col">
       <div className="bot-page-ambient bot-page-ambient--social" aria-hidden="true">
         <div className="bot-page-ambient-grid" />
         <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />
@@ -312,10 +312,10 @@ function SocialContent({
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Active Source:</span>
           <Select value={selectedStore} onValueChange={setSelectedStore}>
-            <SelectTrigger className="w-full sm:w-56 bg-[#050505] border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-amber-400/20 focus:border-amber-400">
+            <SelectTrigger className="w-full sm:w-56 bg-terminal-bg border-white/[0.08] text-white font-mono text-[10px] uppercase h-8 focus:ring-amber-400/20 focus:border-amber-400">
               <SelectValue placeholder="SELECT_TARGET_STORE" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+            <SelectContent className="bg-surface-overlay border-white/[0.08]">
               {storeOptions.map((s: any) => {
                 const brand = getBrand(s.platform);
                 return (
@@ -369,16 +369,16 @@ function SocialContent({
                     placeholder="e.g., Bamboo desk organizer set"
                     value={adPrompt}
                     onChange={(e) => setAdPrompt(e.target.value)}
-                    className="bg-[#050505] border-white/[0.08] text-white font-mono text-xs h-8 focus:border-amber-400 focus:ring-amber-400/20"
+                    className="bg-terminal-bg border-white/[0.08] text-white font-mono text-xs h-8 focus:border-amber-400 focus:ring-amber-400/20"
                   />
                 </div>
                 <div>
                   <span className="font-mono text-[9px] uppercase tracking-widest text-white/30 block mb-1.5">Platform</span>
                   <Select value={adPlatform} onValueChange={setAdPlatform}>
-                    <SelectTrigger className="bg-[#050505] border-white/[0.08] text-white font-mono text-xs h-8 focus:ring-amber-400/20">
+                    <SelectTrigger className="bg-terminal-bg border-white/[0.08] text-white font-mono text-xs h-8 focus:ring-amber-400/20">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0a0f] border-white/[0.08]">
+                    <SelectContent className="bg-surface-overlay border-white/[0.08]">
                       <SelectItem value="tiktok" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">TikTok</SelectItem>
                       <SelectItem value="meta" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">Meta / Facebook</SelectItem>
                       <SelectItem value="google" className="text-white font-mono text-xs focus:bg-amber-500/10 focus:text-amber-300">Google Ads</SelectItem>
