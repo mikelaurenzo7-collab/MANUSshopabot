@@ -28,6 +28,7 @@ import {
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
+import { logger } from "../../utils/logger";
 
 export class BigCommerceAdapter implements EcommercePlatformAdapter {
   readonly platform = "bigcommerce";
@@ -155,10 +156,18 @@ export class BigCommerceAdapter implements EcommercePlatformAdapter {
     };
     const data = await this.fetch("/catalog/products", credentials, { method: "POST", body });
     if (product.imageUrl && data.data?.id) {
+      // Image attachment is best-effort — the product is already created.
+      // A silent failure was masking platform-side issues, so log a warning.
       await this.fetch(`/catalog/products/${data.data.id}/images`, credentials, {
         method: "POST",
         body: { image_url: product.imageUrl, is_thumbnail: true },
-      }).catch(() => {});
+      }).catch((err) =>
+        logger.warn("bigcommerce_image_attach_failed", {
+          module: "bigcommerceAdapter",
+          productId: data.data.id,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     }
     return this.mapProduct(data.data, credentials.storeUrl);
   }

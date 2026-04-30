@@ -28,6 +28,7 @@ import {
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
 import { randomUUID } from "node:crypto";
+import { logger } from "../../utils/logger";
 
 const API_BASE = "https://connect.squareup.com/v2";
 const SQUARE_VERSION = "2024-08-21";
@@ -171,7 +172,13 @@ export class SquareAdapter implements EcommercePlatformAdapter {
           object_id: data.catalog_object.id,
           image: { type: "IMAGE", image_data: { url: product.imageUrl, name: product.title } },
         },
-      }).catch(() => {});
+      }).catch((err) =>
+        logger.warn("square_image_attach_failed", {
+          module: "squareAdapter",
+          objectId: data.catalog_object.id,
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
     }
     return this.mapProduct(data.catalog_object);
   }

@@ -24,6 +24,22 @@ import {
 } from "./utils/webhookVerify";
 import { logger } from "./utils/logger";
 
+type WebhookEventArgs = Parameters<typeof logWebhookEvent>[0];
+
+/** Best-effort write to `webhook_events`. A telemetry failure must not
+ *  fail the user-facing flow, but we *do* want a warning log so the
+ *  operator can see when telemetry is silently broken. */
+function logEventSafely(args: WebhookEventArgs): void {
+  logWebhookEvent(args).catch((logErr) =>
+    logger.warn(`${args.platform}_webhook_event_log_failed`, {
+      module: "platformWebhooks",
+      topic: args.eventType,
+      status: args.status,
+      error: logErr instanceof Error ? logErr.message : String(logErr),
+    }),
+  );
+}
+
 // ─── Shared HMAC Utilities ────────────────────────────────────────────────────
 // Centralised in `server/utils/webhookVerify.ts` (audit P1 #10).
 
@@ -133,7 +149,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
 
     // Log to webhook_events table
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "etsy",
@@ -141,7 +157,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
         status: "processed",
         payload: { receipt_id: payload.receipt_id, listing_id: payload.listing_id },
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   } catch (err: any) {
     logger.error("etsy_webhook_processing_failed", {
@@ -152,7 +168,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
     });
     addToDeadLetterQueue(topic, payload, "etsy", err.message);
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "etsy",
@@ -160,7 +176,7 @@ async function handleEtsyWebhook(req: Request, res: Response) {
         status: "failed",
         errorMessage: err.message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   }
 }
@@ -260,7 +276,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
 
     // Log to webhook_events table
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "tiktok_shop",
@@ -268,7 +284,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
         status: "processed",
         payload: { order_id: payload.data?.order_id, product_id: payload.data?.product_id },
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   } catch (err: any) {
     logger.error("tiktok_shop_webhook_processing_failed", {
@@ -279,7 +295,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
     });
     addToDeadLetterQueue(topic, payload, "tiktok_shop", err.message);
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "tiktok_shop",
@@ -287,7 +303,7 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
         status: "failed",
         errorMessage: err.message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   }
 }
@@ -347,7 +363,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
 
     // Log to webhook_events table
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "amazon",
@@ -355,7 +371,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
         status: "processed",
         payload: message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   } catch (err: any) {
     logger.error("amazon_webhook_processing_failed", {
@@ -366,7 +382,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
     });
     addToDeadLetterQueue(eventType, message ?? payload, "amazon", err.message);
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "amazon",
@@ -374,7 +390,7 @@ async function handleAmazonWebhook(req: Request, res: Response) {
         status: "failed",
         errorMessage: err.message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   }
 }
@@ -431,7 +447,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
 
     // Log to webhook_events table
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "ebay",
@@ -439,7 +455,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
         status: "processed",
         payload,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   } catch (err: any) {
     logger.error("ebay_webhook_processing_failed", {
@@ -450,7 +466,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
     });
     addToDeadLetterQueue(eventType, payload, "ebay", err.message);
     if (store) {
-      logWebhookEvent({
+      logEventSafely({
         userId: store.userId,
         storeId: store.id,
         platform: "ebay",
@@ -458,7 +474,7 @@ async function handleEbayWebhook(req: Request, res: Response) {
         status: "failed",
         errorMessage: err.message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      });
     }
   }
 }
