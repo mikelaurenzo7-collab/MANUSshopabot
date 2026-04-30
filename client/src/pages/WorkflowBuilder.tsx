@@ -196,7 +196,7 @@ function WorkflowNode({ data, selected }: { data: WorkflowNodeData; selected: bo
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-2.5 !h-2.5 !border-2 !border-white/30 !bg-[#0a0a0f] hover:!border-white/70 transition-colors"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/30 !bg-surface-overlay hover:!border-white/70 transition-colors"
       />
 
       <div className="flex items-start gap-2.5">
@@ -217,7 +217,7 @@ function WorkflowNode({ data, selected }: { data: WorkflowNodeData; selected: bo
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !border-2 !border-white/30 !bg-[#0a0a0f] hover:!border-white/70 transition-colors"
+        className="!w-2.5 !h-2.5 !border-2 !border-white/30 !bg-surface-overlay hover:!border-white/70 transition-colors"
       />
     </div>
   );
@@ -327,7 +327,7 @@ function ConfigPanel({
   const Icon = meta.icon;
 
   return (
-    <div className="absolute top-0 right-0 h-full w-[300px] bg-[#07070c]/98 border-l border-white/[0.08] flex flex-col z-30 shadow-[-12px_0_40px_rgba(0,0,0,0.7)]">
+    <div className="absolute top-0 right-0 h-full w-[300px] bg-surface-base/98 border-l border-white/[0.08] flex flex-col z-30 shadow-[-12px_0_40px_rgba(0,0,0,0.7)]">
       {/* Header */}
       <div className={`h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 ${meta.bg}`}>
         <span className={`font-mono text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 ${meta.color}`}>
@@ -406,7 +406,7 @@ function ConfigPanel({
                 <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0a0f] border-white/10 font-mono text-xs">
+                <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
                   <SelectItem value="suppliers.printful.search">Printful — Search Products</SelectItem>
                   <SelectItem value="suppliers.cj.search">CJ Dropshipping — Search Products</SelectItem>
                   <SelectItem value="suppliers.all.search">All Suppliers — Parallel Search</SelectItem>
@@ -450,7 +450,7 @@ function ConfigPanel({
                 <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0a0f] border-white/10 font-mono text-xs">
+                <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
                   <SelectItem value="push_products">Push Products to Store</SelectItem>
                   <SelectItem value="update_prices">Update Product Prices</SelectItem>
                   <SelectItem value="create_collection">Create Collection</SelectItem>
@@ -468,7 +468,7 @@ function ConfigPanel({
                 <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0a0f] border-white/10 font-mono text-xs">
+                <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="active">Active (Live)</SelectItem>
                 </SelectContent>
@@ -753,9 +753,9 @@ export default function WorkflowBuilder() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#050508] overflow-hidden">
+    <div className="flex flex-col h-full bg-surface-base overflow-hidden">
       {/* ── Top Toolbar ──────────────────────────────────────────────────── */}
-      <div className="h-12 border-b border-white/[0.07] bg-[#07070c]/90 flex items-center px-4 gap-3 shrink-0 backdrop-blur-sm">
+      <div className="h-12 border-b border-white/[0.07] bg-surface-base/90 flex items-center px-4 gap-3 shrink-0 backdrop-blur-sm">
         <div className="flex items-center gap-2 mr-2">
           <div className="w-6 h-6 rounded bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-violet-400" />
@@ -778,7 +778,7 @@ export default function WorkflowBuilder() {
           <SelectTrigger className="h-7 w-36 bg-white/[0.04] border-white/[0.08] text-white text-[11px] font-mono">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0a0f] border-white/10 font-mono text-xs">
+          <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
             <SelectItem value="architect">Builder Bot</SelectItem>
             <SelectItem value="merchant">Merchant Bot</SelectItem>
             <SelectItem value="social">Social Bot</SelectItem>
@@ -825,7 +825,7 @@ export default function WorkflowBuilder() {
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* ── Left Palette ─────────────────────────────────────────────────── */}
-        <div className="w-[200px] border-r border-white/[0.07] bg-[#07070c]/80 flex flex-col shrink-0 overflow-y-auto">
+        <div className="w-[200px] border-r border-white/[0.07] bg-surface-base/80 flex flex-col shrink-0 overflow-y-auto">
           <div className="px-3 pt-3 pb-2">
             <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold mb-2.5">Step Types</p>
             <div className="space-y-1.5">
@@ -892,11 +892,11 @@ export default function WorkflowBuilder() {
               color="rgba(255,255,255,0.04)"
             />
             <Controls
-              className="!bg-[#0a0a0f] !border-white/[0.08] !rounded-lg overflow-hidden"
+              className="!bg-surface-overlay !border-white/[0.08] !rounded-lg overflow-hidden"
               showInteractive={false}
             />
             <MiniMap
-              className="!bg-[#07070c] !border-white/[0.08] !rounded-lg"
+              className="!bg-surface-base !border-white/[0.08] !rounded-lg"
               nodeColor={(n) => {
                 const meta = STEP_META[(n.data as WorkflowNodeData)?.kind];
                 return meta ? meta.glow.match(/rgba\(([^)]+)\)/)?.[0]?.replace("0.18", "0.6") ?? "#333" : "#333";
@@ -940,7 +940,7 @@ export default function WorkflowBuilder() {
           {/* Templates overlay */}
           {showTemplates && (
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-20 flex items-center justify-center p-8">
-              <div className="bg-[#07070c] border border-white/[0.1] rounded-xl w-full max-w-2xl shadow-2xl">
+              <div className="bg-surface-base border border-white/[0.1] rounded-xl w-full max-w-2xl shadow-2xl">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
                   <div>
                     <h2 className="font-mono text-sm font-bold text-white uppercase tracking-widest">Starter Templates</h2>

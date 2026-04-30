@@ -846,7 +846,8 @@ export default function IntegrationsPage() {
             <Button
               onClick={handleShopifyConnect}
               disabled={shopifyPending || !shopifyDomain.trim()}
-              className="bg-[#96BF48] hover:bg-[#7ea33d] text-white"
+              className="text-white shadow-sm transition-colors hover:brightness-110"
+              style={{ backgroundColor: getBrand("shopify").color }}
             >
               {shopifyPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Connect to Shopify

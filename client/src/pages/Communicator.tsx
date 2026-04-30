@@ -87,7 +87,7 @@ export default function CommunicatorPage() {
   }, [selectedEmailId]);
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-terminal-bg overflow-hidden text-white flex-col">
       {/* Ambient background */}
       <div className="bot-page-ambient bot-page-ambient--social" aria-hidden="true">
         <div className="bot-page-ambient-grid" />
@@ -120,7 +120,7 @@ export default function CommunicatorPage() {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-terminal-bg">
         <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
 
           {/* Operating across */}
@@ -150,7 +150,7 @@ export default function CommunicatorPage() {
 
           {/* Tabs */}
           <div className="border border-white/[0.08] bg-black/40 rounded-lg overflow-hidden">
-            <div className="flex border-b border-white/[0.08] bg-[#050505]">
+            <div className="flex border-b border-white/[0.08] bg-terminal-bg">
               {[
                 { id: "inbox", label: "Inbox", icon: Inbox },
                 { id: "compose", label: "Compose", icon: Mail },
@@ -217,7 +217,7 @@ export default function CommunicatorPage() {
                       placeholder="recipient@example.com"
                       value={composeRecipient}
                       onChange={(e) => setComposeRecipient(e.target.value)}
-                      className="w-full bg-[#050505] border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors"
+                      className="w-full bg-terminal-bg border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors"
                     />
                   </div>
                   <div>
@@ -227,7 +227,7 @@ export default function CommunicatorPage() {
                       placeholder="Email subject"
                       value={composeSubject}
                       onChange={(e) => setComposeSubject(e.target.value)}
-                      className="w-full bg-[#050505] border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors"
+                      className="w-full bg-terminal-bg border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors"
                     />
                   </div>
                   <div>
@@ -237,7 +237,7 @@ export default function CommunicatorPage() {
                       value={composeBody}
                       onChange={(e) => setComposeBody(e.target.value)}
                       rows={6}
-                      className="w-full bg-[#050505] border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors resize-none"
+                      className="w-full bg-terminal-bg border border-white/[0.08] rounded px-3 py-2 text-white placeholder:text-white/30 focus:border-rose-400/50 focus:outline-none transition-colors resize-none"
                     />
                   </div>
                   <button
@@ -276,7 +276,7 @@ export default function CommunicatorPage() {
       {selectedEmail && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-end">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedEmailId(null)} />
-          <div className="relative w-full md:w-96 h-screen md:h-auto md:rounded-lg bg-[#050505] border border-white/[0.08] flex flex-col max-h-screen md:max-h-[80vh]">
+          <div className="relative w-full md:w-96 h-screen md:h-auto md:rounded-lg bg-terminal-bg border border-white/[0.08] flex flex-col max-h-screen md:max-h-[80vh]">
             <div className="flex items-center justify-between p-4 border-b border-white/[0.08]">
               <h3 className="font-semibold text-white truncate">{selectedEmail.subject}</h3>
               <button onClick={() => setSelectedEmailId(null)} className="text-white/40 hover:text-white">

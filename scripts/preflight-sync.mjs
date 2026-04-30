@@ -272,7 +272,52 @@ function checkConflictMarkers(tracked) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Check 4: Lockfile sanity                                           */
+/* Check 4: Raw-hex regression guard for `client/src/pages/*.tsx`     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Audit P3 #15 (`AUDIT_2026_04.md`): once the page-level color sweep
+ * finished, we want a cheap guard that prevents new `bg-[#…]` /
+ * `text-[#…]` / `border-[#…]` Tailwind arbitrary values from sneaking
+ * back into page files.
+ *
+ * Scope: only `client/src/pages/*.tsx`. `client/src/components/` and
+ * `client/src/lib/` are exempt because they legitimately consume raw
+ * hex for chart helpers and brand-data registries (`platformBrand.ts`,
+ * `chartTheme.ts`).
+ *
+ * Reports a warning per offending line so existing branches won't fail
+ * outright — flip with `--strict` once the next round of cleanup is
+ * confirmed clean.
+ */
+function checkPageHexRegressions(tracked) {
+  if (!tracked) return;
+
+  const re = /(bg|text|border|from|via|to|fill|stroke|ring)-\[#[0-9a-fA-F]{3,8}\]/;
+
+  for (const f of tracked) {
+    if (!f.startsWith("client/src/pages/")) continue;
+    if (!f.endsWith(".tsx")) continue;
+    const abs = join(repoRoot, f);
+    let content;
+    try {
+      content = readFileSync(abs, "utf8");
+    } catch {
+      continue;
+    }
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(re);
+      if (!m) continue;
+      warn(
+        `Raw hex Tailwind utility '${m[0]}' in ${f}:${i + 1} — replace with a token class (see client/src/index.css).`,
+      );
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Check 5: Lockfile sanity                                           */
 /* ------------------------------------------------------------------ */
 
 function checkLockfiles() {
@@ -306,6 +351,7 @@ const tracked = listTrackedFiles();
 checkDrizzle();
 checkForbiddenTrackedFiles(tracked);
 checkConflictMarkers(tracked);
+checkPageHexRegressions(tracked);
 checkLockfiles();
 
 /* ------------------------------------------------------------------ */

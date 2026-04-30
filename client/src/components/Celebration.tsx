@@ -28,12 +28,15 @@ interface CelebrationProps {
   variant?: "subtle" | "full";
 }
 
+/** Particle palette. Maps to the design-token chart palette so the
+ *  celebration adopts the same accents as the rest of the app — change
+ *  `--chart-*` and the celebration follows. (Audit P2 #12.) */
 const PARTICLE_COLORS = [
-  "#38bdf8", // sky-400
-  "#22d3ee", // cyan-400
-  "#34d399", // emerald-400
-  "#fbbf24", // amber-400
-  "#f472b6", // pink-400
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
 
 export function Celebration({
