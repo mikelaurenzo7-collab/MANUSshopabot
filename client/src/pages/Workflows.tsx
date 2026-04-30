@@ -4,6 +4,7 @@
  */
 
 import { useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
@@ -41,6 +42,10 @@ import {
   Bot,
   Zap,
   GitBranch,
+  ArrowRight,
+  Sparkles,
+  Wrench,
+  Store,
 } from "lucide-react";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { PageHeader } from "@/components/PageHeader";
@@ -435,15 +440,59 @@ export default function Workflows() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : (activeWorkflows?.length ?? 0) === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon" style={{ background: "rgba(14, 165, 233, 0.1)", borderColor: "rgba(14, 165, 233, 0.25)" }}>
-                <Bot className="h-5 w-5 text-sky-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">No active workflows</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                Launch one above and watch your bots execute the full plan, step by step. Workflows that finish move to the History tab.
-              </p>
-            </div>
+            // Sexy empty state — icon plate + hero copy + 3 next-action
+            // tiles. Mirrors the gold-standard pattern from Activity.tsx
+            // so a brand-new user sees a path forward, not a wall of
+            // text. Each tile is colour-coded by the bot lane it kicks
+            // off (sky / cyan / amber).
+            <Card className="bento-card">
+              <CardContent className="flex flex-col items-center py-12 px-6">
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 rounded-2xl bg-sky-500/20 blur-xl" aria-hidden="true" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(14,165,233,0.18)]">
+                    <Bot className="h-6 w-6 text-sky-400" />
+                  </div>
+                </div>
+                <h3 className="text-base font-heading font-bold tracking-tight text-foreground">No workflows running yet</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
+                  Workflows are how the bots execute multi-step plans.
+                  Pick a starting move below — each one launches a real,
+                  step-by-step run you can watch unfold.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 w-full max-w-2xl">
+                  <Link href="/chat">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-sky-400/30 hover:bg-sky-500/5">
+                      <Sparkles className="h-4 w-4 text-sky-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Ask the bot</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Describe what you want done</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                  <Link href="/workflow-builder">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-cyan-400/30 hover:bg-cyan-500/5">
+                      <Wrench className="h-4 w-4 text-cyan-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Build a workflow</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Drag-and-drop step canvas</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                  <Link href="/storefronts">
+                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-amber-400/30 hover:bg-amber-500/5">
+                      <Store className="h-4 w-4 text-amber-400 shrink-0 mr-2" />
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-xs font-medium text-foreground">Connect a store</div>
+                        <div className="text-[10px] text-muted-foreground truncate">Workflows need a store to run on</div>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-4">
               {/* Live runner takes over from the static card while the
@@ -475,15 +524,38 @@ export default function Workflows() {
               {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : historyWorkflows.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">
-                <Clock className="h-5 w-5 text-white/45" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">No workflow history yet</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                Completed, failed, and cancelled workflows land here. Completed runs get a one-click <span className="text-emerald-300/85">Rerun</span>; failed ones get <span className="text-amber-300/85">Retry</span>.
-              </p>
-            </div>
+            // History empty = "haven't finished anything yet". Quietly
+            // celebrate the path forward (Live Activity) rather than
+            // explaining a feature the user can't use yet (Rerun/Retry
+            // buttons that don't exist on a zero-row table).
+            <Card className="bento-card">
+              <CardContent className="flex flex-col items-center py-12 px-6">
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 rounded-2xl bg-violet-500/15 blur-xl" aria-hidden="true" />
+                  <div className="relative h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(167,139,250,0.18)]">
+                    <Clock className="h-6 w-6 text-violet-300" />
+                  </div>
+                </div>
+                <h3 className="text-base font-heading font-bold tracking-tight text-foreground">No completed runs yet</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
+                  This timeline fills up the moment a workflow finishes.
+                  Completed runs get a one-click{" "}
+                  <span className="text-emerald-300/85 font-medium">Rerun</span>;
+                  failed ones get{" "}
+                  <span className="text-amber-300/85 font-medium">Retry</span>.
+                </p>
+                <Link href="/inbox#activity">
+                  <Button
+                    variant="outline"
+                    className="mt-5 h-auto py-2 px-4 border-white/10 hover:border-violet-400/30 hover:bg-violet-500/5 gap-2"
+                  >
+                    <GitBranch className="h-4 w-4 text-violet-300" />
+                    <span className="text-xs font-medium">View live activity</span>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-3">
               {historyWorkflows.map((w: any) => (
