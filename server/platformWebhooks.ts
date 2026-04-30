@@ -396,8 +396,11 @@ async function handleAmazonWebhook(req: Request, res: Response) {
     return;
   }
   const eventType = message.eventType ?? "unknown";
+  // notificationId is per-delivery unique and stable across retries;
+  // prefer it over the resource id so two distinct events on the same
+  // order/asin don't collapse into one dedup entry.
   const resourceId = String(
-    message.orderId ?? message.asin ?? message.notificationId ?? "unknown",
+    message.notificationId ?? message.orderId ?? message.asin ?? "unknown",
   );
   const key = dedupKey("amazon", eventType, `${shopId}:${resourceId}`);
   const claim = dedup.tryClaim(key);
@@ -475,8 +478,11 @@ async function handleEbayWebhook(req: Request, res: Response) {
   res.status(200).json({ received: true });
 
   const eventType = payload.eventType ?? "unknown";
+  // notificationId is per-delivery unique and stable across retries;
+  // prefer it over the resource id so two distinct events on the same
+  // item/order don't collapse into one dedup entry.
   const resourceId = String(
-    payload.itemId ?? payload.orderId ?? payload.notificationId ?? "unknown",
+    payload.notificationId ?? payload.itemId ?? payload.orderId ?? "unknown",
   );
   const key = dedupKey("ebay", eventType, `${shopId}:${resourceId}`);
   const claim = dedup.tryClaim(key);
