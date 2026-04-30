@@ -134,12 +134,18 @@ async function handleEtsyWebhook(req: Request, res: Response) {
     logDedupSkip("etsy", topic, resourceId, claim);
     return;
   }
-  const store = await findStoreByPlatformAndShop("etsy", shopId).catch(() => null);
   const eventStart = Date.now();
 
   logger.info("etsy_webhook_received", { module: "platformWebhooks", topic, shopId });
 
+  let store: Awaited<ReturnType<typeof findStoreByPlatformAndShop>> = null;
   try {
+    // DB errors here propagate to the outer catch → DLQ + claim
+    // released. The legacy `.catch(() => null)` mistakenly conflated
+    // "store legitimately absent" with "DB unavailable" and silently
+    // dropped the side effects, which meant orders disappeared from
+    // our system whenever the DB blipped during a webhook delivery.
+    store = await findStoreByPlatformAndShop("etsy", shopId);
     // Handle specific Etsy events
     switch (topic) {
       case "RECEIPT_CREATED":
@@ -268,14 +274,14 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
     logDedupSkip("tiktok_shop", topic, resourceId, claim);
     return;
   }
-  const store = shopId
-    ? await findStoreByPlatformAndShop("tiktok_shop", shopId).catch(() => null)
-    : null;
   const eventStart = Date.now();
 
   logger.info("tiktok_shop_webhook_received", { module: "platformWebhooks", topic, shopId });
 
+  let store: Awaited<ReturnType<typeof findStoreByPlatformAndShop>> = null;
   try {
+    // DB errors propagate to the outer catch → DLQ + claim released.
+    store = shopId ? await findStoreByPlatformAndShop("tiktok_shop", shopId) : null;
     switch (topic) {
       case "ORDER_STATUS_CHANGE": {
         const orderId = String(payload.data?.order_id ?? "");
@@ -413,12 +419,14 @@ async function handleAmazonWebhook(req: Request, res: Response) {
     return;
   }
 
-  const store = await findStoreByPlatformAndShop("amazon", shopId).catch(() => null);
   const eventStart = Date.now();
 
   logger.info("amazon_webhook_received", { module: "platformWebhooks", topic, shopId });
 
+  let store: Awaited<ReturnType<typeof findStoreByPlatformAndShop>> = null;
   try {
+    // DB errors propagate to the outer catch → DLQ + claim released.
+    store = await findStoreByPlatformAndShop("amazon", shopId);
     if (store) {
       await createBotEvent({
         fromBot: "merchant",
@@ -495,12 +503,14 @@ async function handleEbayWebhook(req: Request, res: Response) {
     return;
   }
 
-  const store = await findStoreByPlatformAndShop("ebay", shopId).catch(() => null);
   const eventStart = Date.now();
 
   logger.info("ebay_webhook_received", { module: "platformWebhooks", eventType, shopId });
 
+  let store: Awaited<ReturnType<typeof findStoreByPlatformAndShop>> = null;
   try {
+    // DB errors propagate to the outer catch → DLQ + claim released.
+    store = await findStoreByPlatformAndShop("ebay", shopId);
     // Handle specific eBay events
     switch (eventType) {
       case "ITEM_SOLD":
