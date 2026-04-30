@@ -128,7 +128,7 @@ export function PageHeader({
       <div className={`relative px-6 pt-5 ${flushBottom ? "pb-2" : "pb-4"} flex items-center gap-3`}>
         {/* Icon plate — 36×36, slightly larger than before for more presence */}
         <div
-          className={`h-9 w-9 rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-standard hover:shadow-premium-md`}
+          className={`h-9 w-9 rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-all duration-500 hover:scale-110 hover:shadow-premium-lg`}
         >
           <span className={`${styles.text} flex items-center justify-center`} aria-hidden="true">
             {icon}
@@ -139,13 +139,12 @@ export function PageHeader({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[12px] text-white/45 truncate mt-0.5">{subtitle}</p>
+            <p className="text-[12px] text-white/45 truncate mt-0.5 leading-snug">{subtitle}</p>
           )}
         </div>
         {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
       </div>
-      {/* Signature accent line — upgraded to 1.5px for a sharper edge.   */}
-      {/* The gradient now starts more opaque so the color reads clearly. */}
+      {/* Signature accent line — animated sweep for a dynamic edge. */}
       <div
         className={`page-accent-line bg-gradient-to-r ${styles.line}`}
         aria-hidden="true"
