@@ -220,7 +220,8 @@ export const workspacesRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
-      // One-time backfill of legacy chat messages into a default session.
+      // One-time backfill of legacy chat messages (those that predate the
+      // sessions table) into a default session so they appear in the sidebar.
       await db.adoptOrphanWorkspaceChatMessages(input.workspaceId, ctx.user.id);
       return db.listWorkspaceChatSessions(input.workspaceId, {
         includeArchived: input.includeArchived,

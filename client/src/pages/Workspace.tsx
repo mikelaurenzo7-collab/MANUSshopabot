@@ -522,6 +522,12 @@ function formatRelativeTimestamp(value: string | Date | null | undefined): strin
   return ts.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/**
+ * Bucket a session into the sidebar group it belongs to. Archived and
+ * pinned sessions short-circuit to their own buckets; otherwise we slot
+ * by the most recent message timestamp into Today / Yesterday / Earlier
+ * (matching Claude Code's session list grouping).
+ */
 function bucketSession(session: ChatSession): "pinned" | "today" | "yesterday" | "earlier" | "archived" {
   if (session.archived) return "archived";
   if (session.pinned) return "pinned";
