@@ -6,32 +6,58 @@ import { Loader2, Send, User, Sparkles, Bot, Package, Megaphone, Zap } from "luc
 import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
-const BOT_CONFIGS: Record<string, { icon: typeof Bot; color: string; bg: string; welcome: string; subline: string }> = {
+const BOT_CONFIGS: Record<string, {
+  icon: typeof Bot;
+  color: string;
+  bg: string;
+  glowColor: string;
+  ringColor: string;
+  bubbleFrom: string;
+  bubbleBorder: string;
+  welcome: string;
+  subline: string;
+}> = {
   store: {
     icon: Sparkles,
-    color: "text-sky-400",
+    color: "text-sky-300",
     bg: "bg-sky-500/10",
+    glowColor: "rgba(14,165,233,0.25)",
+    ringColor: "rgba(14,165,233,0.3)",
+    bubbleFrom: "from-sky-500/[0.12] to-sky-600/[0.06]",
+    bubbleBorder: "border-sky-500/[0.18]",
     welcome: "What should we grow today?",
     subline: "One bot for building, operating, marketing, and remembering each store.",
   },
   architect: {
     icon: Zap,
-    color: "text-sky-400",
+    color: "text-sky-300",
     bg: "bg-sky-500/10",
+    glowColor: "rgba(14,165,233,0.25)",
+    ringColor: "rgba(14,165,233,0.3)",
+    bubbleFrom: "from-sky-500/[0.12] to-sky-600/[0.06]",
+    bubbleBorder: "border-sky-500/[0.18]",
     welcome: "What should we build today?",
     subline: "I know every winning niche, every supplier, and every shortcut.",
   },
   merchant: {
     icon: Package,
-    color: "text-cyan-400",
+    color: "text-cyan-300",
     bg: "bg-cyan-500/10",
+    glowColor: "rgba(6,182,212,0.25)",
+    ringColor: "rgba(6,182,212,0.3)",
+    bubbleFrom: "from-cyan-500/[0.12] to-cyan-600/[0.06]",
+    bubbleBorder: "border-cyan-500/[0.18]",
     welcome: "What's the inventory looking like?",
     subline: "I watch margins, stock levels, and competitors 24/7.",
   },
   social: {
     icon: Megaphone,
-    color: "text-amber-400",
+    color: "text-amber-300",
     bg: "bg-amber-500/10",
+    glowColor: "rgba(249,115,22,0.2)",
+    ringColor: "rgba(249,115,22,0.28)",
+    bubbleFrom: "from-amber-500/[0.10] to-amber-600/[0.05]",
+    bubbleBorder: "border-amber-500/[0.18]",
     welcome: "Let's make something go viral.",
     subline: "I craft ads, posts, and campaigns that convert while you sleep.",
   },
@@ -224,11 +250,13 @@ export function AIChatBox({
     }
   };
 
+  const cfg = BOT_CONFIGS[botType] ?? BOT_CONFIGS.store;
+
   return (
     <div
       ref={containerRef}
       className={cn(
-        "flex flex-col bg-card text-card-foreground rounded-lg border shadow-sm",
+        "flex flex-col rounded-xl border border-white/[0.07] bg-[#050508]/80 backdrop-blur-2xl overflow-hidden",
         className
       )}
       style={{ height }}
@@ -236,32 +264,44 @@ export function AIChatBox({
       {/* Messages Area */}
       <div ref={scrollAreaRef} className="flex-1 overflow-hidden">
         {displayMessages.length === 0 ? (
-          <div className="flex h-full flex-col p-4">
-            <div className="flex flex-1 flex-col items-center justify-center gap-6 text-muted-foreground">
+          <div className="flex h-full flex-col p-5">
+            <div className="flex flex-1 flex-col items-center justify-center gap-7">
               {(() => {
-                const config = BOT_CONFIGS[botType];
-                const Icon = config.icon;
+                const Icon = cfg.icon;
                 return (
-                  <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in-95 duration-500">
-                    <div className={`h-16 w-16 rounded-2xl ${config.bg} border border-white/[0.08] flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.1)]`}>
-                      <Icon className={`h-8 w-8 ${config.color}`} />
+                  <div className="flex flex-col items-center gap-5 animate-in fade-in zoom-in-95 duration-500">
+                    {/* Bot avatar — layered glow rings */}
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-2xl blur-xl opacity-60"
+                        style={{ background: cfg.glowColor }}
+                      />
+                      <div
+                        className={`relative h-20 w-20 rounded-2xl ${cfg.bg} border flex items-center justify-center`}
+                        style={{
+                          borderColor: cfg.ringColor,
+                          boxShadow: `0 0 32px ${cfg.glowColor}, inset 0 1px 0 rgba(255,255,255,0.06)`,
+                        }}
+                      >
+                        <Icon className={`h-9 w-9 ${cfg.color}`} />
+                      </div>
                     </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-sm font-semibold text-white/80">{config.welcome}</p>
-                      <p className="text-xs text-white/35 max-w-[280px]">{config.subline}</p>
+                    <div className="text-center space-y-1.5">
+                      <p className="text-base font-bold text-white/90 font-heading tracking-tight">{cfg.welcome}</p>
+                      <p className="text-xs text-white/35 max-w-[300px] leading-relaxed">{cfg.subline}</p>
                     </div>
                   </div>
                 );
               })()}
 
               {suggestedPrompts && suggestedPrompts.length > 0 && (
-                <div className="flex max-w-2xl flex-wrap justify-center gap-2">
+                <div className="flex max-w-xl flex-wrap justify-center gap-2">
                   {suggestedPrompts.map((prompt, index) => (
                     <button
                       key={index}
                       onClick={() => onSendMessage(prompt)}
                       disabled={isLoading}
-                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/60 transition-all hover:bg-white/[0.06] hover:border-white/[0.15] hover:text-white/90 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs text-white/55 transition-all hover:bg-white/[0.07] hover:border-white/[0.15] hover:text-white/85 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(14,165,233,0.08)] disabled:cursor-not-allowed disabled:opacity-50"
                       style={{ animationDelay: `${index * 80}ms` }}
                     >
                       {prompt}
@@ -273,9 +313,8 @@ export function AIChatBox({
           </div>
         ) : (
           <ScrollArea className="h-full">
-            <div className="flex flex-col space-y-4 p-4">
+            <div className="flex flex-col space-y-5 p-4 pb-2">
               {displayMessages.map((message, index) => {
-                // Apply min-height to last message only if NOT loading (when loading, the loading indicator gets it)
                 const isLastMessage = index === displayMessages.length - 1;
                 const shouldApplyMinHeight =
                   isLastMessage && !isLoading && minHeightForLastMessage > 0;
@@ -286,7 +325,7 @@ export function AIChatBox({
                     className={cn(
                       "flex gap-3",
                       message.role === "user"
-                        ? "justify-end items-start"
+                        ? "justify-end items-end"
                         : "justify-start items-start"
                     )}
                     style={
@@ -296,36 +335,39 @@ export function AIChatBox({
                     }
                   >
                     {message.role === "assistant" && (
-                      <div className={`size-8 shrink-0 mt-1 rounded-full ${BOT_CONFIGS[botType].bg} flex items-center justify-center`}>
+                      <div
+                        className={`size-7 shrink-0 mt-0.5 rounded-full ${cfg.bg} border flex items-center justify-center`}
+                        style={{ borderColor: cfg.ringColor, boxShadow: `0 0 10px ${cfg.glowColor}` }}
+                      >
                         {(() => {
-                          const Icon = BOT_CONFIGS[botType].icon;
-                          return <Icon className={`size-4 ${BOT_CONFIGS[botType].color}`} />;
+                          const Icon = cfg.icon;
+                          return <Icon className={`size-3.5 ${cfg.color}`} />;
                         })()}
                       </div>
                     )}
 
                     <div
                       className={cn(
-                        "max-w-[80%] rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-bottom-1 duration-200",
+                        "max-w-[82%] rounded-xl px-4 py-3 animate-in fade-in slide-in-from-bottom-1 duration-200",
                         message.role === "user"
-                          ? "bg-primary text-primary-foreground ml-auto"
-                          : "bg-muted text-foreground"
+                          ? "chat-user-bubble"
+                          : "chat-bot-bubble"
                       )}
                     >
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:text-white/80 prose-p:leading-relaxed prose-code:text-sky-300 prose-code:bg-sky-500/10 prose-code:rounded prose-code:px-1 prose-pre:bg-white/[0.04] prose-pre:border prose-pre:border-white/[0.08]">
                           <Streamdown>{message.content}</Streamdown>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap text-sm">
+                        <p className="whitespace-pre-wrap text-sm text-white/95 leading-relaxed">
                           {message.content}
                         </p>
                       )}
                     </div>
 
                     {message.role === "user" && (
-                      <div className="size-8 shrink-0 mt-1 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="size-4 text-secondary-foreground" />
+                      <div className="size-7 shrink-0 rounded-full bg-white/[0.08] border border-white/[0.12] flex items-center justify-center">
+                        <User className="size-3.5 text-white/60" />
                       </div>
                     )}
                   </div>
@@ -341,16 +383,22 @@ export function AIChatBox({
                       : undefined
                   }
                 >
-                  <div className={`size-8 shrink-0 mt-1 rounded-full ${BOT_CONFIGS[botType].bg} flex items-center justify-center`}>
+                  <div
+                    className={`size-7 shrink-0 mt-0.5 rounded-full ${cfg.bg} border flex items-center justify-center`}
+                    style={{ borderColor: cfg.ringColor, boxShadow: `0 0 10px ${cfg.glowColor}` }}
+                  >
                     {(() => {
-                      const Icon = BOT_CONFIGS[botType].icon;
-                      return <Icon className={`size-4 ${BOT_CONFIGS[botType].color}`} />;
+                      const Icon = cfg.icon;
+                      return <Icon className={`size-3.5 ${cfg.color}`} />;
                     })()}
                   </div>
-                  <div className="rounded-lg bg-muted px-4 py-2.5 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <div className="chat-bot-bubble px-4 py-3 flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <span className="chat-thinking-dot" style={{ animationDelay: "0ms" }} />
+                      <span className="chat-thinking-dot" style={{ animationDelay: "200ms" }} />
+                      <span className="chat-thinking-dot" style={{ animationDelay: "400ms" }} />
+                    </div>
+                    <span className="text-[11px] text-white/30 font-mono tracking-wide">thinking…</span>
                   </div>
                 </div>
               )}
@@ -363,26 +411,29 @@ export function AIChatBox({
       <form
         ref={inputAreaRef}
         onSubmit={handleSubmit}
-        className="flex gap-2 p-4 border-t bg-background/50 items-end"
+        className="chat-input-area flex gap-2.5 p-3 items-end"
       >
-        <Textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          className="flex-1 max-h-32 resize-none min-h-9"
-          rows={1}
-        />
+        <div className="flex-1 chat-input-wrapper">
+          <Textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            className="chat-textarea flex-1 max-h-32 resize-none min-h-[40px] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-white/85 placeholder:text-white/25"
+            rows={1}
+          />
+        </div>
         <Button
           type="submit"
           size="icon"
           disabled={!input.trim() || isLoading}
           aria-label={isLoading ? "Sending…" : "Send message"}
-          className="shrink-0 h-[38px] w-[38px]"
+          className="shrink-0 h-10 w-10 chat-send-btn"
+          style={{ "--ring-color": cfg.ringColor, "--glow-color": cfg.glowColor } as React.CSSProperties}
         >
           {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className={`size-4 animate-spin ${cfg.color}`} />
           ) : (
             <Send className="size-4" />
           )}
