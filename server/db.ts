@@ -2,6 +2,7 @@ import { eq, desc, and, sql, gte, lte, count, sum, inArray, isNotNull } from "dr
 import { drizzle } from "drizzle-orm/mysql2";
 import * as schema from "../drizzle/schema";
 import { logger } from "./utils/logger";
+import { insertWithSlugRetry, isMysqlDuplicateKeyError, toSlug } from "./utils/slug";
 import {
   InsertUser, users,
   stores, InsertStore,
@@ -187,37 +188,35 @@ export async function getUserByOpenId(openId: string) {
 // ─── Organization helpers ───────────────────────────────────────────────────
 
 /**
- * Create an organization and add the owner as a member in one transaction.
- * Returns the created org. The slug is generated from the name; collisions
- * are resolved by suffixing `-<random>`.
+ * Create an organization and add the owner as a member.
+ *
+ * Slug strategy: insert-on-conflict-retry with a crypto-random suffix.
+ * The unique index on `organizations.slug` is the source of truth for
+ * collisions — a SELECT-then-INSERT check would race against concurrent
+ * creates of orgs with the same base name. See `utils/slug.ts` for the
+ * generic helper + tests.
  */
 export async function createOrganization(
   data: { name: string; ownerId: number; kind?: "personal" | "team"; plan?: Organization["plan"] },
 ): Promise<Organization> {
   const db = await requireDb();
-  const baseSlug = (data.name || `user-${data.ownerId}`)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || `user-${data.ownerId}`;
+  const baseSlug = toSlug(data.name || `user-${data.ownerId}`, `user-${data.ownerId}`);
 
-  // Resolve slug collisions deterministically
-  let slug = baseSlug;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const existing = await db.select().from(organizations).where(eq(organizations.slug, slug)).limit(1);
-    if (!existing[0]) break;
-    slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-  }
-
-  const insert = await db.insert(organizations).values({
-    name: data.name,
-    slug,
-    ownerId: data.ownerId,
-    kind: data.kind ?? "personal",
-    plan: data.plan ?? null,
-  } as InsertOrganization);
-
-  const orgId = insert[0].insertId;
+  const { slug, result: orgId } = await insertWithSlugRetry(
+    async (candidate) => {
+      const insert = await db.insert(organizations).values({
+        name: data.name,
+        slug: candidate,
+        ownerId: data.ownerId,
+        kind: data.kind ?? "personal",
+        plan: data.plan ?? null,
+      } as InsertOrganization);
+      return insert[0].insertId;
+    },
+    isMysqlDuplicateKeyError,
+    { baseSlug },
+  );
+  void slug; // emitted via the org row below
 
   await db.insert(orgMembers).values({
     orgId,
