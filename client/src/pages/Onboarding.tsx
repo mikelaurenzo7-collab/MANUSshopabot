@@ -241,7 +241,7 @@ function WelcomeStep({
 }) {
   const bots = [
     {
-      name: "Launch mode",
+      name: "Launch Mode",
       icon: Bot,
       color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
       description: "Researches niches, sources products, and sets up your first storefront end-to-end.",
@@ -252,7 +252,7 @@ function WelcomeStep({
       previewTone: "text-sky-200/90",
     },
     {
-      name: "Operator mode",
+      name: "Operator Mode",
       icon: Package,
       color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
       description: "Monitors inventory, processes orders, and adjusts pricing — all without you.",
@@ -260,7 +260,7 @@ function WelcomeStep({
       previewTone: "text-cyan-200/90",
     },
     {
-      name: "Growth mode",
+      name: "Growth Mode",
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
@@ -1084,7 +1084,7 @@ function LaunchStep({
 
         <div className="space-y-1.5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
           <h2 className="text-lg font-bold text-foreground leading-tight">
-            {hasStore ? "Your Store Bot is awake" : "Store Bot is researching"}
+            {hasStore ? "Store Bot is awake" : "Store Bot is researching"}
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
             {hasStore ? (

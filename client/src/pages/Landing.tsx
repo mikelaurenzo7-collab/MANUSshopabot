@@ -15,23 +15,23 @@ import { useLocation } from "wouter";
 import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
 
 const BOT_COLORS = {
-  "Launch mode":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
-  "Operator mode": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)",  hex: "#22d3ee" },
-  "Growth mode":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)", hex: "#fb923c" },
+  "Launch Mode":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
+  "Operator Mode": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)",  hex: "#22d3ee" },
+  "Growth Mode":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)", hex: "#fb923c" },
 } as const;
 
 const BOTS = [
   {
     icon: Bot,
-    name: "Launch mode" as const,
+    name: "Launch Mode" as const,
     tagline: "Builds your first store — Day 1",
-    description: "The Store Bot researches a winning niche, sources products, configures your storefront, and writes product copy for new owners launching their first store.",
+    description: "Store Bot researches a winning niche, sources products, configures your storefront, and writes product copy for new owners launching their first store.",
     features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
     autonomous: { label: "Competitor Stalker", note: "Agent decides which competitors to inspect, when it has enough triangulation." },
   },
   {
     icon: Package,
-    name: "Operator mode" as const,
+    name: "Operator Mode" as const,
     tagline: "Runs it — forever",
     description: "Takes over the moment your store launches. Processes orders, optimizes pricing, syncs inventory, and triages support — without touching your day.",
     features: ["Automated order fulfillment", "Dynamic pricing engine", "Inventory sync & alerts", "Customer support triage"],
@@ -39,7 +39,7 @@ const BOTS = [
   },
   {
     icon: Megaphone,
-    name: "Growth mode" as const,
+    name: "Growth Mode" as const,
     tagline: "Grows it — while you sleep",
     description: "Turns the same Store Bot toward demand. It creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
     features: ["TikTok & Meta ad campaigns", "Social media scheduling", "Email & SMS recovery flows", "SEO optimization"],
@@ -1328,7 +1328,7 @@ export default function Landing() {
           <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 md:gap-2 items-stretch">
             <LifecyclePill stage="Day 1" title="Building" lead="Store Bot is in the cockpit." hex="#38bdf8" Icon={Bot} />
             <div className="hidden md:flex items-center justify-center"><KeyRound className="w-4 h-4 text-amber-300/70" /></div>
-            <LifecyclePill stage="Launch Day" title="Handoff" lead="Launch mode hands off to operator mode." hex="#fbbf24" Icon={KeyRound} highlight />
+            <LifecyclePill stage="Launch Day" title="Handoff" lead="Store Bot switches from launch to operator mode." hex="#fbbf24" Icon={KeyRound} highlight />
             <div className="hidden md:flex items-center justify-center"><ArrowRight className="w-4 h-4 text-white/30" /></div>
             <LifecyclePill stage="Day 2+" title="Operating" lead="Store Bot fulfills, optimizes, and grows." hex="#22d3ee" Icon={Package} />
           </div>
