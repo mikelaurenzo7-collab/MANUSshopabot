@@ -64,9 +64,10 @@ export function StripeSuccessBanner() {
           variant="ghost"
           size="sm"
           onClick={() => setDismissed(true)}
+          aria-label="Dismiss subscription confirmation"
           className="text-green-300 hover:text-green-200 hover:bg-green-500/10"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
     </div>

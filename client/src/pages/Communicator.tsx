@@ -143,8 +143,12 @@ export default function CommunicatorPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-red-500 mb-2 break-words">{error}</p>
               </div>
-              <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400 transition-colors mt-0.5 shrink-0">
-                <X className="w-3 md:w-4 h-3 md:h-4" />
+              <button
+                onClick={() => setError(null)}
+                aria-label="Dismiss error"
+                className="text-red-500 hover:text-red-400 transition-colors mt-0.5 shrink-0"
+              >
+                <X className="w-3 md:w-4 h-3 md:h-4" aria-hidden="true" />
               </button>
             </div>
           )}
@@ -280,8 +284,12 @@ export default function CommunicatorPage() {
           <div className="relative w-full md:w-96 h-screen md:h-auto md:rounded-lg bg-terminal-bg border border-white/[0.08] flex flex-col max-h-screen md:max-h-[80vh]">
             <div className="flex items-center justify-between p-4 border-b border-white/[0.08]">
               <h3 className="font-semibold text-white truncate">{selectedEmail.subject}</h3>
-              <button onClick={() => setSelectedEmailId(null)} className="text-white/40 hover:text-white">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setSelectedEmailId(null)}
+                aria-label="Close email"
+                className="text-white/40 hover:text-white"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
