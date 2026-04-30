@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { getBrand } from "@/lib/platformBrand";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +29,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  ShieldCheck,
+  GitBranch,
+  ArrowRight,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { CountUp } from "@/components/CountUp";
@@ -329,14 +333,34 @@ export default function Intelligence() {
               ))}
             </div>
           ) : allAnomalies.length === 0 ? (
+            // "All clear" — emerald shield with halo glow signals
+            // confident health rather than empty-data sadness. The CTA
+            // takes the operator to the live activity feed so they can
+            // verify the bots are still running their continuous checks.
             <div className="empty-state">
-              <div className="empty-state-icon" style={{ background: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.25)" }}>
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              <div className="relative mb-3">
+                <div className="absolute inset-0 rounded-2xl bg-emerald-500/20 blur-xl" aria-hidden="true" />
+                <div className="relative h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+                  <ShieldCheck className="h-6 w-6 text-emerald-300" />
+                </div>
               </div>
-              <h3 className="text-sm font-semibold text-foreground">All clear</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                No anomalies detected across your stores and ad accounts. The Builder, Merchant, and Social bots run continuous checks; we'll surface anything off-trend here.
+              <h3 className="text-base font-heading font-bold tracking-tight text-foreground">All clear across every channel</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-md text-center leading-relaxed">
+                No anomalies detected across your stores and ad accounts.
+                The Launch, Operate, and Growth bots run continuous
+                checks — anything off-trend lands here the moment it's
+                flagged.
               </p>
+              <Link href="/inbox#activity">
+                <Button
+                  variant="outline"
+                  className="mt-5 h-auto py-2 px-4 border-white/10 hover:border-emerald-400/30 hover:bg-emerald-500/5 gap-2"
+                >
+                  <GitBranch className="h-4 w-4 text-emerald-300" />
+                  <span className="text-xs font-medium">View bot activity</span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </Link>
             </div>
           ) : (
             <div className="stagger-list space-y-3">
