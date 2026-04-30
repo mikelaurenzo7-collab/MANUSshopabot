@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ComponentType } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,10 @@ import {
   AlertTriangle,
   RefreshCw,
   BarChart3,
+  Globe,
+  Store,
+  ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { CountUp } from "@/components/CountUp";
@@ -55,20 +60,62 @@ type TopProductDatum = {
   orders: number;
 };
 
+/** Per-tone visual treatment for the empty-state icon halo. Mirrors
+ *  the page-level halo+CTA pattern from `/workflows`, `/inbox#approvals`,
+ *  and `/insights/*` empty states — but tighter (10×10 plate vs 14×14)
+ *  since these render INSIDE a chart card rather than as a hero. */
+const EMPTY_TONE = {
+  sky:     { plate: "bg-sky-500/10 border-sky-500/25",         icon: "text-sky-300",     glow: "bg-sky-500/15",     shadow: "shadow-[0_0_18px_rgba(14,165,233,0.18)]"  },
+  cyan:    { plate: "bg-cyan-500/10 border-cyan-500/25",       icon: "text-cyan-300",    glow: "bg-cyan-500/15",    shadow: "shadow-[0_0_18px_rgba(34,211,238,0.18)]" },
+  violet:  { plate: "bg-violet-500/10 border-violet-500/25",   icon: "text-violet-300",  glow: "bg-violet-500/15",  shadow: "shadow-[0_0_18px_rgba(167,139,250,0.18)]" },
+  emerald: { plate: "bg-emerald-500/10 border-emerald-500/25", icon: "text-emerald-300", glow: "bg-emerald-500/15", shadow: "shadow-[0_0_18px_rgba(16,185,129,0.18)]"  },
+  amber:   { plate: "bg-amber-500/10 border-amber-500/25",     icon: "text-amber-300",   glow: "bg-amber-500/15",   shadow: "shadow-[0_0_18px_rgba(251,191,36,0.18)]"  },
+  muted:   { plate: "bg-white/[0.04] border-white/[0.10]",     icon: "text-white/35",    glow: "bg-white/[0.04]",   shadow: "" },
+} as const;
+type EmptyTone = keyof typeof EMPTY_TONE;
+
 function EmptyAnalyticsState({
   title,
   description,
+  icon: IconCmp = Package,
+  tone = "muted",
+  cta,
 }: {
   title: string;
   description: string;
+  /** Lucide icon component — defaults to `Package`. */
+  icon?: LucideIcon | ComponentType<{ className?: string }>;
+  /** Halo colour. Use `sky`/`cyan`/`violet`/`emerald` for thematic
+   *  context (revenue / traffic / products / health), `muted` for the
+   *  neutral "no data yet" cases. */
+  tone?: EmptyTone;
+  /** Optional next-action CTA. Use it whenever the user CAN unblock
+   *  the empty state in one click (connect a store, pick a store). */
+  cta?: { label: string; href: string };
 }) {
+  const t = EMPTY_TONE[tone];
   return (
     <div className="empty-state">
-      <div className="empty-state-icon">
-        <Package className="h-5 w-5 text-white/25" />
+      <div className="relative mb-3">
+        <div className={`absolute inset-0 rounded-xl blur-lg ${t.glow}`} aria-hidden="true" />
+        <div className={`relative h-10 w-10 rounded-xl border flex items-center justify-center ${t.plate} ${t.shadow}`}>
+          <IconCmp className={`h-5 w-5 ${t.icon}`} />
+        </div>
       </div>
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="text-xs text-muted-foreground mt-1.5 max-w-sm leading-relaxed">{description}</p>
+      {cta && (
+        <Link href={cta.href}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 h-auto py-1.5 px-3 border-white/10 hover:border-white/20 hover:bg-white/5 gap-1.5"
+          >
+            <span className="text-xs font-medium">{cta.label}</span>
+            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }
@@ -330,11 +377,16 @@ export default function AnalyticsPage() {
                 </div>
               ) : showStoreSelectionHint ? (
                 <EmptyAnalyticsState
+                  icon={Store}
+                  tone="sky"
                   title="Select a Store for Trend Data"
                   description="Revenue trends are only shown when a specific store has recorded analytics snapshots."
+                  cta={{ label: "Pick a store", href: "/" }}
                 />
               ) : !hasSnapshotData ? (
                 <EmptyAnalyticsState
+                  icon={TrendingUp}
+                  tone="sky"
                   title="No Revenue Snapshots Yet"
                   description="This store does not have 30-day analytics snapshots yet, so trend charts stay empty instead of using simulated values."
                 />
@@ -373,11 +425,16 @@ export default function AnalyticsPage() {
                 </div>
               ) : showStoreSelectionHint ? (
                 <EmptyAnalyticsState
+                  icon={Store}
+                  tone="cyan"
                   title="Store Snapshot Required"
                   description="Traffic-source breakdown comes from the latest analytics snapshot for a selected store."
+                  cta={{ label: "Pick a store", href: "/" }}
                 />
               ) : trafficSources.length === 0 ? (
                 <EmptyAnalyticsState
+                  icon={Globe}
+                  tone="cyan"
                   title="No Traffic Source Data"
                   description="The latest analytics snapshot for this store does not contain a traffic-source breakdown yet."
                 />
@@ -432,11 +489,16 @@ export default function AnalyticsPage() {
               </div>
             ) : showStoreSelectionHint ? (
               <EmptyAnalyticsState
+                icon={Store}
+                tone="violet"
                 title="Select a Store for Product Ranking"
                 description="Top-product rankings come from a store's latest analytics snapshot rather than placeholder data."
+                cta={{ label: "Pick a store", href: "/" }}
               />
             ) : topProducts.length === 0 ? (
               <EmptyAnalyticsState
+                icon={Package}
+                tone="violet"
                 title="No Top Product Data"
                 description="This store has no product-level revenue data in its latest analytics snapshot yet."
               />
