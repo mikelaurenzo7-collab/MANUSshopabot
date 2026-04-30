@@ -69,9 +69,9 @@ function StatusBadge({ status }: { status: string }) {
 
 function AgentBadge({ agentType }: { agentType: string }) {
   const map: Record<string, string> = {
-    architect: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
-    merchant: "bg-violet-500/10 text-violet-400 border-violet-500/30",
-    social: "bg-pink-500/10 text-pink-400 border-pink-500/30",
+    architect: "bg-sky-500/10 text-sky-400 border-sky-500/30",
+    merchant: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+    social: "bg-amber-500/10 text-amber-400 border-amber-500/30",
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${map[agentType] ?? "bg-slate-500/10 text-slate-400 border-slate-500/30"}`}>

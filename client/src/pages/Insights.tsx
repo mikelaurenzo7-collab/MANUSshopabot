@@ -70,7 +70,7 @@ export default function InsightsPage() {
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5">
         <TabsList
-          className="bg-white/[0.03] border border-white/[0.06] p-1"
+          className="tab-bar-shell"
           role="tablist"
           aria-label="Insights sections"
         >
@@ -78,7 +78,7 @@ export default function InsightsPage() {
             value="stores"
             role="tab"
             aria-selected={tab === "stores"}
-            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+            className="tab-trigger-shell"
           >
             My Stores
           </TabsTrigger>
@@ -86,7 +86,7 @@ export default function InsightsPage() {
             value="campaigns"
             role="tab"
             aria-selected={tab === "campaigns"}
-            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+            className="tab-trigger-shell"
           >
             Campaigns
           </TabsTrigger>
@@ -94,7 +94,7 @@ export default function InsightsPage() {
             value="intelligence"
             role="tab"
             aria-selected={tab === "intelligence"}
-            className="data-[state=active]:bg-emerald-500/15 data-[state=active]:text-emerald-300 data-[state=active]:border-emerald-500/20 border border-transparent text-white/50"
+            className="tab-trigger-shell"
           >
             Cross-Store &amp; Market
           </TabsTrigger>

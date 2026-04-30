@@ -135,11 +135,11 @@ export function PageHeader({
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[17px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
+          <h1 className="text-[18px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[11px] text-muted-enhanced truncate mt-0.5">{subtitle}</p>
+            <p className="text-[12px] text-white/45 truncate mt-0.5">{subtitle}</p>
           )}
         </div>
         {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}

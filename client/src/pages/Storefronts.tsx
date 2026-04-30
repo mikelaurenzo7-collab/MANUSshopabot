@@ -93,7 +93,7 @@ export default function StorefrontsPage() {
       />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
-        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 h-auto flex-wrap gap-1">
+        <TabsList className="tab-bar-shell h-auto flex-wrap gap-1">
           {tabConfig.map((t) => {
             const Icon = t.icon;
             const isActive = tab === t.id;
@@ -101,9 +101,7 @@ export default function StorefrontsPage() {
               <TabsTrigger
                 key={t.id}
                 value={t.id}
-                className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all
-                  data-[state=active]:bg-cyan-500/15 data-[state=active]:text-cyan-300 data-[state=active]:border-cyan-500/25
-                  border border-transparent text-white/55 hover:text-white/85`}
+                className="tab-trigger-shell group inline-flex items-center gap-1.5 px-3 py-1.5"
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? "" : "text-white/40 group-hover:text-white/70"}`} />
                 {t.label}

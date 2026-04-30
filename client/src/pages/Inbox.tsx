@@ -74,9 +74,9 @@ export default function InboxPage() {
       <div className="px-5 mb-2" />
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-5">
-        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1">
-          <TabsTrigger value="activity" className="data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">Activity</TabsTrigger>
-          <TabsTrigger value="approvals" className="relative data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-300 data-[state=active]:border-sky-500/20 border border-transparent text-white/50">
+        <TabsList className="tab-bar-shell">
+          <TabsTrigger value="activity" className="tab-trigger-shell">Activity</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative tab-trigger-shell">
             Approvals
             {pendingCount > 0 && (
               <Badge className="ml-1.5 h-5 min-w-5 px-1 text-[10px] bg-amber-500 text-white border-0">
