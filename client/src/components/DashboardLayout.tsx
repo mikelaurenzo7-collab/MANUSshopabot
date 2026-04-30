@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   Inbox as InboxIcon,
   Bot,
+  Sparkles,
   GitBranch,
   Globe,
   BarChart3,
@@ -215,6 +216,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { title: "Command Center", path: "/", icon: LayoutDashboard },
     { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
     { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: storeBotStatus },
+    { title: "Workspace", path: "/workspace", icon: Sparkles, brand: "sky" },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
@@ -267,6 +269,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
     if (path === "/chat") {
       return location.startsWith("/chat");
+    }
+    if (path === "/workspace") {
+      return location.startsWith("/workspace");
     }
     return location === path || location.startsWith(path + "/");
   };
