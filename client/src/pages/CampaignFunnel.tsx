@@ -102,7 +102,7 @@ export default function CampaignFunnel() {
           <div className="text-center py-8">
             <p className="text-sm text-white/55">No campaigns sent yet.</p>
             <p className="text-xs text-white/35 mt-1">
-              Generate one from the Social Bot, then send it to your list.
+              Generate one from Store Bot growth mode, then send it to your list.
             </p>
           </div>
         )}

@@ -114,7 +114,7 @@ export default function Architect() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-terminal-bg overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-terminal-bg text-white flex-col min-h-0">
       {/* Ambient backdrop — soft brand light leaks bleed into the page so
           it feels alive even at idle. Pointer-events:none keeps clicks
           flowing through to the content layer. */}

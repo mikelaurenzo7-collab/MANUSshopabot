@@ -93,7 +93,7 @@ export default function MerchantPage() {
   }, [selectedEntity]);
 
   return (
-    <div className="flex h-full w-full relative bg-terminal-bg overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-terminal-bg text-white flex-col min-h-0">
       <div className="bot-page-ambient bot-page-ambient--merchant" aria-hidden="true">
         <div className="bot-page-ambient-grid" />
         <div className="bot-page-ambient-orb bot-page-ambient-orb--top" />

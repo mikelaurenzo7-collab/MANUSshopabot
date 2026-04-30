@@ -23,10 +23,10 @@ describe("shared/bots — lifecycle taxonomy", () => {
     }
   });
 
-  it("botName returns user-facing names with The prefix", () => {
-    expect(botName("architect")).toBe("The Builder");
-    expect(botName("merchant")).toBe("The Merchant");
-    expect(botName("social")).toBe("The Social Bot");
+  it("botName returns user-facing mode names", () => {
+    expect(botName("architect")).toBe("Launch mode");
+    expect(botName("merchant")).toBe("Operator mode");
+    expect(botName("social")).toBe("Growth mode");
   });
 
   it("botName never throws on unknown ids", () => {

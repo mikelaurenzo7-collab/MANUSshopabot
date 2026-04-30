@@ -1,8 +1,8 @@
 /**
- * HandoffMoment — the Builder→Merchant celebration.
+ * HandoffMoment — the launch-to-operator mode celebration.
  *
  * The most emotional UI surface in the product. Shown once per store, when
- * the Builder has finished its job and the Merchant takes over. Treats the
+ * Store Bot finishes launch mode and switches to operator mode. Treats the
  * moment with care: no small print, no upsell, no friction. Just an honest
  * beat that says "you graduated".
  */
@@ -38,8 +38,8 @@ export function HandoffMoment({ storeId, storeName, onComplete, onDefer }: Hando
 
   const acknowledge = trpc.lifecycle.acknowledgeHandoff.useMutation({
     onSuccess: async () => {
-      toast.success("The Merchant has the keys.", {
-        description: `${storeName} is now in operating mode.`,
+      toast.success("Store Bot is now in operator mode.", {
+        description: `${storeName} has switched to operating mode.`,
         icon: <Package className="w-4 h-4" />,
       });
       await Promise.all([
@@ -138,7 +138,7 @@ export function HandoffMoment({ storeId, storeName, onComplete, onDefer }: Hando
             <BotPanel
               tone="dim"
               icon={<Bot className="w-5 h-5 text-sky-400" />}
-              title="The Builder"
+              title="Launch mode"
               subtitle="Setup complete"
               accent="sky"
               footerLabel="Stays on call for"
@@ -151,7 +151,7 @@ export function HandoffMoment({ storeId, storeName, onComplete, onDefer }: Hando
             <BotPanel
               tone="bright"
               icon={<Package className="w-5 h-5 text-cyan-300" />}
-              title="The Merchant"
+              title="Operator mode"
               subtitle="Taking the wheel"
               accent="cyan"
               footerLabel="Takes over"
@@ -159,10 +159,10 @@ export function HandoffMoment({ storeId, storeName, onComplete, onDefer }: Hando
             />
           </div>
 
-          {/* Social Bot side note */}
+          {/* Growth mode side note */}
           <div className="mt-5 flex items-center gap-2 text-xs text-white/45">
             <Megaphone className="w-3.5 h-3.5 text-orange-400/80" />
-            <span>And the Social Bot starts pulling demand the moment you accept.</span>
+            <span>And Store Bot growth mode starts pulling demand the moment you accept.</span>
           </div>
 
           {/* CTAs */}

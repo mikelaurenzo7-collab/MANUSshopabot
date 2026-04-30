@@ -69,9 +69,9 @@ function StatusBadge({ status }: { status: string }) {
 
 function AgentBadge({ agentType }: { agentType: string }) {
   const map: Record<string, string> = {
-    architect: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
-    merchant: "bg-violet-500/10 text-violet-400 border-violet-500/30",
-    social: "bg-pink-500/10 text-pink-400 border-pink-500/30",
+    architect: "bg-sky-500/10 text-sky-400 border-sky-500/30",
+    merchant: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+    social: "bg-amber-500/10 text-amber-400 border-amber-500/30",
   };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${map[agentType] ?? "bg-slate-500/10 text-slate-400 border-slate-500/30"}`}>
@@ -108,27 +108,27 @@ function WorkflowCard({
   const createdAt = new Date(workflow.createdAt).toLocaleString();
 
   const statusGlow: Record<string, string> = {
-    running: "border-l-2 border-l-sky-500/60 shadow-[inset_2px_0_12px_rgba(14,165,233,0.08)] workflow-running-glow",
-    failed: "border-l-2 border-l-red-500/50",
-    completed: "border-l-2 border-l-emerald-500/40",
-    pending: "border-l-2 border-l-amber-500/40",
+    running: "border-l-2 border-l-sky-500/60 bg-sky-500/[0.03] shadow-[inset_2px_0_16px_rgba(14,165,233,0.10)] workflow-running-glow",
+    failed: "border-l-2 border-l-red-500/50 bg-red-500/[0.02]",
+    completed: "border-l-2 border-l-emerald-500/40 bg-emerald-500/[0.02]",
+    pending: "border-l-2 border-l-amber-500/40 bg-amber-500/[0.02]",
     cancelled: "border-l-2 border-l-slate-500/30",
-    awaiting_approval: "border-l-2 border-l-amber-500/40",
+    awaiting_approval: "border-l-2 border-l-amber-500/40 bg-amber-500/[0.02]",
   };
 
   return (
-    <div className={`card-hover rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04] ${statusGlow[workflow.status] ?? ""}`}>
+    <div className={`card-hover rounded-xl border border-white/[0.06] p-4 transition-all hover:border-white/[0.12] hover:shadow-[0_4px_20px_rgba(0,0,0,0.25)] ${statusGlow[workflow.status] ?? ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <AgentBadge agentType={workflow.agentType} />
             <StatusBadge status={workflow.status} />
           </div>
-          <h3 className="font-medium text-sm text-white truncate mt-1">{workflow.title}</h3>
+          <h3 className="font-semibold text-sm text-white/90 truncate mt-1">{workflow.title}</h3>
           {workflow.description && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{workflow.description}</p>
+            <p className="text-xs text-white/45 mt-0.5 line-clamp-2 leading-relaxed">{workflow.description}</p>
           )}
-          <p className="text-xs text-slate-500 mt-1">{createdAt}</p>
+          <p className="text-xs text-white/25 mt-1 font-mono">{createdAt}</p>
         </div>
         {canRetry && (
           <Button
@@ -212,15 +212,15 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div>
-            <Label className="text-xs text-slate-400 mb-1 block">Bot Agent</Label>
+            <Label className="text-xs text-slate-400 mb-1 block">Store Bot mode</Label>
             <Select value={agentType} onValueChange={(v) => { setAgentType(v as any); setWorkflowType(""); }}>
               <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-surface-overlay border-white/10">
-                <SelectItem value="architect">Architect Bot</SelectItem>
-                <SelectItem value="merchant">Merchant Bot</SelectItem>
-                <SelectItem value="social">Social Bot</SelectItem>
+                <SelectItem value="architect">Launch mode</SelectItem>
+                <SelectItem value="merchant">Operator mode</SelectItem>
+                <SelectItem value="social">Growth mode</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -414,16 +414,16 @@ export default function Workflows() {
 
       {/* Tabs */}
       <Tabs defaultValue="active">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="active" className="data-[state=active]:bg-white/10">
+        <TabsList className="tab-bar-shell">
+          <TabsTrigger value="active" className="tab-trigger-shell">
             Active
             {(activeWorkflows?.length ?? 0) > 0 && (
-              <Badge className="ml-1.5 bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0">
+              <Badge className="ml-1.5 bg-sky-500/20 text-sky-300 border-sky-500/20 text-[10px] px-1.5 py-0">
                 {activeWorkflows?.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-white/10">
+          <TabsTrigger value="history" className="tab-trigger-shell">
             History
           </TabsTrigger>
         </TabsList>

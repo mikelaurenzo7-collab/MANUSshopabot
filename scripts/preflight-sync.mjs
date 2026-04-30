@@ -144,12 +144,20 @@ function checkDrizzle() {
       // Snapshots are mainly used by drizzle-kit when generating the *next*
       // migration. Missing historical snapshots will not crash Manus runtime
       // migrations, but they will block future drizzle-kit generate runs
-      // that try to diff against that snapshot. Warn loudly.
-      warn(
+      // that try to diff against that snapshot.
+      //
+      // Under --strict this is promoted to a hard error so CI can guarantee
+      // every journaled migration ships with its snapshot. In normal runs we
+      // emit a loud warning so historical drift doesn't break existing CI.
+      const msg =
         `drizzle: snapshot '${f}' is missing for a journaled migration. ` +
-          `Future 'drizzle-kit generate' runs may fail or produce incorrect diffs. ` +
-          `Re-run 'pnpm drizzle-kit generate' against the latest schema to regenerate.`
-      );
+        `Future 'drizzle-kit generate' runs may fail or produce incorrect diffs. ` +
+        `Re-run 'pnpm drizzle-kit generate' against the latest schema to regenerate.`;
+      if (strict) {
+        err(msg);
+      } else {
+        warn(msg);
+      }
     }
   }
 

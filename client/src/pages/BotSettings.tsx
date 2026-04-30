@@ -33,9 +33,9 @@ import { BotMemoryView } from "@/components/BotMemoryView";
 type AgentType = "architect" | "merchant" | "social";
 
 const BOT_CONFIG: Record<AgentType, { name: string; icon: React.ElementType; color: string; accent: string }> = {
-  architect: { name: "Builder Bot", icon: Bot, color: "text-cyan-400", accent: "bg-cyan-500/10 border-cyan-500/20" },
-  merchant: { name: "Merchant Bot", icon: Package, color: "text-violet-400", accent: "bg-violet-500/10 border-violet-500/20" },
-  social: { name: "Social Bot", icon: Megaphone, color: "text-pink-400", accent: "bg-pink-500/10 border-pink-500/20" },
+  architect: { name: "Launch mode", icon: Bot, color: "text-cyan-400", accent: "bg-cyan-500/10 border-cyan-500/20" },
+  merchant: { name: "Operator mode", icon: Package, color: "text-violet-400", accent: "bg-violet-500/10 border-violet-500/20" },
+  social: { name: "Growth mode", icon: Megaphone, color: "text-pink-400", accent: "bg-pink-500/10 border-pink-500/20" },
 };
 
 export default function BotSettings() {
@@ -84,18 +84,17 @@ export default function BotSettings() {
         {(Object.entries(BOT_CONFIG) as [AgentType, typeof BOT_CONFIG[AgentType]][]).map(([id, cfg]) => {
           const Icon = cfg.icon;
           const isSelected = selectedBot === id;
+          const baseClasses = "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 flex-1 sm:flex-initial min-w-0 justify-center";
+          const selectedClasses = `${cfg.accent} ${cfg.color} shadow-sm`;
+          const unselectedClasses = "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]";
           return (
             <button
               key={id}
               onClick={() => setSelectedBot(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                isSelected
-                  ? `${cfg.accent} ${cfg.color} shadow-sm`
-                  : "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
-              }`}
+              className={`${baseClasses} ${isSelected ? selectedClasses : unselectedClasses}`}
             >
-              <Icon className="w-4 h-4" />
-              {cfg.name}
+              <Icon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{cfg.name}</span>
             </button>
           );
         })}
@@ -103,7 +102,7 @@ export default function BotSettings() {
 
       {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 h-auto gap-1">
+        <TabsList className="bg-white/[0.03] border border-white/[0.06] p-1 h-auto gap-1 w-full sm:w-auto grid grid-cols-2 sm:flex">
           {[
             { value: "instructions", label: "Instructions", icon: Zap },
             { value: "memory", label: "Memory", icon: Brain },
@@ -111,14 +110,16 @@ export default function BotSettings() {
             { value: "safety", label: "Safety Rules", icon: Shield },
           ].map((tab) => {
             const TabIcon = tab.icon;
+            const shortLabel = tab.label.includes(' ') ? tab.label.split(' ')[0] : tab.label;
             return (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center gap-1.5 text-xs font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 rounded-lg px-3 py-1.5"
+                className="flex items-center justify-center gap-1.5 text-xs font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 rounded-lg px-2 sm:px-3 py-1.5"
               >
-                <TabIcon className="w-3.5 h-3.5" />
-                {tab.label}
+                <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="inline sm:hidden truncate">{shortLabel}</span>
               </TabsTrigger>
             );
           })}
@@ -143,7 +144,7 @@ export default function BotSettings() {
                   <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1.5">Bot Name</label>
                   <Input
                     defaultValue={profileQuery.data.name}
-                    placeholder="e.g., My Builder Bot"
+                    placeholder="e.g., My Store Bot"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus:border-white/20"
                   />
                 </div>

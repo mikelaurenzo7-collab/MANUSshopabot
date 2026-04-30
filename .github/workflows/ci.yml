@@ -7,8 +7,40 @@ on:
     branches: ["main", "master"]
 
 jobs:
+  manus-sync-smoke-test:
+    # Mirrors what Manus runs when the operator clicks "Sync GitHub
+    # changes". If this job fails, the merge will most likely fail to sync
+    # to the live backend. Keep this job lean — install + preflight +
+    # check + build only — so the signal is "would Manus accept this
+    # merge?" without being polluted by unrelated test flakes.
+    name: Manus sync smoke test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: corepack enable pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Preflight (Manus sync guard)
+        # --strict promotes "missing drizzle snapshot" warnings to hard
+        # errors so a missing snapshot can never silently regress and
+        # break a future `drizzle-kit generate` run on the live backend.
+        run: pnpm preflight --strict
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build
+
   ci:
-    name: Preflight + Check + Test + Build
+    name: Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,14 +54,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Preflight (Manus sync guard)
-        run: pnpm preflight
-
-      - name: Type check
-        run: pnpm check
-
       - name: Tests
         run: pnpm test
-
-      - name: Build
-        run: pnpm build

@@ -779,9 +779,9 @@ export default function WorkflowBuilder() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
-            <SelectItem value="architect">Builder Bot</SelectItem>
-            <SelectItem value="merchant">Merchant Bot</SelectItem>
-            <SelectItem value="social">Social Bot</SelectItem>
+            <SelectItem value="architect">Launch mode</SelectItem>
+            <SelectItem value="merchant">Operator mode</SelectItem>
+            <SelectItem value="social">Growth mode</SelectItem>
           </SelectContent>
         </Select>
 

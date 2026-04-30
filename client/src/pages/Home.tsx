@@ -8,7 +8,7 @@
  *   • Activation coach (auto-dismisses once fully activated)
  *   • Recommended next workflows (persona/data-aware)
  *   • 3-column ops grid:
- *       - Bot status cards (Builder / Merchant / Social)
+ *       - Unified Store Bot status card
  *       - Active workflow feed (live, auto-refreshes)
  *       - Store health panel (connected stores + quick actions)
  */
@@ -21,9 +21,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   Bot, Package, Megaphone, Store,
-  Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
+  Sparkles, Plus, MessageSquare, AlertTriangle,
   Loader2, GitBranch, TrendingUp, ShieldCheck,
-  RotateCcw, Zap, ExternalLink, CheckCircle2, XCircle,
+  Zap, CheckCircle2, XCircle,
   Clock, Activity, ChevronRight, RefreshCw,
 } from "lucide-react";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
@@ -39,26 +39,26 @@ import { Button } from "@/components/ui/button";
 type AgentType = "architect" | "merchant" | "social";
 
 const BOT_META: Record<AgentType, {
-  label: string; href: string; chatHref: string;
+  label: string;
   icon: React.ReactNode; description: string;
   accent: string; border: string; glow: string; dot: string;
 }> = {
   architect: {
-    label: "Builder Bot", href: "/architect", chatHref: "/chat?bot=architect",
+    label: "Build lane",
     icon: <Bot className="w-5 h-5" strokeWidth={2.2} />,
     description: "Niche research · brand generation · store scaffolding",
     accent: "text-sky-300", border: "border-sky-500/20", glow: "shadow-[0_0_32px_rgba(14,165,233,0.15)]",
     dot: "bg-sky-400",
   },
   merchant: {
-    label: "Merchant Bot", href: "/merchant", chatHref: "/chat?bot=merchant",
+    label: "Operate lane",
     icon: <Package className="w-5 h-5" strokeWidth={2.2} />,
     description: "Inventory sync · auto-fulfillment · pricing matrices",
     accent: "text-cyan-300", border: "border-cyan-500/20", glow: "shadow-[0_0_32px_rgba(34,211,238,0.12)]",
     dot: "bg-cyan-400",
   },
   social: {
-    label: "Social Bot", href: "/social", chatHref: "/chat?bot=social",
+    label: "Social lane",
     icon: <Megaphone className="w-5 h-5" strokeWidth={2.2} />,
     description: "Ads · posts · campaigns · email recovery",
     accent: "text-fuchsia-300", border: "border-fuchsia-500/20", glow: "shadow-[0_0_32px_rgba(217,70,239,0.12)]",
@@ -130,24 +130,15 @@ export default function Home() {
     if ((row.running ?? 0) > 0) return "running";
     return "ok";
   };
-  const botRunningFor = (t: AgentType): number => {
-    const row = ((agentStatus as any[]) ?? []).find((r) => r?.agentType === t);
-    return row?.running ?? 0;
-  };
-  const botCompletedFor = (t: AgentType): number => {
-    const row = ((agentStatus as any[]) ?? []).find((r) => r?.agentType === t);
-    return row?.completed ?? 0;
-  };
-
   const totalRunning = ((agentStatus as any[]) ?? []).reduce((a: number, s: any) => a + (s?.running ?? 0), 0);
   const pendingCount = pendingApprovals?.length ?? 0;
 
   const botHealth = (() => {
     const errors = (["architect", "merchant", "social"] as AgentType[]).filter((b) => botStatusFor(b) === "error").length;
-    if (errors > 0) return { tone: "warn" as const, text: `${errors} bot${errors > 1 ? "s" : ""} need attention` };
+    if (errors > 0) return { tone: "warn" as const, text: "Store Bot needs attention" };
     const running = (["architect", "merchant", "social"] as AgentType[]).filter((b) => botStatusFor(b) === "running").length;
-    if (running > 0) return { tone: "active" as const, text: `${running} running, all healthy` };
-    return { tone: "ok" as const, text: "3 bots green" };
+    if (running > 0) return { tone: "active" as const, text: `${running} workflow lane${running > 1 ? "s" : ""} running` };
+    return { tone: "ok" as const, text: "Store Bot healthy" };
   })();
 
   const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
@@ -168,7 +159,7 @@ export default function Home() {
   ].slice(0, 8);
 
   return (
-    <div className="page-enter flex flex-col h-full w-full bg-terminal-bg/70 overflow-hidden relative">
+    <div className="page-enter flex flex-col w-full bg-terminal-bg/70 relative">
       {/* Builder→Merchant handoff celebration */}
       {handoffStore && (
         <HandoffMoment
@@ -202,25 +193,25 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-4 md:px-5 py-2.5 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-4 md:px-5 py-3 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
         <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
         <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
         <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
         <Kpi
           icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
-          label="Bots" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
+          label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
         />
-        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-2.5 py-1 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
+        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
-          <span className="text-[10.5px] text-white/75 truncate" title={recommendation}>{recommendation}</span>
+          <span className="text-[11px] font-medium text-white/90 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
       {/* ── Scrollable body ── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="px-4 md:px-5 py-3 space-y-4">
+        <div className="px-4 md:px-5 py-3 space-y-5">
 
           {/* Daily brief */}
           <DailyBrief />
@@ -235,64 +226,52 @@ export default function Home() {
           <RecommendedWorkflows />
 
           {/* ── Ops Grid ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pb-6">
 
-            {/* ── Col 1: Bot Status Cards ── */}
+            {/* ── Col 1: Unified Store Bot ── */}
             <div className="space-y-3">
-              <SectionHeader icon={<Zap className="w-3.5 h-3.5 text-sky-400" />} title="Bot Status" href="/chat" linkLabel="Open chat" />
-              {(["architect", "merchant", "social"] as AgentType[]).map((bot) => {
-                const meta = BOT_META[bot];
-                const status = botStatusFor(bot);
-                const sc = STATUS_CONFIG[status];
-                const running = botRunningFor(bot);
-                const completed = botCompletedFor(bot);
-                return (
-                  <div
-                    key={bot}
-                    className={`group relative rounded-xl border ${meta.border} bg-white/[0.025] p-4 transition-standard hover:bg-white/[0.05] hover:border-opacity-100 hover:shadow-lg hover:-translate-y-1 ${meta.glow} cursor-pointer card-hover`}
-                    onClick={() => setLocation(meta.href)}
-                  >
-                    {/* Status dot */}
-                    <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${sc.dot}`} />
-                    <div className="flex items-start gap-3">
-                      <div className={`w-9 h-9 rounded-lg border ${meta.border} bg-white/[0.04] flex items-center justify-center shrink-0 ${meta.accent} transition-standard group-hover:bg-white/[0.08]`}>
-                        {meta.icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-[11px] font-bold uppercase tracking-widest ${meta.accent}`}>{meta.label}</p>
-                        <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">{meta.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className={`flex items-center gap-1 text-[10px] font-mono ${sc.color}`}>
-                            {sc.icon} {sc.label}
-                          </span>
-                          {running > 0 && (
-                            <span className="text-[10px] font-mono text-white/35">{running} running</span>
-                          )}
-                          {completed > 0 && (
-                            <span className="text-[10px] font-mono text-white/25">{completed} done</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setLocation(meta.href); }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border ${meta.border} bg-white/[0.03] py-1.5 text-[10px] font-semibold ${meta.accent} hover:bg-white/[0.07] transition-all`}
-                      >
-                        <ArrowRight className="w-3 h-3" /> Open
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setLocation(meta.chatHref); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all"
-                      >
-                        <MessageSquare className="w-3 h-3" /> Chat
-                      </button>
+              <SectionHeader icon={<Zap className="w-3.5 h-3.5 text-sky-400" />} title="Store Bot" href="/chat" linkLabel="Open workspace" />
+              <div
+                className="group relative rounded-xl border border-sky-500/22 bg-gradient-to-br from-sky-500/[0.04] to-white/[0.015] p-4 transition-all duration-300 hover:border-sky-500/35 hover:bg-sky-500/[0.06] hover:shadow-[0_8px_32px_rgba(14,165,233,0.12)] hover:-translate-y-1 shadow-[0_0_28px_rgba(14,165,233,0.08),inset_0_1px_0_rgba(14,165,233,0.06)] cursor-pointer"
+                onClick={() => setLocation("/chat")}
+              >
+                <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${botHealth.tone === "warn" ? "bg-red-400 animate-pulse" : botHealth.tone === "active" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg border border-sky-500/25 bg-sky-500/[0.10] flex items-center justify-center shrink-0 text-sky-300 transition-all duration-300 group-hover:bg-sky-500/[0.18] group-hover:shadow-[0_0_16px_rgba(14,165,233,0.3)]">
+                    <Bot className="w-5 h-5" strokeWidth={2.2} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-sky-300">One Store Bot</p>
+                    <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">
+                      Built for new store owners: launch from zero, then operate connected stores, run social growth, and remember each workspace.
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className={`flex items-center gap-1 text-[10px] font-mono ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`}>
+                        {botHealth.tone === "warn" ? <XCircle className="w-3.5 h-3.5" /> : botHealth.tone === "active" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} {botHealth.text}
+                      </span>
+                      {totalRunning > 0 && (
+                        <span className="text-[10px] font-mono text-white/35">{totalRunning} running</span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/[0.14] transition-all"
+                  >
+                    <MessageSquare className="w-3 h-3" /> Chat + workspace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setLocation("/storefronts#integrations"); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all"
+                  >
+                    <Store className="w-3 h-3" /> Add store
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* ── Col 2: Workflow Feed ── */}
@@ -303,7 +282,7 @@ export default function Home() {
                   icon={<GitBranch className="w-5 h-5 text-white/20" />}
                   title="No workflows yet"
                   description="Launch a workflow from any bot page to see it here."
-                  action={{ label: "Launch workflow", href: "/architect" }}
+                  action={{ label: "Launch workflow", href: "/chat" }}
                 />
               ) : (
                 <div className="space-y-2">
@@ -331,10 +310,10 @@ export default function Home() {
                             <p className="text-[11px] font-semibold text-white/90 truncate">{wf.title}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               {agentMeta && (
-                                <span className={`text-[9px] font-mono uppercase ${agentMeta.accent}`}>{agentMeta.label}</span>
+                                <span className={`text-[10px] font-mono uppercase ${agentMeta.accent}`}>{agentMeta.label}</span>
                               )}
-                              <span className={`text-[9px] font-mono ${ws.color}`}>{wf.status.replace(/_/g, " ")}</span>
-                              <span className="text-[9px] text-white/25 ml-auto">{timeAgo}</span>
+                              <span className={`text-[10px] font-mono ${ws.color}`}>{wf.status.replace(/_/g, " ")}</span>
+                              <span className="text-[10px] text-white/35 ml-auto">{timeAgo}</span>
                             </div>
                           </div>
                         </div>
@@ -363,7 +342,7 @@ export default function Home() {
                 <EmptyCard
                   icon={<Store className="w-5 h-5 text-white/20" />}
                   title="No stores connected"
-                  description="Connect your first Shopify, Etsy, or Amazon store to get started."
+                  description="Connect a Shopify store or start your first launch workflow to get started."
                   action={{ label: "Connect a store", href: "/storefronts#integrations?returnTo=/" }}
                 />
               ) : (
@@ -382,24 +361,24 @@ export default function Home() {
                             <Store className="w-4 h-4 text-emerald-400" strokeWidth={2} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-semibold text-white/90 truncate">{store.name}</p>
-                            <p className="text-[9px] font-mono text-white/35 truncate capitalize">{store.platform} · {store.status}</p>
+                            <p className="text-[12px] font-semibold text-white/90 truncate">{store.name}</p>
+                            <p className="text-[10px] font-mono text-white/40 truncate capitalize">{store.platform} · {store.status}</p>
                           </div>
                           <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-emerald-400" : "bg-white/20"}`} />
                         </div>
                         {storeMetrics && (
                           <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] flex items-center gap-4">
                             <div>
-                              <p className="text-[9px] text-white/30 font-mono uppercase">Revenue</p>
+                              <p className="text-[10px] text-white/40 font-mono uppercase">Revenue</p>
                               <p className="text-[11px] font-mono text-emerald-400">${((storeMetrics.revenue ?? 0) / 100).toFixed(0)}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] text-white/30 font-mono uppercase">Orders</p>
+                              <p className="text-[10px] text-white/40 font-mono uppercase">Orders</p>
                               <p className="text-[11px] font-mono text-white/70">{storeMetrics.orders ?? 0}</p>
                             </div>
                             {(storeMetrics.lowStock ?? 0) > 0 && (
                               <div className="ml-auto">
-                                <span className="flex items-center gap-1 text-[9px] font-mono text-amber-400">
+                                <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400">
                                   <AlertTriangle className="w-3 h-3" /> {storeMetrics.lowStock} low stock
                                 </span>
                               </div>
@@ -410,14 +389,14 @@ export default function Home() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setLocation("/insights"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[9px] font-mono text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <TrendingUp className="w-3 h-3" /> Analytics
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setLocation("/merchant"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[9px] font-mono text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <Package className="w-3 h-3" /> Manage
                           </button>
@@ -428,7 +407,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setLocation("/storefronts#integrations")}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/[0.1] bg-transparent py-2.5 text-[10px] font-mono text-white/30 hover:text-white/60 hover:border-white/[0.2] transition-all"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/[0.1] bg-transparent py-2.5 text-[11px] text-white/40 hover:text-white/60 hover:border-white/[0.2] transition-all"
                   >
                     <Plus className="w-3.5 h-3.5" /> Connect another store
                   </button>
@@ -449,13 +428,13 @@ export default function Home() {
 
 function SectionHeader({ icon, title, href, linkLabel }: { icon: React.ReactNode; title: string; href?: string; linkLabel?: string }) {
   return (
-    <div className="flex items-center justify-between mb-1">
+    <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-1.5">
         {icon}
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{title}</span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/55">{title}</span>
       </div>
       {href && linkLabel && (
-        <Link href={href} className="flex items-center gap-0.5 text-[10px] text-white/30 hover:text-sky-400 transition-colors">
+        <Link href={href} className="flex items-center gap-0.5 text-[10px] text-white/35 hover:text-sky-400 transition-colors duration-200">
           {linkLabel} <ChevronRight className="w-3 h-3" />
         </Link>
       )}
@@ -471,19 +450,19 @@ function EmptyCard({ icon, title, description, action }: {
 }) {
   const [, setLocation] = useLocation();
   return (
-    <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] p-6 flex flex-col items-center text-center gap-3">
-      <div className="w-10 h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] flex items-center justify-center">
+    <div className="empty-state p-6">
+      <div className="empty-state-icon mb-0">
         {icon}
       </div>
-      <div>
-        <p className="text-[11px] font-semibold text-white/50">{title}</p>
-        <p className="text-[10px] text-white/30 mt-1 leading-relaxed">{description}</p>
+      <div className="mt-3">
+        <p className="text-[12px] font-semibold text-white/75">{title}</p>
+        <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{description}</p>
       </div>
       {action && (
         <button
           type="button"
           onClick={() => setLocation(action.href)}
-          className="flex items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/20 transition-all"
+          className="mt-1 flex items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/20 hover:border-sky-500/50 transition-all duration-200"
         >
           <Plus className="w-3 h-3" /> {action.label}
         </button>

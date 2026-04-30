@@ -127,11 +127,11 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
         </div>
         <p className="text-sm font-medium text-foreground">No memories yet</p>
         <p className="text-xs text-muted-foreground mt-1 text-center max-w-md">
-          The {agentType === "architect" ? "Builder" : agentType === "merchant" ? "Merchant" : "Social"} bot will accumulate
+          Store Bot will accumulate
           durable learnings — supplier lead times, winning niches, audience hooks — as it runs workflows. Launch one to
           start filling this view.
         </p>
-        <Link href="/architect">
+        <Link href="/chat">
           <button className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-fuchsia-500/15 border border-fuchsia-500/30 text-xs font-semibold text-fuchsia-200 hover:bg-fuchsia-500/25 hover:border-fuchsia-400/40 transition-colors">
             <Sparkles className="h-3.5 w-3.5" />
             Launch a workflow
@@ -144,7 +144,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+      <div className="flex flex-col gap-2">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
           <Input
@@ -154,34 +154,36 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
             className="pl-8 bg-white/[0.03] border-white/[0.08] text-sm h-9"
           />
         </div>
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as MemoryType | "all")}>
-          <SelectTrigger className="w-full sm:w-36 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
-            <Filter className="w-3.5 h-3.5 mr-1.5 text-white/40" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="fact">Facts</SelectItem>
-            <SelectItem value="pattern">Patterns</SelectItem>
-            <SelectItem value="decision">Decisions</SelectItem>
-            <SelectItem value="outcome">Outcomes</SelectItem>
-            <SelectItem value="context">Context</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-          <SelectTrigger className="w-full sm:w-44 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
-            <ArrowDownAZ className="w-3.5 h-3.5 mr-1.5 text-white/40" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="recent">Most recent</SelectItem>
-            <SelectItem value="confidence">Highest confidence</SelectItem>
-            <SelectItem value="most-accessed">Most accessed</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as MemoryType | "all")}>
+            <SelectTrigger className="flex-1 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-white/40 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="fact">Facts</SelectItem>
+              <SelectItem value="pattern">Patterns</SelectItem>
+              <SelectItem value="decision">Decisions</SelectItem>
+              <SelectItem value="outcome">Outcomes</SelectItem>
+              <SelectItem value="context">Context</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger className="flex-1 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
+              <ArrowDownAZ className="w-3.5 h-3.5 mr-1.5 text-white/40 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Most recent</SelectItem>
+              <SelectItem value="confidence">Highest confidence</SelectItem>
+              <SelectItem value="most-accessed">Most accessed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <p className="text-[10px] text-white/35 font-mono">
+      <p className="text-[10px] text-white/35 font-mono break-words">
         Showing {filteredCount} of {totalCount} {totalCount === 1 ? "memory" : "memories"}
         {query && <span className="text-fuchsia-300/70"> · matching "{query}"</span>}
       </p>
@@ -213,10 +215,10 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
             return (
               <div
                 key={mem.id}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 hover:border-white/[0.12] hover:bg-white/[0.035] transition-all"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-3.5 hover:border-white/[0.12] hover:bg-white/[0.035] transition-all"
               >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} aria-hidden="true" />
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${accent.dot}`} aria-hidden="true" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className={`text-[9px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded border ${accent.chip}`}>
@@ -224,7 +226,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
                       </span>
                       <p className="text-sm font-mono font-semibold text-white truncate">{mem.key}</p>
                     </div>
-                    <p className={`text-xs text-white/65 leading-relaxed ${isLong && !isExpanded ? "line-clamp-2" : ""}`}>
+                    <p className={`text-xs text-white/65 leading-relaxed break-words ${isLong && !isExpanded ? "line-clamp-2" : ""}`}>
                       {valueStr}
                     </p>
                     {isLong && (
@@ -243,23 +245,23 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
                             key={i}
                             className="inline-flex items-center gap-1 text-[9px] font-mono text-white/55 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded"
                           >
-                            <Tag className="w-2 h-2 text-fuchsia-400/60" />
-                            {t}
+                            <Tag className="w-2 h-2 text-fuchsia-400/60 shrink-0" />
+                            <span className="truncate max-w-20">{t}</span>
                           </span>
                         ))}
                       </div>
                     )}
                   </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  <div className="shrink-0 flex flex-col items-end gap-1.5 min-w-[80px]">
                     <ConfidenceBar value={mem.confidence ?? 50} />
-                    <div className="flex items-center gap-2 text-[10px] text-white/45 font-mono">
-                      <span className="inline-flex items-center gap-0.5" title="Times read by the bot during runs">
-                        <Activity className="w-2.5 h-2.5" />
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 text-[10px] text-white/45 font-mono">
+                      <span className="inline-flex items-center gap-0.5 whitespace-nowrap" title="Times read by the bot during runs">
+                        <Activity className="w-2.5 h-2.5 shrink-0" />
                         {mem.accessCount ?? 0}
                       </span>
-                      <span className="inline-flex items-center gap-0.5" title="Last time the bot recalled this memory">
-                        <Clock className="w-2.5 h-2.5" />
-                        {relativeTime(mem.lastAccessedAt ?? mem.createdAt)}
+                      <span className="inline-flex items-center gap-0.5 whitespace-nowrap" title="Last time the bot recalled this memory">
+                        <Clock className="w-2.5 h-2.5 shrink-0" />
+                        <span className="truncate max-w-16 sm:max-w-none">{relativeTime(mem.lastAccessedAt ?? mem.createdAt)}</span>
                       </span>
                     </div>
                   </div>

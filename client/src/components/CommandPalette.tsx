@@ -30,7 +30,6 @@ import {
   Globe,
   Bot,
   CheckCircle,
-  Mail,
   RotateCcw,
   Play,
   Plus,
@@ -111,16 +110,13 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     setOpen(false);
   };
 
-  // Navigation entries match the consolidated sidebar (7 destinations)
-  // plus per-bot deep links and common legacy aliases.
+  // Navigation entries match the consolidated sidebar. Legacy bot aliases
+  // all open the unified Store Bot workspace.
   const navigationItems: CommandItem[] = [
     { id: "command-center", label: "Command Center", description: "Personalized overview of your operation", icon: Home,    action: () => go("/"),             group: "navigation" },
     { id: "inbox",          label: "Inbox",          description: "Approvals, activity & alerts",            icon: Inbox,   action: () => go("/inbox"),        group: "navigation" },
-    { id: "architect",      label: "Builder Bot",    description: "Niche research & store scaffolding",      icon: Bot,     action: () => go("/architect"),    group: "navigation" },
-    { id: "merchant",       label: "Merchant Bot",   description: "Inventory, pricing & fulfilment",         icon: Package, action: () => go("/merchant"),     group: "navigation" },
-    { id: "social",         label: "Social Bot",     description: "Ads, posts & campaigns",                  icon: Megaphone, action: () => go("/social"),     group: "navigation" },
+    { id: "store-bot",      label: "Store Bot",      description: "One workspace for launch, ops, social, memory & tools", icon: Bot, action: () => go("/chat"), group: "navigation" },
     { id: "workflows",      label: "Workflows",      description: "Active and historical bot workflows",     icon: GitBranch, action: () => go("/workflows"),  group: "navigation" },
-    { id: "communicator",   label: "Communicator Bot", description: "Gmail & Outlook email management",     icon: Mail,     action: () => go("/communicator"),  group: "navigation" },
     { id: "workflow-builder", label: "Workflow Builder", description: "Design custom automation workflows",  icon: Zap,      action: () => go("/workflow-builder"), group: "navigation" },
     { id: "integrations",   label: "Integrations",   description: "Connect stores, social & tools",          icon: Globe,    action: () => go("/storefronts"),    group: "navigation" },
     { id: "analytics",      label: "Analytics",      description: "Per-store analytics & market intel",      icon: BarChart3, action: () => go("/insights"),   group: "navigation" },
@@ -130,22 +126,22 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     { id: "activity",       label: "Activity Log",   description: "Bot task history",                        icon: Sparkles, action: () => go("/inbox#activity"),  group: "navigation" },
     { id: "connect-store",  label: "Connect a Store", description: "Add Shopify, WooCommerce & more",        icon: ShoppingCart, action: () => go("/storefronts#integrations"), group: "navigation" },
     { id: "connect-social", label: "Connect Social Account", description: "Twitter, Instagram, TikTok & more", icon: Megaphone, action: () => go("/storefronts#social"),  group: "navigation" },
-    { id: "chat",           label: "Bot Chat",       description: "Talk to your bots",                       icon: MessageSquare, action: () => go("/chat"),          group: "navigation" },
+    { id: "chat",           label: "Bot Chat",       description: "Chat with the Store Bot workspace",       icon: MessageSquare, action: () => go("/chat"),          group: "navigation" },
   ];
 
   const workflowItems: CommandItem[] = [
-    { id: "niche-research",       label: "Launch Niche Research", description: "Find profitable niches",  icon: Sparkles, action: () => go("/architect"), group: "workflows" },
-    { id: "product-sourcing",     label: "Source Products",       description: "Find winning products",   icon: Zap,      action: () => go("/architect"), group: "workflows" },
-    { id: "pricing-optimization", label: "Optimize Pricing",      description: "Set smart pricing rules", icon: Layers,   action: () => go("/merchant"),  group: "workflows" },
-    { id: "ad-campaign",          label: "Launch Ad Campaign",    description: "Create ads with AI copy", icon: Megaphone, action: () => go("/social"),    group: "workflows" },
-    { id: "email-flow",           label: "Create Email Flow",     description: "Abandoned cart & welcome", icon: Mail,    action: () => go("/social"),    group: "workflows" },
-    { id: "inventory-audit",      label: "Run Inventory Audit",   description: "Cross-store stock check", icon: Store,    action: () => go("/merchant"),  group: "workflows" },
+    { id: "niche-research",       label: "Launch Niche Research", description: "Find profitable niches",  icon: Sparkles, action: () => go("/chat"), group: "workflows" },
+    { id: "product-sourcing",     label: "Source Products",       description: "Find winning products",   icon: Zap,      action: () => go("/chat"), group: "workflows" },
+    { id: "pricing-optimization", label: "Optimize Pricing",      description: "Set smart pricing rules", icon: Layers,   action: () => go("/chat"), group: "workflows" },
+    { id: "ad-campaign",          label: "Launch Ad Campaign",    description: "Create ads with AI copy", icon: Megaphone, action: () => go("/chat"), group: "workflows" },
+    { id: "email-flow",           label: "Create Email Flow",     description: "Abandoned cart & welcome", icon: MessageSquare, action: () => go("/chat"), group: "workflows" },
+    { id: "inventory-audit",      label: "Run Inventory Audit",   description: "Cross-store stock check", icon: Store,    action: () => go("/chat"), group: "workflows" },
   ];
 
   const actionItems: CommandItem[] = [
     { id: "mark-all-read",   label: "Mark all notifications read", description: "Clear unread badges",       icon: CheckCircle, action: () => { markAllRead.mutate(); setOpen(false); }, group: "actions" },
     { id: "refresh-metrics", label: "Refresh dashboard metrics",   description: "Pull latest store data",    icon: RotateCcw, action: () => { utils.dashboard.metrics.invalidate(); utils.dashboard.agentStatus.invalidate(); setOpen(false); }, group: "actions" },
-    { id: "goto-chat",       label: "Chat with Builder Bot",       description: "Open bot chat",             icon: MessageSquare, action: () => go("/chat?bot=architect"), group: "actions" },
+    { id: "goto-chat",       label: "Chat with Store Bot",         description: "Open the store workspace",  icon: MessageSquare, action: () => go("/chat"), group: "actions" },
     { id: "goto-insights",   label: "View top store insights",     description: "Revenue & performance",     icon: TrendingUp, action: () => go("/insights"), group: "actions" },
   ];
 

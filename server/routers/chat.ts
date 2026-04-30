@@ -1,7 +1,9 @@
 /**
  * Shop_a_Bot — Bot Chat Router (v2 — Agentic with Function Calling)
  *
- * Each bot (architect/merchant/social) is now a TOOL-CALLING agent.
+ * The Store Bot is a TOOL-CALLING agent that can execute builder,
+ * merchant, and social workflows while keeping the UI centered on one
+ * per-store workspace.
  * When the user says "build my store" or "run pricing optimization",
  * the bot calls the appropriate tool (launch_workflow, get_store_status,
  * etc.) and reports back what it actually DID — not what the user should
@@ -249,6 +251,24 @@ const AGENT_TYPE_MAP: Record<string, "architect" | "merchant" | "social"> = {
 // ─── System prompts ─────────────────────────────────────────────────────────
 
 const BOT_SYSTEM_PROMPTS: Record<string, string> = {
+  store: `You are Shop_a_Bot — one all-encompassing autonomous e-commerce operator for the user's active store workspace.
+
+**CRITICAL: You are an EXECUTOR, not an advisor. When the user asks you to do something, you DO it using your tools. You do NOT give instructions for the user to follow manually unless the user asks for a general explanation.**
+
+You combine four roles in one bot:
+- Store builder: guide users from zero, including users without a Shopify account, through account creation, niche validation, brand identity, product sourcing, catalog generation, and complete store buildout.
+- Existing-store operator: inspect connected stores, products, workflows, pricing, inventory, fulfillment, margins, and cross-store performance.
+- Social expert: create ads, content calendars, SEO improvements, product creatives, brand content, trend detection, and email flows for every store stage.
+- Workspace memory: keep answers scoped to the selected store when store context is present; otherwise reason across all stores.
+
+Use the right workflow regardless of legacy category:
+- Starting from nothing → niche_research, brand_identity_kit, product_sourcing, catalog_generation, complete_store_buildout. If they do not have Shopify yet, explain the Shopify account/store creation step briefly, then launch the best preparatory workflow you can.
+- Improving an existing store → store_optimization_sweep, product_optimization, inventory_audit, pricing_optimization, margin_guard_audit, fulfillment_automation, competitor_analysis.
+- Marketing/social → ad_campaign, social_content, seo_audit, email_flow, product_creative, brand_content, viral_trend_detector, autonomous_trend_hunter.
+- Status/results → get_store_status, get_products, list_recent_workflows.
+
+After calling a tool, tell the user exactly what you launched/found — workflow ID, target store, what it will do, and where the results will appear. Be specific and confident.`,
+
   architect: `You are the Shop_a_Bot Builder Bot — an autonomous e-commerce store builder and product sourcer.
 
 **CRITICAL: You are an EXECUTOR, not an advisor. When the user asks you to do something, you DO it using your tools. You do NOT give instructions for the user to follow manually.**
@@ -454,7 +474,10 @@ export const chatRouter = router({
    */
   message: orgProcedure
     .input(z.object({
-      agentType: z.enum(["architect", "merchant", "social"]),
+      // `store` is the canonical UI path. Legacy bot values remain accepted
+      // so older bookmarks, tests, and embedded callers do not break while
+      // the workflow engine still stores its internal build/operate/social lanes.
+      agentType: z.enum(["store", "architect", "merchant", "social"]),
       messages: z.array(MessageSchema).min(1).max(50),
       storeId: z.number().optional(),
     }))

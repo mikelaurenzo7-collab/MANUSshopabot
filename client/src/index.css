@@ -635,12 +635,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     animation: page-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-  }
-  .page-enter > * {
-    overflow-y: auto;
+    min-height: 0;
     flex: 1;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Standardized padding system ──────────────────────────────────────── */
@@ -2139,30 +2138,31 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     width: 1.55rem;
     height: 1.55rem;
     border-radius: 0.4rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
     flex-shrink: 0;
   }
   .kpi-lux .kpi-label {
-    font-size: 8.5px;
+    font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.50);
     line-height: 1;
   }
   .kpi-lux .kpi-value {
     font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 1.05rem;
     color: #fff;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
   .kpi-lux .kpi-sub {
     font-size: 9.5px;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.40);
     line-height: 1.15;
   }
 
@@ -4254,6 +4254,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .bot-page-header--merchant::after { background: linear-gradient(90deg, rgba(6, 182, 212, 0.7), rgba(6, 182, 212, 0.1) 60%, transparent); }
   .bot-page-header--social::before { background: radial-gradient(circle, rgba(249, 115, 22, 0.32), transparent 65%); }
   .bot-page-header--social::after { background: linear-gradient(90deg, rgba(249, 115, 22, 0.7), rgba(249, 115, 22, 0.1) 60%, transparent); }
+  .bot-page-header--communicator::before { background: radial-gradient(circle, rgba(244, 63, 94, 0.32), transparent 65%); }
+  .bot-page-header--communicator::after { background: linear-gradient(90deg, rgba(244, 63, 94, 0.7), rgba(244, 63, 94, 0.1) 60%, transparent); }
 
   /* Animated glyph plate — squircle backdrop + animated pulse halo */
   .bot-page-header-glyph {
@@ -4289,6 +4291,11 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
     color: rgb(251, 146, 60);
     box-shadow: 0 8px 22px -10px rgba(249, 115, 22, 0.6), inset 0 0 0 1px rgba(251, 146, 60, 0.25);
+  }
+  .bot-page-header-glyph--communicator {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.22), rgba(244, 63, 94, 0.05));
+    color: rgb(251, 113, 133);
+    box-shadow: 0 8px 22px -10px rgba(244, 63, 94, 0.6), inset 0 0 0 1px rgba(251, 113, 133, 0.25);
   }
   .bot-page-header-glyph-pulse {
     position: absolute;
@@ -4398,6 +4405,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   .bot-page-ambient--merchant .bot-page-ambient-orb--bottom { background: rgba(34, 211, 238, 0.4); }
   .bot-page-ambient--social .bot-page-ambient-orb--top { background: rgba(249, 115, 22, 0.5); }
   .bot-page-ambient--social .bot-page-ambient-orb--bottom { background: rgba(251, 146, 60, 0.35); }
+  .bot-page-ambient--communicator .bot-page-ambient-orb--top { background: rgba(244, 63, 94, 0.5); }
+  .bot-page-ambient--communicator .bot-page-ambient-orb--bottom { background: rgba(251, 113, 133, 0.35); }
 
   /* Connected badge — the subtle pulse on the corner */
   .platform-connected-dot {
@@ -4445,7 +4454,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
       radial-gradient(ellipse 65% 50% at 14% 8%, rgba(14, 165, 233, 0.09), transparent 55%),
       radial-gradient(ellipse 55% 45% at 88% 14%, rgba(6, 182, 212, 0.06), transparent 55%),
       radial-gradient(ellipse 45% 40% at 52% 92%, rgba(249, 115, 22, 0.06), transparent 55%);
-    z-index: 0;
+    z-index: -1;
     will-change: transform, opacity;
     animation: app-aurora-drift 32s ease-in-out infinite alternate;
   }
@@ -4722,11 +4731,196 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     .main-ambient-animate { opacity: 0.8; }
     .sidebar-top-accent   { opacity: 0.75; }
   }
+
+  /* ── Canonical shell tab bar ─────────────────────────────────────────────── */
+  .tab-bar-shell {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.02) inset,
+      0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+  .tab-trigger-shell {
+    position: relative;
+    border-radius: calc(var(--radius-md) - 2px);
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .tab-trigger-shell[data-state="active"] {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(6, 182, 212, 0.08));
+    border-color: rgba(14, 165, 233, 0.22);
+    color: #93c5fd;
+    font-weight: 600;
+    box-shadow:
+      0 1px 0 rgba(14, 165, 233, 0.12) inset,
+      0 2px 8px rgba(14, 165, 233, 0.08),
+      0 0 0 1px rgba(14, 165, 233, 0.06);
+  }
+  /* Animated bottom-edge indicator on active tab */
+  .tab-trigger-shell[data-state="active"]::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 18%;
+    right: 18%;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.6), rgba(56, 189, 248, 0.9), rgba(6, 182, 212, 0.6));
+    background-size: 200% 100%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .tab-trigger-shell[data-state="active"]::after {
+      animation: tab-indicator-sweep 3s ease-in-out infinite alternate;
+    }
+  }
+  @keyframes tab-indicator-sweep {
+    from { background-position: 0% center; opacity: 0.7; }
+    to   { background-position: 100% center; opacity: 1; }
+  }
+  .tab-trigger-shell:not([data-state="active"]):hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Scrollbar utility ───────────────────────────────────────────────────── */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14, 165, 233, 0.2) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.2);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.35);
+  }
 }
 
-/* ─── PageHeader accent line — upgrade from 1px to 2px ──────────────────────
-   This single global override thickens the bottom scan-line on all
-   page headers for a more dramatic "edge" at the section boundary. */
+/* ─── Premium Chat Bubble System ────────────────────────────────────────────
+   Replaces plain bg-muted / bg-primary bubbles with a branded glass-card
+   treatment. The user bubble has a sky-blue tint; the bot bubble has a
+   subtle glass backdrop with a left-edge accent line. */
+.chat-user-bubble {
+  background: linear-gradient(135deg, rgba(14,165,233,0.16) 0%, rgba(14,165,233,0.08) 60%, rgba(6,182,212,0.06) 100%);
+  border: 1px solid rgba(14,165,233,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 4px 16px rgba(14,165,233,0.08),
+    0 1px 4px rgba(0,0,0,0.3);
+  border-radius: 1rem 0.5rem 1rem 1rem;
+  color: rgba(255,255,255,0.92);
+}
+
+.chat-bot-bubble {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 2px solid rgba(14,165,233,0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 2px 12px rgba(0,0,0,0.25);
+  border-radius: 0.5rem 1rem 1rem 0.5rem;
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Chat thinking dots ─────────────────────────────────────────────────── */
+.chat-thinking-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: rgba(14,165,233,0.6);
+  box-shadow: 0 0 6px rgba(14,165,233,0.4);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-thinking-dot {
+    animation: chat-dot-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes chat-dot-pulse {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+  40%           { opacity: 1;    transform: scale(1.1); }
+}
+
+/* ── Chat input area ────────────────────────────────────────────────────── */
+.chat-input-area {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: rgba(5,5,8,0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.chat-input-wrapper {
+  flex: 1;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 0.5rem 0.75rem;
+}
+.chat-input-wrapper:focus-within {
+  border-color: rgba(14,165,233,0.4);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.1), 0 4px 16px rgba(14,165,233,0.08);
+}
+.chat-textarea {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: 100%;
+}
+.chat-send-btn {
+  background: linear-gradient(135deg, rgba(14,165,233,0.85), rgba(6,182,212,0.75));
+  border: 1px solid rgba(14,165,233,0.4);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 1px rgba(14,165,233,0.2),
+    0 4px 16px rgba(14,165,233,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+  color: white;
+  transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.chat-send-btn:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px rgba(14,165,233,0.5),
+    0 6px 22px rgba(14,165,233,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  transform: translateY(-1px);
+}
+.chat-send-btn:disabled {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: none;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ─── PageHeader accent line — animated scan-sweep ──────────────────────────
+   Thicker line (1.5px) with a slow background-position sweep so it appears
+   to "breathe" — reinforces the cyber-industrial feel without flicker.
+   Animation respects prefers-reduced-motion. */
 .page-accent-line {
   height: 1.5px;
+  background-size: 200% 100% !important;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .page-accent-line {
+    animation: accent-line-sweep 8s ease-in-out infinite alternate;
+  }
+}
+@keyframes accent-line-sweep {
+  from { background-position: 0% center;   opacity: 0.75; }
+  to   { background-position: 100% center; opacity: 1; }
 }
