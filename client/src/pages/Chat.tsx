@@ -173,22 +173,22 @@ export default function Chat() {
 
   return (
     <div className="page-enter flex h-full min-h-0 flex-col bg-[#050505]/70">
-      <div className="shrink-0 border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/90 via-[#06070a]/80 to-[#040406]/90 px-4 py-3 md:px-5">
+      <div className="shrink-0 border-b border-white/[0.06] bg-gradient-to-r from-[#040406]/90 via-[#06070a]/80 to-[#040406]/90 px-3 py-3 sm:px-4 md:px-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="micro-label mb-1">Store workspace</p>
-            <h1 className="flex items-center gap-2 text-lg font-heading font-bold tracking-tight text-foreground">
-              <Sparkles className="h-4 w-4 text-sky-400" />
-              {workspaceLabel}
+            <h1 className="flex items-center gap-2 text-base sm:text-lg font-heading font-bold tracking-tight text-foreground">
+              <Sparkles className="h-4 w-4 text-sky-400 shrink-0" />
+              <span className="truncate">{workspaceLabel}</span>
             </h1>
-            <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground">
+            <p className="mt-0.5 max-w-3xl text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
               One autonomous Store Bot expert for launch, operations, social growth, workflows, memory, connectors, tools, and suppliers.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto items-stretch sm:items-center gap-2">
             <Select value={activeStore ? `store:${activeStore.id}` : GLOBAL_WORKSPACE} onValueChange={handleWorkspaceChange}>
-              <SelectTrigger className="h-9 w-56 border-white/10 bg-white/[0.04] text-sm">
+              <SelectTrigger className="h-9 w-full sm:w-56 border-white/10 bg-white/[0.04] text-sm">
                 <Store className="mr-1.5 h-3.5 w-3.5 shrink-0 text-white/40" />
                 <SelectValue placeholder="Choose workspace" />
               </SelectTrigger>
@@ -204,16 +204,16 @@ export default function Chat() {
             <Button
               variant="outline"
               size="sm"
-              className="h-9 border-sky-500/25 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20"
+              className="h-9 w-full sm:w-auto border-sky-500/25 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20 whitespace-nowrap"
               onClick={() => setLocation("/storefronts#integrations")}
             >
               <Plug className="mr-1.5 h-3.5 w-3.5" />
-              {hasStores ? "Connect store" : "Create/connect store"}
+              <span className="truncate">{hasStores ? "Connect store" : "Create/connect store"}</span>
             </Button>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
           <WorkspaceBadge icon={Bot} label="Unified bot" value="Launch · Operator · Growth" />
           <WorkspaceBadge icon={Brain} label="Memory" value={activeStore ? activeStore.name : "workspace scoped"} />
           <WorkspaceBadge icon={Plug} label="Connectors" value={String(connectorCount)} />
@@ -223,7 +223,7 @@ export default function Chat() {
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-h-0 p-4 md:p-5">
+        <div className="min-h-0 p-3 sm:p-4 md:p-5">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSend}
@@ -237,8 +237,8 @@ export default function Chat() {
           />
         </div>
 
-        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-white/[0.015] p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar">
-          <div className="space-y-4">
+        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-white/[0.015] p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar">
+          <div className="space-y-3 sm:space-y-4">
             <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
               {workflowsQuery.isLoading ? (
                 <LoadingRow />
@@ -252,8 +252,8 @@ export default function Chat() {
             </Panel>
 
             <Panel title="Memory" icon={Brain}>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
-                <p className="text-[11px] font-semibold text-white/75">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-2.5 sm:p-3">
+                <p className="text-[11px] font-semibold text-white/75 break-words">
                   {activeStore ? activeStore.name : hasStores ? "Cross-store workspace" : "Launch workspace"}
                 </p>
                 <p className="mt-1 text-[10px] leading-relaxed text-white/35">
@@ -263,7 +263,7 @@ export default function Chat() {
             </Panel>
 
             <Panel title="Connectors & tools" icon={Plug} actionLabel="Manage" onAction={() => setLocation("/storefronts") }>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 <MiniStat icon={Store} label="Stores" value={String(stores.length)} />
                 <MiniStat icon={Megaphone} label="Social" value={String(socialAccountsQuery.data?.length ?? 0)} />
                 <MiniStat icon={Plug} label="Credentials" value={String(credentialsQuery.data?.length ?? 0)} />
@@ -294,10 +294,10 @@ export default function Chat() {
 
 function WorkspaceBadge({ icon: Icon, label, value }: { icon: typeof Bot; label: string; value: string }) {
   return (
-    <Badge className="border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 text-[10px] text-white/60">
-      <Icon className="mr-1.5 h-3 w-3 text-sky-300" />
-      <span className="mr-1 text-white/35">{label}</span>
-      <span className="font-semibold text-white/75">{value}</span>
+    <Badge className="border border-white/[0.08] bg-white/[0.035] px-2 sm:px-2.5 py-1 text-[10px] text-white/60 shrink-0">
+      <Icon className="mr-1 sm:mr-1.5 h-3 w-3 text-sky-300 shrink-0" />
+      <span className="mr-1 text-white/35 hidden sm:inline">{label}</span>
+      <span className="font-semibold text-white/75 truncate max-w-[120px] sm:max-w-none">{value}</span>
     </Badge>
   );
 }
@@ -356,10 +356,10 @@ function WorkflowCard({ workflow }: { workflow: any }) {
 
 function MiniStat({ icon: Icon, label, value }: { icon: typeof Bot; label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-2.5 sm:p-3 min-w-0">
       <Icon className="h-3.5 w-3.5 text-white/35" />
-      <p className="mt-2 text-[9px] uppercase tracking-widest text-white/30">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-white/80">{value}</p>
+      <p className="mt-1.5 sm:mt-2 text-[9px] uppercase tracking-widest text-white/30 truncate">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-white/80 truncate">{value}</p>
     </div>
   );
 }

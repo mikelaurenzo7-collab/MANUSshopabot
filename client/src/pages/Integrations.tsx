@@ -272,38 +272,39 @@ export default function IntegrationsPage() {
   return (
     <div className="flex flex-col h-full bg-transparent text-slate-200 min-h-0">
       {/* Compact summary bar */}
-      <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between flex-wrap gap-3 bg-white/[0.02]">
-        <div>
+      <div className="px-3 sm:px-4 py-3 border-b border-white/8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/[0.02]">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-white mb-1">Integrations & Connections</p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 break-words">
             {(stores?.length || 0)} stores · {(credentials?.length || 0)} platforms · {(socialAccounts?.length || 0)} social accounts
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {summary && (
-            <div className="flex items-center gap-3 text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-3 py-2">
-              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400" /> {summary.credentials} active</span>
-              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400" /> {summary.stores} warning</span>}
-              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400" /> {summary.socialAccounts} error</span>}
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-2 sm:px-3 py-2 overflow-x-auto whitespace-nowrap">
+              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400 shrink-0" /> {summary.credentials} active</span>
+              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400 shrink-0" /> {summary.stores} warning</span>}
+              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400 shrink-0" /> {summary.socialAccounts} error</span>}
             </div>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-4 py-2 border-b border-white/8 bg-white/2">
+      <div className="flex gap-1 px-3 sm:px-4 py-2 border-b border-white/8 bg-white/2 overflow-x-auto">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setMainTab(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
               mainTab === t.id
                 ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
                 : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
             }`}
           >
             {t.icon}
-            {t.label}
+            <span className="hidden sm:inline">{t.label}</span>
+            <span className="inline sm:hidden">{t.label.split(' ')[0]}</span>
             {"count" in t && (t.count ?? 0) > 0 && (
               <span className="ml-0.5 bg-white/10 text-slate-300 rounded-full px-1.5 py-0.5 text-[10px]">{t.count}</span>
             )}
@@ -312,7 +313,7 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
 
         {/* ── STORES TAB ── */}
         {mainTab === "stores" && (
@@ -562,28 +563,28 @@ export default function IntegrationsPage() {
                 <h3 className="text-sm font-heading font-bold text-white">Connect a Store</h3>
                 <span className="text-xs text-slate-500 ml-auto">{stores?.length || 0} connected</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {ecommercePlatforms?.filter((p: any) => ["shopify", "woocommerce", "bigcommerce", "square"].includes(p.id)).map((platform: any) => {
                   const isConnected = connectedPlatformIds.has(platform.id);
                   const brand = getBrand(platform.id);
                   return (
                     <div
                       key={platform.id}
-                      className="platform-tile p-4 flex flex-col gap-2"
+                      className="platform-tile p-3 sm:p-4 flex flex-col gap-2"
                       style={tileVars(brand)}
                     >
                       <span className="platform-tile-ribbon" />
                       <span className="platform-tile-seam" />
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="platform-tile-icon-halo text-2xl leading-none">{brand.icon}</div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-white tracking-tight">{brand.name}</div>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div className="platform-tile-icon-halo text-2xl leading-none shrink-0">{brand.icon}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-white tracking-tight truncate">{brand.name}</div>
                             <div className="text-[10px] text-slate-400/90 truncate">{brand.tagline}</div>
                           </div>
                         </div>
                         {isConnected && (
-                          <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
+                          <span className="platform-connected-dot inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Live
                           </span>
                         )}
@@ -619,49 +620,50 @@ export default function IntegrationsPage() {
             <JustLanded />
 
             {/* Hero band — sets the tone, surfaces platform counts up front */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-sky-500/8 via-cyan-500/4 to-orange-500/6 p-5">
+            <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-gradient-to-br from-sky-500/8 via-cyan-500/4 to-orange-500/6 p-4 sm:p-5">
               <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-sky-500/15 blur-3xl pointer-events-none" />
               <div className="absolute -bottom-16 -left-8 w-56 h-56 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
-              <div className="relative flex flex-wrap items-center justify-between gap-3">
+              <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-heading font-bold tracking-tight text-white">
+                  <h2 className="text-base sm:text-lg font-heading font-bold tracking-tight text-white">
                     Connect More Platforms ✦
                   </h2>
-                  <p className="text-[12px] text-slate-300/85 max-w-xl leading-snug">
+                  <p className="text-[11px] sm:text-[12px] text-slate-300/85 max-w-xl leading-snug">
                     {(ecommercePlatforms?.length || 0)} commerce surfaces · {(socialPlatforms?.length || 0)} social channels · cross-cutting tools.
                     Every adapter ships with a real capability matrix the bots branch on — no dead tiles.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-300">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
-                    <ShoppingBag className="w-3 h-3 text-sky-400" /> {(ecommercePlatforms?.length || 0)} e-commerce
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10 whitespace-nowrap">
+                    <ShoppingBag className="w-3 h-3 text-sky-400 shrink-0" /> {(ecommercePlatforms?.length || 0)} e-commerce
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
-                    <Share2 className="w-3 h-3 text-fuchsia-400" /> {(socialPlatforms?.length || 0)} social
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10 whitespace-nowrap">
+                    <Share2 className="w-3 h-3 text-fuchsia-400 shrink-0" /> {(socialPlatforms?.length || 0)} social
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10">
-                    <Wrench className="w-3 h-3 text-amber-300" /> 9 tools
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/6 border border-white/10 whitespace-nowrap">
+                    <Wrench className="w-3 h-3 text-amber-300 shrink-0" /> 9 tools
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {(["ecommerce", "social", "tools"] as const).map(t => {
                 const count = t === "ecommerce" ? (ecommercePlatforms?.length || 0)
                   : t === "social" ? (socialPlatforms?.length || 0)
                   : 9;
+                const label = t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools";
                 return (
                   <button
                     key={t}
                     onClick={() => setConnectTab(t)}
-                    className={`relative inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`relative inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                       connectTab === t
                         ? "bg-sky-500/15 text-sky-300 border border-sky-500/30 shadow-[0_4px_16px_-4px_rgba(14,165,233,0.45)]"
                         : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
                     }`}
                   >
-                    {t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools"}
+                    {label}
                     <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
                       connectTab === t ? "bg-sky-400/20 text-sky-200" : "bg-white/8 text-slate-400"
                     }`}>{count}</span>
@@ -675,7 +677,7 @@ export default function IntegrationsPage() {
                 <ToolsTab />
               </Suspense>
             ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {(connectTab === "ecommerce" ? ecommercePlatforms : socialPlatforms)?.map((platform: any) => {
                 const isConnected = connectTab === "ecommerce"
                   ? connectedPlatformIds.has(platform.id)
