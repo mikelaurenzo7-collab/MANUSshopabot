@@ -247,6 +247,36 @@ for (const cat of CONNECTOR_CATEGORIES) {
   for (const c of cat.connectors) CONNECTOR_CATEGORY_BY_ID.set(c.id, cat.title);
 }
 
+// In the Claude-Code-style chat rail we surface "Tools" and "Social"
+// as distinct context buckets so the user can see, at a glance, which
+// growth channels and operational tools the Store Bot can actually
+// reach for *this* workspace. The split is purely presentational —
+// the underlying integration registry is unchanged.
+const SOCIAL_CONNECTOR_CATEGORY_ID = "social";
+
+const SOCIAL_CONNECTOR_IDS: ReadonlySet<string> = new Set(
+  CONNECTOR_CATEGORIES.find((c) => c.id === SOCIAL_CONNECTOR_CATEGORY_ID)
+    ?.connectors.map((c) => c.id) ?? [],
+);
+
+const TOOL_CONNECTOR_CATEGORIES = CONNECTOR_CATEGORIES.filter(
+  (c) => c.id !== SOCIAL_CONNECTOR_CATEGORY_ID,
+);
+
+const SOCIAL_CONNECTOR_CATEGORY = CONNECTOR_CATEGORIES.find(
+  (c) => c.id === SOCIAL_CONNECTOR_CATEGORY_ID,
+);
+
+function isSocialIntegration(integrationType: string): boolean {
+  return SOCIAL_CONNECTOR_IDS.has(integrationType);
+}
+
+const AUTONOMY_LABELS: Record<string, { label: string; tone: string }> = {
+  fully_autonomous: { label: "Fully autonomous", tone: "bg-emerald-500/15 text-emerald-200" },
+  supervised: { label: "Supervised", tone: "bg-sky-500/15 text-sky-200" },
+  manual: { label: "Manual approval", tone: "bg-amber-500/15 text-amber-200" },
+};
+
 function previewJson(value: unknown): string | null {
   if (!value) return null;
   if (typeof value === "string") return value;
@@ -288,6 +318,10 @@ export default function WorkspacePage() {
     { enabled: !!activeWorkspaceId, staleTime: 30_000 },
   );
   const integrationsQuery = trpc.workspaces.listIntegrations.useQuery(
+    { workspaceId: activeWorkspaceId! },
+    { enabled: !!activeWorkspaceId, staleTime: 30_000 },
+  );
+  const settingsQuery = trpc.workspaces.getSettings.useQuery(
     { workspaceId: activeWorkspaceId! },
     { enabled: !!activeWorkspaceId, staleTime: 30_000 },
   );
@@ -396,6 +430,13 @@ export default function WorkspacePage() {
               workflows={workflowsQuery.data ?? []}
               workflowsLoading={workflowsQuery.isLoading}
               onWorkflowsRefetch={() => void workflowsQuery.refetch()}
+              memories={memoryQuery.data ?? []}
+              memoriesLoading={memoryQuery.isLoading}
+              integrations={integrationsQuery.data ?? []}
+              integrationsLoading={integrationsQuery.isLoading}
+              settings={settingsQuery.data ?? null}
+              settingsLoading={settingsQuery.isLoading}
+              onOpenTab={handleTabChange}
             />
           </TabsContent>
           <TabsContent value="workflows" className="m-0 h-full overflow-y-auto">
@@ -550,6 +591,13 @@ function ChatTab({
   workflows,
   workflowsLoading,
   onWorkflowsRefetch,
+  memories,
+  memoriesLoading,
+  integrations,
+  integrationsLoading,
+  settings,
+  settingsLoading,
+  onOpenTab,
 }: {
   workspaceId: number;
   storeId: number | null;
@@ -557,6 +605,13 @@ function ChatTab({
   workflows: any[];
   workflowsLoading: boolean;
   onWorkflowsRefetch: () => void;
+  memories: any[];
+  memoriesLoading: boolean;
+  integrations: any[];
+  integrationsLoading: boolean;
+  settings: any | null;
+  settingsLoading: boolean;
+  onOpenTab: (tab: WorkspaceTab) => void;
 }) {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
@@ -816,6 +871,19 @@ function ChatTab({
           }}
           onNewChat={handleNewChat}
         />
+        {/*
+         * Context chip bar — visible at every breakpoint so users on
+         * narrow screens (where the right rail is hidden) still get
+         * one-click access to memory, instructions, tools, and social
+         * connectors for this workspace. The xl rail and these chips
+         * read the same per-workspace data, so counts always agree.
+         */}
+        <ChatContextChips
+          memories={memories}
+          integrations={integrations}
+          settings={settings}
+          onOpenTab={onOpenTab}
+        />
         <div className="min-h-0 flex-1 p-4 md:p-5">
           <AIChatBox
             messages={activeMessages}
@@ -844,19 +912,34 @@ function ChatTab({
         </div>
       </div>
 
-      {/* ── Workflow rail (workspace-wide context, not session-scoped) ──── */}
+      {/* ── Workspace context rail (xl+) ────────────────────────────────── */}
+      {/*
+       * Claude-Code-style context dock. The chat pane is the conversation;
+       * this rail is "what the bot knows and can reach" inside *this*
+       * workspace — long-lived memory, custom instructions/personality,
+       * tool connectors (commerce/email/ads/calendar/messaging/lifecycle),
+       * social connectors, and recent workflow outputs. Each section has
+       * an Open button that switches to the corresponding workspace tab,
+       * so users can stay anchored in the chat while tweaking context.
+       *
+       * Per-workspace by construction: every query inside reads the
+       * active workspaceId, so opening a different store's workspace
+       * swaps the entire rail.
+       */}
       <aside className="custom-scrollbar hidden min-h-0 overflow-y-auto border-t border-white/[0.06] bg-white/[0.015] p-4 md:p-5 xl:block xl:border-l xl:border-t-0">
-        <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
-          {workflowsLoading ? (
-            <LoadingRow />
-          ) : workflows.length === 0 ? (
-            <EmptyLine text="Workflow outputs will appear here as soon as the Store Bot runs something." />
-          ) : (
-            <div className="space-y-2">
-              {workflows.slice(0, 6).map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
-            </div>
-          )}
-        </Panel>
+        <WorkspaceContextRail
+          workspaceName={workspaceName}
+          memories={memories}
+          memoriesLoading={memoriesLoading}
+          integrations={integrations}
+          integrationsLoading={integrationsLoading}
+          settings={settings}
+          settingsLoading={settingsLoading}
+          workflows={workflows}
+          workflowsLoading={workflowsLoading}
+          onOpenTab={onOpenTab}
+          onOpenAllWorkflows={() => setLocation("/workflows")}
+        />
       </aside>
     </div>
   );
@@ -1169,6 +1252,452 @@ function SessionRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Chat context chips — slim breadcrumb between the session header and the
+// chat composer that exposes Memory / Instructions / Tools / Social with
+// live counts. Always visible so narrow viewports (where the right-hand
+// context rail is hidden) still get one-click access. Clicking a chip
+// switches to the matching workspace tab.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ChatContextChips({
+  memories,
+  integrations,
+  settings,
+  onOpenTab,
+}: {
+  memories: any[];
+  integrations: any[];
+  settings: any | null;
+  onOpenTab: (tab: WorkspaceTab) => void;
+}) {
+  const memoryCount = memories.length;
+  const toolIntegrations = integrations.filter((i) => !isSocialIntegration(i.integrationType));
+  const socialIntegrations = integrations.filter((i) => isSocialIntegration(i.integrationType));
+  const enabledTools = toolIntegrations.filter((i) => i.enabled).length;
+  const enabledSocial = socialIntegrations.filter((i) => i.enabled).length;
+  const hasInstructions =
+    !!settings &&
+    ((settings.customInstructions && settings.customInstructions.trim().length > 0) ||
+      (settings.systemPrompt && settings.systemPrompt.trim().length > 0) ||
+      (settings.personality && settings.personality.trim().length > 0));
+  const autonomy = AUTONOMY_LABELS[settings?.autonomyLevel ?? "supervised"];
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-white/[0.04] bg-white/[0.01] px-4 py-1.5">
+      <span className="text-[9px] uppercase tracking-widest text-white/30">
+        Workspace context
+      </span>
+      <ContextChip
+        icon={Brain}
+        label="Memory"
+        count={memoryCount}
+        accent="text-sky-300"
+        onClick={() => onOpenTab("memory")}
+        title={
+          memoryCount === 0
+            ? "No saved memories — open to add facts, decisions, and preferences."
+            : `${memoryCount} memor${memoryCount === 1 ? "y" : "ies"} saved.`
+        }
+      />
+      <ContextChip
+        icon={ScrollText}
+        label="Instructions"
+        accent="text-violet-300"
+        onClick={() => onOpenTab("instructions")}
+        active={hasInstructions}
+        secondary={autonomy?.label}
+        title={
+          hasInstructions
+            ? "Custom instructions / personality are set."
+            : "No custom instructions yet — open to set tone, system prompt, and autonomy."
+        }
+      />
+      <ContextChip
+        icon={Wrench}
+        label="Tools"
+        count={enabledTools}
+        accent="text-emerald-300"
+        onClick={() => onOpenTab("connectors")}
+        title="Email, ads, calendar, messaging, commerce, and lifecycle accounts wired up to this workspace."
+      />
+      <ContextChip
+        icon={Megaphone}
+        label="Social"
+        count={enabledSocial}
+        accent="text-fuchsia-300"
+        onClick={() => onOpenTab("connectors")}
+        title="Social media accounts the Store Bot can post and reply from for this workspace."
+      />
+    </div>
+  );
+}
+
+function ContextChip({
+  icon: Icon,
+  label,
+  count,
+  active,
+  secondary,
+  accent,
+  onClick,
+  title,
+}: {
+  icon: typeof Bot;
+  label: string;
+  count?: number;
+  active?: boolean;
+  secondary?: string;
+  accent: string;
+  onClick: () => void;
+  title?: string;
+}) {
+  const showsCount = typeof count === "number";
+  const isActive = showsCount ? count! > 0 : !!active;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`group inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+        isActive
+          ? "border-white/15 bg-white/[0.06] text-white/85 hover:border-white/25 hover:bg-white/[0.09]"
+          : "border-white/[0.06] bg-white/[0.02] text-white/45 hover:border-white/15 hover:text-white/70"
+      }`}
+    >
+      <Icon className={`h-3 w-3 ${isActive ? accent : "text-white/40"}`} />
+      <span>{label}</span>
+      {showsCount && (
+        <span
+          className={`ml-0.5 rounded-full px-1.5 py-0 text-[9px] ${
+            isActive ? "bg-white/[0.1] text-white/80" : "bg-white/[0.04] text-white/40"
+          }`}
+        >
+          {count}
+        </span>
+      )}
+      {!showsCount && secondary && (
+        <span className="ml-0.5 rounded-full bg-white/[0.06] px-1.5 py-0 text-[9px] text-white/55">
+          {secondary}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace context rail — the right-hand dock visible at xl+. Mirrors what
+// Claude Code shows next to its chat: the persistent context the assistant
+// is working against. Sections, in order:
+//
+//   1. Workspace card     — reinforces "one workspace per store"
+//   2. Memory             — top recent entries with type chips
+//   3. Instructions       — personality + autonomy + custom-instructions snippet
+//   4. Tools              — connected non-social integrations grouped by sub-cat
+//   5. Social             — every social platform shown as a chip with state
+//   6. Workflow results   — recent runs (was the original-only contents)
+//
+// Every section has an Open / Manage / Edit button that calls onOpenTab to
+// jump to the matching workspace tab without leaving the chat URL.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WorkspaceContextRail({
+  workspaceName,
+  memories,
+  memoriesLoading,
+  integrations,
+  integrationsLoading,
+  settings,
+  settingsLoading,
+  workflows,
+  workflowsLoading,
+  onOpenTab,
+  onOpenAllWorkflows,
+}: {
+  workspaceName: string;
+  memories: any[];
+  memoriesLoading: boolean;
+  integrations: any[];
+  integrationsLoading: boolean;
+  settings: any | null;
+  settingsLoading: boolean;
+  workflows: any[];
+  workflowsLoading: boolean;
+  onOpenTab: (tab: WorkspaceTab) => void;
+  onOpenAllWorkflows: () => void;
+}) {
+  const recentMemories = useMemo(() => {
+    // Newest first, capped to a manageable preview count.
+    const sorted = [...memories].sort((a, b) => {
+      const ta = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+      const tb = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+      return tb - ta;
+    });
+    return sorted.slice(0, 4);
+  }, [memories]);
+
+  const integrationsByType = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const i of integrations) {
+      const arr = map.get(i.integrationType) ?? [];
+      arr.push(i);
+      map.set(i.integrationType, arr);
+    }
+    return map;
+  }, [integrations]);
+
+  const toolIntegrations = integrations.filter((i) => !isSocialIntegration(i.integrationType));
+  const socialIntegrations = integrations.filter((i) => isSocialIntegration(i.integrationType));
+  const enabledTools = toolIntegrations.filter((i) => i.enabled).length;
+  const enabledSocial = socialIntegrations.filter((i) => i.enabled).length;
+
+  const autonomy = AUTONOMY_LABELS[settings?.autonomyLevel ?? "supervised"];
+  const customInstructions: string = settings?.customInstructions ?? "";
+  const systemPrompt: string = settings?.systemPrompt ?? "";
+  const personality: string = settings?.personality ?? "";
+
+  return (
+    <div className="space-y-4">
+      {/* Workspace card — anchors "one workspace per store" framing */}
+      <div className="rounded-2xl border border-sky-500/15 bg-sky-500/[0.04] p-3">
+        <div className="flex items-center gap-2">
+          <Store className="h-3.5 w-3.5 text-sky-300" />
+          <p className="text-[11px] font-semibold text-white/85 truncate">{workspaceName}</p>
+        </div>
+        <p className="mt-1 text-[10px] leading-relaxed text-white/55">
+          One workspace per store. Memory, instructions, tools, and social
+          accounts on this rail belong to this store only.
+        </p>
+      </div>
+
+      {/* Memory */}
+      <Panel
+        title="Memory"
+        icon={Brain}
+        actionLabel={memories.length > 0 ? "Open memory" : "Add memory"}
+        onAction={() => onOpenTab("memory")}
+      >
+        {memoriesLoading ? (
+          <LoadingRow />
+        ) : recentMemories.length === 0 ? (
+          <EmptyLine text="No long-lived facts yet. Save what the bot should remember across every chat in this workspace." />
+        ) : (
+          <ul className="space-y-1.5">
+            {recentMemories.map((m: any) => {
+              const tone = MEMORY_TONE[m.memoryType as MemoryType] ?? MEMORY_TONE.fact;
+              return (
+                <li
+                  key={m.id}
+                  className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider ${tone.bg} ${tone.text}`}
+                    >
+                      {tone.label}
+                    </span>
+                    <span className="truncate text-[10px] font-semibold text-white/80">
+                      {m.key}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-white/55">
+                    {m.value}
+                  </p>
+                </li>
+              );
+            })}
+            {memories.length > recentMemories.length && (
+              <li className="text-[10px] text-white/40">
+                + {memories.length - recentMemories.length} more in memory tab
+              </li>
+            )}
+          </ul>
+        )}
+      </Panel>
+
+      {/* Instructions */}
+      <Panel
+        title="Instructions"
+        icon={ScrollText}
+        actionLabel="Edit"
+        onAction={() => onOpenTab("instructions")}
+      >
+        {settingsLoading ? (
+          <LoadingRow />
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {autonomy && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${autonomy.tone}`}
+                >
+                  {autonomy.label}
+                </span>
+              )}
+              {personality ? (
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] text-white/70">
+                  <Sparkles className="mr-1 inline h-2.5 w-2.5 text-fuchsia-300" />
+                  {personality}
+                </span>
+              ) : (
+                <span className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[9px] text-white/40">
+                  No personality set
+                </span>
+              )}
+              {systemPrompt.trim().length > 0 && (
+                <span className="rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2 py-0.5 text-[9px] text-amber-200">
+                  System prompt override
+                </span>
+              )}
+            </div>
+            {customInstructions.trim().length > 0 ? (
+              <p className="line-clamp-3 rounded-lg border border-white/[0.05] bg-white/[0.02] p-2 text-[10px] leading-relaxed text-white/65">
+                {customInstructions}
+              </p>
+            ) : (
+              <EmptyLine text="No custom instructions yet. Set tone, brand voice, do-nots, or override the system prompt." />
+            )}
+          </div>
+        )}
+      </Panel>
+
+      {/* Tools */}
+      <Panel
+        title="Tools"
+        icon={Wrench}
+        actionLabel="Manage"
+        onAction={() => onOpenTab("connectors")}
+        countLabel={`${enabledTools}/${toolIntegrations.length || 0} on`}
+      >
+        {integrationsLoading ? (
+          <LoadingRow />
+        ) : toolIntegrations.length === 0 ? (
+          <EmptyLine text="No tool connectors yet. Wire up email, ads, calendar, messaging, commerce, or lifecycle automation for this workspace." />
+        ) : (
+          <div className="space-y-2">
+            {TOOL_CONNECTOR_CATEGORIES.map((cat) => {
+              const inCat = cat.connectors
+                .map((c) => ({ meta: c, instances: integrationsByType.get(c.id) ?? [] }))
+                .filter((row) => row.instances.length > 0);
+              if (inCat.length === 0) return null;
+              const Icon = cat.icon;
+              return (
+                <div key={cat.id} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-2">
+                  <div className="flex items-center gap-1.5">
+                    <Icon className={`h-3 w-3 ${cat.accent}`} />
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
+                      {cat.title}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {inCat.map(({ meta, instances }) => {
+                      const enabled = instances.some((i: any) => i.enabled);
+                      return (
+                        <span
+                          key={meta.id}
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] ${
+                            enabled
+                              ? "border-emerald-500/25 bg-emerald-500/[0.08] text-emerald-200"
+                              : "border-white/[0.06] bg-white/[0.02] text-white/45"
+                          }`}
+                          title={
+                            enabled
+                              ? `${meta.label} connected and active`
+                              : `${meta.label} connected but paused`
+                          }
+                        >
+                          <span
+                            className={`h-1 w-1 rounded-full ${
+                              enabled ? "bg-emerald-400" : "bg-white/30"
+                            }`}
+                          />
+                          {meta.label}
+                          {instances.length > 1 && (
+                            <span className="text-white/40">×{instances.length}</span>
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
+
+      {/* Social */}
+      <Panel
+        title="Social"
+        icon={Megaphone}
+        actionLabel="Manage"
+        onAction={() => onOpenTab("connectors")}
+        countLabel={`${enabledSocial}/${SOCIAL_CONNECTOR_CATEGORY?.connectors.length ?? 0} on`}
+      >
+        {integrationsLoading ? (
+          <LoadingRow />
+        ) : !SOCIAL_CONNECTOR_CATEGORY ? (
+          <EmptyLine text="Social registry unavailable." />
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {SOCIAL_CONNECTOR_CATEGORY.connectors.map((c) => {
+              const instances = integrationsByType.get(c.id) ?? [];
+              const isConnected = instances.length > 0;
+              const enabled = instances.some((i: any) => i.enabled);
+              return (
+                <span
+                  key={c.id}
+                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] ${
+                    enabled
+                      ? "border-fuchsia-500/30 bg-fuchsia-500/[0.08] text-fuchsia-100"
+                      : isConnected
+                        ? "border-white/10 bg-white/[0.04] text-white/65"
+                        : "border-white/[0.05] bg-white/[0.015] text-white/35"
+                  }`}
+                  title={
+                    enabled
+                      ? `${c.label} connected and active`
+                      : isConnected
+                        ? `${c.label} connected but paused`
+                        : `${c.label} not connected`
+                  }
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      enabled ? "bg-fuchsia-300" : isConnected ? "bg-white/40" : "bg-white/15"
+                    }`}
+                  />
+                  {c.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
+
+      {/* Workflow results — preserved from the original right-rail */}
+      <Panel
+        title="Workflow results"
+        icon={GitBranch}
+        actionLabel="All workflows"
+        onAction={onOpenAllWorkflows}
+      >
+        {workflowsLoading ? (
+          <LoadingRow />
+        ) : workflows.length === 0 ? (
+          <EmptyLine text="Workflow outputs will appear here as soon as the Store Bot runs something." />
+        ) : (
+          <div className="space-y-2">
+            {workflows.slice(0, 6).map((wf: any) => (
+              <WorkflowCard key={wf.id} workflow={wf} />
+            ))}
+          </div>
+        )}
+      </Panel>
     </div>
   );
 }
@@ -2003,12 +2532,14 @@ function Panel({
   children,
   actionLabel,
   onAction,
+  countLabel,
 }: {
   title: string;
   icon: typeof Bot;
   children: React.ReactNode;
   actionLabel?: string;
   onAction?: () => void;
+  countLabel?: string;
 }) {
   return (
     <section className="space-y-2">
@@ -2016,6 +2547,11 @@ function Panel({
         <div className="flex items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 text-sky-400" />
           <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{title}</span>
+          {countLabel && (
+            <span className="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[9px] font-medium text-white/55">
+              {countLabel}
+            </span>
+          )}
         </div>
         {actionLabel && onAction && (
           <button
