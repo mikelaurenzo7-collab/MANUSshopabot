@@ -179,24 +179,148 @@ export const workspacesRouter = router({
 
   /**
    * Get chat messages for a workspace
+   *
+   * Optionally scoped to a single session. When no `sessionId` is given,
+   * returns messages across the whole workspace (legacy behavior, used as
+   * a fallback by older clients before the session sidebar shipped).
    */
   getChatMessages: orgProcedure
     .input(z.object({
       workspaceId: z.number(),
-      limit: z.number().min(1).max(200).default(100),
+      sessionId: z.number().optional(),
+      limit: z.number().min(1).max(500).default(200),
       offset: z.number().min(0).default(0),
     }))
     .query(async ({ ctx, input }) => {
       await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
+      if (input.sessionId) {
+        // Verify the session is in this workspace before returning messages.
+        const session = await db.getWorkspaceChatSessionById(input.sessionId);
+        if (!session || session.workspaceId !== input.workspaceId) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+        }
+        return db.getWorkspaceChatSessionMessages(input.sessionId, {
+          limit: input.limit,
+          offset: input.offset,
+        });
+      }
       return db.getWorkspaceChatMessages(input.workspaceId, input.limit, input.offset);
     }),
 
   /**
-   * Send a chat message in a workspace
+   * List chat sessions for a workspace (sidebar feed).
+   * Adopts any pre-sessions messages into a "Continued from earlier"
+   * session on first call so existing history isn't lost.
+   */
+  listChatSessions: orgProcedure
+    .input(z.object({
+      workspaceId: z.number(),
+      includeArchived: z.boolean().optional().default(false),
+      limit: z.number().min(1).max(200).default(100),
+    }))
+    .query(async ({ ctx, input }) => {
+      await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
+      // One-time backfill of legacy chat messages into a default session.
+      await db.adoptOrphanWorkspaceChatMessages(input.workspaceId, ctx.user.id);
+      return db.listWorkspaceChatSessions(input.workspaceId, {
+        includeArchived: input.includeArchived,
+        limit: input.limit,
+      });
+    }),
+
+  /**
+   * Create a new chat session in a workspace ("+ New chat" in the sidebar).
+   * The title is optional — it will be auto-derived from the first user
+   * message if not provided.
+   */
+  createChatSession: orgProcedure
+    .input(z.object({
+      workspaceId: z.number(),
+      title: z.string().min(1).max(255).optional(),
+      summary: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
+      return db.createWorkspaceChatSession({
+        workspaceId: input.workspaceId,
+        createdByUserId: ctx.user.id,
+        title: input.title ? sanitizeName(input.title, 255) : "New chat",
+        summary: input.summary ? sanitizeText(input.summary, 500) : undefined,
+      });
+    }),
+
+  /**
+   * Rename a session (sidebar inline edit).
+   */
+  renameChatSession: orgProcedure
+    .input(z.object({
+      sessionId: z.number(),
+      title: z.string().min(1).max(255),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const session = await db.getWorkspaceChatSessionById(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      await requireWorkspaceInOrg(session.workspaceId, ctx.org.id);
+      await db.updateWorkspaceChatSession(input.sessionId, {
+        title: sanitizeName(input.title, 255),
+      });
+      return { success: true };
+    }),
+
+  /**
+   * Pin or unpin a session (pinned sessions float to the top of the sidebar).
+   */
+  pinChatSession: orgProcedure
+    .input(z.object({ sessionId: z.number(), pinned: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const session = await db.getWorkspaceChatSessionById(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      await requireWorkspaceInOrg(session.workspaceId, ctx.org.id);
+      await db.updateWorkspaceChatSession(input.sessionId, { pinned: input.pinned });
+      return { success: true };
+    }),
+
+  /**
+   * Archive (or unarchive) a session — soft delete that keeps history.
+   */
+  archiveChatSession: orgProcedure
+    .input(z.object({ sessionId: z.number(), archived: z.boolean().default(true) }))
+    .mutation(async ({ ctx, input }) => {
+      const session = await db.getWorkspaceChatSessionById(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      await requireWorkspaceInOrg(session.workspaceId, ctx.org.id);
+      await db.updateWorkspaceChatSession(input.sessionId, {
+        archived: input.archived,
+        archivedAt: input.archived ? new Date() : null,
+      });
+      return { success: true };
+    }),
+
+  /**
+   * Hard-delete a session and all of its messages. Use sparingly —
+   * archiveChatSession is the user-facing default in the UI.
+   */
+  deleteChatSession: orgProcedure
+    .input(z.object({ sessionId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const session = await db.getWorkspaceChatSessionById(input.sessionId);
+      if (!session) throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+      await requireWorkspaceInOrg(session.workspaceId, ctx.org.id);
+      await db.deleteWorkspaceChatSession(input.sessionId);
+      return { success: true };
+    }),
+
+  /**
+   * Send a chat message in a workspace (direct insert, no LLM).
+   *
+   * For LLM turns the client should use `chat.message` with a sessionId,
+   * which auto-persists both sides of the turn. This endpoint stays for
+   * legacy callers and for tests that want to insert a single message.
    */
   sendMessage: orgProcedure
     .input(z.object({
       workspaceId: z.number(),
+      sessionId: z.number().optional(),
       content: z.string().min(1),
       role: z.enum(["user", "assistant", "system"]).default("user"),
       toolCalls: z.any().optional(),
@@ -206,8 +330,16 @@ export const workspacesRouter = router({
     .mutation(async ({ ctx, input }) => {
       await requireWorkspaceInOrg(input.workspaceId, ctx.org.id);
 
+      if (input.sessionId) {
+        const session = await db.getWorkspaceChatSessionById(input.sessionId);
+        if (!session || session.workspaceId !== input.workspaceId) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Session not found" });
+        }
+      }
+
       const message = await db.createWorkspaceChatMessage({
         workspaceId: input.workspaceId,
+        sessionId: input.sessionId,
         userId: ctx.user.id,
         role: input.role,
         content: sanitizeText(input.content, 50000),
@@ -215,6 +347,10 @@ export const workspacesRouter = router({
         relatedWorkflowId: input.relatedWorkflowId,
         metadata: input.metadata,
       });
+
+      if (input.sessionId) {
+        await db.refreshWorkspaceChatSessionCounters(input.sessionId);
+      }
 
       return message;
     }),

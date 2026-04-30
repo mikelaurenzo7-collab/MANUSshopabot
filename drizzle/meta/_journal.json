@@ -218,6 +218,13 @@
       "when": 1777520000000,
       "tag": "0030_workspace_integrations_extended_enum",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1777530000000,
+      "tag": "0031_workspace_chat_sessions",
+      "breakpoints": true
     }
   ]
 }

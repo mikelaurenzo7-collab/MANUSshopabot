@@ -1179,16 +1179,67 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type InsertWorkspace = typeof workspaces.$inferInsert;
 
 /**
- * Workspace Chat Messages — conversation history per workspace.
- * 
- * Each workspace has its own isolated chat thread with the Store Bot.
+ * Workspace Chat Sessions — Claude-Code-style multi-session chat per workspace.
+ *
+ * Each workspace (≈ one store, treated as a "repository") can hold many
+ * independent conversation sessions. Users start a "+ New chat", switch
+ * between past chats, rename/pin/archive them — exactly like Claude Code's
+ * session sidebar inside a repo. All messages roll up to a single workspace
+ * memory, but live in their own thread so context doesn't bleed across
+ * unrelated tasks (e.g. "fix shipping rules" vs "draft holiday campaign").
+ */
+export const workspaceChatSessions = mysqlTable("workspace_chat_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  /** Who started this session */
+  createdByUserId: int("createdByUserId").notNull(),
+
+  /** Auto-generated from the first user turn; user-renameable. */
+  title: varchar("title", { length: 255 }).notNull().default("New chat"),
+  /** Optional one-line summary surfaced in the sidebar. */
+  summary: text("summary"),
+
+  /** Pinned sessions sort to the top of the sidebar, regardless of recency. */
+  pinned: boolean("pinned").default(false).notNull(),
+  /** Soft-archive (hidden from default sidebar but retained for audit/recall). */
+  archived: boolean("archived").default(false).notNull(),
+  archivedAt: timestamp("archivedAt"),
+
+  /** Cached counters so the sidebar doesn't have to scan messages. */
+  messageCount: int("messageCount").default(0).notNull(),
+  lastMessageAt: timestamp("lastMessageAt"),
+  /** Snippet of the most recent message, for sidebar preview. */
+  lastMessagePreview: varchar("lastMessagePreview", { length: 280 }),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  workspaceIdx: index("workspace_chat_sessions_workspace_idx").on(table.workspaceId, table.archived, table.lastMessageAt),
+  pinnedIdx: index("workspace_chat_sessions_pinned_idx").on(table.workspaceId, table.pinned, table.lastMessageAt),
+}));
+
+export type WorkspaceChatSession = typeof workspaceChatSessions.$inferSelect;
+export type InsertWorkspaceChatSession = typeof workspaceChatSessions.$inferInsert;
+
+/**
+ * Workspace Chat Messages — conversation history per workspace session.
+ *
+ * Each row belongs to a `workspace_chat_sessions` row (sessionId). Legacy
+ * rows from before sessions existed have `sessionId = NULL`; they're
+ * auto-migrated into a "Continued from earlier" session on first read.
  * Messages include both user inputs and bot responses, with full context
  * for memory and workflow tracking.
  */
 export const workspaceChatMessages = mysqlTable("workspace_chat_messages", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull(),
-  
+  /**
+   * Session this message belongs to. Nullable for backward compatibility
+   * with messages that existed before the multi-session table was added —
+   * those get adopted into a default session on first sidebar load.
+   */
+  sessionId: int("sessionId"),
+
   // Message
   role: mysqlEnum("role", ["user", "assistant", "system"]).notNull(),
   content: text("content").notNull(),
@@ -1208,6 +1259,7 @@ export const workspaceChatMessages = mysqlTable("workspace_chat_messages", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({
   workspaceIdIdx: index("workspace_chat_messages_workspace_id_idx").on(table.workspaceId, table.createdAt),
+  sessionIdIdx: index("workspace_chat_messages_session_id_idx").on(table.sessionId, table.createdAt),
   userIdIdx: index("workspace_chat_messages_user_id_idx").on(table.userId),
   workflowIdx: index("workspace_chat_messages_workflow_idx").on(table.relatedWorkflowId),
 }));

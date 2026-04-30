@@ -41,8 +41,10 @@ import {
   Bot,
   Brain,
   Calendar as CalendarIcon,
+  Check,
   CheckCircle2,
   Clock,
+  Edit3,
   ExternalLink,
   GitBranch,
   Lightbulb,
@@ -50,10 +52,16 @@ import {
   Mail,
   Megaphone,
   MessageCircle,
+  MessageSquare,
+  MoreHorizontal,
   Package,
+  Pencil,
+  Pin,
+  PinOff,
   Plug,
   Plus,
   Save,
+  Search,
   ScrollText,
   ShoppingBag,
   Sparkles,
@@ -62,9 +70,18 @@ import {
   Trash2,
   Truck,
   Wrench,
+  X,
   XCircle,
   Zap,
 } from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & config
@@ -446,8 +463,79 @@ function WorkspaceTabTrigger({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Chat tab — embedded chat with workflow side panel
+// Chat tab — Claude-Code-style multi-session chat
+//
+// Each store is a "repository". Inside a workspace the user can keep many
+// independent conversation sessions side-by-side: kick off a "+ New chat"
+// for a one-off question, pin the long-running ops thread, archive
+// finished work — exactly the way Claude Code lists past sessions per
+// repo. Switching sessions swaps just the message pane; the workflow
+// rail keeps the workspace-wide context.
 // ─────────────────────────────────────────────────────────────────────────────
+
+type ChatSession = {
+  id: number;
+  workspaceId: number;
+  title: string;
+  summary: string | null;
+  pinned: boolean;
+  archived: boolean;
+  archivedAt: string | Date | null;
+  messageCount: number;
+  lastMessageAt: string | Date | null;
+  lastMessagePreview: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
+const SESSION_QUERY_PARAM = "session";
+
+function readSessionFromUrl(): number | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get(SESSION_QUERY_PARAM);
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function writeSessionToUrl(sessionId: number | null) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (sessionId) url.searchParams.set(SESSION_QUERY_PARAM, String(sessionId));
+  else url.searchParams.delete(SESSION_QUERY_PARAM);
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function formatRelativeTimestamp(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  const ts = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(ts.getTime())) return "";
+  const diffMs = Date.now() - ts.getTime();
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (diffMs < minute) return "just now";
+  if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
+  if (diffMs < 7 * day) return `${Math.floor(diffMs / day)}d ago`;
+  return ts.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function bucketSession(session: ChatSession): "pinned" | "today" | "yesterday" | "earlier" | "archived" {
+  if (session.archived) return "archived";
+  if (session.pinned) return "pinned";
+  const ref = session.lastMessageAt ?? session.updatedAt ?? session.createdAt;
+  const ts = typeof ref === "string" ? new Date(ref) : ref;
+  if (!ts || Number.isNaN(ts.getTime())) return "earlier";
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+  const time = ts.getTime();
+  if (time >= startOfToday) return "today";
+  if (time >= startOfYesterday) return "yesterday";
+  return "earlier";
+}
 
 function ChatTab({
   workspaceId,
@@ -465,27 +553,130 @@ function ChatTab({
   onWorkflowsRefetch: () => void;
 }) {
   const [, setLocation] = useLocation();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const utils = trpc.useUtils();
 
-  const savedMessagesQuery = trpc.workspaces.getChatMessages.useQuery(
-    { workspaceId },
-    { enabled: !!workspaceId, staleTime: 60_000 },
+  // Sidebar state
+  const [showArchived, setShowArchived] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Active session state — persisted in the URL so each chat is shareable
+  // and survives a page reload (just like a Claude Code session URL).
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(() =>
+    readSessionFromUrl(),
   );
 
-  // Seed in-memory history from persisted messages whenever the
-  // active workspace changes.
+  // Per-session in-memory message buffer. Keyed by session id so switching
+  // back and forth doesn't drop the latest assistant reply before the
+  // server query refetches.
+  const [messagesBySession, setMessagesBySession] = useState<Record<number, Message[]>>({});
+
+  const sessionsQuery = trpc.workspaces.listChatSessions.useQuery(
+    { workspaceId, includeArchived: showArchived, limit: 200 },
+    { enabled: !!workspaceId, staleTime: 15_000 },
+  );
+
+  // Ensure a session is always selected: prefer the one in the URL, fall
+  // back to the most-recent active session, otherwise leave null (the user
+  // explicitly clicks "+ New chat" or sends a message to create one).
   useEffect(() => {
-    if (!savedMessagesQuery.data) return;
-    const loaded: Message[] = [...savedMessagesQuery.data]
-      .reverse()
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
-    setMessages(loaded);
-  }, [workspaceId, savedMessagesQuery.data]);
+    if (!sessionsQuery.data) return;
+    if (activeSessionId) {
+      const exists = sessionsQuery.data.some((s: ChatSession) => s.id === activeSessionId);
+      if (exists) return;
+    }
+    const firstActive = sessionsQuery.data.find((s: ChatSession) => !s.archived);
+    if (firstActive) {
+      setActiveSessionId(firstActive.id);
+      writeSessionToUrl(firstActive.id);
+    } else if (activeSessionId) {
+      setActiveSessionId(null);
+      writeSessionToUrl(null);
+    }
+  }, [sessionsQuery.data, activeSessionId]);
+
+  const messagesQuery = trpc.workspaces.getChatMessages.useQuery(
+    { workspaceId, sessionId: activeSessionId ?? undefined, limit: 500 },
+    { enabled: !!workspaceId && !!activeSessionId, staleTime: 30_000 },
+  );
+
+  // When the server returns the persisted history for a session, hydrate
+  // the local buffer (only if we don't already have a more-up-to-date
+  // optimistic copy).
+  useEffect(() => {
+    if (!activeSessionId) return;
+    const data = messagesQuery.data;
+    if (!data) return;
+    const loaded: Message[] = data
+      .filter((m: any) => m.role === "user" || m.role === "assistant")
+      .map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }));
+    setMessagesBySession((prev) => {
+      const existing = prev[activeSessionId];
+      // If the local buffer is longer (e.g. an optimistic user message
+      // hasn't been persisted yet), keep it.
+      if (existing && existing.length > loaded.length) return prev;
+      return { ...prev, [activeSessionId]: loaded };
+    });
+  }, [activeSessionId, messagesQuery.data]);
+
+  const createSessionMutation = trpc.workspaces.createChatSession.useMutation({
+    onSuccess: (session) => {
+      void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+      setActiveSessionId(session.id);
+      writeSessionToUrl(session.id);
+      setMessagesBySession((prev) => ({ ...prev, [session.id]: [] }));
+    },
+    onError: (err) => toast.error(err.message || "Could not start a new chat"),
+  });
+
+  const renameSessionMutation = trpc.workspaces.renameChatSession.useMutation({
+    onSuccess: () => {
+      void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+    },
+    onError: (err) => toast.error(err.message || "Could not rename chat"),
+  });
+
+  const pinSessionMutation = trpc.workspaces.pinChatSession.useMutation({
+    onSuccess: () => {
+      void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+    },
+    onError: (err) => toast.error(err.message || "Could not pin chat"),
+  });
+
+  const archiveSessionMutation = trpc.workspaces.archiveChatSession.useMutation({
+    onSuccess: () => {
+      void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+    },
+    onError: (err) => toast.error(err.message || "Could not archive chat"),
+  });
+
+  const deleteSessionMutation = trpc.workspaces.deleteChatSession.useMutation({
+    onSuccess: (_data, vars) => {
+      void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+      setMessagesBySession((prev) => {
+        const next = { ...prev };
+        delete next[vars.sessionId];
+        return next;
+      });
+      if (activeSessionId === vars.sessionId) {
+        setActiveSessionId(null);
+        writeSessionToUrl(null);
+      }
+    },
+    onError: (err) => toast.error(err.message || "Could not delete chat"),
+  });
 
   const chatMutation = trpc.chat.message.useMutation({
-    onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+    onSuccess: (data, variables) => {
+      const sid = (variables as any).sessionId as number | undefined;
+      if (sid) {
+        setMessagesBySession((prev) => ({
+          ...prev,
+          [sid]: [...(prev[sid] ?? []), { role: "assistant", content: data.reply }],
+        }));
+        // Refetch the session list to surface the auto-generated title and
+        // refreshed counters/timestamps.
+        void utils.workspaces.listChatSessions.invalidate({ workspaceId });
+      }
       if (data.toolsUsed?.length) onWorkflowsRefetch();
     },
     onError: (err) => {
@@ -493,10 +684,23 @@ function ChatTab({
     },
   });
 
-  function handleSend(content: string) {
+  async function handleSend(content: string) {
+    let sid = activeSessionId;
+    // First send with no active session → create one on demand and route
+    // the message through it. Mirrors Claude Code starting a new session
+    // when you type into the empty composer.
+    if (!sid) {
+      try {
+        const session = await createSessionMutation.mutateAsync({ workspaceId });
+        sid = session.id;
+      } catch {
+        return;
+      }
+    }
     const newMsg: Message = { role: "user", content };
-    const updated = [...messages, newMsg];
-    setMessages(updated);
+    const prevMessages = messagesBySession[sid] ?? [];
+    const updated = [...prevMessages, newMsg];
+    setMessagesBySession((prev) => ({ ...prev, [sid!]: updated }));
     chatMutation.mutate({
       agentType: "store",
       messages: updated.filter(
@@ -505,37 +709,137 @@ function ChatTab({
       ),
       storeId: storeId ?? undefined,
       workspaceId,
+      sessionId: sid,
     });
   }
 
-  const placeholder = `Ask the ${workspaceName} Store Bot to build, operate, market, or inspect results…`;
+  function handleSelectSession(id: number) {
+    setActiveSessionId(id);
+    writeSessionToUrl(id);
+  }
+
+  function handleNewChat() {
+    createSessionMutation.mutate({ workspaceId });
+  }
+
+  const sessions: ChatSession[] = (sessionsQuery.data ?? []) as ChatSession[];
+  const filteredSessions = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return sessions;
+    return sessions.filter((s) => {
+      const haystack = `${s.title} ${s.summary ?? ""} ${s.lastMessagePreview ?? ""}`.toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [sessions, searchTerm]);
+
+  const groupedSessions = useMemo(() => {
+    const buckets: Record<"pinned" | "today" | "yesterday" | "earlier" | "archived", ChatSession[]> = {
+      pinned: [],
+      today: [],
+      yesterday: [],
+      earlier: [],
+      archived: [],
+    };
+    for (const s of filteredSessions) buckets[bucketSession(s)].push(s);
+    return buckets;
+  }, [filteredSessions]);
+
+  const activeSession = useMemo(
+    () => sessions.find((s) => s.id === activeSessionId) ?? null,
+    [sessions, activeSessionId],
+  );
+  const activeMessages = activeSessionId ? messagesBySession[activeSessionId] ?? [] : [];
+
+  const placeholder = activeSession
+    ? `Reply to "${activeSession.title}"…`
+    : `Ask the ${workspaceName} Store Bot to build, operate, market, or inspect results…`;
 
   return (
-    <div className="grid h-full grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="min-h-0 p-4 md:p-5">
-        <AIChatBox
-          messages={messages}
-          onSendMessage={handleSend}
-          isLoading={chatMutation.isPending}
-          placeholder={placeholder}
-          suggestedPrompts={
-            messages.length === 0
-              ? [
-                  `Show me what's happening in ${workspaceName} and what to fix first`,
-                  "Run a full store optimization sweep",
-                  "Create a social content plan for my best products",
-                  "Check workflows and summarize the latest results",
-                ]
-              : undefined
-          }
-          className="h-full border-white/10 bg-white/[0.02]"
-          height="100%"
-          emptyStateMessage={`${workspaceName} workspace is ready.`}
-          botType="store"
+    <div className="grid h-full grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_360px]">
+      {/* ── Session sidebar ─────────────────────────────────────────────── */}
+      <SessionSidebar
+        sessions={filteredSessions}
+        grouped={groupedSessions}
+        activeSessionId={activeSessionId}
+        searchTerm={searchTerm}
+        onSearch={setSearchTerm}
+        showArchived={showArchived}
+        onToggleArchived={() => setShowArchived((v) => !v)}
+        onNewChat={handleNewChat}
+        creating={createSessionMutation.isPending}
+        onSelect={handleSelectSession}
+        onRename={(id, title) => renameSessionMutation.mutate({ sessionId: id, title })}
+        onTogglePin={(id, pinned) => pinSessionMutation.mutate({ sessionId: id, pinned })}
+        onToggleArchive={(id, archived) =>
+          archiveSessionMutation.mutate({ sessionId: id, archived })
+        }
+        onDelete={(id) => deleteSessionMutation.mutate({ sessionId: id })}
+        loading={sessionsQuery.isLoading}
+        workspaceName={workspaceName}
+      />
+
+      {/* ── Active session pane ─────────────────────────────────────────── */}
+      <div className="flex min-h-0 min-w-0 flex-col border-t border-white/[0.06] lg:border-l lg:border-t-0">
+        <SessionHeader
+          session={activeSession}
+          onRename={(title) => {
+            if (activeSession) {
+              renameSessionMutation.mutate({ sessionId: activeSession.id, title });
+            }
+          }}
+          onTogglePin={() => {
+            if (activeSession) {
+              pinSessionMutation.mutate({
+                sessionId: activeSession.id,
+                pinned: !activeSession.pinned,
+              });
+            }
+          }}
+          onToggleArchive={() => {
+            if (activeSession) {
+              archiveSessionMutation.mutate({
+                sessionId: activeSession.id,
+                archived: !activeSession.archived,
+              });
+            }
+          }}
+          onDelete={() => {
+            if (activeSession && confirm(`Delete "${activeSession.title}"? This cannot be undone.`)) {
+              deleteSessionMutation.mutate({ sessionId: activeSession.id });
+            }
+          }}
+          onNewChat={handleNewChat}
         />
+        <div className="min-h-0 flex-1 p-4 md:p-5">
+          <AIChatBox
+            messages={activeMessages}
+            onSendMessage={handleSend}
+            isLoading={chatMutation.isPending || createSessionMutation.isPending}
+            placeholder={placeholder}
+            suggestedPrompts={
+              activeMessages.length === 0
+                ? [
+                    `Show me what's happening in ${workspaceName} and what to fix first`,
+                    "Run a full store optimization sweep",
+                    "Create a social content plan for my best products",
+                    "Check workflows and summarize the latest results",
+                  ]
+                : undefined
+            }
+            className="h-full border-white/10 bg-white/[0.02]"
+            height="100%"
+            emptyStateMessage={
+              activeSession
+                ? `${activeSession.title} — start where you left off, or ask something new.`
+                : `${workspaceName} workspace is ready. Type below to start a new chat.`
+            }
+            botType="store"
+          />
+        </div>
       </div>
 
-      <aside className="custom-scrollbar min-h-0 overflow-y-auto border-t border-white/[0.06] bg-white/[0.015] p-4 md:p-5 xl:border-l xl:border-t-0">
+      {/* ── Workflow rail (workspace-wide context, not session-scoped) ──── */}
+      <aside className="custom-scrollbar hidden min-h-0 overflow-y-auto border-t border-white/[0.06] bg-white/[0.015] p-4 md:p-5 xl:block xl:border-l xl:border-t-0">
         <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
           {workflowsLoading ? (
             <LoadingRow />
@@ -548,6 +852,486 @@ function ChatTab({
           )}
         </Panel>
       </aside>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session sidebar
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SessionSidebar({
+  sessions,
+  grouped,
+  activeSessionId,
+  searchTerm,
+  onSearch,
+  showArchived,
+  onToggleArchived,
+  onNewChat,
+  creating,
+  onSelect,
+  onRename,
+  onTogglePin,
+  onToggleArchive,
+  onDelete,
+  loading,
+  workspaceName,
+}: {
+  sessions: ChatSession[];
+  grouped: Record<"pinned" | "today" | "yesterday" | "earlier" | "archived", ChatSession[]>;
+  activeSessionId: number | null;
+  searchTerm: string;
+  onSearch: (term: string) => void;
+  showArchived: boolean;
+  onToggleArchived: () => void;
+  onNewChat: () => void;
+  creating: boolean;
+  onSelect: (id: number) => void;
+  onRename: (id: number, title: string) => void;
+  onTogglePin: (id: number, pinned: boolean) => void;
+  onToggleArchive: (id: number, archived: boolean) => void;
+  onDelete: (id: number) => void;
+  loading: boolean;
+  workspaceName: string;
+}) {
+  const groupOrder: Array<{
+    key: keyof typeof grouped;
+    label: string;
+  }> = [
+    { key: "pinned", label: "Pinned" },
+    { key: "today", label: "Today" },
+    { key: "yesterday", label: "Yesterday" },
+    { key: "earlier", label: "Earlier" },
+    { key: "archived", label: "Archived" },
+  ];
+
+  return (
+    <div className="custom-scrollbar flex min-h-0 flex-col overflow-hidden bg-[#070707]/80">
+      <div className="shrink-0 space-y-2 border-b border-white/[0.06] p-3">
+        <Button
+          size="sm"
+          className="h-8 w-full justify-start bg-sky-500/15 text-xs font-semibold text-sky-100 hover:bg-sky-500/25"
+          onClick={onNewChat}
+          disabled={creating}
+        >
+          {creating ? (
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+          )}
+          New chat
+        </Button>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => onSearch(e.target.value)}
+            placeholder="Search chats…"
+            className="h-8 border-white/10 bg-white/[0.04] pl-7 pr-7 text-xs"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={() => onSearch("")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-white/40 hover:bg-white/[0.06] hover:text-white/70"
+              aria-label="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-2">
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="px-2 py-6 text-center">
+            <MessageSquare className="mx-auto h-5 w-5 text-white/30" />
+            <p className="mt-2 text-[11px] text-white/55">
+              {searchTerm
+                ? "No chats match your search."
+                : `No chats in ${workspaceName} yet.`}
+            </p>
+            {!searchTerm && (
+              <p className="mt-1 text-[10px] text-white/35">
+                Click <span className="text-white/60">+ New chat</span> to start one.
+              </p>
+            )}
+          </div>
+        ) : (
+          groupOrder.map(({ key, label }) => {
+            const items = grouped[key];
+            if (!items || items.length === 0) return null;
+            return (
+              <div key={key} className="mb-3">
+                <div className="px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+                  {label}
+                  <span className="ml-1.5 text-white/25">{items.length}</span>
+                </div>
+                <div className="space-y-0.5">
+                  {items.map((s) => (
+                    <SessionRow
+                      key={s.id}
+                      session={s}
+                      active={s.id === activeSessionId}
+                      onSelect={() => onSelect(s.id)}
+                      onRename={(title) => onRename(s.id, title)}
+                      onTogglePin={() => onTogglePin(s.id, !s.pinned)}
+                      onToggleArchive={() => onToggleArchive(s.id, !s.archived)}
+                      onDelete={() => onDelete(s.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-white/[0.06] p-2">
+        <button
+          type="button"
+          onClick={onToggleArchived}
+          className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-[10px] uppercase tracking-[0.15em] text-white/40 hover:bg-white/[0.04] hover:text-white/65"
+        >
+          <span>{showArchived ? "Hide archived" : "Show archived"}</span>
+          <span className="text-white/30">{showArchived ? "−" : "+"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SessionRow({
+  session,
+  active,
+  onSelect,
+  onRename,
+  onTogglePin,
+  onToggleArchive,
+  onDelete,
+}: {
+  session: ChatSession;
+  active: boolean;
+  onSelect: () => void;
+  onRename: (title: string) => void;
+  onTogglePin: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(session.title);
+
+  useEffect(() => {
+    setDraftTitle(session.title);
+  }, [session.title]);
+
+  function commitRename() {
+    const next = draftTitle.trim();
+    setEditing(false);
+    if (!next || next === session.title) {
+      setDraftTitle(session.title);
+      return;
+    }
+    onRename(next);
+  }
+
+  return (
+    <div
+      className={`group relative rounded-md px-2 py-1.5 text-xs transition-colors ${
+        active
+          ? "bg-sky-500/15 text-white"
+          : "text-white/70 hover:bg-white/[0.04] hover:text-white/90"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        onDoubleClick={() => setEditing(true)}
+        className="flex w-full items-start gap-1.5 text-left"
+      >
+        <div className="mt-0.5 shrink-0">
+          {session.pinned ? (
+            <Pin className="h-3 w-3 text-amber-300" />
+          ) : (
+            <MessageSquare className={`h-3 w-3 ${active ? "text-sky-200" : "text-white/35"}`} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <Input
+              autoFocus
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitRename();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setDraftTitle(session.title);
+                  setEditing(false);
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="h-6 border-white/15 bg-black/40 px-1.5 text-xs"
+              maxLength={255}
+            />
+          ) : (
+            <p className="truncate text-[11px] font-semibold leading-tight">{session.title}</p>
+          )}
+          {session.lastMessagePreview && !editing && (
+            <p
+              className={`mt-0.5 line-clamp-1 text-[10px] leading-snug ${
+                active ? "text-white/65" : "text-white/40"
+              }`}
+            >
+              {session.lastMessagePreview}
+            </p>
+          )}
+          <div className="mt-0.5 flex items-center gap-2 text-[9px] text-white/35">
+            <span>{formatRelativeTimestamp(session.lastMessageAt ?? session.updatedAt)}</span>
+            {session.messageCount > 0 && (
+              <span className="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/45">
+                {session.messageCount} msg
+              </span>
+            )}
+            {session.archived && (
+              <span className="rounded-full bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/45">
+                archived
+              </span>
+            )}
+          </div>
+        </div>
+      </button>
+
+      <div className="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="rounded p-1 text-white/40 hover:bg-white/[0.08] hover:text-white/80"
+              aria-label="Chat actions"
+            >
+              <MoreHorizontal className="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setEditing(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onTogglePin}>
+              {session.pinned ? (
+                <>
+                  <PinOff className="mr-2 h-3.5 w-3.5" />
+                  Unpin
+                </>
+              ) : (
+                <>
+                  <Pin className="mr-2 h-3.5 w-3.5" />
+                  Pin
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleArchive}>
+              {session.archived ? (
+                <>
+                  <Check className="mr-2 h-3.5 w-3.5" />
+                  Unarchive
+                </>
+              ) : (
+                <>
+                  <ScrollText className="mr-2 h-3.5 w-3.5" />
+                  Archive
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-rose-300 focus:bg-rose-500/15 focus:text-rose-200"
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete forever
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
+function SessionHeader({
+  session,
+  onRename,
+  onTogglePin,
+  onToggleArchive,
+  onDelete,
+  onNewChat,
+}: {
+  session: ChatSession | null;
+  onRename: (title: string) => void;
+  onTogglePin: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
+  onNewChat: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(session?.title ?? "");
+
+  useEffect(() => {
+    setDraft(session?.title ?? "");
+    setEditing(false);
+  }, [session?.id, session?.title]);
+
+  if (!session) {
+    return (
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.015] px-4 py-2">
+        <div className="flex items-center gap-2 text-xs text-white/55">
+          <Sparkles className="h-3.5 w-3.5 text-sky-300" />
+          <span>Type below to start your first chat in this workspace.</span>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 border-white/10 bg-white/[0.04] text-[11px]"
+          onClick={onNewChat}
+        >
+          <Plus className="mr-1 h-3 w-3" />
+          New chat
+        </Button>
+      </div>
+    );
+  }
+
+  function commit() {
+    if (!session) return;
+    const next = draft.trim();
+    setEditing(false);
+    if (!next || next === session.title) {
+      setDraft(session.title);
+      return;
+    }
+    onRename(next);
+  }
+
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.015] px-4 py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        {session.pinned ? (
+          <Pin className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+        ) : (
+          <MessageSquare className="h-3.5 w-3.5 shrink-0 text-sky-300" />
+        )}
+        {editing ? (
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commit();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setDraft(session.title);
+                setEditing(false);
+              }
+            }}
+            className="h-7 max-w-md border-white/15 bg-black/40 text-xs"
+            maxLength={255}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="group flex min-w-0 items-center gap-1.5 truncate text-left text-xs font-semibold text-white/85 hover:text-white"
+            title="Click to rename"
+          >
+            <span className="truncate">{session.title}</span>
+            <Edit3 className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
+          </button>
+        )}
+        {session.archived && (
+          <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/45">
+            archived
+          </span>
+        )}
+        <span className="hidden text-[10px] text-white/35 md:inline">
+          · {session.messageCount} message{session.messageCount === 1 ? "" : "s"}
+          {session.lastMessageAt ? ` · ${formatRelativeTimestamp(session.lastMessageAt)}` : ""}
+        </span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-[11px] text-white/65 hover:text-white"
+          onClick={onTogglePin}
+          title={session.pinned ? "Unpin" : "Pin"}
+        >
+          {session.pinned ? (
+            <PinOff className="h-3.5 w-3.5" />
+          ) : (
+            <Pin className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-[11px] text-white/65 hover:text-white"
+              aria-label="Chat actions"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setEditing(true)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleArchive}>
+              {session.archived ? (
+                <>
+                  <Check className="mr-2 h-3.5 w-3.5" />
+                  Unarchive
+                </>
+              ) : (
+                <>
+                  <ScrollText className="mr-2 h-3.5 w-3.5" />
+                  Archive
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-rose-300 focus:bg-rose-500/15 focus:text-rose-200"
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" />
+              Delete forever
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 border-white/10 bg-white/[0.04] text-[11px]"
+          onClick={onNewChat}
+        >
+          <Plus className="mr-1 h-3 w-3" />
+          New chat
+        </Button>
+      </div>
     </div>
   );
 }

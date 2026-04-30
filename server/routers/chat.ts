@@ -469,6 +469,7 @@ const MessageSchema = z.object({
 /** Persist user message + assistant reply to workspace_chat_messages when a workspaceId is provided. */
 async function persistWorkspaceTurn(opts: {
   workspaceId: number;
+  sessionId?: number;
   userId: number;
   messages: Array<{ role: string; content: string }>;
   reply: string;
@@ -478,6 +479,7 @@ async function persistWorkspaceTurn(opts: {
   if (lastUserMsg) {
     await db.createWorkspaceChatMessage({
       workspaceId: opts.workspaceId,
+      sessionId: opts.sessionId,
       userId: opts.userId,
       role: "user",
       content: lastUserMsg.content,
@@ -485,11 +487,23 @@ async function persistWorkspaceTurn(opts: {
   }
   await db.createWorkspaceChatMessage({
     workspaceId: opts.workspaceId,
+    sessionId: opts.sessionId,
     userId: opts.userId,
     role: "assistant",
     content: opts.reply,
     toolCalls: opts.toolsUsed?.length ? opts.toolsUsed : undefined,
   });
+  if (opts.sessionId) {
+    // Auto-title the session on the first user turn (when title is still
+    // the default "New chat") and refresh sidebar counters.
+    const session = await db.getWorkspaceChatSessionById(opts.sessionId);
+    if (session && session.title === "New chat" && lastUserMsg) {
+      await db.updateWorkspaceChatSession(opts.sessionId, {
+        title: db.deriveSessionTitle(lastUserMsg.content),
+      });
+    }
+    await db.refreshWorkspaceChatSessionCounters(opts.sessionId);
+  }
 }
 
 export const chatRouter = router({
@@ -508,6 +522,8 @@ export const chatRouter = router({
       storeId: z.number().optional(),
       /** Workspace ID — when provided, persists messages to workspace_chat_messages */
       workspaceId: z.number().optional(),
+      /** Session ID inside the workspace — required for multi-session chat sidebar */
+      sessionId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const systemBase = BOT_SYSTEM_PROMPTS[input.agentType];
@@ -561,6 +577,7 @@ export const chatRouter = router({
         if (input.workspaceId) {
           await persistWorkspaceTurn({
             workspaceId: input.workspaceId,
+            sessionId: input.sessionId,
             userId: ctx.user.id,
             messages: input.messages,
             reply,
@@ -624,6 +641,7 @@ export const chatRouter = router({
       if (input.workspaceId) {
         await persistWorkspaceTurn({
           workspaceId: input.workspaceId,
+          sessionId: input.sessionId,
           userId: ctx.user.id,
           messages: input.messages,
           reply,
