@@ -21,9 +21,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   Bot, Package, Megaphone, Store,
-  Sparkles, Plus, MessageSquare, ArrowRight, AlertTriangle,
+  Sparkles, Plus, MessageSquare, AlertTriangle,
   Loader2, GitBranch, TrendingUp, ShieldCheck,
-  RotateCcw, Zap, ExternalLink, CheckCircle2, XCircle,
+  Zap, CheckCircle2, XCircle,
   Clock, Activity, ChevronRight, RefreshCw,
 } from "lucide-react";
 import { HandoffMoment, LifecycleBadge } from "@/components/handoff/HandoffMoment";
@@ -39,26 +39,26 @@ import { Button } from "@/components/ui/button";
 type AgentType = "architect" | "merchant" | "social";
 
 const BOT_META: Record<AgentType, {
-  label: string; href: string; chatHref: string;
+  label: string;
   icon: React.ReactNode; description: string;
   accent: string; border: string; glow: string; dot: string;
 }> = {
   architect: {
-    label: "Builder Bot", href: "/architect", chatHref: "/chat?bot=architect",
+    label: "Build lane",
     icon: <Bot className="w-5 h-5" strokeWidth={2.2} />,
     description: "Niche research · brand generation · store scaffolding",
     accent: "text-sky-300", border: "border-sky-500/20", glow: "shadow-[0_0_32px_rgba(14,165,233,0.15)]",
     dot: "bg-sky-400",
   },
   merchant: {
-    label: "Merchant Bot", href: "/merchant", chatHref: "/chat?bot=merchant",
+    label: "Operate lane",
     icon: <Package className="w-5 h-5" strokeWidth={2.2} />,
     description: "Inventory sync · auto-fulfillment · pricing matrices",
     accent: "text-cyan-300", border: "border-cyan-500/20", glow: "shadow-[0_0_32px_rgba(34,211,238,0.12)]",
     dot: "bg-cyan-400",
   },
   social: {
-    label: "Social Bot", href: "/social", chatHref: "/chat?bot=social",
+    label: "Social lane",
     icon: <Megaphone className="w-5 h-5" strokeWidth={2.2} />,
     description: "Ads · posts · campaigns · email recovery",
     accent: "text-fuchsia-300", border: "border-fuchsia-500/20", glow: "shadow-[0_0_32px_rgba(217,70,239,0.12)]",
@@ -130,24 +130,15 @@ export default function Home() {
     if ((row.running ?? 0) > 0) return "running";
     return "ok";
   };
-  const botRunningFor = (t: AgentType): number => {
-    const row = ((agentStatus as any[]) ?? []).find((r) => r?.agentType === t);
-    return row?.running ?? 0;
-  };
-  const botCompletedFor = (t: AgentType): number => {
-    const row = ((agentStatus as any[]) ?? []).find((r) => r?.agentType === t);
-    return row?.completed ?? 0;
-  };
-
   const totalRunning = ((agentStatus as any[]) ?? []).reduce((a: number, s: any) => a + (s?.running ?? 0), 0);
   const pendingCount = pendingApprovals?.length ?? 0;
 
   const botHealth = (() => {
     const errors = (["architect", "merchant", "social"] as AgentType[]).filter((b) => botStatusFor(b) === "error").length;
-    if (errors > 0) return { tone: "warn" as const, text: `${errors} bot${errors > 1 ? "s" : ""} need attention` };
+    if (errors > 0) return { tone: "warn" as const, text: "Store Bot needs attention" };
     const running = (["architect", "merchant", "social"] as AgentType[]).filter((b) => botStatusFor(b) === "running").length;
-    if (running > 0) return { tone: "active" as const, text: `${running} running, all healthy` };
-    return { tone: "ok" as const, text: "3 bots green" };
+    if (running > 0) return { tone: "active" as const, text: `${running} workflow lane${running > 1 ? "s" : ""} running` };
+    return { tone: "ok" as const, text: "Store Bot healthy" };
   })();
 
   const todayRevenue = (((metrics?.totalRevenue ?? 0) as number) / 100).toFixed(2);
@@ -209,7 +200,7 @@ export default function Home() {
         <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
         <Kpi
           icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
-          label="Bots" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
+          label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
         />
         <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-2.5 py-1 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
@@ -237,62 +228,50 @@ export default function Home() {
           {/* ── Ops Grid ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-6">
 
-            {/* ── Col 1: Bot Status Cards ── */}
+            {/* ── Col 1: Unified Store Bot ── */}
             <div className="space-y-3">
-              <SectionHeader icon={<Zap className="w-3.5 h-3.5 text-sky-400" />} title="Bot Status" href="/chat" linkLabel="Open chat" />
-              {(["architect", "merchant", "social"] as AgentType[]).map((bot) => {
-                const meta = BOT_META[bot];
-                const status = botStatusFor(bot);
-                const sc = STATUS_CONFIG[status];
-                const running = botRunningFor(bot);
-                const completed = botCompletedFor(bot);
-                return (
-                  <div
-                    key={bot}
-                    className={`group relative rounded-xl border ${meta.border} bg-white/[0.025] p-4 transition-standard hover:bg-white/[0.05] hover:border-opacity-100 hover:shadow-lg hover:-translate-y-1 ${meta.glow} cursor-pointer card-hover`}
-                    onClick={() => setLocation(meta.href)}
-                  >
-                    {/* Status dot */}
-                    <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${sc.dot}`} />
-                    <div className="flex items-start gap-3">
-                      <div className={`w-9 h-9 rounded-lg border ${meta.border} bg-white/[0.04] flex items-center justify-center shrink-0 ${meta.accent} transition-standard group-hover:bg-white/[0.08]`}>
-                        {meta.icon}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-[11px] font-bold uppercase tracking-widest ${meta.accent}`}>{meta.label}</p>
-                        <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">{meta.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className={`flex items-center gap-1 text-[10px] font-mono ${sc.color}`}>
-                            {sc.icon} {sc.label}
-                          </span>
-                          {running > 0 && (
-                            <span className="text-[10px] font-mono text-white/35">{running} running</span>
-                          )}
-                          {completed > 0 && (
-                            <span className="text-[10px] font-mono text-white/25">{completed} done</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setLocation(meta.href); }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border ${meta.border} bg-white/[0.03] py-1.5 text-[10px] font-semibold ${meta.accent} hover:bg-white/[0.07] transition-all`}
-                      >
-                        <ArrowRight className="w-3 h-3" /> Open
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setLocation(meta.chatHref); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all"
-                      >
-                        <MessageSquare className="w-3 h-3" /> Chat
-                      </button>
+              <SectionHeader icon={<Zap className="w-3.5 h-3.5 text-sky-400" />} title="Store Bot" href="/chat" linkLabel="Open workspace" />
+              <div
+                className="group relative rounded-xl border border-sky-500/20 bg-white/[0.025] p-4 transition-standard hover:bg-white/[0.05] hover:shadow-lg hover:-translate-y-1 shadow-[0_0_32px_rgba(14,165,233,0.12)] cursor-pointer card-hover"
+                onClick={() => setLocation("/chat")}
+              >
+                <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${botHealth.tone === "warn" ? "bg-red-400 animate-pulse" : botHealth.tone === "active" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] flex items-center justify-center shrink-0 text-sky-300 transition-standard group-hover:bg-sky-500/[0.12]">
+                    <Bot className="w-5 h-5" strokeWidth={2.2} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-sky-300">One Store Bot</p>
+                    <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">
+                      Launch from zero, operate connected stores, run social growth, and remember each store workspace.
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className={`flex items-center gap-1 text-[10px] font-mono ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`}>
+                        {botHealth.tone === "warn" ? <XCircle className="w-3.5 h-3.5" /> : botHealth.tone === "active" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} {botHealth.text}
+                      </span>
+                      {totalRunning > 0 && (
+                        <span className="text-[10px] font-mono text-white/35">{totalRunning} running</span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/[0.14] transition-all"
+                  >
+                    <MessageSquare className="w-3 h-3" /> Chat + workspace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setLocation("/storefronts#integrations"); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all"
+                  >
+                    <Store className="w-3 h-3" /> Add store
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* ── Col 2: Workflow Feed ── */}
@@ -303,7 +282,7 @@ export default function Home() {
                   icon={<GitBranch className="w-5 h-5 text-white/20" />}
                   title="No workflows yet"
                   description="Launch a workflow from any bot page to see it here."
-                  action={{ label: "Launch workflow", href: "/architect" }}
+                  action={{ label: "Launch workflow", href: "/chat" }}
                 />
               ) : (
                 <div className="space-y-2">
@@ -416,7 +395,7 @@ export default function Home() {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setLocation("/merchant"); }}
+                            onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
                             className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[9px] font-mono text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <Package className="w-3 h-3" /> Manage

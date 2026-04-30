@@ -44,24 +44,24 @@ const BOT_META: Record<
   { name: string; href: string; icon: typeof Bot; color: string; accent: string; rgb: string }
 > = {
   builder: {
-    name: "The Builder",
-    href: "/architect",
+    name: "Build lane",
+    href: "/chat",
     icon: Bot,
     color: "#38bdf8",
     accent: "#0ea5e9",
     rgb: "14, 165, 233",
   },
   merchant: {
-    name: "The Merchant",
-    href: "/merchant",
+    name: "Operate lane",
+    href: "/chat",
     icon: Package,
     color: "#22d3ee",
     accent: "#06b6d4",
     rgb: "6, 182, 212",
   },
   social: {
-    name: "The Social Bot",
-    href: "/social",
+    name: "Social lane",
+    href: "/chat",
     icon: Megaphone,
     color: "#fb923c",
     accent: "#f97316",

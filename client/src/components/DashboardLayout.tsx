@@ -19,8 +19,6 @@ import {
   LayoutDashboard,
   Inbox as InboxIcon,
   Bot,
-  Package,
-  Megaphone,
   GitBranch,
   Globe,
   BarChart3,
@@ -31,8 +29,6 @@ import {
   Zap,
   Search,
   Store,
-  Workflow,
-  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -49,8 +45,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getBrand } from "@/lib/platformBrand";
-
-type AgentType = "architect" | "merchant" | "social";
 
 interface NavItem {
   title: string;
@@ -121,9 +115,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const targets: Record<string, string> = {
       h: "/", c: "/", // home / command center
       i: "/inbox",
-      b: "/architect", // builder
-      m: "/merchant",
-      o: "/social",    // social — `s` is taken by Settings
+      // Legacy bot shortcuts now converge on the unified Store Bot workspace.
+      b: "/chat",
+      m: "/chat",
+      o: "/chat",    // `s` is taken by Settings
       w: "/workflows",
       f: "/storefronts", // storefronts
       n: "/insights",   // iNsights
@@ -184,37 +179,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     enabled: !!user,
   });
 
-  // Map agent status rows into per-bot dot status.
-  const statusByAgent: Partial<Record<AgentType, NavItem["dot"]>> = {};
-  for (const row of (agentStatus as any[] | undefined) ?? []) {
-    const t = row?.agentType as AgentType | undefined;
-    if (!t) continue;
-    if ((row.failed ?? 0) > 0) statusByAgent[t] = "error";
-    else if ((row.running ?? 0) > 0) statusByAgent[t] = "running";
-    else statusByAgent[t] = "ok";
-  }
-
   const totalRunning = ((agentStatus as any[]) ?? []).reduce(
     (a: number, s: any) => a + (s?.running ?? 0),
     0,
   );
+  const hasAgentErrors = ((agentStatus as any[]) ?? []).some((s: any) => (s?.failed ?? 0) > 0);
+  const storeBotStatus: NavItem["dot"] = hasAgentErrors ? "error" : totalRunning > 0 ? "running" : "ok";
 
   // Active workspace store (for the switcher pill)
   const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
 
-  // Flat nav — 8 destinations, no group headers. The earlier grouping
+  // Flat nav — one Store Bot destination instead of separate builder,
+  // merchant, social, and communicator bots.
   // (Workspace/Bots/Operate/Account) added vertical noise without aiding
   // discovery. A single thin separator before the bot triad keeps the
   // visual rhythm without consuming a row per label.
   const navItems: NavItem[] = [
     { title: "Command Center", path: "/", icon: LayoutDashboard },
     { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
-    // ── BOTS section ──
-    { title: "BOTS", section: true },
-    { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
-    { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
-    { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
-    { title: "Communicator", path: "/communicator", icon: Mail, brand: "emerald", dot: statusByAgent.social ?? "ok" },
+    { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: storeBotStatus },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
@@ -264,6 +247,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         location.startsWith("/bot-settings") ||
         location.startsWith("/health")
       );
+    }
+    if (path === "/chat") {
+      return location.startsWith("/chat");
     }
     return location === path || location.startsWith(path + "/");
   };
