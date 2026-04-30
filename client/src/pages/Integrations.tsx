@@ -652,6 +652,7 @@ export default function IntegrationsPage() {
                 const count = t === "ecommerce" ? (ecommercePlatforms?.length || 0)
                   : t === "social" ? (socialPlatforms?.length || 0)
                   : 9;
+                const label = t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools";
                 return (
                   <button
                     key={t}
@@ -662,7 +663,7 @@ export default function IntegrationsPage() {
                         : "text-slate-400 hover:text-slate-200 bg-white/4 border border-white/8"
                     }`}
                   >
-                    {t === "ecommerce" ? "🛍️ E-Commerce" : t === "social" ? "📱 Social Media" : "🛠️ Tools"}
+                    {label}
                     <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
                       connectTab === t ? "bg-sky-400/20 text-sky-200" : "bg-white/8 text-slate-400"
                     }`}>{count}</span>

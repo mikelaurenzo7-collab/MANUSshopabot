@@ -84,15 +84,14 @@ export default function BotSettings() {
         {(Object.entries(BOT_CONFIG) as [AgentType, typeof BOT_CONFIG[AgentType]][]).map(([id, cfg]) => {
           const Icon = cfg.icon;
           const isSelected = selectedBot === id;
+          const baseClasses = "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 flex-1 sm:flex-initial min-w-0 justify-center";
+          const selectedClasses = `${cfg.accent} ${cfg.color} shadow-sm`;
+          const unselectedClasses = "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]";
           return (
             <button
               key={id}
               onClick={() => setSelectedBot(id)}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 flex-1 sm:flex-initial min-w-0 justify-center ${
-                isSelected
-                  ? `${cfg.accent} ${cfg.color} shadow-sm`
-                  : "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
-              }`}
+              className={`${baseClasses} ${isSelected ? selectedClasses : unselectedClasses}`}
             >
               <Icon className="w-4 h-4 shrink-0" />
               <span className="truncate">{cfg.name}</span>
@@ -111,6 +110,7 @@ export default function BotSettings() {
             { value: "safety", label: "Safety Rules", icon: Shield },
           ].map((tab) => {
             const TabIcon = tab.icon;
+            const shortLabel = tab.label.includes(' ') ? tab.label.split(' ')[0] : tab.label;
             return (
               <TabsTrigger
                 key={tab.value}
@@ -119,7 +119,7 @@ export default function BotSettings() {
               >
                 <TabIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{tab.label}</span>
-                <span className="inline sm:hidden truncate">{tab.label.split(' ')[0]}</span>
+                <span className="inline sm:hidden truncate">{shortLabel}</span>
               </TabsTrigger>
             );
           })}

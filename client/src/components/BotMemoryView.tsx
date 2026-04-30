@@ -246,7 +246,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
                             className="inline-flex items-center gap-1 text-[9px] font-mono text-white/55 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded"
                           >
                             <Tag className="w-2 h-2 text-fuchsia-400/60 shrink-0" />
-                            <span className="truncate max-w-[80px]">{t}</span>
+                            <span className="truncate max-w-20">{t}</span>
                           </span>
                         ))}
                       </div>
@@ -261,7 +261,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
                       </span>
                       <span className="inline-flex items-center gap-0.5 whitespace-nowrap" title="Last time the bot recalled this memory">
                         <Clock className="w-2.5 h-2.5 shrink-0" />
-                        <span className="truncate max-w-[60px] sm:max-w-none">{relativeTime(mem.lastAccessedAt ?? mem.createdAt)}</span>
+                        <span className="truncate max-w-16 sm:max-w-none">{relativeTime(mem.lastAccessedAt ?? mem.createdAt)}</span>
                       </span>
                     </div>
                   </div>
