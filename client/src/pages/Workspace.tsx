@@ -1357,7 +1357,7 @@ function ContextChip({
   title?: string;
 }) {
   const showsCount = typeof count === "number";
-  const isActive = showsCount ? count! > 0 : !!active;
+  const isActive = showsCount ? (count as number) > 0 : !!active;
   return (
     <button
       type="button"
@@ -1387,6 +1387,10 @@ function ContextChip({
       )}
     </button>
   );
+}
+
+function formatEnabledCountLabel(enabled: number, total: number): string {
+  return `${enabled}/${total} on`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1466,7 +1470,9 @@ function WorkspaceContextRail({
       <div className="rounded-2xl border border-sky-500/15 bg-sky-500/[0.04] p-3">
         <div className="flex items-center gap-2">
           <Store className="h-3.5 w-3.5 text-sky-300" />
-          <p className="text-[11px] font-semibold text-white/85 truncate">{workspaceName}</p>
+          <p className="text-[11px] font-semibold text-white/85 truncate" title={workspaceName}>
+            {workspaceName}
+          </p>
         </div>
         <p className="mt-1 text-[10px] leading-relaxed text-white/55">
           One workspace per store. Memory, instructions, tools, and social
@@ -1571,7 +1577,7 @@ function WorkspaceContextRail({
         icon={Wrench}
         actionLabel="Manage"
         onAction={() => onOpenTab("connectors")}
-        countLabel={`${enabledTools}/${toolIntegrations.length || 0} on`}
+        countLabel={formatEnabledCountLabel(enabledTools, toolIntegrations.length)}
       >
         {integrationsLoading ? (
           <LoadingRow />
@@ -1636,7 +1642,10 @@ function WorkspaceContextRail({
         icon={Megaphone}
         actionLabel="Manage"
         onAction={() => onOpenTab("connectors")}
-        countLabel={`${enabledSocial}/${SOCIAL_CONNECTOR_CATEGORY?.connectors.length ?? 0} on`}
+        countLabel={formatEnabledCountLabel(
+          enabledSocial,
+          SOCIAL_CONNECTOR_CATEGORY?.connectors.length ?? 0,
+        )}
       >
         {integrationsLoading ? (
           <LoadingRow />
