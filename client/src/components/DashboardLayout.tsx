@@ -196,6 +196,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Legacy: derive activeStore from activeWorkspace for components that still use activeStoreId
   const activeStore = stores?.find((s: any) => s.id === (activeWorkspace?.storeId ?? activeStoreId)) ?? stores?.[0];
 
+  function handleSelectAllWorkspaces() {
+    setActiveWorkspaceId(null);
+    setActiveStoreId(null);
+  }
+
+  function handleSelectWorkspace(w: { id: number; storeId?: number | null }) {
+    setActiveWorkspaceId(w.id);
+    if (w.storeId) setActiveStoreId(w.storeId);
+  }
+
   // Flat nav — one Store Bot destination instead of separate builder,
   // merchant, social, and communicator bots.
   // (Workspace/Bots/Operate/Account) added vertical noise without aiding
@@ -418,7 +428,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 Workspace
               </DropdownMenuLabel>
               <DropdownMenuItem
-                onSelect={() => { setActiveWorkspaceId(null); setActiveStoreId(null); }}
+                onSelect={handleSelectAllWorkspaces}
                 className={!activeWorkspaceId ? "bg-sky-500/10 text-sky-300" : ""}
               >
                 <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores
@@ -430,7 +440,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 return (
                   <DropdownMenuItem
                     key={w.id}
-                    onSelect={() => { setActiveWorkspaceId(w.id); if (w.storeId) setActiveStoreId(w.storeId); }}
+                    onSelect={() => handleSelectWorkspace(w)}
                     className={w.id === activeWorkspaceId ? "bg-sky-500/10 text-sky-300" : ""}
                   >
                     <span className="text-sm leading-none mr-2">{brand.icon}</span>

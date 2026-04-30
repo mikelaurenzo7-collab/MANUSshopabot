@@ -130,7 +130,7 @@ export default function Chat() {
       .filter((m) => m.role === "user" || m.role === "assistant")
       .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
     setHistory((prev) => ({ ...prev, [workspaceKey]: loaded }));
-  }, [activeWorkspaceId, savedMessagesQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeWorkspaceId, workspaceKey, savedMessagesQuery.data]);
 
   useEffect(() => {
     if (!activeStoreId) return;

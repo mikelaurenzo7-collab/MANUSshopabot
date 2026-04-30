@@ -466,6 +466,32 @@ const MessageSchema = z.object({
   content: z.string().max(8000),
 });
 
+/** Persist user message + assistant reply to workspace_chat_messages when a workspaceId is provided. */
+async function persistWorkspaceTurn(opts: {
+  workspaceId: number;
+  userId: number;
+  messages: Array<{ role: string; content: string }>;
+  reply: string;
+  toolsUsed?: string[];
+}): Promise<void> {
+  const lastUserMsg = [...opts.messages].reverse().find((m) => m.role === "user");
+  if (lastUserMsg) {
+    await db.createWorkspaceChatMessage({
+      workspaceId: opts.workspaceId,
+      userId: opts.userId,
+      role: "user",
+      content: lastUserMsg.content,
+    });
+  }
+  await db.createWorkspaceChatMessage({
+    workspaceId: opts.workspaceId,
+    userId: opts.userId,
+    role: "assistant",
+    content: opts.reply,
+    toolCalls: opts.toolsUsed?.length ? opts.toolsUsed : undefined,
+  });
+}
+
 export const chatRouter = router({
   /**
    * Send a message to the selected bot and receive a response.
@@ -533,20 +559,11 @@ export const chatRouter = router({
 
         // Persist to workspace chat history when a workspace is scoped
         if (input.workspaceId) {
-          const lastUserMsg = [...input.messages].reverse().find((m) => m.role === "user");
-          if (lastUserMsg) {
-            await db.createWorkspaceChatMessage({
-              workspaceId: input.workspaceId,
-              userId: ctx.user.id,
-              role: "user",
-              content: lastUserMsg.content,
-            });
-          }
-          await db.createWorkspaceChatMessage({
+          await persistWorkspaceTurn({
             workspaceId: input.workspaceId,
             userId: ctx.user.id,
-            role: "assistant",
-            content: reply,
+            messages: input.messages,
+            reply,
           });
         }
 
@@ -605,21 +622,12 @@ export const chatRouter = router({
 
       // Persist to workspace chat history when a workspace is scoped
       if (input.workspaceId) {
-        const lastUserMsg = [...input.messages].reverse().find((m) => m.role === "user");
-        if (lastUserMsg) {
-          await db.createWorkspaceChatMessage({
-            workspaceId: input.workspaceId,
-            userId: ctx.user.id,
-            role: "user",
-            content: lastUserMsg.content,
-          });
-        }
-        await db.createWorkspaceChatMessage({
+        await persistWorkspaceTurn({
           workspaceId: input.workspaceId,
           userId: ctx.user.id,
-          role: "assistant",
-          content: reply,
-          toolCalls: toolsUsed.length ? toolsUsed : undefined,
+          messages: input.messages,
+          reply,
+          toolsUsed,
         });
       }
 
