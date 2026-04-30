@@ -102,11 +102,29 @@ export async function withRetry<T>(
 const CIRCUIT_BREAKER_THRESHOLD = 5;   // consecutive failures before opening
 const CIRCUIT_BREAKER_TIMEOUT_MS = 60_000; // 1 minute half-open window
 
-// Per-key cockatiel circuit breaker instances
+/** Hard cap on the number of distinct breaker keys held in memory.
+ *  Several call sites use dynamic keys (e.g. `gmail-recovery-${storeId}`),
+ *  which would otherwise grow unbounded as the store count grows.
+ *  When the cap is hit we evict the least-recently-used breaker — its
+ *  internal state is dropped, and the next call recreates a fresh
+ *  closed breaker, which is the correct fail-open behaviour for an
+ *  evicted (= cold) key. */
+const MAX_BREAKERS = 256;
+
+// Per-key cockatiel circuit breaker instances. We rely on the fact that
+// `Map` preserves insertion order in V8 to implement an O(1) LRU:
+// touching a key (re-inserting on read) bumps it to the most-recently-
+// used end, and the oldest entry is `_breakers.keys().next()`.
 const _breakers = new Map<string, ReturnType<typeof circuitBreaker>>();
 
 function getBreaker(key: string) {
-  if (_breakers.has(key)) return _breakers.get(key)!;
+  const existing = _breakers.get(key);
+  if (existing) {
+    // Touch: re-insert to mark as most-recently-used.
+    _breakers.delete(key);
+    _breakers.set(key, existing);
+    return existing;
+  }
 
   const policy = circuitBreaker(handleAll, {
     halfOpenAfter: CIRCUIT_BREAKER_TIMEOUT_MS,
@@ -139,6 +157,22 @@ function getBreaker(key: string) {
   });
   policy.onReset(() => logger.info("circuit_breaker_closed", { key }));
   policy.onHalfOpen(() => logger.info("circuit_breaker_half_open", { key }));
+
+  // Evict LRU entry before inserting if we'd exceed the cap. The oldest
+  // entry is the first key in iteration order. We log at debug (info)
+  // level only the first time we hit the cap so an operator can see
+  // it in steady state without spamming.
+  if (_breakers.size >= MAX_BREAKERS) {
+    const oldestKey = _breakers.keys().next().value;
+    if (oldestKey !== undefined) {
+      _breakers.delete(oldestKey);
+      logger.info("circuit_breaker_evicted", {
+        key: oldestKey,
+        replacedBy: key,
+        registrySize: _breakers.size,
+      });
+    }
+  }
 
   _breakers.set(key, policy);
   return policy;
@@ -196,3 +230,15 @@ export async function withResilience<T>(
 export function resetCircuit(key: string): void {
   _breakers.delete(key);
 }
+
+/** Test/diagnostic helpers. Exposed so the LRU eviction policy can be
+ *  exercised without exporting the Map directly (which would let tests
+ *  mutate internal state in surprising ways). */
+export const _testHelpers = {
+  /** Drop every registered breaker. Useful in `beforeEach`. */
+  clearAll: () => _breakers.clear(),
+  /** Current number of registered breakers. */
+  size: () => _breakers.size,
+  /** Hard cap declared above. */
+  maxSize: MAX_BREAKERS,
+};
