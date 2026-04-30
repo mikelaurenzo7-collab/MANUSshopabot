@@ -19,8 +19,6 @@ import {
   LayoutDashboard,
   Inbox as InboxIcon,
   Bot,
-  Package,
-  Megaphone,
   GitBranch,
   Globe,
   BarChart3,
@@ -31,8 +29,6 @@ import {
   Zap,
   Search,
   Store,
-  Workflow,
-  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -121,9 +117,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const targets: Record<string, string> = {
       h: "/", c: "/", // home / command center
       i: "/inbox",
-      b: "/architect", // builder
-      m: "/merchant",
-      o: "/social",    // social — `s` is taken by Settings
+      b: "/chat", // unified store bot
+      m: "/chat",
+      o: "/chat",    // legacy bot shortcut — `s` is taken by Settings
       w: "/workflows",
       f: "/storefronts", // storefronts
       n: "/insights",   // iNsights
@@ -202,19 +198,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Active workspace store (for the switcher pill)
   const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
 
-  // Flat nav — 8 destinations, no group headers. The earlier grouping
+  // Flat nav — one Store Bot destination instead of separate builder,
+  // merchant, social, and communicator bots.
   // (Workspace/Bots/Operate/Account) added vertical noise without aiding
   // discovery. A single thin separator before the bot triad keeps the
   // visual rhythm without consuming a row per label.
   const navItems: NavItem[] = [
     { title: "Command Center", path: "/", icon: LayoutDashboard },
     { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
-    // ── BOTS section ──
-    { title: "BOTS", section: true },
-    { title: "Builder", path: "/architect", icon: Bot, brand: "sky", dot: statusByAgent.architect ?? "ok" },
-    { title: "Merchant", path: "/merchant", icon: Package, brand: "cyan", dot: statusByAgent.merchant ?? "ok" },
-    { title: "Social", path: "/social", icon: Megaphone, brand: "amber", dot: statusByAgent.social ?? "ok" },
-    { title: "Communicator", path: "/communicator", icon: Mail, brand: "emerald", dot: statusByAgent.social ?? "ok" },
+    { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: (totalRunning > 0 ? "running" : statusByAgent.architect ?? statusByAgent.merchant ?? statusByAgent.social ?? "ok") },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
@@ -263,6 +255,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         location.startsWith("/profile") ||
         location.startsWith("/bot-settings") ||
         location.startsWith("/health")
+      );
+    }
+    if (path === "/chat") {
+      return (
+        location.startsWith("/chat") ||
+        location.startsWith("/architect") ||
+        location.startsWith("/merchant") ||
+        location.startsWith("/social") ||
+        location.startsWith("/communicator")
       );
     }
     return location === path || location.startsWith(path + "/");

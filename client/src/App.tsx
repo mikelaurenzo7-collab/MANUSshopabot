@@ -7,7 +7,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { OrgProvider } from "./contexts/OrgContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import DashboardLayout from "./components/DashboardLayout";
-import BotPageShell from "./components/BotPageShell";
 import { CommandPalette } from "./components/CommandPalette";
 import { StripeSuccessBanner } from "./components/StripeSuccessBanner";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -19,10 +18,6 @@ import { Loader2 } from "lucide-react";
 // SupplierPOs, GmailBot) are imported directly by their parent shell —
 // not lazy-loaded here — and reach via Redirect for legacy URLs.
 const Home = lazy(() => import("./pages/Home"));
-const ArchitectPage = lazy(() => import("./pages/Architect"));
-const MerchantPage = lazy(() => import("./pages/Merchant"));
-const SocialPage = lazy(() => import("./pages/Social"));
-const CommunicatorPage = lazy(() => import("./pages/Communicator"));
 const ConfigPage = lazy(() => import("./pages/Config"));
 
 const OnboardingPage = lazy(() => import("./pages/Onboarding"));
@@ -150,10 +145,10 @@ function Router() {
                         if we ever rename. StripeSuccessBanner reads
                         ?subscription=success and fires automatically. */}
                     <Route path="/command-center" component={Home} />
-                    <Route path="/architect">{() => <ErrorBoundary inline label="Builder Bot"><BotPageShell agentType="architect"><ArchitectPage /></BotPageShell></ErrorBoundary>}</Route>
-                    <Route path="/merchant">{() => <ErrorBoundary inline label="Merchant Bot"><BotPageShell agentType="merchant"><MerchantPage /></BotPageShell></ErrorBoundary>}</Route>
-                    <Route path="/social">{() => <ErrorBoundary inline label="Social Bot"><BotPageShell agentType="social"><SocialPage /></BotPageShell></ErrorBoundary>}</Route>
-                    <Route path="/communicator">{() => <ErrorBoundary inline label="Communicator Bot"><BotPageShell agentType="social"><CommunicatorPage /></BotPageShell></ErrorBoundary>}</Route>
+                    <Route path="/architect">{() => <Redirect to="/chat" />}</Route>
+                    <Route path="/merchant">{() => <Redirect to="/chat" />}</Route>
+                    <Route path="/social">{() => <Redirect to="/chat" />}</Route>
+                    <Route path="/communicator">{() => <Redirect to="/chat" />}</Route>
                     {/* Legacy direct routes redirect to their consolidated hub tab.
                         Old bookmarks resolve cleanly into the new layout instead of
                         rendering naked, header-less pages. */}
@@ -164,7 +159,7 @@ function Router() {
                     <Route path="/integrations">{() => <Redirect to="/storefronts#integrations" />}</Route>
                     <Route path="/plugins">{() => <Redirect to="/storefronts#plugins" />}</Route>
                     <Route path="/supplier">{() => <Redirect to="/storefronts#supplier" />}</Route>
-                    <Route path="/gmail-bot">{() => <Redirect to="/communicator" />}</Route>
+                    <Route path="/gmail-bot">{() => <Redirect to="/chat" />}</Route>
                     <Route path="/profile">{() => <Redirect to="/settings#profile" />}</Route>
                     <Route path="/bot-settings">{() => <Redirect to="/settings#bots" />}</Route>
                     <Route path="/health">{() => <Redirect to="/settings#platform" />}</Route>

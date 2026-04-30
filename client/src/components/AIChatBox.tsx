@@ -7,6 +7,13 @@ import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
 const BOT_CONFIGS: Record<string, { icon: typeof Bot; color: string; bg: string; welcome: string; subline: string }> = {
+  store: {
+    icon: Sparkles,
+    color: "text-sky-400",
+    bg: "bg-sky-500/10",
+    welcome: "What should we grow today?",
+    subline: "One bot for building, operating, marketing, and remembering each store.",
+  },
   architect: {
     icon: Zap,
     color: "text-sky-400",
@@ -85,7 +92,7 @@ export type AIChatBoxProps = {
   /**
    * Bot type for personalized empty state and typing indicator
    */
-  botType?: "architect" | "merchant" | "social";
+  botType?: "store" | "architect" | "merchant" | "social";
 };
 
 /**
@@ -148,7 +155,7 @@ export function AIChatBox({
   height = "600px",
   emptyStateMessage = "Start a conversation with AI",
   suggestedPrompts,
-  botType = "architect",
+  botType = "store",
 }: AIChatBoxProps) {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
