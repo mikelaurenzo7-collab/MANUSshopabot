@@ -1,6 +1,7 @@
 import { eq, desc, and, sql, gte, lte, count, sum, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import * as schema from "../drizzle/schema";
+import { logger } from "./utils/logger";
 import {
   InsertUser, users,
   stores, InsertStore,
@@ -55,7 +56,10 @@ export async function getDb() {
     try {
       _db = drizzle(process.env.DATABASE_URL, { schema, mode: 'default' });
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      logger.warn("db_connect_failed", {
+        module: "db",
+        error: error instanceof Error ? error.message : String(error),
+      });
       _db = null;
     }
   }
@@ -111,7 +115,10 @@ function decryptCredentialTokens<T extends { accessToken?: string | null; refres
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
-  if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
+  if (!db) {
+    logger.warn("db_upsert_user_unavailable", { module: "db" });
+    return;
+  }
   try {
     const values: InsertUser = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
@@ -144,7 +151,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.stripeSubscriptionStatus = "trialing";
     }
     await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-  } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
+  } catch (error) {
+    logger.error("db_upsert_user_failed", {
+      module: "db",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }
 
 /**

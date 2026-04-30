@@ -42,6 +42,7 @@ import {
 } from "./platformBridge";
 import type { InsertAgentWorkflow, InsertWorkflowStep } from "../../drizzle/schema";
 import { logAgentAction } from "../telemetry";
+import { logger } from "../utils/logger";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -178,8 +179,13 @@ export async function launchWorkflow(
   });
 
   // Start execution (non-blocking)
-  executeWorkflow(workflowId, userId, steps).catch(err => {
-    console.error(`[WorkflowEngine] Workflow ${workflowId} failed:`, err);
+  executeWorkflow(workflowId, userId, steps).catch((err) => {
+    logger.error("workflow_execution_failed", {
+      module: "workflowEngine",
+      workflowId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
   });
 
   return workflowId;
@@ -350,7 +356,12 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         durationMs,
         metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
       }).catch((telemetryErr: any) => {
-        console.error(`[Workflow] Failed to log telemetry for step ${i}:`, telemetryErr.message);
+        logger.error("workflow_step_telemetry_failed", {
+          module: "workflowEngine",
+          workflowId,
+          stepIndex: i,
+          error: telemetryErr.message,
+        });
       });
     } catch (error: any) {
       const durationMs = Date.now() - stepStartTime;
@@ -373,7 +384,12 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
         durationMs,
         metadata: { workflowId, stepId: dbStep.id, stepIndex: i, workflowTitle: workflow.title, stepTitle: stepDef.title },
       }).catch((telemetryErr: any) => {
-        console.error(`[Workflow] Failed to log telemetry for failed step ${i}:`, telemetryErr.message);
+        logger.error("workflow_failed_step_telemetry_failed", {
+          module: "workflowEngine",
+          workflowId,
+          stepIndex: i,
+          error: telemetryErr.message,
+        });
       });
 
       // Attempt rollback of previously completed steps (reverse order)
@@ -393,9 +409,20 @@ async function executeWorkflow(workflowId: number, userId: number, stepDefinitio
               allStores,
             };
             await rollbackDef.rollback(rollbackCtx, previousOutputs[r] ?? {});
-            console.log(`[WorkflowEngine] Rolled back step ${r}: ${rollbackDef.title}`);
+            logger.info("workflow_step_rolled_back", {
+              module: "workflowEngine",
+              workflowId,
+              stepIndex: r,
+              stepTitle: rollbackDef.title,
+            });
           } catch (rollbackErr: any) {
-            console.error(`[WorkflowEngine] Rollback failed for step ${r} (${rollbackDef.title}):`, rollbackErr.message);
+            logger.error("workflow_step_rollback_failed", {
+              module: "workflowEngine",
+              workflowId,
+              stepIndex: r,
+              stepTitle: rollbackDef.title,
+              error: rollbackErr.message,
+            });
           }
         }
       }
@@ -502,8 +529,13 @@ export async function resumeWorkflow(workflowId: number, stepId: number, approve
   }
 
   // Resume execution from the approved step
-  executeWorkflow(workflowId, workflow.userId, stepDefinitions).catch(err => {
-    console.error(`[WorkflowEngine] Resumed workflow ${workflowId} failed:`, err);
+  executeWorkflow(workflowId, workflow.userId, stepDefinitions).catch((err) => {
+    logger.error("workflow_resume_failed", {
+      module: "workflowEngine",
+      workflowId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
   });
 }
 
@@ -729,9 +761,14 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         },
       };
     } catch (err: any) {
-      console.error(
-        `[WorkflowEngine.LLMStep] memory agent failed, falling back to single-shot: ${err?.message ?? err}`,
-      );
+      // memory agent failed, falling back to single-shot — kept verbatim
+      // so the cookbook + memory-agent test suites can grep for the phrase.
+      logger.error("workflow_llm_memory_agent_failed", {
+        module: "workflowEngine",
+        step: "LLMStep",
+        note: "memory agent failed, falling back to single-shot",
+        error: err?.message ?? String(err),
+      });
       // Fall through to the standard path so a flaky agentic call
       // doesn't hard-fail the workflow.
     }
@@ -752,9 +789,14 @@ async function executeLLMStep(context: StepContext): Promise<any> {
   ) {
     const toolset = getAgentToolset(input.agentToolset);
     if (!toolset) {
-      console.error(
-        `[WorkflowEngine.LLMStep] agent toolset "${input.agentToolset}" is not registered — falling back to single-shot.`,
-      );
+      logger.error("workflow_llm_toolset_missing", {
+        module: "workflowEngine",
+        step: "LLMStep",
+        agentToolset: input.agentToolset,
+        // toolset is not registered — falling back to single-shot.
+        // Kept verbatim so cookbook-patterns.test.ts can grep the phrase.
+        note: `toolset "${input.agentToolset}" is not registered — falling back to single-shot`,
+      });
     } else {
       try {
         const agent = await runAgentLoop({
@@ -791,9 +833,12 @@ async function executeLLMStep(context: StepContext): Promise<any> {
         };
       } catch (err: any) {
         recordCookbookEvent({ recipe: "agent_loop", success: false });
-        console.error(
-          `[WorkflowEngine.LLMStep] agent loop failed, falling back to single-shot: ${err?.message ?? err}`,
-        );
+        logger.error("workflow_llm_agent_loop_failed", {
+          module: "workflowEngine",
+          step: "LLMStep",
+          fallback: "single_shot",
+          error: err?.message ?? String(err),
+        });
       }
     }
   }
@@ -853,9 +898,12 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       };
     } catch (err: any) {
       recordCookbookEvent({ recipe: "multi_draft", success: false });
-      console.error(
-        `[WorkflowEngine.LLMStep] multiDraftAndJudge failed, falling back: ${err?.message ?? err}`,
-      );
+      logger.error("workflow_llm_multi_draft_failed", {
+        module: "workflowEngine",
+        step: "LLMStep",
+        fallback: "single_shot",
+        error: err?.message ?? String(err),
+      });
     }
   }
 
@@ -910,9 +958,12 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       };
     } catch (err: any) {
       recordCookbookEvent({ recipe: "reflect", success: false });
-      console.error(
-        `[WorkflowEngine.LLMStep] reflectAndRevise failed, falling back to single-shot: ${err?.message ?? err}`,
-      );
+      logger.error("workflow_llm_reflect_failed", {
+        module: "workflowEngine",
+        step: "LLMStep",
+        fallback: "single_shot",
+        error: err?.message ?? String(err),
+      });
       // Fall through — a flaky reflect pass shouldn't kill the workflow.
     }
   }
@@ -931,7 +982,11 @@ async function executeLLMStep(context: StepContext): Promise<any> {
       ...(input.adaptiveThinking !== undefined ? { adaptiveThinking: input.adaptiveThinking } : {}),
     });
   } catch (err: any) {
-    console.error(`[WorkflowEngine.LLMStep] invokeLLM failed: ${err?.message ?? err}`);
+    logger.error("workflow_llm_invoke_failed", {
+      module: "workflowEngine",
+      step: "LLMStep",
+      error: err?.message ?? String(err),
+    });
     // Re-throw — the engine retry layer wraps this call, so a bare
     // throw triggers retries before failing the step. Returning a
     // structured error here would BYPASS retries and treat a
@@ -991,7 +1046,11 @@ async function executeAnalysisStep(context: StepContext): Promise<any> {
       ],
     });
   } catch (err: any) {
-    console.error(`[WorkflowEngine.AnalysisStep] invokeLLM failed: ${err?.message ?? err}`);
+    logger.error("workflow_analysis_llm_invoke_failed", {
+      module: "workflowEngine",
+      step: "AnalysisStep",
+      error: err?.message ?? String(err),
+    });
     throw err; // Engine retry wraps; let it kick in.
   }
 
@@ -1210,7 +1269,11 @@ async function executeDataTransformStep(context: StepContext): Promise<any> {
       default:
         // Unknown operation — return previousOutputs so the next step
         // can still attempt to do something useful, and log.
-        console.warn(`[WorkflowEngine.DataTransform] Unknown operation: ${op}`);
+        logger.warn("workflow_data_transform_unknown_op", {
+          module: "workflowEngine",
+          step: "DataTransform",
+          operation: op,
+        });
         return { unknownOperation: op, previousOutputs: ctx.previousOutputs };
     }
   }
@@ -1727,7 +1790,10 @@ async function executeSupplierApiCall(
     }
 
     default:
-      console.warn(`[WorkflowEngine] Unknown supplier endpoint: ${endpoint}`);
+      logger.warn("workflow_unknown_supplier_endpoint", {
+        module: "workflowEngine",
+        endpoint,
+      });
       return { error: `Unknown supplier endpoint: ${endpoint}`, products: [] };
   }
 }

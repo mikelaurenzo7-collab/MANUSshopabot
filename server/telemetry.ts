@@ -23,6 +23,7 @@
 
 import * as db from "./db";
 import type { InsertAgentTelemetry } from "../drizzle/schema";
+import { logger } from "./utils/logger";
 
 export interface TelemetryContext {
   agentType: "architect" | "merchant" | "social";
@@ -86,7 +87,10 @@ export async function withTelemetry<T>(
       });
     } catch (logError) {
       // Don't let telemetry failures break the main flow
-      console.error("[Telemetry] Failed to log error telemetry:", logError);
+      logger.error("telemetry_error_log_failed", {
+        module: "telemetry",
+        error: logError instanceof Error ? logError.message : String(logError),
+      });
     }
 
     throw error; // Re-throw the original error
@@ -124,7 +128,10 @@ export async function logAgentAction(
       metadata: ctx.metadata,
     }) ?? null;
   } catch (error) {
-    console.error("[Telemetry] Failed to log action:", error);
+    logger.error("telemetry_action_log_failed", {
+      module: "telemetry",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -146,7 +153,10 @@ export async function collectOutcome(
       outcomeAfter,
     });
   } catch (error) {
-    console.error("[Telemetry] Failed to collect outcome:", error);
+    logger.error("telemetry_outcome_collect_failed", {
+      module: "telemetry",
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 

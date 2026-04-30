@@ -1,6 +1,8 @@
+import { logger } from "./logger";
+
 /**
  * Rate Limiter with Exponential Backoff
- * 
+ *
  * Provides retry logic for API calls that may hit rate limits (HTTP 429).
  * Used by adapters to gracefully handle throttling from Shopify, Meta, Etsy, etc.
  */
@@ -102,7 +104,11 @@ export async function withRetry<T>(
 
       // Don't retry if we've exhausted attempts
       if (attempt >= opts.maxRetries) {
-        console.error(`[RateLimiter] Max retries (${opts.maxRetries}) exhausted. Last error: ${err.message}`);
+        logger.error("rate_limiter_max_retries_exhausted", {
+          module: "rateLimiter",
+          maxRetries: opts.maxRetries,
+          error: err.message,
+        });
         throw err;
       }
 
@@ -110,7 +116,12 @@ export async function withRetry<T>(
       const retryAfterMs = getRetryAfterMs(err);
       const delay = retryAfterMs ?? calculateDelay(attempt, opts);
 
-      console.warn(`[RateLimiter] Rate limited (attempt ${attempt + 1}/${opts.maxRetries}). Retrying in ${delay}ms...`);
+      logger.warn("rate_limiter_retry_scheduled", {
+        module: "rateLimiter",
+        attempt: attempt + 1,
+        maxRetries: opts.maxRetries,
+        delayMs: delay,
+      });
       await sleep(delay);
     }
   }
@@ -152,7 +163,12 @@ export class ApiRateLimiter {
   async acquire(): Promise<void> {
     const waitMs = this.check();
     if (waitMs > 0) {
-      console.warn(`[ApiRateLimiter] Throttling for ${waitMs}ms (${this.calls.length}/${this.maxCalls} calls in window)`);
+      logger.warn("api_rate_limiter_throttling", {
+        module: "rateLimiter",
+        waitMs,
+        callsInWindow: this.calls.length,
+        maxCalls: this.maxCalls,
+      });
       await sleep(waitMs);
     }
     this.calls.push(Date.now());

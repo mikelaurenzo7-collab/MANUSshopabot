@@ -31,6 +31,7 @@ import { lifecycleRouter } from "./routers/lifecycle";
 import { orgsRouter } from "./routers/orgs";
 import { resumeWorkflow, cancelWorkflow } from "./engine/workflowEngine";
 import * as db from "./db";
+import { logger } from "./utils/logger";
 
 export const appRouter = router({
   system: systemRouter,
@@ -152,7 +153,11 @@ export const appRouter = router({
             );
           } catch (err: any) {
             // Workflow may have already been resolved — log but don't fail the mutation
-            console.warn(`[Approvals] resumeWorkflow(${proposed.workflowId}) skipped:`, err.message);
+            logger.warn("approvals_resume_workflow_skipped", {
+              module: "approvals",
+              workflowId: proposed.workflowId,
+              error: err.message,
+            });
           }
         }
 

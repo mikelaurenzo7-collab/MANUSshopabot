@@ -23,6 +23,7 @@
  */
 
 import { registerWorkflow, type WorkflowStepDefinition, type StepContext } from "./workflowEngine";
+import { logger } from "../utils/logger";
 
 // ─── 1. Shopify Metafields Sync ──────────────────────────────────────────────
 
@@ -99,7 +100,10 @@ Return as JSON with keys: missingMetafields, recommendations, bulkUpdatePayload,
         fields: ["supplier_cost", "profit_margin", "reorder_point", "supplier_name", "lead_time_days"],
       },
       rollback: async (_ctx: StepContext, _output: unknown) => {
-        console.log(`[Rollback] Metafield updates can be reverted by clearing the beast_bots namespace`);
+        logger.info("rollback_metafields_advisory", {
+          module: "platformEliteWorkflows",
+          advisory: "Metafield updates can be reverted by clearing the beast_bots namespace",
+        });
       },
     },
     {
@@ -159,7 +163,11 @@ Each line is a separate mutation. Max 10MB per file.`,
         steps: ["upload_jsonl", "submit_mutation", "poll_status", "download_results"],
       },
       rollback: async (_ctx: StepContext, _output: unknown) => {
-        console.log(`[Rollback] Bulk operation ${operationType} — check Shopify admin for partial application`);
+        logger.info("rollback_bulk_op_advisory", {
+          module: "platformEliteWorkflows",
+          operationType,
+          advisory: "check Shopify admin for partial application",
+        });
       },
     },
     {
@@ -402,7 +410,10 @@ WooCommerce REST API:
         method: "catalog_visibility_hidden",
       },
       rollback: async (_ctx: StepContext, _output: unknown) => {
-        console.log(`[Rollback] Restore hidden products to visible — set catalog_visibility back to "visible"`);
+        logger.info("rollback_woo_visibility_advisory", {
+          module: "platformEliteWorkflows",
+          advisory: "Restore hidden products to visible — set catalog_visibility back to 'visible'",
+        });
       },
     },
     {

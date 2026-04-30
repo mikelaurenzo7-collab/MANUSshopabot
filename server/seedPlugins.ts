@@ -3,6 +3,7 @@
  * Called once at server startup — idempotent (skips if plugins already exist).
  */
 import * as db from "./db";
+import { logger } from "./utils/logger";
 
 const DEFAULT_PLUGINS = [
   {
@@ -109,7 +110,10 @@ export async function seedDefaultPlugins() {
     }
     return { seeded: true, count };
   } catch (err) {
-    console.error("[seedPlugins] Failed to seed default plugins:", err);
+    logger.error("seed_plugins_failed", {
+      module: "seedPlugins",
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { seeded: false, count: 0, error: String(err) };
   }
 }

@@ -20,6 +20,7 @@ import { getRenderedStoreContext } from "../utils/userContext";
 import * as db from "../db";
 import { launchWorkflow } from "../engine/workflowEngine";
 import { getUserByOpenId } from "../db";
+import { logger } from "../utils/logger";
 
 // ─── Tool definitions (sent to the LLM) ────────────────────────────────────
 
@@ -456,7 +457,11 @@ async function executeTool(
 
     return JSON.stringify({ error: `Unknown tool: ${toolName}` });
   } catch (err: any) {
-    console.error(`[Chat Tool Error] ${toolName}:`, err);
+    logger.error("chat_tool_failed", {
+      module: "chat",
+      toolName,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return JSON.stringify({ error: err.message || "Tool execution failed" });
   }
 }

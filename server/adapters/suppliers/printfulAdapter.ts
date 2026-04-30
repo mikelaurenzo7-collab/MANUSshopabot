@@ -21,6 +21,7 @@
  */
 
 import { ENV } from "../../_core/env";
+import { logger } from "../../utils/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -258,7 +259,10 @@ export class PrintfulAdapter {
    */
   async searchProducts(keyword: string, limit = 20): Promise<PrintfulProduct[]> {
     if (!this.token) {
-      console.warn("[Printful] API token not configured — skipping Printful search");
+      logger.warn("printful_credentials_missing", {
+        module: "printfulAdapter",
+        action: "search_skipped",
+      });
       return [];
     }
 
@@ -293,7 +297,10 @@ export class PrintfulAdapter {
 
       return scored.map((s) => this.mapProduct(s.item));
     } catch (error: any) {
-      console.error(`[Printful] searchProducts error: ${error?.message ?? error}`);
+      logger.error("printful_search_failed", {
+        module: "printfulAdapter",
+        error: error?.message ?? String(error),
+      });
       return [];
     }
   }
@@ -317,7 +324,10 @@ export class PrintfulAdapter {
       const item = { ...data.result.product, variants: data.result.variants };
       return this.mapProduct(item);
     } catch (error: any) {
-      console.error(`[Printful] getProduct error: ${error?.message ?? error}`);
+      logger.error("printful_get_product_failed", {
+        module: "printfulAdapter",
+        error: error?.message ?? String(error),
+      });
       return null;
     }
   }
@@ -336,7 +346,10 @@ export class PrintfulAdapter {
         .slice(0, limit)
         .map((item) => this.mapProduct(item));
     } catch (error: any) {
-      console.error(`[Printful] getTrendingProducts error: ${error?.message ?? error}`);
+      logger.error("printful_trending_failed", {
+        module: "printfulAdapter",
+        error: error?.message ?? String(error),
+      });
       return [];
     }
   }
