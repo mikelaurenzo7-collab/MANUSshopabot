@@ -1414,7 +1414,17 @@ export async function consumeOAuthStateToken(state: string, flowType?: "ecommerc
   const token = result[0];
   if (!token) return undefined;
 
-  await db.delete(oauthStateTokens).where(eq(oauthStateTokens.id, token.id));
+  // Use DELETE's affectedRows as the consume race-winner signal. Two
+  // concurrent callbacks (user double-clicking the OAuth redirect, or
+  // a browser retry) can both see the token in the SELECT above; only
+  // one of their DELETEs will affect a row. The losing caller returns
+  // undefined so it doesn't proceed to a second vendor code-exchange
+  // (which would fail anyway since OAuth codes are single-use, but
+  // we shouldn't lean on that vendor invariant for our CSRF guard).
+  const deleteResult = await db.delete(oauthStateTokens).where(eq(oauthStateTokens.id, token.id));
+  // Drizzle's mysql2 exec result shape: [{ affectedRows, insertId, ... }, fields]
+  const affectedRows = (deleteResult as unknown as Array<{ affectedRows?: number }>)[0]?.affectedRows ?? 0;
+  if (affectedRows === 0) return undefined;
   return token;
 }
 
