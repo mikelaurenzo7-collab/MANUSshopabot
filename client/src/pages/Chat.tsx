@@ -67,6 +67,13 @@ const WORKFLOW_TONE: Record<string, { dot: string; icon: typeof Clock; label: st
   cancelled: { dot: "bg-white/25", icon: XCircle, label: "Cancelled" },
 };
 
+const SUPPLIER_WORKFLOW_TYPES = new Set([
+  "product_sourcing",
+  "supply_chain_intelligence",
+  "fulfillment_automation",
+  "velocity_restock_predictor",
+]);
+
 function keyForStore(storeId: number | null | undefined): WorkspaceKey {
   return storeId ? `store:${storeId}` : GLOBAL_WORKSPACE;
 }
@@ -113,7 +120,7 @@ export default function Chat() {
   }, [activeStoreId]);
 
   const workspaceLabel = activeStore
-    ? `${activeStore.name} Store Bot`
+    ? `Store Bot: ${activeStore.name}`
     : hasStores
       ? "All Stores Bot"
       : "New Store Launch Bot";
@@ -121,7 +128,7 @@ export default function Chat() {
   const connectorCount = (credentialsQuery.data?.length ?? 0) + (socialAccountsQuery.data?.length ?? 0);
   const toolCount = toolsQuery.data?.length ?? 0;
   const supplierRuns = useMemo(
-    () => (workflowsQuery.data ?? []).filter((w: any) => /supplier|sourcing|purchase|fulfillment/i.test(`${w.workflowType} ${w.title}`)),
+    () => (workflowsQuery.data ?? []).filter((w: any) => SUPPLIER_WORKFLOW_TYPES.has(w.workflowType)),
     [workflowsQuery.data],
   );
 

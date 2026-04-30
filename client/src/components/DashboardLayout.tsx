@@ -249,13 +249,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       );
     }
     if (path === "/chat") {
-      return (
-        location.startsWith("/chat") ||
-        location.startsWith("/architect") ||
-        location.startsWith("/merchant") ||
-        location.startsWith("/social") ||
-        location.startsWith("/communicator")
-      );
+      return location.startsWith("/chat");
     }
     return location === path || location.startsWith(path + "/");
   };
