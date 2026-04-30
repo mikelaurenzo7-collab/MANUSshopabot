@@ -490,7 +490,15 @@ async function handleShopifyWebhook(req: Request, res: Response) {
         status: "processed",
         payload: { id: payload.id, order_number: payload.order_number },
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      }).catch((logErr) =>
+        logger.warn("shopify_webhook_event_log_failed", {
+          module: "shopifyWebhooks",
+          topic,
+          shopDomain,
+          status: "processed",
+          error: logErr instanceof Error ? logErr.message : String(logErr),
+        }),
+      );
     }
   } catch (err: any) {
     logger.error("shopify_webhook_processing_failed", {
@@ -512,7 +520,15 @@ async function handleShopifyWebhook(req: Request, res: Response) {
         status: "failed",
         errorMessage: err.message,
         processingMs: Date.now() - eventStart,
-      }).catch(() => {});
+      }).catch((logErr) =>
+        logger.warn("shopify_webhook_event_log_failed", {
+          module: "shopifyWebhooks",
+          topic,
+          shopDomain,
+          status: "failed",
+          error: logErr instanceof Error ? logErr.message : String(logErr),
+        }),
+      );
     }
   }
 }
