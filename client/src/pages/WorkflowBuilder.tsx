@@ -339,16 +339,18 @@ function ConfigPanel({
             type="button"
             onClick={() => { onDelete(node.id); onClose(); }}
             className="w-7 h-7 rounded text-red-400/60 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors"
+            aria-label="Delete node"
             title="Delete node"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close node inspector"
             className="w-7 h-7 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -946,8 +948,12 @@ export default function WorkflowBuilder() {
                     <h2 className="font-mono text-sm font-bold text-white uppercase tracking-widest">Starter Templates</h2>
                     <p className="font-mono text-[10px] text-white/40 mt-0.5">Load a pre-built workflow to get started fast</p>
                   </div>
-                  <button onClick={() => setShowTemplates(false)} className="w-7 h-7 rounded text-white/40 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors">
-                    <X className="w-4 h-4" />
+                  <button
+                    onClick={() => setShowTemplates(false)}
+                    aria-label="Close templates panel"
+                    className="w-7 h-7 rounded text-white/40 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
