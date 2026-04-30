@@ -1126,3 +1126,219 @@ export const orgInvitations = mysqlTable("org_invitations", {
 
 export type OrgInvitation = typeof orgInvitations.$inferSelect;
 export type InsertOrgInvitation = typeof orgInvitations.$inferInsert;
+
+// ─── MULTI-WORKSPACE ARCHITECTURE ───────────────────────────────────────────
+
+/**
+ * Workspaces — isolated contexts for each connected store or business unit.
+ * 
+ * Each workspace has its own:
+ *  - Chat history and bot memory
+ *  - Connected integrations (Gmail, Twitter, etc.)
+ *  - Settings and configurations
+ *  - Workflows and automation
+ * 
+ * A user can have multiple workspaces, each tied to a different store or
+ * business context. Workspaces are scoped to organizations for multi-tenancy.
+ */
+export const workspaces = mysqlTable("workspaces", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Owning organization — workspaces are org-scoped for multi-tenancy */
+  orgId: int("orgId").notNull(),
+  /** User who created this workspace */
+  createdByUserId: int("createdByUserId").notNull(),
+  
+  // Identity
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Main Store", "EU Store", "Wholesale Division"
+  description: text("description"),
+  slug: varchar("slug", { length: 100 }).notNull(), // URL-safe identifier
+  icon: varchar("icon", { length: 255 }), // emoji or icon identifier
+  color: varchar("color", { length: 20 }), // hex color for UI theming
+  
+  // Store Association
+  /** Primary store for this workspace — most workspaces map 1:1 with a store */
+  storeId: int("storeId"),
+  /** Type of workspace — store-specific or general purpose */
+  workspaceType: mysqlEnum("workspaceType", ["store", "general", "campaign", "channel"]).default("store").notNull(),
+  
+  // Settings
+  /** Is this workspace archived (soft delete) */
+  archived: boolean("archived").default(false).notNull(),
+  archivedAt: timestamp("archivedAt"),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgIdIdx: index("workspaces_org_id_idx").on(table.orgId),
+  storeIdIdx: index("workspaces_store_id_idx").on(table.storeId),
+  slugOrgUnique: uniqueIndex("workspaces_slug_org_unique").on(table.slug, table.orgId),
+}));
+
+export type Workspace = typeof workspaces.$inferSelect;
+export type InsertWorkspace = typeof workspaces.$inferInsert;
+
+/**
+ * Workspace Chat Messages — conversation history per workspace.
+ * 
+ * Each workspace has its own isolated chat thread with the Store Bot.
+ * Messages include both user inputs and bot responses, with full context
+ * for memory and workflow tracking.
+ */
+export const workspaceChatMessages = mysqlTable("workspace_chat_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  
+  // Message
+  role: mysqlEnum("role", ["user", "assistant", "system"]).notNull(),
+  content: text("content").notNull(),
+  
+  // Context
+  userId: int("userId").notNull(), // who sent this message (for user role)
+  
+  // Tool Calls & Workflow Links
+  /** Tool calls made in this message (for assistant responses) */
+  toolCalls: json("toolCalls"),
+  /** Workflow ID if this message triggered a workflow */
+  relatedWorkflowId: int("relatedWorkflowId"),
+  
+  // Metadata
+  metadata: json("metadata"), // arbitrary metadata (model, tokens, etc.)
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  workspaceIdIdx: index("workspace_chat_messages_workspace_id_idx").on(table.workspaceId, table.createdAt),
+  userIdIdx: index("workspace_chat_messages_user_id_idx").on(table.userId),
+  workflowIdx: index("workspace_chat_messages_workflow_idx").on(table.relatedWorkflowId),
+}));
+
+export type WorkspaceChatMessage = typeof workspaceChatMessages.$inferSelect;
+export type InsertWorkspaceChatMessage = typeof workspaceChatMessages.$inferInsert;
+
+/**
+ * Workspace Integrations — social and tool connections per workspace.
+ * 
+ * Each workspace can have its own set of connected integrations:
+ *  - Gmail account for email automation
+ *  - Twitter account for social posting
+ *  - Slack workspace for notifications
+ *  - etc.
+ * 
+ * This allows users with multiple stores to connect different social
+ * accounts to each store's workspace.
+ */
+export const workspaceIntegrations = mysqlTable("workspace_integrations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  
+  // Integration Identity
+  integrationType: mysqlEnum("integrationType", [
+    "gmail", "outlook", "twitter", "facebook", "instagram", "tiktok", 
+    "linkedin", "pinterest", "youtube", "slack", "discord", "telegram",
+    "whatsapp", "shopify", "stripe", "mailchimp", "klaviyo", "zapier",
+  ]).notNull(),
+  
+  // Credentials
+  accountId: varchar("accountId", { length: 255 }), // external account ID
+  accountName: varchar("accountName", { length: 255 }), // display name
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  tokenExpiresAt: timestamp("tokenExpiresAt"),
+  
+  // Configuration
+  config: json("config"), // integration-specific settings
+  enabled: boolean("enabled").default(true).notNull(),
+  
+  // Metadata
+  connectedByUserId: int("connectedByUserId").notNull(),
+  lastSyncAt: timestamp("lastSyncAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  workspaceIdIdx: index("workspace_integrations_workspace_id_idx").on(table.workspaceId),
+  typeIdx: index("workspace_integrations_type_idx").on(table.integrationType),
+  workspaceTypeUnique: uniqueIndex("workspace_integrations_workspace_type_unique").on(table.workspaceId, table.integrationType, table.accountId),
+}));
+
+export type WorkspaceIntegration = typeof workspaceIntegrations.$inferSelect;
+export type InsertWorkspaceIntegration = typeof workspaceIntegrations.$inferInsert;
+
+/**
+ * Workspace Settings — per-workspace configuration and preferences.
+ * 
+ * Each workspace can have its own bot settings, automation rules,
+ * notification preferences, and custom configurations.
+ */
+export const workspaceSettings = mysqlTable("workspace_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  
+  // Bot Configuration
+  botEnabled: boolean("botEnabled").default(true).notNull(),
+  autonomyLevel: mysqlEnum("autonomyLevel", ["fully_autonomous", "supervised", "manual"]).default("supervised").notNull(),
+  requiresApproval: boolean("requiresApproval").default(false).notNull(),
+  
+  // Behavior
+  customInstructions: text("customInstructions"), // workspace-specific bot instructions
+  systemPrompt: text("systemPrompt"), // custom system prompt override
+  personality: varchar("personality", { length: 100 }), // bot personality
+  
+  // Notifications
+  notificationsEnabled: boolean("notificationsEnabled").default(true).notNull(),
+  notificationChannels: json("notificationChannels"), // ["email", "slack", "sms"]
+  
+  // Safety & Limits
+  dailyBudgetCents: int("dailyBudgetCents"), // daily spending cap
+  approvalThresholdCents: int("approvalThresholdCents"), // require approval above this
+  safetyRules: json("safetyRules"), // custom safety rules
+  
+  // Features
+  enabledFeatures: json("enabledFeatures"), // ["chat", "workflows", "analytics"]
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  workspaceIdUnique: uniqueIndex("workspace_settings_workspace_id_unique").on(table.workspaceId),
+}));
+
+export type WorkspaceSetting = typeof workspaceSettings.$inferSelect;
+export type InsertWorkspaceSetting = typeof workspaceSettings.$inferInsert;
+
+/**
+ * Workspace Memory — persistent bot memory per workspace.
+ * 
+ * Each workspace maintains its own memory of past interactions,
+ * learned patterns, and context. This ensures that the bot's
+ * behavior and knowledge is specific to each store/workspace context.
+ */
+export const workspaceMemory = mysqlTable("workspace_memory", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  
+  // Memory Entry
+  memoryType: mysqlEnum("memoryType", ["fact", "pattern", "decision", "outcome", "context", "preference"]).notNull(),
+  key: varchar("key", { length: 255 }).notNull(), // e.g., "preferred_shipping_method", "best_posting_time"
+  value: text("value").notNull(),
+  confidence: int("confidence").default(50), // 0-100
+  
+  // Context
+  relatedWorkflowId: int("relatedWorkflowId"),
+  relatedMessageId: int("relatedMessageId"),
+  tags: json("tags"),
+  
+  // Lifecycle
+  lastAccessedAt: timestamp("lastAccessedAt"),
+  accessCount: int("accessCount").default(0),
+  expiresAt: timestamp("expiresAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  workspaceIdIdx: index("workspace_memory_workspace_id_idx").on(table.workspaceId),
+  keyIdx: index("workspace_memory_key_idx").on(table.key),
+  typeIdx: index("workspace_memory_type_idx").on(table.memoryType),
+}));
+
+export type WorkspaceMemory = typeof workspaceMemory.$inferSelect;
+export type InsertWorkspaceMemory = typeof workspaceMemory.$inferInsert;

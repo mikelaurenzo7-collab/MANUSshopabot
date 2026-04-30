@@ -43,6 +43,11 @@ import {
   orgMembers, InsertOrgMember, OrgMember,
   emailDeliveryEvents, InsertEmailDeliveryEvent,
   orgInvitations, InsertOrgInvitation, OrgInvitation,
+  workspaces, InsertWorkspace, Workspace,
+  workspaceChatMessages, InsertWorkspaceChatMessage, WorkspaceChatMessage,
+  workspaceIntegrations, InsertWorkspaceIntegration, WorkspaceIntegration,
+  workspaceSettings, InsertWorkspaceSetting, WorkspaceSetting,
+  workspaceMemory, InsertWorkspaceMemory, WorkspaceMemory,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -2407,4 +2412,221 @@ export async function getPendingInvitationsForOrg(orgId: number): Promise<OrgInv
     .from(orgInvitations)
     .where(eq(orgInvitations.orgId, orgId))
     .orderBy(desc(orgInvitations.createdAt));
+}
+
+// ─── WORKSPACE FUNCTIONS ────────────────────────────────────────────────────
+
+function encryptWorkspaceIntegrationTokens<T extends { accessToken?: string | null; refreshToken?: string | null }>(record: T): T {
+  return {
+    ...record,
+    accessToken: encryptSecret(record.accessToken) ?? null,
+    refreshToken: encryptSecret(record.refreshToken) ?? null,
+  };
+}
+
+function decryptWorkspaceIntegrationTokens<T extends { accessToken?: string | null; refreshToken?: string | null }>(record: T | undefined): T | undefined {
+  if (!record) return record;
+  return {
+    ...record,
+    accessToken: decryptSecret(record.accessToken) ?? null,
+    refreshToken: decryptSecret(record.refreshToken) ?? null,
+  };
+}
+
+/** Create a new workspace */
+export async function createWorkspace(data: InsertWorkspace, executor?: DbExecutor): Promise<Workspace> {
+  const db = executor ?? await requireDb();
+  const [result] = await db.insert(workspaces).values(data).$returningId();
+  const workspace = await getWorkspaceById(result.id, db);
+  if (!workspace) throw new Error("Failed to create workspace");
+  return workspace;
+}
+
+/** Get workspace by ID */
+export async function getWorkspaceById(id: number, executor?: DbExecutor): Promise<Workspace | undefined> {
+  const db = executor ?? await requireDb();
+  const result = await db.select().from(workspaces).where(eq(workspaces.id, id));
+  return result[0];
+}
+
+/** Get all workspaces for an organization */
+export async function getWorkspacesByOrg(orgId: number, includeArchived = false, executor?: DbExecutor): Promise<Workspace[]> {
+  const db = executor ?? await requireDb();
+  const conditions = includeArchived 
+    ? [eq(workspaces.orgId, orgId)]
+    : [eq(workspaces.orgId, orgId), eq(workspaces.archived, false)];
+  
+  return db
+    .select()
+    .from(workspaces)
+    .where(and(...conditions))
+    .orderBy(desc(workspaces.createdAt));
+}
+
+/** Get workspace by store ID */
+export async function getWorkspaceByStoreId(storeId: number, executor?: DbExecutor): Promise<Workspace | undefined> {
+  const db = executor ?? await requireDb();
+  const result = await db
+    .select()
+    .from(workspaces)
+    .where(and(eq(workspaces.storeId, storeId), eq(workspaces.archived, false)));
+  return result[0];
+}
+
+/** Update workspace */
+export async function updateWorkspace(id: number, data: Partial<InsertWorkspace>, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.update(workspaces).set(data).where(eq(workspaces.id, id));
+}
+
+/** Archive workspace (soft delete) */
+export async function archiveWorkspace(id: number, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.update(workspaces).set({ 
+    archived: true, 
+    archivedAt: new Date() 
+  }).where(eq(workspaces.id, id));
+}
+
+/** Create workspace chat message */
+export async function createWorkspaceChatMessage(data: InsertWorkspaceChatMessage, executor?: DbExecutor): Promise<WorkspaceChatMessage> {
+  const db = executor ?? await requireDb();
+  const [result] = await db.insert(workspaceChatMessages).values(data).$returningId();
+  const msg = await db.select().from(workspaceChatMessages).where(eq(workspaceChatMessages.id, result.id));
+  return msg[0];
+}
+
+/** Get chat messages for a workspace */
+export async function getWorkspaceChatMessages(
+  workspaceId: number, 
+  limit = 100, 
+  offset = 0,
+  executor?: DbExecutor
+): Promise<WorkspaceChatMessage[]> {
+  const db = executor ?? await requireDb();
+  return db
+    .select()
+    .from(workspaceChatMessages)
+    .where(eq(workspaceChatMessages.workspaceId, workspaceId))
+    .orderBy(desc(workspaceChatMessages.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+/** Create workspace integration */
+export async function createWorkspaceIntegration(data: InsertWorkspaceIntegration, executor?: DbExecutor): Promise<WorkspaceIntegration> {
+  const db = executor ?? await requireDb();
+  const encrypted = encryptWorkspaceIntegrationTokens(data);
+  const [result] = await db.insert(workspaceIntegrations).values(encrypted).$returningId();
+  const integration = await db.select().from(workspaceIntegrations).where(eq(workspaceIntegrations.id, result.id));
+  return decryptWorkspaceIntegrationTokens(integration[0])!;
+}
+
+/** Get workspace integrations */
+export async function getWorkspaceIntegrations(workspaceId: number, executor?: DbExecutor): Promise<WorkspaceIntegration[]> {
+  const db = executor ?? await requireDb();
+  const results = await db
+    .select()
+    .from(workspaceIntegrations)
+    .where(eq(workspaceIntegrations.workspaceId, workspaceId));
+  return results.map(r => decryptWorkspaceIntegrationTokens(r)!);
+}
+
+/** Get workspace integration by type */
+export async function getWorkspaceIntegrationByType(
+  workspaceId: number, 
+  integrationType: string,
+  executor?: DbExecutor
+): Promise<WorkspaceIntegration | undefined> {
+  const db = executor ?? await requireDb();
+  const results = await db
+    .select()
+    .from(workspaceIntegrations)
+    .where(and(
+      eq(workspaceIntegrations.workspaceId, workspaceId),
+      eq(workspaceIntegrations.integrationType, integrationType as any)
+    ));
+  return decryptWorkspaceIntegrationTokens(results[0]);
+}
+
+/** Update workspace integration */
+export async function updateWorkspaceIntegration(id: number, data: Partial<InsertWorkspaceIntegration>, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  const encrypted = encryptWorkspaceIntegrationTokens(data);
+  await db.update(workspaceIntegrations).set(encrypted).where(eq(workspaceIntegrations.id, id));
+}
+
+/** Delete workspace integration */
+export async function deleteWorkspaceIntegration(id: number, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.delete(workspaceIntegrations).where(eq(workspaceIntegrations.id, id));
+}
+
+/** Get or create workspace settings */
+export async function getOrCreateWorkspaceSettings(workspaceId: number, executor?: DbExecutor): Promise<WorkspaceSetting> {
+  const db = executor ?? await requireDb();
+  const existing = await db
+    .select()
+    .from(workspaceSettings)
+    .where(eq(workspaceSettings.workspaceId, workspaceId));
+  
+  if (existing[0]) return existing[0];
+  
+  // Create default settings
+  const [result] = await db.insert(workspaceSettings).values({
+    workspaceId,
+    botEnabled: true,
+    autonomyLevel: "supervised",
+    requiresApproval: false,
+    notificationsEnabled: true,
+  }).$returningId();
+  
+  const settings = await db.select().from(workspaceSettings).where(eq(workspaceSettings.id, result.id));
+  return settings[0];
+}
+
+/** Update workspace settings */
+export async function updateWorkspaceSettings(workspaceId: number, data: Partial<InsertWorkspaceSetting>, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.update(workspaceSettings).set(data).where(eq(workspaceSettings.workspaceId, workspaceId));
+}
+
+/** Create workspace memory */
+export async function createWorkspaceMemory(data: InsertWorkspaceMemory, executor?: DbExecutor): Promise<WorkspaceMemory> {
+  const db = executor ?? await requireDb();
+  const [result] = await db.insert(workspaceMemory).values(data).$returningId();
+  const memory = await db.select().from(workspaceMemory).where(eq(workspaceMemory.id, result.id));
+  return memory[0];
+}
+
+/** Get workspace memory entries */
+export async function getWorkspaceMemory(
+  workspaceId: number, 
+  memoryType?: string,
+  limit = 100,
+  executor?: DbExecutor
+): Promise<WorkspaceMemory[]> {
+  const db = executor ?? await requireDb();
+  const conditions = memoryType 
+    ? [eq(workspaceMemory.workspaceId, workspaceId), eq(workspaceMemory.memoryType, memoryType as any)]
+    : [eq(workspaceMemory.workspaceId, workspaceId)];
+  
+  return db
+    .select()
+    .from(workspaceMemory)
+    .where(and(...conditions))
+    .orderBy(desc(workspaceMemory.lastAccessedAt))
+    .limit(limit);
+}
+
+/** Update workspace memory entry */
+export async function updateWorkspaceMemory(id: number, data: Partial<InsertWorkspaceMemory>, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.update(workspaceMemory).set(data).where(eq(workspaceMemory.id, id));
+}
+
+/** Delete workspace memory entry */
+export async function deleteWorkspaceMemory(id: number, executor?: DbExecutor): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.delete(workspaceMemory).where(eq(workspaceMemory.id, id));
 }

@@ -79,6 +79,20 @@ export const storesRouter = router({
           currency: input.currency,
           status: "setup",
         }, tx);
+        
+        // Auto-create a workspace for this store
+        const workspace = await db.createWorkspace({
+          orgId: ctx.org.id,
+          createdByUserId: ctx.user.id,
+          name: input.name,
+          slug: `${sanitizeName(input.name, 100).toLowerCase().replace(/\s+/g, '-')}-${createdStore.id}`,
+          storeId: createdStore.id,
+          workspaceType: "store",
+        }, tx);
+        
+        // Create default settings for the workspace
+        await db.getOrCreateWorkspaceSettings(workspace.id, tx);
+        
         await db.createAgentTask({
           agentType: "architect",
           taskType: "store_creation",

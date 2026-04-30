@@ -29,6 +29,7 @@ import { queueHealthRouter } from "./routers/queueHealth";
 import { chatRouter } from "./routers/chat";
 import { lifecycleRouter } from "./routers/lifecycle";
 import { orgsRouter } from "./routers/orgs";
+import { workspacesRouter } from "./routers/workspaces";
 import { resumeWorkflow, cancelWorkflow } from "./engine/workflowEngine";
 import * as db from "./db";
 
@@ -79,6 +80,7 @@ export const appRouter = router({
   chat: chatRouter,
   lifecycle: lifecycleRouter,
   orgs: orgsRouter,
+  workspaces: workspacesRouter,
 
   // Notifications — scoped to current user
   notifications: router({
