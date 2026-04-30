@@ -55,7 +55,7 @@ describe("BotMemoryView — empty states + error recovery", () => {
     // "nothing here yet"
     const src = read("client/src/components/BotMemoryView.tsx");
     expect(src).toContain("No memories yet");
-    expect(src).toContain('href="/architect"');
+    expect(src).toContain('href="/chat"');
     expect(src).toContain("Launch a workflow");
   });
 
