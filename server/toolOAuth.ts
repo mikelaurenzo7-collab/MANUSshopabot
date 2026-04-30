@@ -21,6 +21,7 @@ import {
 import { platformCredentials } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { logAgentAction } from "./telemetry";
+import { logger } from "./utils/logger";
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -55,7 +56,11 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
   const origin = stateData?.origin || (req.headers.origin as string) || "";
 
   if (error) {
-    console.error(`[ToolOAuth] OAuth error: ${error} — ${error_description}`);
+    logger.error("tool_oauth_provider_error", {
+      module: "toolOAuth",
+      error,
+      description: error_description,
+    });
     return res.redirect(`${origin}/integrations?error=${encodeURIComponent(error_description || error)}`);
   }
 
@@ -116,7 +121,7 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
       }
     }
 
-    console.log(`[ToolOAuth] Connected ${tool} for user ${userId}`);
+    logger.info("tool_oauth_connected", { module: "toolOAuth", tool, userId });
     logAgentAction({
       agentType: "architect",
       actionType: "oauth_connect",
@@ -124,11 +129,17 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
       input: { tool, userId },
       output: { status: "connected", hasRefreshToken: !!tokenData.refresh_token },
       success: true,
-    }).catch((err) => console.error("[ToolOAuth] Telemetry error:", err.message));
+    }).catch((err) =>
+      logger.error("tool_oauth_telemetry_failed", { module: "toolOAuth", tool, error: err.message }),
+    );
 
     return res.redirect(`${callbackOrigin}/integrations?connected=${tool}&tab=tools`);
   } catch (err: any) {
-    console.error(`[ToolOAuth] Token exchange failed for ${tool}:`, err.response?.data || err.message);
+    logger.error("tool_oauth_token_exchange_failed", {
+      module: "toolOAuth",
+      tool,
+      error: err.response?.data ?? err.message,
+    });
     logAgentAction({
       agentType: "architect",
       actionType: "oauth_connect",
@@ -137,7 +148,9 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
       output: { error: err.message },
       success: false,
       errorMessage: err.message,
-    }).catch((telErr) => console.error("[ToolOAuth] Telemetry error:", telErr.message));
+    }).catch((telErr) =>
+      logger.error("tool_oauth_telemetry_failed", { module: "toolOAuth", tool, error: telErr.message }),
+    );
     return res.redirect(
       `${callbackOrigin}/integrations?error=${encodeURIComponent(`Failed to connect ${tool}: ${err.message}`)}`,
     );
@@ -146,5 +159,8 @@ async function handleToolOAuthCallback(req: Request, res: Response) {
 
 export function registerToolOAuthRoutes(app: Express) {
   app.get("/api/tools/oauth/callback", handleToolOAuthCallback);
-  console.log("[ToolOAuth] Callback route registered: GET /api/tools/oauth/callback");
+  logger.info("tool_oauth_route_registered", {
+    module: "toolOAuth",
+    route: "GET /api/tools/oauth/callback",
+  });
 }

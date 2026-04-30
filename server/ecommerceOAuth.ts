@@ -20,6 +20,7 @@ import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import { ecomOAuthStateStore, pkceStore } from "./routers/connectors";
 import { logAgentAction } from "./telemetry";
+import { logger } from "./utils/logger";
 
 interface TokenResponse {
   access_token: string;
@@ -200,7 +201,11 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
   const resolvedOrigin = persistedState?.origin || origin;
 
   if (error) {
-    console.error(`[EcomOAuth] OAuth error: ${error} — ${error_description}`);
+    logger.error("ecom_oauth_provider_error", {
+      module: "ecommerceOAuth",
+      error,
+      description: error_description,
+    });
     if (state) {
       await consumeOAuthStateToken(state, "ecommerce");
     }
@@ -354,7 +359,12 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       reverb: "Reverb",
     };
 
-    console.log(`[EcomOAuth] Connected ${platform} for user ${userId}`);
+    logger.info("ecom_oauth_connected", {
+      module: "ecommerceOAuth",
+      platform,
+      userId,
+      storeId: storeId || undefined,
+    });
     logAgentAction({
       agentType: "architect",
       actionType: "oauth_connect",
@@ -363,11 +373,17 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       input: { platform, storeId, userId },
       output: { status: "connected", hasRefreshToken: !!tokenData.refresh_token },
       success: true,
-    }).catch(err => console.error("[EcomOAuth] Telemetry error:", err.message));
+    }).catch((err) =>
+      logger.error("ecom_oauth_telemetry_failed", { module: "ecommerceOAuth", platform, error: err.message }),
+    );
     return res.redirect(`${callbackOrigin}/integrations?connected=${platform}&name=${encodeURIComponent(platformNames[platform] || platform)}`);
 
   } catch (err: any) {
-    console.error(`[EcomOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
+    logger.error("ecom_oauth_token_exchange_failed", {
+      module: "ecommerceOAuth",
+      platform,
+      error: err.response?.data ?? err.message,
+    });
     logAgentAction({
       agentType: "architect",
       actionType: "oauth_connect",
@@ -377,7 +393,9 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
       output: { error: err.message },
       success: false,
       errorMessage: err.message,
-    }).catch(telErr => console.error("[EcomOAuth] Telemetry error:", telErr.message));
+    }).catch((telErr) =>
+      logger.error("ecom_oauth_telemetry_failed", { module: "ecommerceOAuth", platform, error: telErr.message }),
+    );
     return res.redirect(`${callbackOrigin}/integrations?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
 }
@@ -487,5 +505,8 @@ export async function refreshPlatformToken(
 
 export function registerEcommerceOAuthRoutes(app: Express) {
   app.get("/api/ecommerce/oauth/callback", handleEcommerceOAuthCallback);
-  console.log("[EcomOAuth] Callback route registered: GET /api/ecommerce/oauth/callback");
+  logger.info("ecom_oauth_route_registered", {
+    module: "ecommerceOAuth",
+    route: "GET /api/ecommerce/oauth/callback",
+  });
 }

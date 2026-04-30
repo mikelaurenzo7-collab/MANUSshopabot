@@ -17,6 +17,7 @@ import { socialAccounts } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import { logAgentAction } from "./telemetry";
+import { logger } from "./utils/logger";
 
 interface TokenResponse {
   access_token: string;
@@ -403,7 +404,11 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
   const origin = persistedState?.origin || parsed?.origin || req.headers.origin as string || "";
 
   if (error) {
-    console.error(`[SocialOAuth] OAuth error: ${error} - ${error_description}`);
+    logger.error("social_oauth_provider_error", {
+      module: "socialOAuth",
+      error,
+      description: error_description,
+    });
     if (state) {
       await consumeOAuthStateToken(state, "social");
     }
@@ -535,7 +540,12 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       }
     }
 
-    console.log(`[SocialOAuth] Connected ${platform} account "${profile.accountName}" for user ${userId}`);
+    logger.info("social_oauth_connected", {
+      module: "socialOAuth",
+      platform,
+      userId,
+      accountName: profile.accountName,
+    });
     logAgentAction({
       agentType: "social",
       actionType: "social_oauth_connect",
@@ -543,13 +553,19 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       input: { platform, userId },
       output: { accountId: profile.accountId, accountName: profile.accountName, hasRefreshToken: !!tokenData.refresh_token },
       success: true,
-    }).catch(err => console.error("[SocialOAuth] Telemetry error:", err.message));
+    }).catch((err) =>
+      logger.error("social_oauth_telemetry_failed", { module: "socialOAuth", platform, error: err.message }),
+    );
     const redirectPath = effectiveState.returnTo || "/integrations";
     const connectedParam = effectiveState.returnTo ? `social_connected=${platform}` : `connected=${platform}&account=${encodeURIComponent(profile.accountName)}`;
     return res.redirect(`${callbackOrigin}${redirectPath}?${connectedParam}`);
 
   } catch (err: any) {
-    console.error(`[SocialOAuth] Token exchange failed for ${platform}:`, err.response?.data || err.message);
+    logger.error("social_oauth_token_exchange_failed", {
+      module: "socialOAuth",
+      platform,
+      error: err.response?.data ?? err.message,
+    });
     logAgentAction({
       agentType: "social",
       actionType: "social_oauth_connect",
@@ -558,7 +574,9 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
       output: { error: err.message },
       success: false,
       errorMessage: err.message,
-    }).catch(telErr => console.error("[SocialOAuth] Telemetry error:", telErr.message));
+    }).catch((telErr) =>
+      logger.error("social_oauth_telemetry_failed", { module: "socialOAuth", platform, error: telErr.message }),
+    );
     const redirectPath = effectiveState?.returnTo || "/integrations";
     return res.redirect(`${callbackOrigin}${redirectPath}?error=${encodeURIComponent(`Failed to connect ${platform}: ${err.message}`)}`);
   }
@@ -568,5 +586,8 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
 
 export function registerSocialOAuthRoutes(app: Express) {
   app.get("/api/social/oauth/callback", handleSocialOAuthCallback);
-  console.log("[SocialOAuth] Callback route registered: GET /api/social/oauth/callback");
+  logger.info("social_oauth_route_registered", {
+    module: "socialOAuth",
+    route: "GET /api/social/oauth/callback",
+  });
 }
