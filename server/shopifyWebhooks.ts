@@ -22,6 +22,7 @@ import { notifyOwner } from "./_core/notification";
 import { ENV } from "./_core/env";
 import { logAgentAction, logTimeToFulfill } from "./telemetry";
 import { rawBodyMiddleware, verifyShopifyHmac } from "./utils/webhookVerify";
+import { WebhookDedup } from "./utils/webhookDedup";
 import { logger } from "./utils/logger";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
@@ -370,29 +371,17 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
 
 // ─── Webhook Deduplication ────────────────────────────────────────────────
 // Shopify may retry webhooks if it doesn't receive a 200 within 5 seconds.
-// This in-memory set prevents duplicate processing. Entries expire after 5 minutes.
+// We use a three-state dedup (in_flight / completed / unseen) so a
+// failed handler RELEASES its claim — letting Shopify's next retry
+// reach the work — instead of silently dropping retries with a
+// premature "seen" mark. See `server/utils/webhookDedup.ts`.
 
-const processedWebhooks = new Map<string, number>();
-const MAX_DEDUP_ENTRIES = 10_000;
+const dedup = new WebhookDedup();
+// Cleanup expired entries every 2 minutes to keep the map healthy.
+setInterval(() => dedup.prune(), 2 * 60 * 1000).unref?.();
 
-// Cleanup expired entries every 2 minutes to prevent memory leak
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, ts] of Array.from(processedWebhooks.entries())) {
-    if (now - ts > 5 * 60 * 1000) processedWebhooks.delete(key);
-  }
-}, 2 * 60 * 1000);
-
-function isWebhookDuplicate(shopDomain: string, topic: string, resourceId: string): boolean {
-  const key = `${shopDomain}:${topic}:${resourceId}`;
-  if (processedWebhooks.has(key)) return true;
-  // Hard cap: under abusive load, drop oldest entries to prevent unbounded growth
-  if (processedWebhooks.size >= MAX_DEDUP_ENTRIES) {
-    const oldestKey = processedWebhooks.keys().next().value;
-    if (oldestKey !== undefined) processedWebhooks.delete(oldestKey);
-  }
-  processedWebhooks.set(key, Date.now());
-  return false;
+function dedupKey(shopDomain: string, topic: string, resourceId: string): string {
+  return `${shopDomain}:${topic}:${resourceId}`;
 }
 
 // ─── Main Webhook Dispatcher ──────────────────────────────────────────────
@@ -440,14 +429,18 @@ async function handleShopifyWebhook(req: Request, res: Response) {
     shopDomain,
   });
 
-  // ── Deduplication: prevent duplicate processing on retries ──
+  // ── Deduplication: claim before processing, release on failure ──
   const resourceId = String(payload.id || payload.inventory_item_id || "unknown");
-  if (isWebhookDuplicate(shopDomain, topic, resourceId)) {
+  const key = dedupKey(shopDomain, topic, resourceId);
+  const claim = dedup.tryClaim(key);
+  if (claim !== "claim") {
     logger.info("shopify_webhook_duplicate_skipped", {
       module: "shopifyWebhooks",
       topic,
       shopDomain,
       resourceId,
+      claim, // "in_flight" | "completed" — distinguishes a concurrent
+             // retry from a successfully-processed-and-cached one.
     });
     return;
   }
@@ -480,6 +473,10 @@ async function handleShopifyWebhook(req: Request, res: Response) {
           shopDomain,
         });
     }
+    // Mark the work as completed AFTER it succeeded — future Shopify
+    // retries within the TTL window will skip; failed runs released
+    // their claim below so the next retry reaches the work.
+    dedup.markCompleted(key);
     // Log processed event
     if (store) {
       logWebhookEvent({
@@ -501,6 +498,10 @@ async function handleShopifyWebhook(req: Request, res: Response) {
       );
     }
   } catch (err: any) {
+    // Release the in-flight claim so vendor retries can re-attempt the
+    // work. The legacy "mark on entry" pattern silently dropped retries
+    // here and depended on the in-process DLQ to eventually recover.
+    dedup.releaseClaim(key);
     logger.error("shopify_webhook_processing_failed", {
       module: "shopifyWebhooks",
       topic,
