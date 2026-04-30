@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { randomUUID } from "node:crypto";
 import { storagePut } from "../storage";
 import axios from "axios";
 import { logger } from "./logger";
@@ -22,8 +23,12 @@ export async function optimizeAndUploadImage(
       .webp({ quality: 80, effort: 6 }) 
       .toBuffer();
 
-    // 3. Upload to storage
-    const filename = `optimized-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`;
+    // 3. Upload to storage. Use crypto.randomUUID for the suffix —
+    // Math.random().toString(36).substring(7) is only ~5 base-36
+    // chars (~60M values) from a non-CSPRNG, so a high-throughput
+    // product import in the same millisecond had a real collision
+    // risk where one user's optimized image could overwrite another's.
+    const filename = `optimized-${Date.now()}-${randomUUID()}.webp`;
     const result = await storagePut(filename, optimizedBuffer, 'image/webp');
     
     return result.url;
