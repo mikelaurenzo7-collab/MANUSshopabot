@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte, count, sum, inArray, isNotNull } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, count, sum, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import * as schema from "../drizzle/schema";
 import {
@@ -45,6 +45,7 @@ import {
   orgInvitations, InsertOrgInvitation, OrgInvitation,
   workspaces, InsertWorkspace, Workspace,
   workspaceChatMessages, InsertWorkspaceChatMessage, WorkspaceChatMessage,
+  workspaceChatSessions, InsertWorkspaceChatSession, WorkspaceChatSession,
   workspaceIntegrations, InsertWorkspaceIntegration, WorkspaceIntegration,
   workspaceSettings, InsertWorkspaceSetting, WorkspaceSetting,
   workspaceMemory, InsertWorkspaceMemory, WorkspaceMemory,
@@ -2511,6 +2512,201 @@ export async function getWorkspaceChatMessages(
     .orderBy(desc(workspaceChatMessages.createdAt))
     .limit(limit)
     .offset(offset);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace chat sessions (Claude-Code-style multi-session chat per workspace)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Truncated preview snippet stored on the session row for sidebar display. */
+function buildMessagePreview(content: string): string {
+  const collapsed = content.replace(/\s+/g, " ").trim();
+  return collapsed.length > 240 ? `${collapsed.slice(0, 237)}…` : collapsed;
+}
+
+/** Auto-generate a session title from the first user message. */
+export function deriveSessionTitle(firstUserMessage: string): string {
+  const collapsed = firstUserMessage.replace(/\s+/g, " ").trim();
+  if (!collapsed) return "New chat";
+  // Prefer the first sentence/clause if short; otherwise truncate at a word boundary.
+  const stop = collapsed.search(/[.!?]\s/);
+  const candidate = stop > 0 && stop < 70 ? collapsed.slice(0, stop) : collapsed;
+  if (candidate.length <= 60) return candidate;
+  const truncated = candidate.slice(0, 60);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${truncated.slice(0, lastSpace > 30 ? lastSpace : 60).trim()}…`;
+}
+
+/** Create a new chat session in a workspace. */
+export async function createWorkspaceChatSession(
+  data: InsertWorkspaceChatSession,
+  executor?: DbExecutor,
+): Promise<WorkspaceChatSession> {
+  const db = executor ?? await requireDb();
+  const [result] = await db.insert(workspaceChatSessions).values(data).$returningId();
+  const rows = await db
+    .select()
+    .from(workspaceChatSessions)
+    .where(eq(workspaceChatSessions.id, result.id));
+  return rows[0];
+}
+
+/** Get a single session by id. */
+export async function getWorkspaceChatSessionById(
+  id: number,
+  executor?: DbExecutor,
+): Promise<WorkspaceChatSession | undefined> {
+  const db = executor ?? await requireDb();
+  const rows = await db
+    .select()
+    .from(workspaceChatSessions)
+    .where(eq(workspaceChatSessions.id, id));
+  return rows[0];
+}
+
+/** List sessions for a workspace, newest activity first; pinned float to the top. */
+export async function listWorkspaceChatSessions(
+  workspaceId: number,
+  options: { includeArchived?: boolean; limit?: number } = {},
+  executor?: DbExecutor,
+): Promise<WorkspaceChatSession[]> {
+  const db = executor ?? await requireDb();
+  const where = options.includeArchived
+    ? eq(workspaceChatSessions.workspaceId, workspaceId)
+    : and(
+        eq(workspaceChatSessions.workspaceId, workspaceId),
+        eq(workspaceChatSessions.archived, false),
+      );
+  return db
+    .select()
+    .from(workspaceChatSessions)
+    .where(where)
+    .orderBy(
+      desc(workspaceChatSessions.pinned),
+      desc(workspaceChatSessions.lastMessageAt),
+      desc(workspaceChatSessions.updatedAt),
+    )
+    .limit(options.limit ?? 200);
+}
+
+/** Update session fields (title, summary, pinned, archived). */
+export async function updateWorkspaceChatSession(
+  id: number,
+  updates: Partial<Pick<WorkspaceChatSession, "title" | "summary" | "pinned" | "archived" | "archivedAt">>,
+  executor?: DbExecutor,
+): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.update(workspaceChatSessions).set(updates).where(eq(workspaceChatSessions.id, id));
+}
+
+/** Hard-delete a session and all of its messages. */
+export async function deleteWorkspaceChatSession(
+  id: number,
+  executor?: DbExecutor,
+): Promise<void> {
+  const db = executor ?? await requireDb();
+  await db.delete(workspaceChatMessages).where(eq(workspaceChatMessages.sessionId, id));
+  await db.delete(workspaceChatSessions).where(eq(workspaceChatSessions.id, id));
+}
+
+/**
+ * Adopt any messages in this workspace that predate the sessions table
+ * (sessionId IS NULL) into a single "Continued from earlier" session, so
+ * pre-existing conversation history shows up in the new sidebar instead of
+ * silently disappearing. Idempotent: if no orphan messages exist, this
+ * returns null without creating an empty session.
+ */
+export async function adoptOrphanWorkspaceChatMessages(
+  workspaceId: number,
+  userId: number,
+  executor?: DbExecutor,
+): Promise<WorkspaceChatSession | null> {
+  const db = executor ?? await requireDb();
+  const orphans = await db
+    .select()
+    .from(workspaceChatMessages)
+    .where(and(
+      eq(workspaceChatMessages.workspaceId, workspaceId),
+      isNull(workspaceChatMessages.sessionId),
+    ))
+    .orderBy(desc(workspaceChatMessages.createdAt))
+    .limit(1);
+  if (orphans.length === 0) return null;
+
+  const totalRow = await db
+    .select({ n: count() })
+    .from(workspaceChatMessages)
+    .where(and(
+      eq(workspaceChatMessages.workspaceId, workspaceId),
+      isNull(workspaceChatMessages.sessionId),
+    ));
+  const total = Number(totalRow[0]?.n ?? 0);
+  if (total === 0) return null;
+
+  const session = await createWorkspaceChatSession({
+    workspaceId,
+    createdByUserId: userId,
+    title: "Continued from earlier",
+    summary: "Imported from your previous workspace chat history.",
+    messageCount: total,
+    lastMessageAt: orphans[0].createdAt,
+    lastMessagePreview: buildMessagePreview(orphans[0].content),
+  }, db);
+
+  await db
+    .update(workspaceChatMessages)
+    .set({ sessionId: session.id })
+    .where(and(
+      eq(workspaceChatMessages.workspaceId, workspaceId),
+      isNull(workspaceChatMessages.sessionId),
+    ));
+
+  return session;
+}
+
+/** Get all messages for a session, oldest first (chat-display order). */
+export async function getWorkspaceChatSessionMessages(
+  sessionId: number,
+  options: { limit?: number; offset?: number } = {},
+  executor?: DbExecutor,
+): Promise<WorkspaceChatMessage[]> {
+  const db = executor ?? await requireDb();
+  return db
+    .select()
+    .from(workspaceChatMessages)
+    .where(eq(workspaceChatMessages.sessionId, sessionId))
+    .orderBy(workspaceChatMessages.createdAt)
+    .limit(options.limit ?? 500)
+    .offset(options.offset ?? 0);
+}
+
+/**
+ * Refresh sidebar-facing counters for a session after appending messages.
+ * Recomputes from source-of-truth (the messages table) so we never drift.
+ */
+export async function refreshWorkspaceChatSessionCounters(
+  sessionId: number,
+  executor?: DbExecutor,
+): Promise<void> {
+  const db = executor ?? await requireDb();
+  const totals = await db
+    .select({ n: count() })
+    .from(workspaceChatMessages)
+    .where(eq(workspaceChatMessages.sessionId, sessionId));
+  const last = await db
+    .select()
+    .from(workspaceChatMessages)
+    .where(eq(workspaceChatMessages.sessionId, sessionId))
+    .orderBy(desc(workspaceChatMessages.createdAt))
+    .limit(1);
+  await db
+    .update(workspaceChatSessions)
+    .set({
+      messageCount: Number(totals[0]?.n ?? 0),
+      lastMessageAt: last[0]?.createdAt ?? null,
+      lastMessagePreview: last[0] ? buildMessagePreview(last[0].content) : null,
+    })
+    .where(eq(workspaceChatSessions.id, sessionId));
 }
 
 /** Create workspace integration */
