@@ -1106,7 +1106,8 @@ export default function Landing() {
                   <p className="micro-label mb-1">Live Autonomous Store</p>
                   <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
                 </div>
-                <div className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.12)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
                   24/7 Active
                 </div>
               </div>
@@ -1119,13 +1120,13 @@ export default function Landing() {
                     return (
                       <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentCSSVars}>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-[0_0_14px_var(--accent,rgba(14,165,233,0.4))]" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
                             <bot.icon className={`w-5 h-5 ${colors.icon}`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-bold text-white truncate">{bot.name}</p>
-                              <span className="text-[10px] font-mono text-white/35">{progress}%</span>
+                              <span className="text-[10px] font-mono font-bold" style={{ color: colors.hex }}>{progress}%</span>
                             </div>
                             <p className="text-[11px] text-white/40 truncate">{bot.tagline}</p>
                           </div>
@@ -1141,7 +1142,7 @@ export default function Landing() {
                 <div className="space-y-4">
                   <div className="revenue-card">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/35">Projected lift</p>
-                    <div className="mt-2 text-4xl font-black tracking-tighter text-white">2.4x</div>
+                    <div className="mt-2 text-4xl font-black tracking-tighter text-white lux-numeral">2.4x</div>
                     <div className="mt-3 flex h-24 items-end gap-1.5">
                       {HERO_GROWTH_BARS.map((height, index) => (
                         <div key={index} className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/25 to-cyan-300/90 hero-growth-bar" style={{ height: `${height}%`, animationDelay: `${index * 120}ms` }} />
@@ -1150,9 +1151,14 @@ export default function Landing() {
                   </div>
 
                   <div className="action-feed-card">
+                    {/* Live indicator row */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-1 h-1 rounded-full bg-sky-400 animate-pulse" aria-hidden="true" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-sky-300/70">Live actions</span>
+                    </div>
                     {HERO_ACTION_FEED.map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-[11px] text-white/58">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <div key={item} className="flex items-center gap-2 text-[11px] text-white/65">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                         <span>{item}</span>
                       </div>
                     ))}
@@ -1295,18 +1301,22 @@ export default function Landing() {
 
       {/* ── Metrics Strip ──────────────────────────────────────────────────── */}
       <section className="py-14 px-4 border-y border-white/[0.06] relative overflow-hidden">
+        {/* Ambient centre glow */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(14,165,233,0.07),transparent_65%)]" />
         <div className="absolute inset-x-0 top-0 hairline opacity-60" />
         <div className="absolute inset-x-0 bottom-0 hairline opacity-60" />
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card spotlight-card lift-on-hover p-7 text-center group"
+              className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 text-center group relative overflow-hidden"
             >
-              <div className="w-10 h-10 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 transition-colors">
+              {/* Top glow rim */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent" />
+              <div className="w-11 h-11 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 group-hover:shadow-[0_0_18px_rgba(14,165,233,0.15)] transition-all duration-300">
                 <metric.icon className={`w-5 h-5 ${metric.color} group-hover:scale-110 transition-transform duration-300`} />
               </div>
-              <div className="lux-numeral text-3xl text-white mb-1.5 metric-number">{metric.value}</div>
+              <div className="lux-numeral text-3xl font-black text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
               <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
             </div>
           ))}

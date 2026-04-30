@@ -108,27 +108,27 @@ function WorkflowCard({
   const createdAt = new Date(workflow.createdAt).toLocaleString();
 
   const statusGlow: Record<string, string> = {
-    running: "border-l-2 border-l-sky-500/60 shadow-[inset_2px_0_12px_rgba(14,165,233,0.08)] workflow-running-glow",
-    failed: "border-l-2 border-l-red-500/50",
-    completed: "border-l-2 border-l-emerald-500/40",
-    pending: "border-l-2 border-l-amber-500/40",
+    running: "border-l-2 border-l-sky-500/60 bg-sky-500/[0.03] shadow-[inset_2px_0_16px_rgba(14,165,233,0.10)] workflow-running-glow",
+    failed: "border-l-2 border-l-red-500/50 bg-red-500/[0.02]",
+    completed: "border-l-2 border-l-emerald-500/40 bg-emerald-500/[0.02]",
+    pending: "border-l-2 border-l-amber-500/40 bg-amber-500/[0.02]",
     cancelled: "border-l-2 border-l-slate-500/30",
-    awaiting_approval: "border-l-2 border-l-amber-500/40",
+    awaiting_approval: "border-l-2 border-l-amber-500/40 bg-amber-500/[0.02]",
   };
 
   return (
-    <div className={`card-hover rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-white/10 hover:bg-white/[0.04] ${statusGlow[workflow.status] ?? ""}`}>
+    <div className={`card-hover rounded-xl border border-white/[0.06] p-4 transition-all hover:border-white/[0.12] hover:shadow-[0_4px_20px_rgba(0,0,0,0.25)] ${statusGlow[workflow.status] ?? ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <AgentBadge agentType={workflow.agentType} />
             <StatusBadge status={workflow.status} />
           </div>
-          <h3 className="font-medium text-sm text-white truncate mt-1">{workflow.title}</h3>
+          <h3 className="font-semibold text-sm text-white/90 truncate mt-1">{workflow.title}</h3>
           {workflow.description && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{workflow.description}</p>
+            <p className="text-xs text-white/45 mt-0.5 line-clamp-2 leading-relaxed">{workflow.description}</p>
           )}
-          <p className="text-xs text-slate-500 mt-1">{createdAt}</p>
+          <p className="text-xs text-white/25 mt-1 font-mono">{createdAt}</p>
         </div>
         {canRetry && (
           <Button
