@@ -100,7 +100,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [railOverride, setRailOverride] = useState<boolean | null>(null);
   const railMode = railOverride === null ? isNarrow : railOverride;
   const { setOpen: setPaletteOpen } = useCommandPalette();
-  const { activeStoreId, setActiveStoreId } = useWorkspace();
+  const { activeStoreId, setActiveStoreId, activeWorkspaceId, setActiveWorkspaceId } = useWorkspace();
 
   // ── Keyboard nav: press `g` then a letter to jump. Linear/GitHub style. ──
   // Only active outside text inputs; the leader key (`g`) is consumed only
@@ -179,6 +179,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     enabled: !!user,
   });
 
+  const { data: workspaces } = trpc.workspaces.list.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
   const totalRunning = ((agentStatus as any[]) ?? []).reduce(
     (a: number, s: any) => a + (s?.running ?? 0),
     0,
@@ -186,8 +191,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const hasAgentErrors = ((agentStatus as any[]) ?? []).some((s: any) => (s?.failed ?? 0) > 0);
   const storeBotStatus: NavItem["dot"] = hasAgentErrors ? "error" : totalRunning > 0 ? "running" : "ok";
 
-  // Active workspace store (for the switcher pill)
-  const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
+  // Active workspace (for the switcher pill)
+  const activeWorkspace = workspaces?.find((w: any) => w.id === activeWorkspaceId) ?? workspaces?.[0];
+  // Legacy: derive activeStore from activeWorkspace for components that still use activeStoreId
+  const activeStore = stores?.find((s: any) => s.id === (activeWorkspace?.storeId ?? activeStoreId)) ?? stores?.[0];
+
+  function handleSelectAllWorkspaces() {
+    setActiveWorkspaceId(null);
+    setActiveStoreId(null);
+  }
+
+  function handleSelectWorkspace(w: { id: number; storeId?: number | null }) {
+    setActiveWorkspaceId(w.id);
+    if (w.storeId) setActiveStoreId(w.storeId);
+  }
 
   // Flat nav — one Store Bot destination instead of separate builder,
   // merchant, social, and communicator bots.
@@ -387,8 +404,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="mb-1.5 px-0.5">
         <OrgSwitcher />
       </div>
-      {/* Workspace (store) switcher */}
-      {stores && stores.length > 0 && (
+      {/* Workspace switcher */}
+      {workspaces && workspaces.length > 0 && (
         <div className="mb-2 px-0.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -401,7 +418,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <Store className="w-2.5 h-2.5 text-sky-300" />
                 </span>
                 <span className="min-w-0 flex-1 text-[12px] font-semibold text-white/85 truncate text-left">
-                  {activeStore?.name ?? "All stores"}
+                  {activeWorkspace?.name ?? activeStore?.name ?? "All stores"}
                 </span>
                 <ChevronDown className="w-3 h-3 text-white/35 shrink-0 group-hover:text-sky-300 transition-colors" />
               </button>
@@ -411,23 +428,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 Workspace
               </DropdownMenuLabel>
               <DropdownMenuItem
-                onSelect={() => setActiveStoreId(null)}
-                className={!activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
+                onSelect={handleSelectAllWorkspaces}
+                className={!activeWorkspaceId ? "bg-sky-500/10 text-sky-300" : ""}
               >
                 <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {stores.map((s: any) => {
-                const brand = getBrand(s.platform);
+              {workspaces.map((w: any) => {
+                const linkedStore = stores?.find((s: any) => s.id === w.storeId);
+                const brand = linkedStore ? getBrand(linkedStore.platform) : { icon: "🏪", name: "" };
                 return (
                   <DropdownMenuItem
-                    key={s.id}
-                    onSelect={() => setActiveStoreId(s.id)}
-                    className={s.id === activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
+                    key={w.id}
+                    onSelect={() => handleSelectWorkspace(w)}
+                    className={w.id === activeWorkspaceId ? "bg-sky-500/10 text-sky-300" : ""}
                   >
                     <span className="text-sm leading-none mr-2">{brand.icon}</span>
-                    <span className="truncate">{s.name}</span>
-                    <span className="ml-auto text-[10px] text-white/55">{brand.name}</span>
+                    <span className="truncate">{w.name}</span>
+                    {brand.name && <span className="ml-auto text-[10px] text-white/55">{brand.name}</span>}
                   </DropdownMenuItem>
                 );
               })}

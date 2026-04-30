@@ -466,6 +466,32 @@ const MessageSchema = z.object({
   content: z.string().max(8000),
 });
 
+/** Persist user message + assistant reply to workspace_chat_messages when a workspaceId is provided. */
+async function persistWorkspaceTurn(opts: {
+  workspaceId: number;
+  userId: number;
+  messages: Array<{ role: string; content: string }>;
+  reply: string;
+  toolsUsed?: string[];
+}): Promise<void> {
+  const lastUserMsg = [...opts.messages].reverse().find((m) => m.role === "user");
+  if (lastUserMsg) {
+    await db.createWorkspaceChatMessage({
+      workspaceId: opts.workspaceId,
+      userId: opts.userId,
+      role: "user",
+      content: lastUserMsg.content,
+    });
+  }
+  await db.createWorkspaceChatMessage({
+    workspaceId: opts.workspaceId,
+    userId: opts.userId,
+    role: "assistant",
+    content: opts.reply,
+    toolCalls: opts.toolsUsed?.length ? opts.toolsUsed : undefined,
+  });
+}
+
 export const chatRouter = router({
   /**
    * Send a message to the selected bot and receive a response.
@@ -480,6 +506,8 @@ export const chatRouter = router({
       agentType: z.enum(["store", "architect", "merchant", "social"]),
       messages: z.array(MessageSchema).min(1).max(50),
       storeId: z.number().optional(),
+      /** Workspace ID — when provided, persists messages to workspace_chat_messages */
+      workspaceId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const systemBase = BOT_SYSTEM_PROMPTS[input.agentType];
@@ -528,6 +556,17 @@ export const chatRouter = router({
       if (!firstMessage.tool_calls || firstMessage.tool_calls.length === 0) {
         const reply = firstMessage.content;
         if (!reply || typeof reply !== "string") throw new Error("Empty response from AI");
+
+        // Persist to workspace chat history when a workspace is scoped
+        if (input.workspaceId) {
+          await persistWorkspaceTurn({
+            workspaceId: input.workspaceId,
+            userId: ctx.user.id,
+            messages: input.messages,
+            reply,
+          });
+        }
+
         return { reply, toolsUsed: [] };
       }
 
@@ -580,6 +619,17 @@ export const chatRouter = router({
 
       const reply = finalResult.choices?.[0]?.message?.content;
       if (!reply || typeof reply !== "string") throw new Error("Empty response from AI");
+
+      // Persist to workspace chat history when a workspace is scoped
+      if (input.workspaceId) {
+        await persistWorkspaceTurn({
+          workspaceId: input.workspaceId,
+          userId: ctx.user.id,
+          messages: input.messages,
+          reply,
+          toolsUsed,
+        });
+      }
 
       return { reply, toolsUsed };
     }),

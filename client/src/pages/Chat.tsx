@@ -97,7 +97,7 @@ function previewJson(value: unknown): string | null {
 
 export default function Chat() {
   const [, setLocation] = useLocation();
-  const { activeStoreId, setActiveStoreId } = useWorkspace();
+  const { activeStoreId, setActiveStoreId, activeWorkspaceId } = useWorkspace();
   const [history, setHistory] = useState<Record<WorkspaceKey, Message[]>>({ all: [] });
 
   const storesQuery = trpc.chat.stores.useQuery();
@@ -109,11 +109,28 @@ export default function Chat() {
   const socialAccountsQuery = trpc.connectors.listSocialAccounts.useQuery();
   const toolsQuery = trpc.tools.listConnected.useQuery();
 
+  // Load persisted chat history for the active workspace
+  const savedMessagesQuery = trpc.workspaces.getChatMessages.useQuery(
+    { workspaceId: activeWorkspaceId! },
+    { enabled: !!activeWorkspaceId, staleTime: 60_000 },
+  );
+
   const stores = storesQuery.data ?? [];
   const activeStore = stores.find((s: any) => s.id === activeStoreId) ?? null;
   const workspaceKey = keyForStore(activeStore?.id ?? activeStoreId);
   const messages = history[workspaceKey] ?? [];
   const hasStores = stores.length > 0;
+
+  // Seed in-memory history from persisted messages when workspace changes
+  useEffect(() => {
+    if (!activeWorkspaceId || !savedMessagesQuery.data) return;
+    // Messages from DB are newest-first; reverse to chronological order
+    const loaded: Message[] = [...savedMessagesQuery.data]
+      .reverse()
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+    setHistory((prev) => ({ ...prev, [workspaceKey]: loaded }));
+  }, [activeWorkspaceId, workspaceKey, savedMessagesQuery.data]);
 
   useEffect(() => {
     if (!activeStoreId) return;
@@ -168,6 +185,7 @@ export default function Chat() {
           m.role === "user" || m.role === "assistant",
       ),
       storeId: activeStore?.id ?? activeStoreId ?? undefined,
+      workspaceId: activeWorkspaceId ?? undefined,
     });
   }
 
