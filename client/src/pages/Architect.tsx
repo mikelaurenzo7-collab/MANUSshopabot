@@ -114,7 +114,7 @@ export default function Architect() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-[#050505] overflow-hidden text-white flex-col">
+    <div className="flex h-full w-full relative bg-terminal-bg overflow-hidden text-white flex-col">
       {/* Ambient backdrop — soft brand light leaks bleed into the page so
           it feels alive even at idle. Pointer-events:none keeps clicks
           flowing through to the content layer. */}
@@ -160,7 +160,7 @@ export default function Architect() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-[#050505]">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-6 bg-terminal-bg">
           <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
 
             {/* Operating-across strip — surfaces every connected platform
@@ -212,7 +212,7 @@ export default function Architect() {
                   placeholder="ENTER NICHE KEYWORD (E.G., 'MODERN MINIMALIST LAMPS')"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="flex-1 bg-[#050505] border border-white/[0.08] rounded-none px-4 py-2 font-mono text-xs text-white uppercase placeholder:text-muted-enhanced transition-standard focus:border-sky-400/50 focus:shadow-premium-sm"
+                  className="flex-1 bg-terminal-bg border border-white/[0.08] rounded-none px-4 py-2 font-mono text-xs text-white uppercase placeholder:text-muted-enhanced transition-standard focus:border-sky-400/50 focus:shadow-premium-sm"
                   onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                 />
                 <button
@@ -234,7 +234,7 @@ export default function Architect() {
 
             {/* Report Ledger */}
             <div className="border border-white/[0.08] bg-black/40">
-              <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-[#050505]">
+              <div className="border-b border-white/[0.08] px-4 py-3 flex justify-between items-center bg-terminal-bg">
                 <h2 className="font-mono text-[10px] uppercase tracking-widest font-bold text-white">Intelligence Ledger: Niche Scans</h2>
                 <Badge count={reports?.length || 0} />
               </div>
@@ -251,7 +251,7 @@ export default function Architect() {
                 ) : (
                   <table className="w-full text-left font-mono text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-white/[0.08] bg-[#050505]">
+                      <tr className="border-b border-white/[0.08] bg-terminal-bg">
                         <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal w-1/4">Coordinate</th>
                         <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal">Score</th>
                         <th className="px-4 py-2 text-[9px] uppercase tracking-widest text-muted-foreground font-normal text-right">Timestamp</th>
@@ -305,7 +305,7 @@ export default function Architect() {
         }`}
         aria-hidden={!selectedReport}
       >
-        <div className="h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-[#050505]">
+        <div className="h-12 flex items-center px-4 border-b border-white/[0.08] justify-between shrink-0 bg-terminal-bg">
           <span className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
             <Cpu className="w-3 h-3 text-sky-400" />
             Architect Inspector
@@ -387,7 +387,7 @@ export default function Architect() {
                     <button
                       onClick={() => handleGenerateBrandPack(selectedReport.keyword)}
                       disabled={launchBrandPackMutation.isPending}
-                      className="w-full bg-[#050505] border border-white/[0.08] hover:border-[#00ff41] hover:text-emerald-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
+                      className="w-full bg-terminal-bg border border-white/[0.08] hover:border-terminal-accent hover:text-emerald-400 text-terminal-muted font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
                     >
                        {launchBrandPackMutation.isPending ? "Launching..." : "Generate Brand Pack"}
                        <Sparkles className="w-3 h-3 group-hover:text-emerald-400" />
@@ -395,7 +395,7 @@ export default function Architect() {
                     <button
                       onClick={() => handleInitializeStore(selectedReport.keyword)}
                       disabled={launchBuildoutMutation.isPending}
-                      className="w-full bg-[#050505] border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-[#94a3b8] font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
+                      className="w-full bg-terminal-bg border border-white/[0.08] hover:border-sky-400 hover:text-sky-400 text-terminal-muted font-mono text-[10px] uppercase tracking-wider px-4 py-2.5 transition-colors flex items-center justify-between group disabled:opacity-50"
                     >
                        {launchBuildoutMutation.isPending ? "Launching..." : "Initialize Drop Store"}
                        <Store className="w-3 h-3 group-hover:text-sky-400" />
@@ -558,7 +558,7 @@ function VisionListingPanel() {
               <select
                 value={storeId}
                 onChange={(e) => setStoreId(e.target.value)}
-                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                className="bg-terminal-bg border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
               >
                 <option value="">No store context</option>
                 {storeList.map((s: any) => (
@@ -568,7 +568,7 @@ function VisionListingPanel() {
               <select
                 value={priceTier}
                 onChange={(e) => setPriceTier(e.target.value as any)}
-                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                className="bg-terminal-bg border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
               >
                 <option value="">Any price tier</option>
                 <option value="budget">Budget</option>
@@ -581,21 +581,21 @@ function VisionListingPanel() {
                 placeholder="Niche / category"
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
-                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                className="bg-terminal-bg border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
               />
               <input
                 type="text"
                 placeholder="Target audience"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                className="bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                className="bg-terminal-bg border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
               />
               <input
                 type="text"
                 placeholder="Brand tone (e.g., warm, clinical)"
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
-                className="sm:col-span-2 bg-[#050505] border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                className="sm:col-span-2 bg-terminal-bg border border-white/[0.08] text-white font-mono text-[10px] px-2 py-1.5 focus:outline-none focus:border-fuchsia-400 transition-colors"
               />
             </div>
             <button
@@ -617,7 +617,7 @@ function VisionListingPanel() {
           <ListingField label="Description" value={listing.description} onCopy={() => copy(listing.description, "Description")} multiline />
           <div>
             <ListingLabel label="Bullets" onCopy={() => copy(listing.bulletPoints.map((b) => `• ${b}`).join("\n"), "Bullets")} />
-            <ul className="space-y-1 bg-[#050505] border border-white/[0.08] p-3">
+            <ul className="space-y-1 bg-terminal-bg border border-white/[0.08] p-3">
               {listing.bulletPoints.map((b, i) => (
                 <li key={i} className="font-mono text-[10px] text-white/85 leading-relaxed flex gap-2">
                   <span className="text-fuchsia-400 mt-0.5">▸</span> {b}
@@ -627,7 +627,7 @@ function VisionListingPanel() {
           </div>
           <div>
             <ListingLabel label="SEO Keywords" onCopy={() => copy(listing.seoKeywords.join(", "), "Keywords")} />
-            <div className="flex flex-wrap gap-1.5 bg-[#050505] border border-white/[0.08] p-3">
+            <div className="flex flex-wrap gap-1.5 bg-terminal-bg border border-white/[0.08] p-3">
               {listing.seoKeywords.map((k, i) => (
                 <span key={i} className="font-mono text-[9px] text-fuchsia-300/80 bg-fuchsia-500/[0.06] border border-fuchsia-500/20 px-1.5 py-0.5">
                   {k}
@@ -636,7 +636,7 @@ function VisionListingPanel() {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-[#050505] border border-white/[0.08] p-3">
+            <div className="bg-terminal-bg border border-white/[0.08] p-3">
               <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Suggested Price</p>
               <p className="font-mono text-sm font-bold text-emerald-400">
                 {fmt(listing.suggestedPriceRange.minCents, listing.suggestedPriceRange.currency)}
@@ -644,7 +644,7 @@ function VisionListingPanel() {
                 {fmt(listing.suggestedPriceRange.maxCents, listing.suggestedPriceRange.currency)}
               </p>
             </div>
-            <div className="bg-[#050505] border border-white/[0.08] p-3">
+            <div className="bg-terminal-bg border border-white/[0.08] p-3">
               <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1">Category</p>
               <p className="font-mono text-[10px] text-white/85">{listing.categoryBreadcrumb || "—"}</p>
             </div>
@@ -652,7 +652,7 @@ function VisionListingPanel() {
           <ListingField label="Image Alt Text" value={listing.imageAltText} onCopy={() => copy(listing.imageAltText, "Alt text")} />
           <div>
             <ListingLabel label="Tags" onCopy={() => copy(listing.tags.join(", "), "Tags")} />
-            <div className="flex flex-wrap gap-1.5 bg-[#050505] border border-white/[0.08] p-3">
+            <div className="flex flex-wrap gap-1.5 bg-terminal-bg border border-white/[0.08] p-3">
               {listing.tags.map((t, i) => (
                 <span key={i} className="font-mono text-[9px] text-white/70 bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 flex items-center gap-1">
                   <Tag className="w-2.5 h-2.5 text-fuchsia-400/60" /> {t}
@@ -724,7 +724,7 @@ function ListingField({ label, value, onCopy, multiline }: { label: string; valu
   return (
     <div>
       <ListingLabel label={label} onCopy={onCopy} />
-      <div className={`bg-[#050505] border border-white/[0.08] p-3 font-mono text-[10px] text-white/85 leading-relaxed ${multiline ? "whitespace-pre-wrap" : ""}`}>
+      <div className={`bg-terminal-bg border border-white/[0.08] p-3 font-mono text-[10px] text-white/85 leading-relaxed ${multiline ? "whitespace-pre-wrap" : ""}`}>
         {value || "—"}
       </div>
     </div>
@@ -773,7 +773,7 @@ function ImageOptimizerPanel() {
         <select
           value={selectedStoreId}
           onChange={(e) => setSelectedStoreId(e.target.value)}
-          className="flex-1 bg-[#050505] border border-white/[0.08] text-white font-mono text-xs px-3 py-2 focus:outline-none focus:border-violet-400 transition-colors"
+          className="flex-1 bg-terminal-bg border border-white/[0.08] text-white font-mono text-xs px-3 py-2 focus:outline-none focus:border-violet-400 transition-colors"
         >
           <option value="">SELECT STORE TARGET</option>
           {storeList.map((s: any) => (
