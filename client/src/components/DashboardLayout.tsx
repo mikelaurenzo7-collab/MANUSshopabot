@@ -662,9 +662,9 @@ function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void })
       rows: [
         { keys: "g h", desc: "Command Center" },
         { keys: "g i", desc: "Inbox" },
-        { keys: "g b", desc: "Builder" },
-        { keys: "g m", desc: "Merchant" },
-        { keys: "g o", desc: "Social" },
+        { keys: "g b", desc: "Store Bot" },
+        { keys: "g m", desc: "Store Bot (operate)" },
+        { keys: "g o", desc: "Store Bot (growth)" },
         { keys: "g w", desc: "Workflows" },
         { keys: "g f", desc: "Storefronts" },
         { keys: "g n", desc: "Insights" },

@@ -2122,30 +2122,31 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     width: 1.55rem;
     height: 1.55rem;
     border-radius: 0.4rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
     flex-shrink: 0;
   }
   .kpi-lux .kpi-label {
     font-size: 9.5px;
     font-weight: 700;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.50);
     line-height: 1;
   }
   .kpi-lux .kpi-value {
     font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: #fff;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
   }
   .kpi-lux .kpi-sub {
     font-size: 9.5px;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.40);
     line-height: 1.15;
   }
 
@@ -4718,11 +4719,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   /* ── Canonical shell tab bar ─────────────────────────────────────────────── */
   .tab-bar-shell {
     background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: var(--radius-md);
     padding: 3px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.02) inset,
+      0 2px 8px rgba(0, 0, 0, 0.25);
   }
   .tab-trigger-shell {
+    position: relative;
     border-radius: calc(var(--radius-md) - 2px);
     border: 1px solid transparent;
     color: rgba(255, 255, 255, 0.45);
@@ -4731,20 +4736,67 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   .tab-trigger-shell[data-state="active"] {
-    background: rgba(14, 165, 233, 0.12);
-    border-color: rgba(14, 165, 233, 0.2);
-    color: #7dd3fc;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(6, 182, 212, 0.08));
+    border-color: rgba(14, 165, 233, 0.22);
+    color: #93c5fd;
     font-weight: 600;
+    box-shadow:
+      0 1px 0 rgba(14, 165, 233, 0.12) inset,
+      0 2px 8px rgba(14, 165, 233, 0.08),
+      0 0 0 1px rgba(14, 165, 233, 0.06);
+  }
+  /* Animated bottom-edge indicator on active tab */
+  .tab-trigger-shell[data-state="active"]::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 18%;
+    right: 18%;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.6), rgba(56, 189, 248, 0.9), rgba(6, 182, 212, 0.6));
+    background-size: 200% 100%;
+    animation: tab-indicator-sweep 3s ease-in-out infinite alternate;
+  }
+  @keyframes tab-indicator-sweep {
+    from { background-position: 0% center; opacity: 0.7; }
+    to   { background-position: 100% center; opacity: 1; }
   }
   .tab-trigger-shell:not([data-state="active"]):hover {
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Scrollbar utility ───────────────────────────────────────────────────── */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14, 165, 233, 0.2) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.2);
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(14, 165, 233, 0.35);
   }
 }
 
-/* ─── PageHeader accent line — upgrade from 1px to 2px ──────────────────────
-   This single global override thickens the bottom scan-line on all
-   page headers for a more dramatic "edge" at the section boundary. */
+/* ─── PageHeader accent line — animated scan-sweep ──────────────────────────
+   Thicker line (1.5px) with a slow background-position sweep so it appears
+   to "breathe" — reinforces the cyber-industrial feel without flicker. */
 .page-accent-line {
   height: 1.5px;
+  background-size: 200% 100% !important;
+  animation: accent-line-sweep 8s ease-in-out infinite alternate;
+}
+@keyframes accent-line-sweep {
+  from { background-position: 0% center;   opacity: 0.75; }
+  to   { background-position: 100% center; opacity: 1; }
 }

@@ -202,10 +202,10 @@ export default function Home() {
           icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
           label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
         />
-        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/25 bg-gradient-to-r from-sky-500/[0.10] to-cyan-500/[0.06] px-2.5 py-1 shadow-[0_0_24px_rgba(14,165,233,0.08)]">
+        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
-          <span className="text-[11px] text-white/80 truncate" title={recommendation}>{recommendation}</span>
+          <span className="text-[11px] font-medium text-white/85 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
@@ -232,12 +232,12 @@ export default function Home() {
             <div className="space-y-3">
               <SectionHeader icon={<Zap className="w-3.5 h-3.5 text-sky-400" />} title="Store Bot" href="/chat" linkLabel="Open workspace" />
               <div
-                className="group relative rounded-xl border border-sky-500/20 bg-white/[0.025] p-4 transition-standard hover:bg-white/[0.05] hover:shadow-lg hover:-translate-y-1 shadow-[0_0_32px_rgba(14,165,233,0.12)] cursor-pointer card-hover"
+                className="group relative rounded-xl border border-sky-500/22 bg-gradient-to-br from-sky-500/[0.04] to-white/[0.015] p-4 transition-all duration-300 hover:border-sky-500/35 hover:bg-sky-500/[0.06] hover:shadow-[0_8px_32px_rgba(14,165,233,0.12)] hover:-translate-y-1 shadow-[0_0_28px_rgba(14,165,233,0.08),inset_0_1px_0_rgba(14,165,233,0.06)] cursor-pointer"
                 onClick={() => setLocation("/chat")}
               >
                 <span className={`absolute top-3 right-3 w-2 h-2 rounded-full ${botHealth.tone === "warn" ? "bg-red-400 animate-pulse" : botHealth.tone === "active" ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] flex items-center justify-center shrink-0 text-sky-300 transition-standard group-hover:bg-sky-500/[0.12]">
+                  <div className="w-9 h-9 rounded-lg border border-sky-500/25 bg-sky-500/[0.10] flex items-center justify-center shrink-0 text-sky-300 transition-all duration-300 group-hover:bg-sky-500/[0.18] group-hover:shadow-[0_0_16px_rgba(14,165,233,0.3)]">
                     <Bot className="w-5 h-5" strokeWidth={2.2} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -431,10 +431,10 @@ function SectionHeader({ icon, title, href, linkLabel }: { icon: React.ReactNode
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-1.5">
         {icon}
-        <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">{title}</span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/55">{title}</span>
       </div>
       {href && linkLabel && (
-        <Link href={href} className="flex items-center gap-0.5 text-[10px] text-white/30 hover:text-sky-400 transition-colors">
+        <Link href={href} className="flex items-center gap-0.5 text-[10px] text-white/35 hover:text-sky-400 transition-colors duration-200">
           {linkLabel} <ChevronRight className="w-3 h-3" />
         </Link>
       )}
@@ -450,19 +450,19 @@ function EmptyCard({ icon, title, description, action }: {
 }) {
   const [, setLocation] = useLocation();
   return (
-    <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] p-6 flex flex-col items-center text-center gap-3">
-      <div className="w-10 h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] flex items-center justify-center">
+    <div className="empty-state p-6">
+      <div className="empty-state-icon mb-0">
         {icon}
       </div>
-      <div>
-        <p className="text-[12px] font-semibold text-white/60">{title}</p>
+      <div className="mt-3">
+        <p className="text-[12px] font-semibold text-white/65">{title}</p>
         <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{description}</p>
       </div>
       {action && (
         <button
           type="button"
           onClick={() => setLocation(action.href)}
-          className="flex items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/20 transition-all"
+          className="mt-1 flex items-center gap-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/20 hover:border-sky-500/50 transition-all duration-200"
         >
           <Plus className="w-3 h-3" /> {action.label}
         </button>
