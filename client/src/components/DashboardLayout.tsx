@@ -46,8 +46,6 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getBrand } from "@/lib/platformBrand";
 
-type AgentType = "architect" | "merchant" | "social";
-
 interface NavItem {
   title: string;
   path?: string;
@@ -117,9 +115,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const targets: Record<string, string> = {
       h: "/", c: "/", // home / command center
       i: "/inbox",
-      b: "/chat", // unified store bot
+      // Legacy bot shortcuts now converge on the unified Store Bot workspace.
+      b: "/chat",
       m: "/chat",
-      o: "/chat",    // legacy bot shortcut — `s` is taken by Settings
+      o: "/chat",    // `s` is taken by Settings
       w: "/workflows",
       f: "/storefronts", // storefronts
       n: "/insights",   // iNsights
@@ -180,20 +179,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     enabled: !!user,
   });
 
-  // Map agent status rows into per-bot dot status.
-  const statusByAgent: Partial<Record<AgentType, NavItem["dot"]>> = {};
-  for (const row of (agentStatus as any[] | undefined) ?? []) {
-    const t = row?.agentType as AgentType | undefined;
-    if (!t) continue;
-    if ((row.failed ?? 0) > 0) statusByAgent[t] = "error";
-    else if ((row.running ?? 0) > 0) statusByAgent[t] = "running";
-    else statusByAgent[t] = "ok";
-  }
-
   const totalRunning = ((agentStatus as any[]) ?? []).reduce(
     (a: number, s: any) => a + (s?.running ?? 0),
     0,
   );
+  const hasAgentErrors = ((agentStatus as any[]) ?? []).some((s: any) => (s?.failed ?? 0) > 0);
+  const storeBotStatus: NavItem["dot"] = hasAgentErrors ? "error" : totalRunning > 0 ? "running" : "ok";
 
   // Active workspace store (for the switcher pill)
   const activeStore = stores?.find((s: any) => s.id === activeStoreId) ?? stores?.[0];
@@ -206,7 +197,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const navItems: NavItem[] = [
     { title: "Command Center", path: "/", icon: LayoutDashboard },
     { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
-    { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: (totalRunning > 0 ? "running" : statusByAgent.architect ?? statusByAgent.merchant ?? statusByAgent.social ?? "ok") },
+    { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: storeBotStatus },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
     { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },

@@ -474,6 +474,9 @@ export const chatRouter = router({
    */
   message: orgProcedure
     .input(z.object({
+      // `store` is the canonical UI path. Legacy bot values remain accepted
+      // so older bookmarks, tests, and embedded callers do not break while
+      // the workflow engine still stores its internal build/operate/social lanes.
       agentType: z.enum(["store", "architect", "merchant", "social"]),
       messages: z.array(MessageSchema).min(1).max(50),
       storeId: z.number().optional(),
