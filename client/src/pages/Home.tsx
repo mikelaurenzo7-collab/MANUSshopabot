@@ -205,7 +205,7 @@ export default function Home() {
         <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
-          <span className="text-[11px] font-medium text-white/85 truncate" title={recommendation}>{recommendation}</span>
+          <span className="text-[11px] font-medium text-white/90 truncate" title={recommendation}>{recommendation}</span>
         </div>
       </div>
 
@@ -455,7 +455,7 @@ function EmptyCard({ icon, title, description, action }: {
         {icon}
       </div>
       <div className="mt-3">
-        <p className="text-[12px] font-semibold text-white/65">{title}</p>
+        <p className="text-[12px] font-semibold text-white/75">{title}</p>
         <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{description}</p>
       </div>
       {action && (
