@@ -18,6 +18,7 @@ import * as dbHelpers from "./db";
 import { platformCredentials } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { ENV } from "./_core/env";
+import { encryptSecret } from "./_core/secrets";
 import { ecomOAuthStateStore, pkceStore } from "./routers/connectors";
 import { logAgentAction } from "./telemetry";
 import { logger } from "./utils/logger";
@@ -299,11 +300,19 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
         ))
         .limit(1);
 
+      // Tokens are encrypted at rest with AES-256-GCM. The read paths
+      // in db.ts call decryptSecret, which is a no-op for plaintext
+      // (returns the value as-is) — so historically these inline
+      // writes silently stored plaintext. Always go through
+      // encryptSecret to honour the at-rest-encryption guarantee.
+      const encryptedAccessToken = encryptSecret(tokenData.access_token) ?? null;
+      const encryptedRefreshToken = encryptSecret(tokenData.refresh_token || null) ?? null;
+
       if (existing.length > 0) {
         await db.update(platformCredentials)
           .set({
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token || null,
+            accessToken: encryptedAccessToken,
+            refreshToken: encryptedRefreshToken,
             tokenExpiresAt: tokenExpiresAt || null,
             status: "active",
             lastHealthCheck: new Date(),
@@ -329,8 +338,8 @@ async function handleEcommerceOAuthCallback(req: Request, res: Response) {
           userId,
           storeId: storeId || null,
           platform,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token || null,
+          accessToken: encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
           tokenExpiresAt: tokenExpiresAt || null,
           status: "active",
           lastHealthCheck: new Date(),
