@@ -17,7 +17,9 @@ type LogLevel = keyof typeof LOG_LEVELS;
 interface LogMetadata {
   agentType?: "architect" | "merchant" | "social" | "system";
   storeId?: number;
-  workflowId?: string;
+  /** DB primary key (number) for engine workflows; opaque string for
+   *  external references that share a "workflow id" naming convention. */
+  workflowId?: string | number;
   externalRef?: string;
   [key: string]: any;
 }

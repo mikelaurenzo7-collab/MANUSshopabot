@@ -17,6 +17,7 @@ import type {
   ListParams,
   PlatformCapabilities,
 } from "./types";
+import { logger } from "../../utils/logger";
 
 export class EbayAdapter implements EcommercePlatformAdapter {
   readonly platform = "ebay";
@@ -185,7 +186,10 @@ export class EbayAdapter implements EcommercePlatformAdapter {
       trackingNumber: fulfillment.trackingNumber || "",
     }).catch(() => {
       // Fallback: just log the fulfillment attempt
-      console.log(`eBay fulfillment attempted for order ${orderId}`);
+      logger.info("ebay_adapter_fulfillment_attempted", {
+        module: "ebayAdapter",
+        orderId,
+      });
     });
   }
 

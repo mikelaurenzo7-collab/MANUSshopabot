@@ -19,6 +19,7 @@ import type {
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
 import { withRetry, platformRateLimiters } from "../../utils/rateLimiter";
+import { logger } from "../../utils/logger";
 
 export class ShopifyAdapter implements EcommercePlatformAdapter {
   readonly platform = "shopify";
@@ -241,7 +242,10 @@ export class ShopifyAdapter implements EcommercePlatformAdapter {
     
     const order = orderData.order;
     if (order?.fulfillment_status === "fulfilled" || order?.fulfillment_status === "partially_fulfilled") {
-      console.warn(`Order ${orderId} is already fulfilled. Skipping duplicate fulfillment.`);
+      logger.warn("shopify_adapter_fulfillment_duplicate", {
+        module: "shopifyAdapter",
+        orderId,
+      });
       return; // Idempotent: skip if already fulfilled
     }
 

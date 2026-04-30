@@ -12,6 +12,7 @@
  */
 
 import { ENV } from "../../_core/env";
+import { logger } from "../../utils/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -239,7 +240,10 @@ export class CJAdapter {
     category?: string,
   ): Promise<CJProduct[]> {
     if (!ENV.cjEmail || !ENV.cjPassword) {
-      console.warn("[CJ] Credentials not configured — skipping CJ search");
+      logger.warn("cj_credentials_missing", {
+        module: "cjAdapter",
+        action: "search_skipped",
+      });
       return [];
     }
 
@@ -254,13 +258,19 @@ export class CJAdapter {
       const data = await this.get<CJSearchResponse>("/product/list", params);
 
       if (data.code !== "200" || !data.data?.list) {
-        console.warn(`[CJ] Search returned no results: ${data.message}`);
+        logger.warn("cj_search_empty", {
+          module: "cjAdapter",
+          message: data.message,
+        });
         return [];
       }
 
       return data.data.list.slice(0, limit).map((p) => this.mapProduct(p));
     } catch (error: any) {
-      console.error(`[CJ] searchProducts error: ${error?.message ?? error}`);
+      logger.error("cj_search_failed", {
+        module: "cjAdapter",
+        error: error?.message ?? String(error),
+      });
       return []; // graceful degradation
     }
   }
@@ -280,7 +290,10 @@ export class CJAdapter {
       if (data.code !== "200" || !data.data) return null;
       return this.mapProduct(data.data);
     } catch (error: any) {
-      console.error(`[CJ] getProduct error: ${error?.message ?? error}`);
+      logger.error("cj_get_product_failed", {
+        module: "cjAdapter",
+        error: error?.message ?? String(error),
+      });
       return null;
     }
   }
@@ -301,7 +314,10 @@ export class CJAdapter {
       if (data.code !== "200" || !data.data?.list) return [];
       return data.data.list.slice(0, limit).map((p) => this.mapProduct(p));
     } catch (error: any) {
-      console.error(`[CJ] getTrendingProducts error: ${error?.message ?? error}`);
+      logger.error("cj_trending_failed", {
+        module: "cjAdapter",
+        error: error?.message ?? String(error),
+      });
       return [];
     }
   }

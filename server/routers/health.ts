@@ -9,6 +9,7 @@ import * as db from "../db";
 import { getDeliveryStatus } from "../delivery";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { getSocialAdapter, buildSocialCredentials } from "../adapters/social";
+import { logger } from "../utils/logger";
 
 export const healthRouter = router({
   /**
@@ -117,7 +118,8 @@ export const healthRouter = router({
           // adapter exceptions can include API-key fragments, internal
           // version strings, and stack-trace artifacts. Log the real
           // error and return a clean message.
-          console.warn("[health.checkAll] ecommerce probe failed", {
+          logger.warn("health_ecommerce_probe_failed", {
+            module: "health",
             credId: cred.id,
             platform: cred.platform,
             error: err?.message,
@@ -155,7 +157,8 @@ export const healthRouter = router({
           };
         } catch (err: any) {
           // Same redaction as ecommerce — log internally, return clean.
-          console.warn("[health.checkAll] social probe failed", {
+          logger.warn("health_social_probe_failed", {
+            module: "health",
             acctId: acct.id,
             platform: acct.platform,
             error: err?.message,

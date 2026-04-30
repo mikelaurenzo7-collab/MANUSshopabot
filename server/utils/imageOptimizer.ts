@@ -1,6 +1,7 @@
 import sharp from "sharp";
-import { storagePut } from "../storage"; 
+import { storagePut } from "../storage";
 import axios from "axios";
+import { logger } from "./logger";
 
 /**
  * Downloads a raw image buffer, optimizes it for specific e-commerce or social specs, 
@@ -27,7 +28,11 @@ export async function optimizeAndUploadImage(
     
     return result.url;
   } catch (error) {
-    console.error("Error optimizing image:", error);
+    logger.error("image_optimization_failed", {
+      module: "imageOptimizer",
+      sourceUrl,
+      error: error instanceof Error ? error.message : String(error),
+    });
     // Silent fallback to original URL on failure to avoid halting workflows
     return sourceUrl;
   }
@@ -109,7 +114,9 @@ export async function optimizeProductImage(
       throw new Error('Invalid image: missing dimensions');
     }
 
-    console.log(`[Image Optimizer] Processing product ${productId}:`, {
+    logger.info("image_optimizer_processing", {
+      module: "imageOptimizer",
+      productId,
       originalSize: imageBuffer.length,
       dimensions: `${metadata.width}x${metadata.height}`,
       format: metadata.format,
@@ -168,8 +175,11 @@ export async function optimizeProductImage(
           fileSize: buffer.length,
         });
 
-        console.log(`[Image Optimizer] Generated ${sizeKey} ${format}:`, {
-          size: buffer.length,
+        logger.info("image_optimizer_generated", {
+          module: "imageOptimizer",
+          sizeKey,
+          format,
+          fileSize: buffer.length,
           url,
         });
       }
@@ -177,7 +187,10 @@ export async function optimizeProductImage(
 
     return results;
   } catch (err) {
-    console.error('[Image Optimizer] Error:', err);
+    logger.error("image_optimizer_failed", {
+      module: "imageOptimizer",
+      error: err instanceof Error ? err.message : String(err),
+    });
     throw err;
   }
 }

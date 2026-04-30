@@ -19,6 +19,7 @@ import type {
   AdCampaign,
 } from "./types";
 import { ADAPTER_HTTP_TIMEOUT_MS } from "./types";
+import { logger } from "../../utils/logger";
 
 const TIKTOK_CONTENT_BASE = "https://open.tiktokapis.com/v2";
 const TIKTOK_ADS_BASE = "https://business-api.tiktok.com/open_api/v1.3";
@@ -201,7 +202,10 @@ export class TikTokAdapter implements SocialPlatformAdapter {
 
   async deletePost(credentials: SocialCredentials, postId: string): Promise<void> {
     // TikTok does not support deleting posts via API; only via app
-    console.warn(`TikTok post deletion not supported via API for post ${postId}`);
+    logger.warn("tiktok_adapter_delete_not_supported", {
+      module: "tiktokAdapter",
+      postId,
+    });
   }
 
   async getPostAnalytics(credentials: SocialCredentials, postId: string): Promise<PostMetrics> {

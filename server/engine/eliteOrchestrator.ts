@@ -16,6 +16,7 @@ import * as db from "../db";
 import { getSocialAdapter, buildSocialCredentials } from "../adapters/social";
 import { getEcommerceAdapter, buildCredentials } from "../adapters/ecommerce";
 import { withCircuitBreaker } from "../_core/retry";
+import { logger } from "../utils/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -172,7 +173,10 @@ export async function detectAnomalies(userId: number, orgId: number): Promise<An
       }
     }
   } catch (err: any) {
-    console.error("[EliteOrchestrator] Anomaly detection error:", err.message);
+    logger.error("orchestrator_anomaly_detection_failed", {
+      module: "eliteOrchestrator",
+      error: err.message,
+    });
   }
 
   return alerts;
@@ -319,7 +323,10 @@ export async function monitorBuyBox(userId: number, orgId: number): Promise<BuyB
       }
     }
   } catch (err: any) {
-    console.error("[EliteOrchestrator] Buy Box monitoring error:", err.message);
+    logger.error("orchestrator_buybox_failed", {
+      module: "eliteOrchestrator",
+      error: err.message,
+    });
   }
 
   return results;
@@ -458,7 +465,10 @@ export async function runDynamicPricingEngine(userId: number, orgId: number): Pr
       }
     }
   } catch (err: any) {
-    console.error("[EliteOrchestrator] Dynamic pricing engine error:", err.message);
+    logger.error("orchestrator_dynamic_pricing_failed", {
+      module: "eliteOrchestrator",
+      error: err.message,
+    });
   }
 
   return results;
@@ -581,7 +591,10 @@ export async function runCreativeVelocityOptimization(userId: number, orgId: num
       }
     }
   } catch (err: any) {
-    console.error("[EliteOrchestrator] Creative velocity error:", err.message);
+    logger.error("orchestrator_creative_velocity_failed", {
+      module: "eliteOrchestrator",
+      error: err.message,
+    });
   }
 
   return result;
@@ -731,7 +744,13 @@ export function addToDeadLetterQueue(
     nextRetryAt: new Date(Date.now() + 5 * 60 * 1000),
     createdAt: new Date(),
   });
-  console.warn(`[DLQ] Added entry ${id}: ${event} on ${platform} — ${error}`);
+  logger.warn("dlq_entry_added", {
+    module: "eliteOrchestrator",
+    dlqId: id,
+    event,
+    platform,
+    error,
+  });
   return id;
 }
 
@@ -747,7 +766,13 @@ export async function processDLQ(
     if (entry.nextRetryAt > now) continue;
     if (entry.attempts >= 5) {
       deadLetterQueue.delete(id);
-      console.error(`[DLQ] Permanently failed entry ${id} after ${entry.attempts} attempts`);
+      logger.error("dlq_entry_permanently_failed", {
+        module: "eliteOrchestrator",
+        dlqId: id,
+        attempts: entry.attempts,
+        event: entry.event,
+        platform: entry.platform,
+      });
       failed++;
       continue;
     }
@@ -761,7 +786,13 @@ export async function processDLQ(
       const backoffMinutes = Math.pow(3, entry.attempts - 1) * 5;
       entry.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
       entry.lastError = err.message;
-      console.warn(`[DLQ] Retry ${entry.attempts}/5 for ${id}, next attempt in ${backoffMinutes}min`);
+      logger.warn("dlq_entry_retry_scheduled", {
+        module: "eliteOrchestrator",
+        dlqId: id,
+        attempt: entry.attempts,
+        maxAttempts: 5,
+        nextRetryInMinutes: backoffMinutes,
+      });
       failed++;
     }
   }

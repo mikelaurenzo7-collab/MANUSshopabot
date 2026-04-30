@@ -7,6 +7,7 @@ import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
 import { getStoreLimit } from "../stripe/products";
+import { logger } from "../utils/logger";
 
 const platformEnum = z.enum([
   // Original 7
@@ -327,10 +328,11 @@ export const storesRouter = router({
         return result;
       } catch (err: any) {
         // Log full error server-side, but never leak details to the client
-        console.error("[stores.optimizeProductImage] failed", {
+        logger.error("stores_optimize_product_image_failed", {
+          module: "stores",
           storeId: input.storeId,
           imageUrl: input.imageUrl,
-          message: err?.message,
+          error: err?.message,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

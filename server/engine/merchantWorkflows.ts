@@ -11,6 +11,7 @@
 import { registerWorkflow, type WorkflowStepDefinition, type StepContext } from "./workflowEngine";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
 import { composeSystemPrompt } from "./sharedPrompts";
+import { logger } from "../utils/logger";
 
 // ─── Inventory Audit Workflow ──────────────────────────────────────────────
 
@@ -288,7 +289,11 @@ Return: validation status, any issues found, recommended shipping method, estima
       },
       rollback: async (_ctx: StepContext, _output: unknown) => {
         // Validation is read-only — no side effects to undo
-        console.log(`[Rollback] Order validation for ${orderId} — no side effects to undo`);
+        logger.info("rollback_validation_noop", {
+          module: "merchantWorkflows",
+          orderId,
+          advisory: "validation step is read-only, no side effects to undo",
+        });
       },
     },
     {
@@ -302,7 +307,11 @@ Return: validation status, any issues found, recommended shipping method, estima
       },
       rollback: async (ctx: StepContext, output: unknown) => {
         // Attempt to revert order status back to unfulfilled
-        console.log(`[Rollback] Reverting fulfillment for order ${orderId} on store ${ctx.storeId}`);
+        logger.info("rollback_fulfillment_attempted", {
+          module: "merchantWorkflows",
+          orderId,
+          storeId: ctx.storeId,
+        });
         // Note: Not all platforms support fulfillment cancellation.
         // This logs the rollback attempt for manual intervention.
         const { notifyOwner } = await import("../_core/notification");
