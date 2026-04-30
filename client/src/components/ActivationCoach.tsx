@@ -59,7 +59,7 @@ const COPY: Record<Exclude<Milestone, "ACTIVATED">, MilestoneCopy> = {
     eyebrow: "Step 1 / 4",
     title: "Connect your first store",
     description:
-      "Store Bot needs a connected storefront before it can research your niche, source products, and ship a catalog.",
+      "Store Bot needs a connected storefront or launch workspace before it can research your niche, source products, and ship a catalog.",
     cta: "Connect a store",
     href: "/storefronts#integrations?returnTo=/",
   },
@@ -170,7 +170,7 @@ export function ActivationCoach() {
             <Sparkles className="w-3 h-3 text-emerald-300" aria-hidden="true" />
           </div>
           <p className="text-xs text-white/70 mt-1 truncate">
-            All four bots are wired up and producing. Check the Insights tab to track performance.
+            Store Bot is wired up across launch, operations, and growth. Check the Insights tab to track performance.
           </p>
         </div>
         <button

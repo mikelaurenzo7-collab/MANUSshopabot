@@ -94,33 +94,29 @@ describe("Landing copy — pricing tier caps match server-side enforcement", () 
   });
 });
 
-describe("Landing positioning — cofounder one-liners landed", () => {
+describe("Landing positioning — autonomous Store Bot one-liners landed", () => {
   it("hero headline is the three-stab tagline (Hire / Run / Touch)", () => {
     const src = read(LANDING);
     // The new tagline structure:
-    //   Hire three bots.
+    //   Hire one expert.
     //   Run your store.
     //   Touch nothing.
-    expect(src).toContain("Hire three bots.");
+    expect(src).toContain("Hire one expert.");
     expect(src).toContain("Run your store.");
     expect(src).toContain("Touch nothing.");
   });
 
-  it("hero subtext reads the handoff narrative (builds → runs → grows)", () => {
+  it("hero subtext reads the one-expert capability narrative", () => {
     const src = read(LANDING);
-    // Color-coded role narrative: Builder (sky) builds, Merchant (cyan)
-    // runs, Social (amber) grows. The colors must match the role icons
-    // used elsewhere on the landing.
-    expect(src).toMatch(/text-sky-300">Builder<\/span>\s+builds it/);
-    expect(src).toMatch(/text-cyan-300">Merchant<\/span>\s+runs it/);
-    expect(src).toMatch(/text-amber-300">Social<\/span>\s+grows it/);
+    expect(src).toContain("Store Bot builds it, runs it, and grows it");
+    expect(src).toContain("new store owner");
   });
 
   it("hero subtext spells out the retention compound (the moat)", () => {
     const src = read(LANDING);
-    // The "bots remember what worked for YOU" line is the strongest
+    // The "Store Bot remembers what worked for YOU" line is the strongest
     // differentiator from copy-only AI tools — and the visible moat.
-    expect(src).toContain("The bots remember what worked for");
+    expect(src).toContain("Store Bot remembers what worked for");
     expect(src).toContain("month over month, the operation gets better while your hours go down");
   });
 
@@ -132,24 +128,24 @@ describe("Landing positioning — cofounder one-liners landed", () => {
     expect(src).not.toContain("Amazon FBA, TikTok Shop, and Shopify automation in one platform");
   });
 
-  it("BOTS taglines align with the role narrative", () => {
+  it("Store Bot mode taglines align with the one-expert lifecycle", () => {
     const src = read(LANDING);
-    expect(src).toContain('tagline: "Builds it — Day 1"');
+    expect(src).toContain('tagline: "Builds your first store — Day 1"');
     expect(src).toContain('tagline: "Runs it — forever"');
     expect(src).toContain('tagline: "Grows it — while you sleep"');
   });
 
   it("final CTA leads with the trial promise + the compound", () => {
     const src = read(LANDING);
-    expect(src).toContain("Hire your three bots tonight.");
+    expect(src).toContain("Hire your autonomous Store Bot tonight.");
     expect(src).toContain("7-day free trial. No credit card.");
-    expect(src).toContain("every month, they get better");
+    expect(src).toContain("every month, it gets better");
   });
 
   it("footer brand line uses the canonical role narrative", () => {
     const src = read(LANDING);
-    expect(src).toContain("Builder builds it. Merchant runs it. Social grows it.");
-    expect(src).toContain("Three bots. One operation. Zero touch.");
+    expect(src).toContain("Store Bot builds it, runs it, and grows it.");
+    expect(src).toContain("One expert. One operation. Zero touch.");
   });
 });
 
@@ -159,7 +155,7 @@ describe("Landing — existing-store operator lane", () => {
     // Two segments, two paths. New stores → /lifecycle.
     // Existing stores → /existing-store.
     expect(src).toContain("Starting from scratch");
-    expect(src).toContain("I already have a Shopify store");
+    expect(src).toContain("I already have a store");
     expect(src).toContain('document.getElementById("existing-store")?.scrollIntoView');
     expect(src).toContain('document.getElementById("lifecycle")?.scrollIntoView');
   });
@@ -168,7 +164,7 @@ describe("Landing — existing-store operator lane", () => {
     const src = read(LANDING);
     expect(src).toContain('id="existing-store"');
     // The headline that promises immediate operational takeover
-    expect(src).toContain("The Merchant takes the wheel");
+    expect(src).toContain("Store Bot can take the wheel");
     expect(src).toContain("on day one");
     // Reassurance: no migration, no re-entry
     expect(src).toContain("No re-entry, no migration");
@@ -208,7 +204,7 @@ describe("Landing — existing-store operator lane", () => {
   it("existing-store CTA uses connect-language, not launch-language", () => {
     const src = read(LANDING);
     // "Connect my Shopify store" speaks to operators who already have
-    // one. "Launch my bot empire" works for fresh-start users.
+    // one. The primary hero CTA works for fresh-start users.
     expect(src).toContain("Connect my Shopify store");
     // OAuth scope reassurance under the CTA
     expect(src).toContain("OAuth read+write to your store");
@@ -216,8 +212,8 @@ describe("Landing — existing-store operator lane", () => {
 
   it("FAQ has an existing-store entry covering the catalog-inheritance question", () => {
     const src = read(LANDING);
-    expect(src).toContain("I already have a Shopify store — do the bots work with my existing catalog?");
-    expect(src).toContain("inherit your products, orders, customers, and inventory immediately");
+    expect(src).toContain("I already have a Shopify store — can Store Bot take over my existing catalog?");
+    expect(src).toContain("Store Bot inherits your products, orders, customers, and inventory immediately");
   });
 
   it("FAQ has an autonomy / approval-gate entry for users worried about bot mistakes", () => {
@@ -233,14 +229,14 @@ describe("Landing — outcomes strip + pricing matrix + sticky CTA", () => {
     const src = read(LANDING);
     expect(src).toContain("function OutcomesStrip");
     // Section title — "what changes" framing, not "save 10 hours" lies.
-    expect(src).toContain("The day you hire the bots");
-    // Before/after pairs are ordered Builder → Merchant → Social → Audited reasoning.
+    expect(src).toContain("The day you hire Store Bot");
+    // Before/after pairs are ordered launch → operations → growth → audited reasoning.
     expect(src).toContain("Manual store setup");
-    expect(src).toContain("Builder-driven launch");
+    expect(src).toContain("Expert-guided launch");
     expect(src).toContain("Manual fulfillment");
-    expect(src).toContain("Merchant on autopilot");
+    expect(src).toContain("Store Bot on autopilot");
     expect(src).toContain("Manual ad creative");
-    expect(src).toContain("Social Bot generates");
+    expect(src).toContain("Store Bot generates");
     // Reasoning lift framing — operator-facing, no internal "cookbook" word.
     expect(src).toContain("Black-box AI agents");
     expect(src).toContain("Audited reasoning");

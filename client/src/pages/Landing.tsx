@@ -15,33 +15,33 @@ import { useLocation } from "wouter";
 import { ECOMMERCE_BRANDS, SOCIAL_BRANDS, TOOL_BRANDS } from "@/lib/platformBrand";
 
 const BOT_COLORS = {
-  "Builder Bot":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
-  "Merchant Bot": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)",  hex: "#22d3ee" },
-  "Social Bot":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)", hex: "#fb923c" },
+  "Launch mode":  { bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.3)",  icon: "text-sky-400",  glow: "rgba(14,165,233,0.15)", hex: "#38bdf8" },
+  "Operator mode": { bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.3)",   icon: "text-cyan-400", glow: "rgba(6,182,212,0.15)",  hex: "#22d3ee" },
+  "Growth mode":   { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.25)", icon: "text-orange-400",glow: "rgba(249,115,22,0.12)", hex: "#fb923c" },
 } as const;
 
 const BOTS = [
   {
     icon: Bot,
-    name: "Builder Bot" as const,
-    tagline: "Builds it — Day 1",
-    description: "Researches winning niches, sources products, configures your storefront, and writes all product copy — then hands the keys to the Merchant.",
+    name: "Launch mode" as const,
+    tagline: "Builds your first store — Day 1",
+    description: "The Store Bot researches a winning niche, sources products, configures your storefront, and writes product copy for a new owner launching from zero.",
     features: ["Niche & competitor research", "Product research + draft purchase orders", "Theme setup & legal pages", "SEO-optimized product listings"],
     autonomous: { label: "Competitor Stalker", note: "Agent decides which competitors to inspect, when it has enough triangulation." },
   },
   {
     icon: Package,
-    name: "Merchant Bot" as const,
+    name: "Operator mode" as const,
     tagline: "Runs it — forever",
-    description: "Takes over the moment your store launches. Processes every order, optimizes pricing, syncs inventory, and triages support — without touching your day.",
+    description: "Takes over the moment your store launches. Processes orders, optimizes pricing, syncs inventory, and triages support — without touching your day.",
     features: ["Automated order fulfillment", "Dynamic pricing engine", "Inventory sync & alerts", "Customer support triage"],
     autonomous: { label: "Autonomous Repricer", note: "Walks SKUs one at a time. Moves >25% auto-promote to your approval queue." },
   },
   {
     icon: Megaphone,
-    name: "Social Bot" as const,
+    name: "Growth mode" as const,
     tagline: "Grows it — while you sleep",
-    description: "Wakes up alongside the Merchant. Creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
+    description: "Turns the same Store Bot toward demand. It creates ad creatives for TikTok & Meta, schedules social posts, runs email/SMS recovery flows, and optimizes SEO.",
     features: ["TikTok & Meta ad campaigns", "Social media scheduling", "Email & SMS recovery flows", "SEO optimization"],
     autonomous: { label: "Trend Hunter", note: "Crawls TikTok / IG / Twitter, scores trends 0-100, commits hijack briefs." },
   },
@@ -50,7 +50,7 @@ const BOTS = [
 const METRICS = [
   { icon: Clock,        value: "< 30 min", label: "Store goes live",        color: "text-sky-400"    },
   { icon: ShoppingCart, value: "0 clicks", label: "To fulfill an order",    color: "text-cyan-400"   },
-  { icon: TrendingUp,   value: "24 / 7",   label: "Bots running for you",   color: "text-emerald-400"},
+  { icon: TrendingUp,   value: "24 / 7",   label: "Expert running for you", color: "text-emerald-400"},
   { icon: Globe,        value: "Live",     label: "Shopify · OAuth ready",  color: "text-orange-400" },
 ];
 
@@ -59,10 +59,10 @@ const PRICING = [
     name: "Starter",
     price: "$49",
     period: "/mo",
-    description: "Research niches, source products, build your first store.",
+    description: "Research niches, source products, and build your first store with one autonomous expert.",
     features: [
       "1 connected store",
-      "Builder Bot — full access",
+      "Store Bot launch mode",
       "Niche & competitor research",
       "Product sourcing automation",
       "500 AI actions / month",
@@ -76,10 +76,10 @@ const PRICING = [
     name: "Growth",
     price: "$149",
     period: "/mo",
-    description: "Full store automation with zero-touch fulfillment.",
+    description: "Full store automation once your new store is live.",
     features: [
       "3 connected stores",
-      "Builder Bot + Merchant Bot",
+      "Store Bot launch + operator modes",
       "Auto-fulfillment & pricing",
       "Inventory sync & low-stock alerts",
       "5,000 AI actions / month",
@@ -96,7 +96,7 @@ const PRICING = [
     description: "Add marketing automation and multi-store management.",
     features: [
       "10 connected stores",
-      "All 3 Bots — full access",
+      "Store Bot growth mode",
       "TikTok & Meta ad automation",
       "Email & SMS recovery flows",
       "25,000 AI actions / month",
@@ -113,7 +113,7 @@ const PRICING = [
     description: "Unlimited stores, priority support, custom integrations.",
     features: [
       "Unlimited stores",
-      "All 3 Bots + Elite workflows",
+      "Store Bot + elite workflows",
       "White-label option",
       "Custom platform integrations",
       "Unlimited AI actions",
@@ -178,9 +178,9 @@ const INTEGRATION_LOGOS = [
 
 const SOCIAL_TICKER = [
   "Shopify OAuth — live today",
-  "3 AI bots running 24/7",
+  "One autonomous Store Bot running 24/7",
   "Zero manual fulfillment",
-  "Builder → Merchant → Social, in one platform",
+  "Launch → operate → grow, one expert",
   "Stripe-grade billing built in",
   "Amazon, Etsy, TikTok Shop adapters scaffolded — see status page",
 ];
@@ -188,23 +188,23 @@ const SOCIAL_TICKER = [
 const FAQ_ITEMS = [
   {
     q: "Do I need any technical skills to use Shop_a_Bot?",
-    a: "None at all. Shop_a_Bot is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and the bots handle everything else. No code, no APIs, no manual setup.",
+    a: "None at all. Shop_a_Bot is designed for entrepreneurs, not developers. You connect your store, configure your preferences, and Store Bot handles everything else. No code, no APIs, no manual setup.",
   },
   {
     q: "What's actually different about the bot's reasoning? What do 'self-critique' and 'autonomous workflows' mean for me?",
     a: "Three reasoning lifts run on every high-stakes step, all visible to you on the workflow detail page. (1) Self-critique — every operator-facing draft (niche reports, brand kits, ad copy, pricing) goes through a critique pass that enforces a rubric (specificity, fee math, hook strength, etc.) and a revise pass that addresses what the critic flagged. (2) Parallel drafting — for decisions where the right answer isn't iterative refinement (brand naming), four divergent angles draft in parallel and a judge picks the strongest against memorability + spell-ability + niche-fit + .com-likeness. (3) Autonomous workflows — for research and execution (Builder Competitor Stalker, Merchant Autonomous Repricer, Social Trend Hunter), the bot decides which tools to call and when it has enough information. Every step carries an audit trail you can expand: critique findings (severity-grouped), persona breakdown (with the judge's reasoning), and a per-tool-call timeline. No black boxes.",
   },
   {
-    q: "What is the Builder→Merchant handoff?",
-    a: "It's the moment your store graduates from setup to operation. The Builder spends Day 1 building your storefront. The day you go live, you click ‘hand over the keys’ and the Merchant takes the wheel — orders, pricing, inventory, support — forever. The Builder stays on call for redesigns and new collections.",
+    q: "What happens after Store Bot builds my new store?",
+    a: "Your launch workspace becomes your operating workspace. The same autonomous Store Bot moves from setup into orders, pricing, inventory, support, and growth — with a visible handoff moment so you know the store is live and under management.",
   },
   {
     q: "Which platforms does Shop_a_Bot support?",
-    a: "Shopify is live today via OAuth and is the deepest integration. 14 e-commerce surfaces are wired in total (Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, Walmart, plus Sprint 27's Depop, BigCommerce, Square, Faire, Bonanza, StockX, Reverb), alongside 10 social + messaging channels (Meta, Instagram, TikTok, X, Pinterest, Google Ads, Gmail, plus Outlook for Microsoft inboxes, Slack for VIP community channels, and YouTube for Shorts + long-form video) and 9 cross-cutting tools (Sheets, GA4, Klaviyo, ShipStation, Postscript, Printful, Judge.me, Gorgias). Each adapter has a published capability matrix the bots branch on, so they never recommend a tactic the platform doesn't support. Adapters beyond Shopify are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
+    a: "Shopify is live today via OAuth and is the deepest integration. 14 e-commerce surfaces are wired in total (Shopify, WooCommerce, Amazon, Etsy, eBay, TikTok Shop, Walmart, plus Sprint 27's Depop, BigCommerce, Square, Faire, Bonanza, StockX, Reverb), alongside 10 social + messaging channels (Meta, Instagram, TikTok, X, Pinterest, Google Ads, Gmail, plus Outlook for Microsoft inboxes, Slack for VIP community channels, and YouTube for Shorts + long-form video) and 9 cross-cutting tools (Sheets, GA4, Klaviyo, ShipStation, Postscript, Printful, Judge.me, Gorgias). Each adapter has a published capability matrix Store Bot branches on, so it never recommends a tactic the platform doesn't support. Adapters beyond Shopify are scaffolded server-side and rolling out per-platform — see the public status page for what's hot and what's still wiring up.",
   },
   {
-    q: "How does the Builder Bot source products?",
-    a: "The Builder Bot researches products that match your niche — evaluating profit margins, competition levels, and trend data — and drafts purchase orders for the suppliers you've connected (Shopify-native today; AliExpress / Zendrop / CJDropshipping API submission rolling out per platform — drafts are recorded and ready to submit the moment a supplier key is connected in Settings).",
+    q: "How does Store Bot source products for a new store?",
+    a: "Store Bot researches products that match your niche — evaluating profit margins, competition levels, and trend data — and drafts purchase orders for the suppliers you've connected (Shopify-native today; AliExpress / Zendrop / CJDropshipping API submission rolling out per platform — drafts are recorded and ready to submit the moment a supplier key is connected in Settings).",
   },
   {
     q: "Can I run multiple stores from one account?",
@@ -215,12 +215,12 @@ const FAQ_ITEMS = [
     a: "Every bot action is logged in real time in the Activity feed with timestamps and the input that triggered it. You can pause, override, or roll back any workflow from the Activity view, and configurable per-action approval gates are rolling out by bot — Builder gates ship first.",
   },
   {
-    q: "I already have a Shopify store — do the bots work with my existing catalog?",
-    a: "Yes — that's actually the easier path. Connect via Shopify OAuth and the bots inherit your products, orders, customers, and inventory immediately. The Merchant starts running operations from minute one (auto-fulfillment, inventory watching, price-floor monitoring, support triage). The Builder analyzes your catalog to find margin-friendly products to add. The Social bot tunes ad creative to your actual audience. No re-entry, no migration — just one OAuth click and the work moves off your plate.",
+    q: "I already have a Shopify store — can Store Bot take over my existing catalog?",
+    a: "Yes. Connect via Shopify OAuth and Store Bot inherits your products, orders, customers, and inventory immediately. It starts with operations from minute one (auto-fulfillment, inventory watching, price-floor monitoring, support triage), then finds margin-friendly products to add and tunes ad creative to your actual audience. No re-entry, no migration — just one OAuth click and the work moves off your plate.",
   },
   {
     q: "What if I don't want a bot to take an action without my approval?",
-    a: "Every bot has an autonomy level (fully autonomous, supervised, manual) configurable per workflow class. Supervised mode queues high-impact actions in the Approval queue with a one-click approve/reject. The Activity feed logs every action in real time so you can pause or roll back anything. Configurable per-action approval gates are rolling out by bot — Builder gates ship first.",
+    a: "Store Bot has an autonomy level (fully autonomous, supervised, manual) configurable per workflow class. Supervised mode queues high-impact actions in the Approval queue with a one-click approve/reject. The Activity feed logs every action in real time so you can pause or roll back anything. Configurable per-action approval gates are rolling out by workflow class.",
   },
   {
     q: "Is there a free trial?",
@@ -282,13 +282,13 @@ function CookbookShowcase() {
       <div className="light-leak-blue absolute top-0 left-1/4 opacity-40 pointer-events-none" />
       <div className="max-w-6xl mx-auto relative">
         <div className="text-center mb-12">
-          <span className="eyebrow text-violet-300/85 mb-2">Behind the bots</span>
+          <span className="eyebrow text-violet-300/85 mb-2">Behind Store Bot</span>
           <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">
             Three reasoning lifts on every high-stakes step
           </h2>
           <p className="mt-4 text-white/55 max-w-2xl mx-auto leading-relaxed">
-            Niche scoring, brand naming, repricing, trend hunting — Builder,
-            Merchant, and Social route their stakes-bearing outputs through
+            Niche scoring, brand naming, repricing, trend hunting — the
+            autonomous Store Bot routes its stakes-bearing outputs through
             one of three reasoning lifts. You see what the bot drafted, what
             the self-critique pass forced changed, and which competitors the
             agent actually inspected. Not a black box. Not a slide deck.
@@ -506,7 +506,7 @@ function AgentTrailSample() {
 
 /**
  * OutcomesStrip — concrete, contrast-style "before/after" for what
- * actually changes the day operators hire the bots. Lives between
+ * actually changes the day operators hire Store Bot. Lives between
  * the hero and the integration logo bar so it carries the page's
  * "what's in it for me" weight on the first scroll.
  *
@@ -529,21 +529,21 @@ function OutcomesStrip() {
       color: "#38bdf8",
       rgb: "14, 165, 233",
       before: { label: "Manual store setup", lead: "Pick a theme. Wire legal pages. Write 20 product descriptions. 8-12 hours." },
-      after: { label: "Builder-driven launch", lead: "One niche keyword in. Niche scoring + brand identity + draft catalog + legal pages out — 30 minutes." },
+      after: { label: "Expert-guided launch", lead: "One niche keyword in. Niche scoring + brand identity + draft catalog + legal pages out — 30 minutes." },
     },
     {
       icon: ShoppingCart,
       color: "#22d3ee",
       rgb: "6, 182, 212",
       before: { label: "Manual fulfillment", lead: "Watch the inbox. Click through Shopify. Forward to supplier. Update tracking. Per order, every order." },
-      after: { label: "Merchant on autopilot", lead: "Orders fulfill themselves on connected suppliers. Inventory syncs across stores. Margin floor flagged automatically." },
+      after: { label: "Store Bot on autopilot", lead: "Orders fulfill themselves on connected suppliers. Inventory syncs across stores. Margin floor flagged automatically." },
     },
     {
       icon: TrendingUp,
       color: "#fb923c",
       rgb: "249, 115, 22",
       before: { label: "Manual ad creative", lead: "Brief a freelancer. Wait three days. Get one variation. Repeat for every angle, every audience." },
-      after: { label: "Social Bot generates", lead: "Five ad copy variations + audience targeting + creative direction in 90 seconds. Per platform, tuned to each." },
+      after: { label: "Store Bot generates", lead: "Five ad copy variations + audience targeting + creative direction in 90 seconds. Per platform, tuned to each." },
     },
     {
       icon: Shield,
@@ -561,7 +561,7 @@ function OutcomesStrip() {
         <div className="text-center mb-10">
           <span className="eyebrow mb-2">What actually changes</span>
           <h2 className="mt-3 text-2xl md:text-3xl font-black tracking-tighter text-white">
-            The day you hire the bots
+            The day you hire Store Bot
           </h2>
           <p className="mt-3 text-sm text-white/55 max-w-xl mx-auto leading-relaxed">
             Four things move off your plate. Each one named honestly —
@@ -649,7 +649,7 @@ function PricingMatrix({ onPick }: { onPick: (planId: string) => void }) {
       title: "Stores & catalog",
       rows: [
         { label: "Connected stores", cells: ["1", "3", "10", "Unlimited"] },
-        { label: "Builder Bot — niche + sourcing + setup", cells: [true, true, true, true] },
+        { label: "Store Bot — niche + sourcing + setup", cells: [true, true, true, true] },
         { label: "Cross-store inventory + auto-fulfillment", cells: [false, true, true, true] },
         { label: "Multi-store expansion strategy", cells: [false, false, true, true] },
       ],
@@ -919,7 +919,7 @@ export default function Landing() {
       {subscriptionSuccess && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-emerald-500/90 backdrop-blur-sm text-white text-sm font-semibold text-center py-3 px-4 flex items-center justify-center gap-2">
           <CheckCircle2 className="w-4 h-4" />
-          Subscription activated! Your bots are ready.
+          Subscription activated! Your Store Bot is ready.
           <Button
             size="sm"
             variant="ghost"
@@ -1010,7 +1010,7 @@ export default function Landing() {
             {/* Headline — the cofounder one-liner. Three short stabs;
                 the meaning compounds line-by-line. */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
-              <span className="text-white">Hire three bots.</span>
+              <span className="text-white">Hire one expert.</span>
               <br />
               <span className="text-white">Run your store.</span>
               <br />
@@ -1020,12 +1020,10 @@ export default function Landing() {
             {/* Subtext — the handoff narrative + the retention compound,
                 in two crisp sentences. */}
             <p className="text-base md:text-lg text-white/65 max-w-2xl mx-auto lg:mx-0 mb-3 leading-relaxed font-medium">
-              <span className="text-sky-300">Builder</span> builds it.{" "}
-              <span className="text-cyan-300">Merchant</span> runs it.{" "}
-              <span className="text-amber-300">Social</span> grows it.
+              Store Bot builds it, runs it, and grows it — one autonomous expert for new store owners.
             </p>
             <p className="text-sm md:text-base text-white/55 max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal">
-              The bots remember what worked for <em className="not-italic text-white/75">you</em> — month over month, the operation gets better while your hours go down.
+              Store Bot remembers what worked for <em className="not-italic text-white/75">you</em> — month over month, the operation gets better while your hours go down.
             </p>
 
             {/* CTAs */}
@@ -1043,7 +1041,7 @@ export default function Landing() {
                   </>
                 ) : (
                   <>
-                    Launch my bot empire <ArrowRight className="w-4 h-4 ml-1" />
+                    Launch my store expert <ArrowRight className="w-4 h-4 ml-1" />
                   </>
                 )}
               </Button>
@@ -1070,7 +1068,7 @@ export default function Landing() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 hover:text-white hover:border-sky-400/40 hover:bg-sky-500/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
               >
                 <Rocket className="w-3 h-3 text-sky-300" aria-hidden="true" />
-                Starting from scratch
+                Start my first store
                 <ArrowRight className="w-3 h-3 opacity-50" aria-hidden="true" />
               </button>
               <button
@@ -1079,7 +1077,7 @@ export default function Landing() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-200 hover:text-emerald-100 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               >
                 <Store className="w-3 h-3" aria-hidden="true" />
-                I already have a Shopify store
+                I already have a store
                 <ArrowRight className="w-3 h-3 opacity-60" aria-hidden="true" />
               </button>
             </div>
@@ -1166,7 +1164,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Outcomes strip — what changes when you hire the bots ───────────── */}
+      {/* ── Outcomes strip — what changes when you hire Store Bot ────────────── */}
       <OutcomesStrip />
 
       {/* ── Integration Logo Bar ───────────────────────────────────────────── */}
@@ -1201,7 +1199,7 @@ export default function Landing() {
       </section>
 
       {/* ── Platform Constellation ─────────────────────────────────────────── */}
-      {/* Every adapter the bots can drive — surfaced honestly. The cards are
+      {/* Every adapter Store Bot can drive — surfaced honestly. The cards are
           marquee-scrolled so the section reads as alive even on the 90% of
           page-loads where the user doesn't scroll past the fold. */}
       <section className="py-16 px-4 border-b border-white/[0.06] overflow-hidden relative">
@@ -1213,7 +1211,7 @@ export default function Landing() {
               {Object.keys(ECOMMERCE_BRANDS).length} commerce surfaces. {Object.keys(SOCIAL_BRANDS).length} social channels. {Object.keys(TOOL_BRANDS).length} tools.
             </h2>
             <p className="text-sm text-white/55 max-w-2xl mx-auto">
-              Every adapter ships with a real capability matrix the bots branch on. No dead tiles, no "coming soon"
+              Every adapter ships with a real capability matrix Store Bot branches on. No dead tiles, no "coming soon"
               for tactics the platform doesn't actually support.
             </p>
           </div>
@@ -1315,27 +1313,24 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── The Three Bots ─────────────────────────────────────────────────── */}
+      {/* ── One expert lifecycle ────────────────────────────────────────────── */}
       <section id="lifecycle" className="py-14 px-4 scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">The Platform</span>
-            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Three bots. One lifecycle.</h2>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">One autonomous expert. One store lifecycle.</h2>
             <p className="mt-4 text-white/55 max-w-2xl mx-auto leading-relaxed">
-              <span className="text-sky-300">Builder</span> ships your store on Day 1.
-              On launch day it hands the keys to the <span className="text-cyan-300">Merchant</span>.
-              The <span className="text-amber-300">Social</span> Bot manufactures demand from the moment you go live.
-              Each bot wakes up at the right moment — and remembers what worked last time.
+              Store Bot starts as your launch expert for a first store, then shifts into operator and growth mode the moment you go live. One expert wakes up at the right moment — and remembers what worked last time.
             </p>
           </div>
 
           {/* Lifecycle ribbon */}
           <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 md:gap-2 items-stretch">
-            <LifecyclePill stage="Day 1" title="Building" lead="Builder is in the cockpit." hex="#38bdf8" Icon={Bot} />
+            <LifecyclePill stage="Day 1" title="Building" lead="Store Bot is in the cockpit." hex="#38bdf8" Icon={Bot} />
             <div className="hidden md:flex items-center justify-center"><KeyRound className="w-4 h-4 text-amber-300/70" /></div>
-            <LifecyclePill stage="Launch Day" title="Handoff" lead="Builder hands the keys to the Merchant." hex="#fbbf24" Icon={KeyRound} highlight />
+            <LifecyclePill stage="Launch Day" title="Handoff" lead="Launch mode hands off to operator mode." hex="#fbbf24" Icon={KeyRound} highlight />
             <div className="hidden md:flex items-center justify-center"><ArrowRight className="w-4 h-4 text-white/30" /></div>
-            <LifecyclePill stage="Day 2+" title="Operating" lead="Merchant fulfills, Social grows." hex="#22d3ee" Icon={Package} />
+            <LifecyclePill stage="Day 2+" title="Operating" lead="Store Bot fulfills, optimizes, and grows." hex="#22d3ee" Icon={Package} />
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -1403,7 +1398,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── How the bots actually think — Cookbook recipes ─────────────────── */}
+      {/* ── How Store Bot actually thinks — Cookbook recipes ────────────────── */}
       <CookbookShowcase />
 
       {/* ── Already have a store? — the existing-operator lane ─────────────── */}
@@ -1416,10 +1411,10 @@ export default function Landing() {
           <div className="text-center mb-12 reveal reveal-visible">
             <span className="eyebrow mb-4 text-emerald-300">Already running a store?</span>
             <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">
-              The Merchant takes the wheel <span className="text-emerald-300">on day one</span>.
+              Store Bot can take the wheel <span className="text-emerald-300">on day one</span>.
             </h2>
             <p className="mt-4 text-white/60 max-w-2xl mx-auto leading-relaxed">
-              You don't need to start over. Connect your existing Shopify store and the bots inherit your products, orders, and history immediately. The Merchant runs operations starting now. The Builder finds new opportunities in the catalog you already have. The Social bot drives traffic to listings you've already built.
+              New store owners are the focus, but you don't need to start over if you already have traction. Connect your existing Shopify store and Store Bot inherits products, orders, and history immediately, then runs operations, finds catalog opportunities, and drives traffic to listings you've already built.
             </p>
           </div>
 
@@ -1434,7 +1429,7 @@ export default function Landing() {
               </div>
               <h3 className="text-base font-bold text-white mb-1.5">Sync your existing catalog</h3>
               <p className="text-xs text-white/55 leading-relaxed">
-                One-click Shopify OAuth pulls in every product, order, and inventory level. The Merchant immediately starts watching for low stock, anomalies, and pricing drift. No re-entry, no migration.
+                One-click Shopify OAuth pulls in every product, order, and inventory level. Store Bot immediately starts watching for low stock, anomalies, and pricing drift. No re-entry, no migration.
               </p>
             </div>
             <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] p-5 reveal reveal-visible">
@@ -1446,7 +1441,7 @@ export default function Landing() {
               </div>
               <h3 className="text-base font-bold text-white mb-1.5">Take the manual work off your plate</h3>
               <p className="text-xs text-white/55 leading-relaxed">
-                Auto-fulfill orders. Adjust prices to your margin floor. Re-stock SKUs before they go to zero. Triage support emails. Every job a VA was doing — done by the bots, every minute, no oversight.
+                Auto-fulfill orders. Adjust prices to your margin floor. Re-stock SKUs before they go to zero. Triage support emails. Every job a VA was doing — handled by Store Bot, every minute, with approvals where you want them.
               </p>
             </div>
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-5 reveal reveal-visible">
@@ -1458,7 +1453,7 @@ export default function Landing() {
               </div>
               <h3 className="text-base font-bold text-white mb-1.5">Compound what's already working</h3>
               <p className="text-xs text-white/55 leading-relaxed">
-                Builder finds margin-friendly products to add to your catalog. Social runs ads tuned to your actual audience. Memory means each bot gets sharper at <em className="not-italic text-white/75">your</em> store the longer it runs.
+                Store Bot finds margin-friendly products to add to your catalog and runs ads tuned to your actual audience. Memory means the expert gets sharper at <em className="not-italic text-white/75">your</em> store the longer it runs.
               </p>
             </div>
           </div>
@@ -1535,15 +1530,15 @@ export default function Landing() {
                 step: "Step 2",
                 accent: "#22d3ee",
                 Icon: Bot,
-                title: "Bots wake up",
-                text: "Builder researches your niche and configures your storefront. Merchant takes the keys on launch day and runs orders, pricing, and inventory. Social manufactures demand.",
+                title: "Your expert wakes up",
+                text: "Store Bot researches your niche, configures your storefront, then shifts into operator mode for orders, pricing, inventory, and demand generation.",
               },
               {
                 step: "Step 3",
                 accent: "#fb923c",
                 Icon: Shield,
                 title: "You stay in control",
-                text: "Every bot action is logged in the Activity feed in real time. Pause, override, or roll back any workflow at any moment — your bots run with full audit trail.",
+                text: "Every Store Bot action is logged in the Activity feed in real time. Pause, override, or roll back any workflow at any moment — your expert runs with a full audit trail.",
               },
             ].map(({ step, accent, Icon, title, text }) => (
               <div key={step} className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 flex flex-col gap-4">
@@ -1658,10 +1653,10 @@ export default function Landing() {
             <div className="relative">
               <p className="eyebrow mb-4">Ready when you are</p>
               <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-4">
-                Hire your three bots tonight.
+                Hire your autonomous Store Bot tonight.
               </h2>
               <p className="text-white/55 mb-8 leading-relaxed max-w-lg mx-auto">
-                7-day free trial. No credit card. The bots start learning your store the moment you connect it — and every month, they get better.
+                7-day free trial. No credit card. Store Bot starts learning your niche the moment you begin — and every month, it gets better.
               </p>
               <Button
                 onClick={() => handlePricingClick("growth")}
@@ -1697,8 +1692,8 @@ export default function Landing() {
             <div>
               <BrandName size="sm" />
               <p className="text-white/45 text-sm mt-2 max-w-xs leading-relaxed">
-                Builder builds it. Merchant runs it. Social grows it.
-                <span className="block text-white/30 mt-1">Three bots. One operation. Zero touch.</span>
+                Store Bot builds it, runs it, and grows it.
+                <span className="block text-white/30 mt-1">One expert. One operation. Zero touch.</span>
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-3">

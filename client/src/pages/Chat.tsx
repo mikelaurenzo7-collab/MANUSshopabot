@@ -1,9 +1,10 @@
 /**
  * Chat.tsx — Store Bot Workspace
  *
- * One all-encompassing bot per store workspace. The bot can start a store
- * from zero, operate an existing store, and handle social growth in the same
- * conversation while surfacing workflow results beside the chat.
+ * One autonomous Store Bot expert per workspace. It is positioned for new
+ * store owners first, but can also operate an existing connected store and
+ * handle social growth in the same conversation. Workflow results sit beside
+ * the chat.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -45,7 +46,7 @@ const GLOBAL_WORKSPACE = "all";
 type WorkspaceKey = typeof GLOBAL_WORKSPACE | `store:${number}`;
 
 const SUGGESTIONS_WITHOUT_STORE = [
-  "I don't have a Shopify store yet — guide me from zero and start the first workflow",
+  "I'm a new store owner — guide me from zero and start the first workflow",
   "Research a profitable niche and create a launch plan",
   "Build a brand identity kit for a new store",
   "Find products and suppliers for a store I can launch this week",
@@ -123,7 +124,7 @@ export default function Chat() {
     ? `Store Bot: ${activeStore.name}`
     : hasStores
       ? "All Stores Bot"
-      : "New Store Launch Bot";
+      : "New Store Expert";
 
   const connectorCount = (credentialsQuery.data?.length ?? 0) + (socialAccountsQuery.data?.length ?? 0);
   const toolCount = toolsQuery.data?.length ?? 0;
@@ -181,7 +182,7 @@ export default function Chat() {
               {workspaceLabel}
             </h1>
             <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground">
-              One bot for launch, operations, social growth, workflows, memory, connectors, tools, and suppliers.
+              One autonomous Store Bot expert for launch, operations, social growth, workflows, memory, connectors, tools, and suppliers.
             </p>
           </div>
 

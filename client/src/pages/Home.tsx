@@ -8,7 +8,7 @@
  *   • Activation coach (auto-dismisses once fully activated)
  *   • Recommended next workflows (persona/data-aware)
  *   • 3-column ops grid:
- *       - Bot status cards (Builder / Merchant / Social)
+ *       - Unified Store Bot status card
  *       - Active workflow feed (live, auto-refreshes)
  *       - Store health panel (connected stores + quick actions)
  */
@@ -243,7 +243,7 @@ export default function Home() {
                   <div className="min-w-0 flex-1">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-sky-300">One Store Bot</p>
                     <p className="text-[10px] text-muted-enhanced mt-0.5 leading-relaxed">
-                      Launch from zero, operate connected stores, run social growth, and remember each store workspace.
+                      Built for new store owners: launch from zero, then operate connected stores, run social growth, and remember each workspace.
                     </p>
                     <div className="flex items-center gap-3 mt-2">
                       <span className={`flex items-center gap-1 text-[10px] font-mono ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`}>
@@ -342,7 +342,7 @@ export default function Home() {
                 <EmptyCard
                   icon={<Store className="w-5 h-5 text-white/20" />}
                   title="No stores connected"
-                  description="Connect your first Shopify, Etsy, or Amazon store to get started."
+                  description="Connect a Shopify store or start your first launch workflow to get started."
                   action={{ label: "Connect a store", href: "/storefronts#integrations?returnTo=/" }}
                 />
               ) : (

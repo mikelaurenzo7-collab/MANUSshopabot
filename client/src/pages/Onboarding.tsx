@@ -3,8 +3,8 @@
  * Guides new users through the 4 steps to get their first bot running:
  * 1. Welcome — understand what Shop_a_Bot does
  * 2. Connect Store — link a Shopify/WooCommerce store
- * 3. Connect Socials — link Meta/TikTok/Twitter for the Social Bot
- * 4. Launch — pick a niche and fire the Builder Bot
+ * 3. Connect Socials — link Meta/TikTok/Twitter for Store Bot growth mode
+ * 4. Launch — pick a niche and fire Store Bot
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -241,30 +241,30 @@ function WelcomeStep({
 }) {
   const bots = [
     {
-      name: "Builder Bot",
+      name: "Launch mode",
       icon: Bot,
       color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-      description: "Researches niches, sources products, and stands up your storefront end-to-end.",
-      // Item 8 — animated 1-line "live" message previews so the bots
+      description: "Researches niches, sources products, and stands up your first storefront end-to-end.",
+      // Item 8 — animated 1-line "live" message previews so Store Bot
       // feel alive instead of static product copy. Plain text — no
       // decorative emoji in production UI.
-      preview: "Builder: I'll have your store live by morning.",
+      preview: "Store Bot: I'll have your first store mapped by morning.",
       previewTone: "text-sky-200/90",
     },
     {
-      name: "Merchant Bot",
+      name: "Operator mode",
       icon: Package,
       color: "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
       description: "Monitors inventory, processes orders, and adjusts pricing — all without you.",
-      preview: "Merchant: Restocked your top SKU before it sold out.",
+      preview: "Store Bot: Restocked your top SKU before it sold out.",
       previewTone: "text-cyan-200/90",
     },
     {
-      name: "Social Bot",
+      name: "Growth mode",
       icon: Megaphone,
       color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
       description: "Generates ad copy, schedules social posts, and runs email recovery flows.",
-      preview: "Social: Drafting 3 fresh hooks for tomorrow's ad set.",
+      preview: "Store Bot: Drafting 3 fresh hooks for tomorrow's ad set.",
       previewTone: "text-amber-200/90",
     },
   ];
@@ -306,7 +306,7 @@ function WelcomeStep({
         </div>
         <h2 className="text-lg font-bold text-foreground leading-tight">Welcome to <BrandName size="lg" /></h2>
         <p className="text-xs text-muted-foreground max-w-md mx-auto">
-          Three autonomous bots work 24/7 to build, run, and grow your e-commerce business. Zero-touch.
+          One autonomous Store Bot expert works 24/7 to build, run, and grow your e-commerce business. Built for new store owners first.
         </p>
       </div>
 
@@ -364,7 +364,7 @@ function WelcomeStep({
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
                 </div>
                 {/* Bot personality preview — staggered fade-in so the
-                    three bots "speak" one after the other (item 8). */}
+                    Store Bot modes "speak" one after the other (item 8). */}
                 <p
                   className={`text-[11px] italic leading-relaxed ${previewTone} motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-700 motion-safe:[animation-fill-mode:both]`}
                   style={{ animationDelay: `${300 + idx * 350}ms` }}
@@ -543,7 +543,7 @@ function ConnectStoreStep({
         </div>
         <h2 className="text-base font-bold text-foreground leading-tight">Connect your store</h2>
         <p className="text-muted-foreground text-xs">
-          Builder Bot needs access to build, source products for, and operate your store.
+          Store Bot needs access to build, source products for, and operate your store.
         </p>
         <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
           ~30 seconds · Shopify OAuth
@@ -575,11 +575,11 @@ function ConnectStoreStep({
                   <div className="mt-2.5 space-y-1 text-[11px] text-foreground/70">
                     <p className="flex items-start gap-1.5">
                       <Check className="h-3 w-3 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
-                      Builder Bot has read &amp; write access on your products and orders.
+                      Store Bot has read &amp; write access on your products and orders.
                     </p>
                     <p className="flex items-start gap-1.5">
                       <Check className="h-3 w-3 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
-                      Merchant Bot will start watching inventory the moment onboarding finishes.
+                      Operator mode starts watching inventory the moment onboarding finishes.
                     </p>
                   </div>
                 )}
@@ -705,7 +705,7 @@ function ConnectStoreStep({
                 <ul className="space-y-1 text-xs text-foreground/75">
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
-                    <span>Read products, orders, and inventory so the bots can run your store.</span>
+                    <span>Read products, orders, and inventory so Store Bot can run your store.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Check className="h-3.5 w-3.5 text-emerald-300 shrink-0 mt-0.5" aria-hidden="true" />
@@ -775,7 +775,7 @@ function ConnectStoreStep({
             onClick={onSkip}
             className="w-full text-center text-xs text-muted-foreground/85 hover:text-foreground transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 rounded"
           >
-            Skip for now — Builder Bot stays paused until a store is connected
+            Skip for now — Store Bot stays paused until a store is connected
           </button>
         </div>
       )}
@@ -837,7 +837,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         </div>
         <h2 className="text-base font-bold text-foreground leading-tight">Connect social platforms</h2>
         <p className="text-muted-foreground text-xs">
-          Social Bot needs these to publish content and run ads automatically.
+          Store Bot needs these to publish content and run ads automatically.
         </p>
         <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
           Optional · ~30 seconds each · OAuth
@@ -893,7 +893,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
         <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/[0.06] border border-amber-500/20 text-xs text-amber-100/90">
           <PauseCircle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
           <p>
-            <span className="font-medium text-amber-200">Social Bot will stay paused</span> until
+            <span className="font-medium text-amber-200">Growth mode will stay paused</span> until
             you connect at least one platform. You can do this in 30 seconds later from{" "}
             <span className="font-medium">Settings → Integrations</span>.
           </p>
@@ -902,7 +902,7 @@ function ConnectSocialsStep({ onNext, onSkip }: { onNext: () => void; onSkip: ()
 
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onSkip} className="flex-1 text-muted-foreground">
-          {connectedCount === 0 ? "Skip — Social Bot stays paused" : "Skip"}
+          {connectedCount === 0 ? "Skip — growth mode stays paused" : "Skip"}
         </Button>
         <Button onClick={onNext} className="flex-1 gap-2">
           Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -1084,19 +1084,19 @@ function LaunchStep({
 
         <div className="space-y-1.5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
           <h2 className="text-lg font-bold text-foreground leading-tight">
-            {hasStore ? "Your Bot is Awake" : "Builder is researching"}
+            {hasStore ? "Your Store Bot is awake" : "Store Bot is researching"}
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
             {hasStore ? (
               <>
-                Builder Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> right now.
+                Store Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> right now.
                 Products are being sourced. Copy is being written. Your store is coming alive.
               </>
             ) : (
               <>
-                Builder Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> —
+                Store Bot is researching <span className="text-sky-300 font-medium">&ldquo;{niche}&rdquo;</span> —
                 niche analysis, competitor scan, and product picks. Connect a store next so the
-                Builder can import the products it recommends.
+                Store Bot can import the products it recommends.
               </>
             )}
           </p>
@@ -1105,8 +1105,8 @@ function LaunchStep({
             <p className="text-xs text-muted-foreground leading-relaxed">
               {hasStore ? (
                 <>
-                  When Builder finishes, you&apos;ll see a handoff moment on your dashboard.
-                  The <span className="text-cyan-200 font-medium">Merchant Bot</span> takes the keys and runs your store from there.
+                  When launch mode finishes, you&apos;ll see a handoff moment on your dashboard.
+                  Store Bot shifts into operator mode and runs your store from there.
                 </>
               ) : (
                 <>
@@ -1160,10 +1160,10 @@ function LaunchStep({
         <h2 className="text-base font-bold text-foreground leading-tight">Launch your first bot</h2>
         <p className="text-muted-foreground text-xs">
           {persona === "exploring"
-            ? "Pick any niche to see Builder Bot run a full research workflow end-to-end."
+            ? "Pick any niche to see Store Bot run a full research workflow end-to-end."
             : persona === "existing"
-              ? "Tell Builder Bot the category your store is in and it will surface margin-friendly product picks."
-              : "Give Builder Bot a niche and it will research, source products, and build your store."}
+              ? "Tell Store Bot the category your store is in and it will surface margin-friendly product picks."
+              : "Give Store Bot a niche and it will research, source products, and build your first store."}
         </p>
         <p className="text-[10px] text-muted-foreground/60 font-mono uppercase tracking-widest">
           ~5 minutes · runs in the background
@@ -1204,7 +1204,7 @@ function LaunchStep({
 
       <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-2">
         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Bot className="h-4 w-4 text-sky-300" aria-hidden="true" /> What the Builder Bot will do:
+          <Bot className="h-4 w-4 text-sky-300" aria-hidden="true" /> What Store Bot will do:
         </h4>
         <ul className="space-y-1.5">
           {[
@@ -1227,7 +1227,7 @@ function LaunchStep({
           variant="ghost"
           onClick={onComplete}
           className="flex-1 text-muted-foreground"
-          title="You can launch this workflow any time from the Builder Bot page"
+          title="You can launch this workflow any time from the Store Bot workspace"
         >
           Skip — finish onboarding without launching
         </Button>
@@ -1244,7 +1244,7 @@ function LaunchStep({
             </>
           ) : (
             <>
-              <Zap className="h-4 w-4" aria-hidden="true" /> Launch Builder Bot
+              <Zap className="h-4 w-4" aria-hidden="true" /> Launch Store Bot
             </>
           )}
         </Button>

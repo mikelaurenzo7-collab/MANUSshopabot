@@ -2,16 +2,16 @@
  * DailyBrief.tsx — the morning report.
  *
  * The single most important card on the Home dashboard: it answers
- * the question "what did the bots do while I was offline?" in one
+ * the question "what did Store Bot do while I was offline?" in one
  * glance. Pulls dashboard.dailyBrief and renders a three-column
- * spread (Builder · Merchant · Social) plus a commerce-velocity
+ * spread (Build · Operate · Social lanes) plus a commerce-velocity
  * footer with orders + revenue captured in the window.
  *
  * Auto-collapses to a single-line headline ("12 tasks · 7 orders ·
  * $1,243 in revenue overnight") when the user has acknowledged the
  * brief — sessionStorage flag, no server round-trip. Designed to
  * make the brand promise visible: every time the user opens the
- * app, they see the bots' overnight footprint immediately.
+ * app, they see Store Bot's overnight footprint immediately.
  */
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
@@ -139,14 +139,14 @@ export function DailyBrief() {
           <h2 className="text-xl md:text-2xl font-heading font-black tracking-tight text-white mt-2 leading-tight">
             {totalCompleted > 0 ? (
               <>
-                Your bots completed{" "}
+                Store Bot completed{" "}
                 <span className="text-sky-300 tabular-nums">
                   <CountUp value={totalCompleted} />
                 </span>{" "}
                 {totalCompleted === 1 ? "task" : "tasks"} while you were away.
               </>
             ) : (
-              <>While you slept, the bots stood watch.</>
+              <>While you slept, Store Bot stood watch.</>
             )}
           </h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-[12px]">
@@ -185,7 +185,7 @@ export function DailyBrief() {
         </button>
       </div>
 
-      {/* Three columns — one per bot */}
+      {/* Three columns — one Store Bot lane each */}
       <div className="relative grid gap-3 sm:grid-cols-3">
         {(Object.keys(BOT_META) as BotKey[]).map((id) => {
           const meta = BOT_META[id];
