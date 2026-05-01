@@ -31,6 +31,26 @@ export function getStoreLimit(planId: PlanId | null | undefined): number {
 }
 
 /**
+ * Closed allowlist of plan ids the server will trust on the wire. The
+ * Stripe webhook reads `planId` from `metadata.plan_id` on
+ * `checkout.session.completed` and `customer.subscription.updated`;
+ * anyone with write access to that metadata could otherwise plant
+ * arbitrary strings (e.g. an attacker setting `plan_id="scale"` to
+ * skip the upgrade bill). Validate every wire-supplied planId against
+ * this allowlist before writing it to `users.stripePlan`.
+ *
+ * Order matters: `Object.keys(PLANS)` would also work, but a frozen
+ * tuple is easier to grep + testable in a single regex.
+ */
+export const VALID_PLAN_IDS = ["starter", "growth", "pro", "scale"] as const;
+
+/** Type guard for planId strings coming off the wire. Returns `true`
+ *  iff the string is one of the documented PLANS keys. */
+export function isValidPlanId(value: unknown): value is PlanId {
+  return typeof value === "string" && (VALID_PLAN_IDS as readonly string[]).includes(value);
+}
+
+/**
  * Suggest the next-tier upsell for a user already on `current`. Used by
  * the SubscriptionGate when a feature is locked behind a higher plan.
  */

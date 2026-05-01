@@ -8,6 +8,26 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import { logger } from "../_core/logger";
 import { WebhookDedup } from "../utils/webhookDedup";
+import { isValidPlanId, type PlanId } from "./products";
+
+/**
+ * Validate a wire-supplied planId against the closed allowlist. Returns
+ * the typed PlanId on success or `undefined` on rejection — and emits
+ * a structured warn log so Stripe metadata tampering surfaces in the
+ * operator's audit trail. Without this gate an attacker (or a
+ * misconfigured Stripe price) could plant `metadata.plan_id="scale"`
+ * and silently upgrade the user past the billing tier they paid for.
+ */
+function safePlanId(value: unknown, context: string): PlanId | undefined {
+  if (value == null) return undefined;
+  if (isValidPlanId(value)) return value;
+  logger.warn("stripe_invalid_plan_id_rejected", {
+    module: "stripe.webhook",
+    context,
+    received: typeof value === "string" ? value.slice(0, 64) : typeof value,
+  });
+  return undefined;
+}
 
 function getStripe(): Stripe {
   if (!ENV.stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
@@ -84,7 +104,14 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id ? parseInt(session.metadata.user_id) : null;
-      const planId = session.metadata?.plan_id as string | undefined;
+      // Allowlist-gate the planId — Stripe metadata is operator-writable
+      // so an attacker who controls the dashboard could plant arbitrary
+      // strings here. `safePlanId` returns undefined on rejection and
+      // logs `stripe_invalid_plan_id_rejected`, which keeps the rest of
+      // the lifecycle update flowing (customerId / subscriptionId /
+      // status are all Stripe-trusted) without silently writing a bad
+      // tier into `users.stripePlan`.
+      const planId = safePlanId(session.metadata?.plan_id, "checkout.session.completed");
       const customerId = session.customer as string | null;
       const subscriptionId = session.subscription as string | null;
 
@@ -96,7 +123,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       await db.updateUserStripe(userId, {
         stripeCustomerId: customerId ?? undefined,
         stripeSubscriptionId: subscriptionId ?? undefined,
-        stripePlan: (planId as any) ?? undefined,
+        stripePlan: planId ?? undefined,
         stripeSubscriptionStatus: "active",
       });
 
@@ -111,10 +138,13 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         logger.warn("stripe_subscription_user_not_found", { subscriptionId: sub.id });
         return;
       }
-      const planId = sub.metadata?.plan_id as string | undefined;
+      const planId = safePlanId(sub.metadata?.plan_id, "customer.subscription.updated");
       await db.updateUserStripe(user.id, {
         stripeSubscriptionStatus: sub.status,
-        stripePlan: (planId as any) ?? user.stripePlan ?? undefined,
+        // If the wire-supplied planId is invalid we keep the user's
+        // existing plan rather than fall through to undefined (which
+        // would clear it).
+        stripePlan: planId ?? user.stripePlan ?? undefined,
       });
       logger.info("stripe_subscription_updated", { userId: user.id, status: sub.status });
       break;
