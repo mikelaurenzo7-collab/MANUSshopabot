@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { boundedJsonBlob } from "../utils/boundedJson";
 import { requireStoreInOrg } from "../utils/authz";
 import { ENV } from "../_core/env";
 import * as db from "../db";
@@ -572,7 +573,7 @@ export const connectorsRouter = router({
       scopes: z.string().optional(),
       profileUrl: z.string().optional(),
       profileImageUrl: z.string().optional(),
-      metadata: z.any().optional(),
+      metadata: boundedJsonBlob().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const platformName = SOCIAL_PLATFORMS[input.platform]?.name || input.platform;

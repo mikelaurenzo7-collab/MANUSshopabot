@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { orgProcedure, router } from "../_core/trpc";
+import { boundedJsonBlob } from "../utils/boundedJson";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -182,7 +183,7 @@ export const merchantRouter = router({
       storeId: z.number(),
       name: z.string().min(1).max(200),
       ruleType: z.enum(["margin_target", "competitor_match", "dynamic", "clearance"]),
-      config: z.any().optional(),
+      config: boundedJsonBlob().optional(),
       enabled: z.boolean().default(true),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -205,7 +206,7 @@ export const merchantRouter = router({
     .input(z.object({
       id: z.number(),
       name: z.string().max(200).optional(),
-      config: z.any().optional(),
+      config: boundedJsonBlob().optional(),
       enabled: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {

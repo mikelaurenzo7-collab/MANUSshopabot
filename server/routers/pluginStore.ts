@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+import { boundedJsonBlob } from "../utils/boundedJson";
 import * as db from "../db";
 
 export const pluginRouter = router({
@@ -45,7 +46,7 @@ export const pluginRouter = router({
    * Install a plugin (1-click from the App Store).
    */
   install: protectedProcedure
-    .input(z.object({ pluginId: z.number(), config: z.record(z.string(), z.any()).optional() }))
+    .input(z.object({ pluginId: z.number(), config: boundedJsonBlob().optional() }))
     .mutation(async ({ ctx, input }) => {
       // Check plugin exists
       const plugin = await db.getPluginById(input.pluginId);
