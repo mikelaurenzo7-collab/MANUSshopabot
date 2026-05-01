@@ -130,10 +130,17 @@ const PRICING = [
 // honestly so the merchant can verify the claim. Shopify-OAuth is wired
 // today; Claude Opus 4.7 powers reasoning when ANTHROPIC_API_KEY is set;
 // Stripe handles billing end-to-end.
+/**
+ * Trust strip — each item now ships a verifiable credibility tag so a
+ * scanning prospect can tell which claims are wired live (vs marketing
+ * promises). The audit pass identified "claims without proof anchors"
+ * as the #1 trust killer on first scroll. `verifyHref` deep-links to
+ * the public status page row that proves the integration is healthy.
+ */
 const TRUST_ITEMS = [
-  { icon: Zap,       label: "Claude Opus 4.7",    sub: "Reasoning + tool use"       },
-  { icon: Shield,    label: "Shopify OAuth",      sub: "First-party connect"        },
-  { icon: BarChart3, label: "Stripe billing",     sub: "PCI-compliant out of box"  },
+  { icon: Zap,       label: "Claude Opus 4.7",    sub: "Reasoning + tool use",      tag: "live", verifyHref: "/status#anthropic" },
+  { icon: Shield,    label: "Shopify OAuth",      sub: "First-party connect",       tag: "live", verifyHref: "/status#shopify"   },
+  { icon: BarChart3, label: "Stripe billing",     sub: "PCI-compliant out of box",  tag: "live", verifyHref: "/status#stripe"    },
 ];
 
 const BOT_PREVIEW_PROGRESS_PERCENTAGES = [82, 67, 91];
@@ -1084,18 +1091,30 @@ export default function Landing() {
               </button>
             </div>
 
-            {/* Trust strip */}
+            {/* Trust strip — every item carries a "live" credibility tag
+                that links to the matching row on the public status page,
+                so prospects can verify the claim in one click. */}
             <div className="mt-8 sm:mt-12 grid grid-cols-1 xs:grid-cols-3 gap-2 sm:gap-3">
               {TRUST_ITEMS.map((item) => (
-                <div key={item.label} className="luxury-stat-card text-left">
+                <a
+                  key={item.label}
+                  href={item.verifyHref}
+                  className="luxury-stat-card text-left group hover:border-sky-400/30 transition-colors"
+                >
                   <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
                     <item.icon className="w-4 h-4 text-sky-400" />
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold text-white/85">{item.label}</div>
-                    <div className="text-xs text-white/38">{item.sub}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-white/85 truncate">{item.label}</span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-emerald-300">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
+                        {item.tag}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/55">{item.sub}</div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>

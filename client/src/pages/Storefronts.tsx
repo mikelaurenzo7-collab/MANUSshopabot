@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Plug, Layers, Puzzle, Truck, Mail, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { QueryErrorBanner } from "@/components/QueryErrorBanner";
 import { trpc } from "@/lib/trpc";
 import IntegrationsPage from "./Integrations";
 import PluginStorePage from "./PluginStore";
@@ -46,10 +47,15 @@ export default function StorefrontsPage() {
   // before clicking. tRPC handles caching — these queries are also fired
   // by the inner pages, so the React Query cache gives us the data for
   // free without an extra round-trip.
-  const { data: stores } = trpc.stores.list.useQuery();
-  const { data: credentials } = trpc.connectors.listCredentials.useQuery();
-  const { data: socialAccounts } = trpc.connectors.listSocialAccounts.useQuery();
-  const { data: connectedTools } = trpc.tools.listConnected.useQuery();
+  const storesQuery = trpc.stores.list.useQuery();
+  const credentialsQuery = trpc.connectors.listCredentials.useQuery();
+  const socialAccountsQuery = trpc.connectors.listSocialAccounts.useQuery();
+  const connectedToolsQuery = trpc.tools.listConnected.useQuery();
+
+  const stores = storesQuery.data;
+  const credentials = credentialsQuery.data;
+  const socialAccounts = socialAccountsQuery.data;
+  const connectedTools = connectedToolsQuery.data;
 
   const connectionCount = (stores?.length ?? 0) + (credentials?.length ?? 0) + (socialAccounts?.length ?? 0);
 
@@ -91,6 +97,13 @@ export default function StorefrontsPage() {
         accent="cyan"
         flushBottom
       />
+
+      <div className="px-3 sm:px-5 mt-2">
+        <QueryErrorBanner
+          queries={[storesQuery, credentialsQuery, socialAccountsQuery, connectedToolsQuery]}
+          label="Connector counts unavailable"
+        />
+      </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5 pt-1.5">
         <TabsList className="tab-bar-shell h-auto flex-wrap gap-1">

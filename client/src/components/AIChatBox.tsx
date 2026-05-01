@@ -116,6 +116,27 @@ export type AIChatBoxProps = {
   suggestedPrompts?: string[];
 
   /**
+   * Quick-start templates rendered as labeled tiles in the empty state.
+   * Each tile carries a category label + a one-line action description so
+   * a new operator sees "what can this bot actually do?" without having
+   * to type freeform. `prompt` is what gets sent on click.
+   *
+   * When both `quickStartTemplates` and `suggestedPrompts` are supplied,
+   * templates render first (richer affordance) and suggestions render
+   * below as plain pills.
+   */
+  quickStartTemplates?: Array<{
+    /** Short eyebrow label, e.g. "Research" or "Operations". */
+    category: string;
+    /** Tile headline, e.g. "Find a profitable niche". */
+    title: string;
+    /** One-line subtitle explaining what happens next. */
+    subtitle: string;
+    /** Full prompt sent to the bot when the tile is clicked. */
+    prompt: string;
+  }>;
+
+  /**
    * Bot type for personalized empty state and typing indicator
    */
   botType?: "store" | "architect" | "merchant" | "social";
@@ -181,6 +202,7 @@ export function AIChatBox({
   height = "600px",
   emptyStateMessage = "Start a conversation with AI",
   suggestedPrompts,
+  quickStartTemplates,
   botType = "store",
 }: AIChatBoxProps) {
   const [input, setInput] = useState("");
@@ -334,6 +356,33 @@ export function AIChatBox({
                   </div>
                 );
               })()}
+
+              {quickStartTemplates && quickStartTemplates.length > 0 && (
+                <div className="w-full sm:max-w-2xl">
+                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
+                    Quick start templates
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {quickStartTemplates.map((tpl, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => onSendMessage(tpl.prompt)}
+                        disabled={isLoading}
+                        aria-label={tpl.title}
+                        className="group text-left rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-3 transition-all hover:bg-sky-500/[0.06] hover:border-sky-400/30 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(14,165,233,0.10)] disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{ animationDelay: `${index * 80}ms` }}
+                      >
+                        <span className="text-[9.5px] font-bold uppercase tracking-[0.16em] text-sky-300/85">
+                          {tpl.category}
+                        </span>
+                        <p className="mt-1 text-[13px] font-semibold text-white/85 leading-tight">{tpl.title}</p>
+                        <p className="mt-1 text-[11px] text-white/55 leading-relaxed">{tpl.subtitle}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {suggestedPrompts && suggestedPrompts.length > 0 && (
                 <div className="flex flex-col sm:flex-wrap sm:flex-row sm:justify-center gap-2 w-full sm:max-w-xl">

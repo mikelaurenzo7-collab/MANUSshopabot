@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Inbox as InboxIcon } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { QueryErrorBanner } from "@/components/QueryErrorBanner";
 import { trpc } from "@/lib/trpc";
 import ActivityPage from "./Activity";
 import ApprovalsPage from "./Approvals";
@@ -28,10 +29,10 @@ function readTabFromHash(): InboxTab {
 export default function InboxPage() {
   const [tab, setTab] = useState<InboxTab>(() => readTabFromHash());
 
-  const { data: pending } = trpc.approvals.pending.useQuery(undefined, {
+  const pendingQuery = trpc.approvals.pending.useQuery(undefined, {
     refetchInterval: 30_000,
   });
-  const pendingCount = pending?.length ?? 0;
+  const pendingCount = pendingQuery.data?.length ?? 0;
 
   // Keep the URL hash in sync so tabs are deep-linkable.
   useEffect(() => {
@@ -71,7 +72,9 @@ export default function InboxPage() {
         }
       />
 
-      <div className="px-3 sm:px-5 mb-2" />
+      <div className="px-3 sm:px-5 mb-2">
+        <QueryErrorBanner queries={[pendingQuery]} label="Approvals unavailable" />
+      </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5">
         <TabsList className="tab-bar-shell">

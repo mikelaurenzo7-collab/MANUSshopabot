@@ -62,6 +62,70 @@ const SUGGESTIONS_WITH_STORE = [
   "Check workflows and summarize the latest results",
 ];
 
+/**
+ * Tile-style quick-start templates rendered above the plain suggestions
+ * in the empty state. The audit pass identified "operators don't know
+ * what 'workflow' means" as a top friction point — these tiles show the
+ * bot's actual capabilities by category, with a one-line outcome each.
+ *
+ * Each `prompt` is the exact text sent to the bot when clicked, so the
+ * downstream tool dispatcher can route to the right workflow without any
+ * intermediate template parsing on the operator's side.
+ */
+const TEMPLATES_WITHOUT_STORE: Array<{ category: string; title: string; subtitle: string; prompt: string }> = [
+  {
+    category: "Research",
+    title: "Find a profitable niche",
+    subtitle: "Score market size, competition, and trend direction in one pass.",
+    prompt: "Research a profitable e-commerce niche under $500 startup cost — score market size, competition, trend direction, and recommend the top 5 product ideas with margins.",
+  },
+  {
+    category: "Brand",
+    title: "Generate a brand identity",
+    subtitle: "4 brand-name angles + tagline shortlist judged by memorability.",
+    prompt: "Generate a brand identity kit for a new store: name candidates from 4 different angles (clever coiner, practical descriptor, aspirational mood, category disruptor), pick the strongest, and propose a tagline shortlist.",
+  },
+  {
+    category: "Catalog",
+    title: "Source the first products",
+    subtitle: "Margin-safe SKUs with supplier suggestions, ready to push.",
+    prompt: "Find 8 margin-safe products I can source this week. Include supplier name, retail price, cost price, and category for each. Aim for 50%+ margin.",
+  },
+  {
+    category: "Launch",
+    title: "Build my first store end-to-end",
+    subtitle: "Niche → brand → catalog → launch plan in one workflow.",
+    prompt: "I'm a new store owner. Walk me through launching my first store from zero — niche research, brand identity, product catalog, and a 7-day launch plan. Start the first workflow now.",
+  },
+];
+
+const TEMPLATES_WITH_STORE: Array<{ category: string; title: string; subtitle: string; prompt: string }> = [
+  {
+    category: "Operations",
+    title: "Run a full store sweep",
+    subtitle: "Inventory, pricing, low-stock, support triage — in one pass.",
+    prompt: "Run a comprehensive store sweep: check inventory levels, flag low-stock SKUs, review pricing against competitors, summarize support ticket volume, and list the top 5 actions I should take today.",
+  },
+  {
+    category: "Growth",
+    title: "Create a social content plan",
+    subtitle: "Per-platform posts + ad copy tuned to my best sellers.",
+    prompt: "Create a 7-day social content plan for my best-selling products. Generate post copy + hashtags for TikTok and Meta, and draft 2 ad creative angles for the top SKU.",
+  },
+  {
+    category: "Insight",
+    title: "Audit health + bottlenecks",
+    subtitle: "Score SEO, conversion, ops, and surface the critical fixes.",
+    prompt: "Run a store health check: score SEO, conversion, and operational health out of 100. Surface the top 5 critical actions to fix immediately and explain the impact.",
+  },
+  {
+    category: "Suppliers",
+    title: "Source new margin-safe SKUs",
+    subtitle: "Catalog gaps + supplier picks + draft purchase orders.",
+    prompt: "Identify gaps in my current catalog and source 5 complementary products with healthy margins. Draft purchase orders for each one against my connected suppliers.",
+  },
+];
+
 const WORKFLOW_TONE: Record<string, { dot: string; icon: typeof Clock; label: string }> = {
   running: { dot: "bg-amber-400 animate-pulse", icon: Loader2, label: "Running" },
   pending: { dot: "bg-amber-400 animate-pulse", icon: Clock, label: "Pending" },
@@ -279,6 +343,7 @@ export default function Chat() {
             onSendMessage={handleSend}
             isLoading={chatMutation.isPending}
             placeholder={activeStore ? `Ask the ${activeStore.name} Store Bot to build, operate, market, or inspect results…` : "Ask the Store Bot to start from zero, create Shopify launch steps, research a niche, or build a store…"}
+            quickStartTemplates={messages.length === 0 ? (activeStore ? TEMPLATES_WITH_STORE : TEMPLATES_WITHOUT_STORE) : undefined}
             suggestedPrompts={messages.length === 0 ? (activeStore ? SUGGESTIONS_WITH_STORE : SUGGESTIONS_WITHOUT_STORE) : undefined}
             className="h-full"
             height="100%"
