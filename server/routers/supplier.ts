@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 import { generatePO } from "../adapters/supplierAdapter";
 import {
@@ -67,6 +67,7 @@ export const supplierRouter = router({
    * style guide reused across many workflows), don't auto-delete.
    */
   parseReceiptDocument: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       filename: z.string().min(1).max(255),
       // base64 bytes — frontend converts file → base64 before submit

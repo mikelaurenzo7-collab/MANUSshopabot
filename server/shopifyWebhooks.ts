@@ -403,9 +403,23 @@ async function handleShopifyWebhook(req: Request, res: Response) {
     return res.status(400).json({ error: "Missing required webhook headers" });
   }
 
-  // Verify HMAC using the Shopify Partner App secret
+  // Verify HMAC using the Shopify Partner App secret.
+  // PRODUCTION REQUIREMENT: when NODE_ENV=production, the secret MUST be
+  // present. Returning 503 here forces the operator to fix the env rather
+  // than silently accepting unsigned webhooks (which a forged caller could
+  // use to flip store state).
   const secret = ENV.shopifyPartnerClientSecret;
-  if (secret && !verifyShopifyHmac(rawBody, hmacHeader, secret)) {
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("shopify_webhook_secret_missing_in_production", {
+        module: "shopifyWebhooks",
+        topic,
+        shopDomain,
+      });
+      return res.status(503).json({ error: "Webhook signing not configured" });
+    }
+    logger.warn("shopify_webhook_unsigned_dev_mode", { module: "shopifyWebhooks", topic });
+  } else if (!verifyShopifyHmac(rawBody, hmacHeader, secret)) {
     logger.warn("shopify_webhook_hmac_failed", {
       module: "shopifyWebhooks",
       topic,

@@ -108,9 +108,19 @@ async function handleEtsyWebhook(req: Request, res: Response) {
     return res.status(400).json({ error: "Missing required headers" });
   }
 
-  // Verify HMAC if secret is configured
+  // Verify HMAC. PRODUCTION REQUIREMENT: secret must be present in prod
+  // and signature must verify. Fail closed otherwise.
   const secret = ENV.etsySharedSecret;
-  if (secret && signature && !verifyHmacSha256(rawBody, signature, secret)) {
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("etsy_webhook_secret_missing_in_production", { module: "platformWebhooks" });
+      return res.status(503).json({ error: "Webhook signing not configured" });
+    }
+    logger.warn("etsy_webhook_unsigned_dev_mode", { module: "platformWebhooks" });
+  } else if (!signature) {
+    logger.warn("etsy_webhook_signature_missing", { module: "platformWebhooks", shopId });
+    return res.status(401).json({ error: "Signature missing" });
+  } else if (!verifyHmacSha256(rawBody, signature, secret)) {
     logger.warn("etsy_webhook_hmac_failed", { module: "platformWebhooks", shopId });
     return res.status(401).json({ error: "HMAC verification failed" });
   }
@@ -242,13 +252,21 @@ async function handleTikTokShopWebhook(req: Request, res: Response) {
     return res.status(400).json({ error: "Missing body" });
   }
 
-  // Verify HMAC if secret is configured
+  // Verify HMAC. PRODUCTION REQUIREMENT: secret must be present and
+  // signature must verify. Dev fallback only when not in production.
   const appSecret = ENV.tiktokClientSecret;
-  if (appSecret && timestamp && nonce && signature) {
-    if (!verifyTikTokShopSignature(rawBody, timestamp, nonce, signature, appSecret)) {
-      logger.warn("tiktok_shop_webhook_signature_failed", { module: "platformWebhooks" });
-      return res.status(401).json({ error: "Signature verification failed" });
+  if (!appSecret) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("tiktok_shop_webhook_secret_missing_in_production", { module: "platformWebhooks" });
+      return res.status(503).json({ error: "Webhook signing not configured" });
     }
+    logger.warn("tiktok_shop_webhook_unsigned_dev_mode", { module: "platformWebhooks" });
+  } else if (!timestamp || !nonce || !signature) {
+    logger.warn("tiktok_shop_webhook_signature_headers_missing", { module: "platformWebhooks" });
+    return res.status(401).json({ error: "Signature headers missing" });
+  } else if (!verifyTikTokShopSignature(rawBody, timestamp, nonce, signature, appSecret)) {
+    logger.warn("tiktok_shop_webhook_signature_failed", { module: "platformWebhooks" });
+    return res.status(401).json({ error: "Signature verification failed" });
   }
 
   // Acknowledge immediately

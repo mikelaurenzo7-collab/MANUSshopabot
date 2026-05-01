@@ -353,6 +353,57 @@ function checkLockfiles() {
 /* ------------------------------------------------------------------ */
 /* Run all checks                                                     */
 /* ------------------------------------------------------------------ */
+/* Recommended-env coverage report                                     */
+/* ------------------------------------------------------------------ */
+/* Heads-up only: lists the env vars the app would degrade-without if
+   they weren't injected at runtime. Doesn't fail sync — Manus injects
+   most of them after the deploy comes up. The point is to surface the
+   feature-coverage truth at sync time so the operator knows what's
+   live before they go to production.                                  */
+function checkRecommendedEnvCoverage() {
+  const tiers = [
+    {
+      label: "Billing (Stripe)",
+      vars: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
+    },
+    {
+      label: "Reasoning lifts (Anthropic)",
+      vars: ["ANTHROPIC_API_KEY"],
+    },
+    {
+      label: "Email delivery (SendGrid)",
+      vars: ["SENDGRID_API_KEY"],
+    },
+    {
+      label: "Shopify connector",
+      vars: ["SHOPIFY_PARTNER_CLIENT_ID", "SHOPIFY_PARTNER_CLIENT_SECRET"],
+    },
+    {
+      label: "Encryption-at-rest (TOKEN_ENCRYPTION_KEY)",
+      vars: ["TOKEN_ENCRYPTION_KEY"],
+    },
+  ];
+  const envExamplePath = join(repoRoot, ".env.example");
+  const envExample = existsSync(envExamplePath)
+    ? readFileSync(envExamplePath, "utf8")
+    : "";
+  const examplesByVar = new Set(
+    envExample
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"))
+      .map((l) => l.split("=")[0].trim()),
+  );
+
+  for (const tier of tiers) {
+    const undocumented = tier.vars.filter((v) => !examplesByVar.has(v));
+    if (undocumented.length > 0) {
+      warn(
+        `${tier.label}: ${undocumented.join(", ")} not present in .env.example — operators won't know to set them.`,
+      );
+    }
+  }
+}
 
 const tracked = listTrackedFiles();
 
@@ -361,6 +412,7 @@ checkForbiddenTrackedFiles(tracked);
 checkConflictMarkers(tracked);
 checkPageHexRegressions(tracked);
 checkLockfiles();
+checkRecommendedEnvCoverage();
 
 /* ------------------------------------------------------------------ */
 /* Report                                                             */

@@ -298,7 +298,10 @@ const SOCIAL_PLATFORMS = {
     description: "Post tweets and manage Twitter/X presence",
     oauthConfig: {
       authUrl: (clientId: string, scopes: string, redirectUri: string, state: string) =>
-        `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}&code_challenge=challenge&code_challenge_method=plain`,
+        // PKCE code_challenge is injected by the per-request OAuth URL builder
+        // below (see generateSocialOAuthUrl). The {{CODE_CHALLENGE}} token is
+        // replaced server-side after the verifier is generated and persisted.
+        `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}&code_challenge={{CODE_CHALLENGE}}&code_challenge_method=S256`,
       tokenUrl: "https://api.twitter.com/2/oauth2/token",
       scopes: "tweet.read tweet.write users.read offline.access",
     },
@@ -820,6 +823,16 @@ export const connectorsRouter = router({
       const crypto = await import("crypto");
       const state = crypto.randomBytes(24).toString("hex");
 
+      // PKCE for Twitter (RFC 7636 S256). Generate the verifier per request,
+      // persist alongside the state token, then exchange it on callback. The
+      // old hardcoded `code_verifier: "challenge"` made PKCE a no-op.
+      let codeVerifier: string | undefined;
+      let codeChallenge: string | undefined;
+      if (input.platform === "twitter") {
+        codeVerifier = crypto.randomBytes(32).toString("base64url");
+        codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+      }
+
       await db.createOAuthStateToken({
         state,
         flowType: "social",
@@ -827,6 +840,7 @@ export const connectorsRouter = router({
         platform: input.platform,
         origin: input.origin,
         returnTo: input.returnTo,
+        codeVerifier,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       });
 
@@ -834,8 +848,12 @@ export const connectorsRouter = router({
       const redirectUri = `${input.origin}/api/social/oauth/callback`;
       const scopes = platformConfig.oauthConfig.scopes;
 
-      // Generate the real OAuth authorization URL
-      const url = platformConfig.oauthConfig.authUrl(clientId, scopes, redirectUri, state);
+      // Generate the real OAuth authorization URL, then substitute the
+      // per-request PKCE challenge token if the platform uses it.
+      let url = platformConfig.oauthConfig.authUrl(clientId, scopes, redirectUri, state);
+      if (codeChallenge) {
+        url = url.replace("{{CODE_CHALLENGE}}", codeChallenge);
+      }
 
       return {
         url,
