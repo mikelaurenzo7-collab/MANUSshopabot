@@ -21,6 +21,8 @@ import {
   rawBodyMiddleware,
   verifyHmacSha256,
   verifyTikTokShopSignature,
+  verifyAmazonHmac,
+  verifyEbayHmac,
 } from "./utils/webhookVerify";
 import { logger } from "./utils/logger";
 import { WebhookDedup, type ClaimResult } from "./utils/webhookDedup";
@@ -403,13 +405,38 @@ export function registerPlatformWebhookRoutes(app: Express) {
 
 async function handleAmazonWebhook(req: Request, res: Response) {
   const rawBody = (req as any).rawBody as Buffer;
-  const payload = JSON.parse(rawBody.toString("utf8"));
-  const topic = payload.TopicArn ?? "unknown";
+  const signature = req.headers["x-amazon-signature"] as string | undefined;
   const shopId = req.query.shop_id as string | undefined;
 
+  if (!rawBody) {
+    return res.status(400).json({ error: "Missing body" });
+  }
   if (!shopId) {
     return res.status(400).json({ error: "Missing shop_id" });
   }
+
+  // Verify HMAC. PRODUCTION REQUIREMENT: secret must be present in
+  // production AND the signature must verify, otherwise an attacker
+  // who knows the URL pattern can forge order events for any store.
+  // Dev fallback only when not in production. Mirrors the Etsy /
+  // TikTok Shop pattern.
+  const secret = ENV.amazonWebhookSecret;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("amazon_webhook_secret_missing_in_production", { module: "platformWebhooks" });
+      return res.status(503).json({ error: "Webhook signing not configured" });
+    }
+    logger.warn("amazon_webhook_unsigned_dev_mode", { module: "platformWebhooks" });
+  } else if (!signature) {
+    logger.warn("amazon_webhook_signature_missing", { module: "platformWebhooks", shopId });
+    return res.status(401).json({ error: "Signature missing" });
+  } else if (!verifyAmazonHmac(rawBody, signature, secret)) {
+    logger.warn("amazon_webhook_hmac_failed", { module: "platformWebhooks", shopId });
+    return res.status(401).json({ error: "HMAC verification failed" });
+  }
+
+  const payload = JSON.parse(rawBody.toString("utf8"));
+  const topic = payload.TopicArn ?? "unknown";
 
   // Acknowledge immediately
   res.status(200).json({ received: true });
@@ -497,12 +524,34 @@ async function handleAmazonWebhook(req: Request, res: Response) {
 
 async function handleEbayWebhook(req: Request, res: Response) {
   const rawBody = (req as any).rawBody as Buffer;
-  const payload = JSON.parse(rawBody.toString("utf8"));
+  const signature = req.headers["x-ebay-signature"] as string | undefined;
   const shopId = req.query.shop_id as string | undefined;
 
+  if (!rawBody) {
+    return res.status(400).json({ error: "Missing body" });
+  }
   if (!shopId) {
     return res.status(400).json({ error: "Missing shop_id" });
   }
+
+  // Verify HMAC. PRODUCTION REQUIREMENT: token must be present and
+  // signature must verify. Dev fallback only when not in production.
+  const verificationToken = ENV.ebayVerificationToken;
+  if (!verificationToken) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error("ebay_webhook_token_missing_in_production", { module: "platformWebhooks" });
+      return res.status(503).json({ error: "Webhook signing not configured" });
+    }
+    logger.warn("ebay_webhook_unsigned_dev_mode", { module: "platformWebhooks" });
+  } else if (!signature) {
+    logger.warn("ebay_webhook_signature_missing", { module: "platformWebhooks", shopId });
+    return res.status(401).json({ error: "Signature missing" });
+  } else if (!verifyEbayHmac(rawBody, signature, verificationToken)) {
+    logger.warn("ebay_webhook_hmac_failed", { module: "platformWebhooks", shopId });
+    return res.status(401).json({ error: "HMAC verification failed" });
+  }
+
+  const payload = JSON.parse(rawBody.toString("utf8"));
 
   // Acknowledge immediately
   res.status(200).json({ received: true });

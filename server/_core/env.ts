@@ -97,6 +97,22 @@ export const ENV = {
   // Amazon SP-API
   amazonSpClientId: process.env.AMAZON_SP_CLIENT_ID ?? "",
   amazonSpClientSecret: process.env.AMAZON_SP_CLIENT_SECRET ?? "",
+  /**
+   * Shared secret used to verify inbound Amazon webhook payloads
+   * (HMAC-SHA256 over the raw body, header `x-amazon-signature`).
+   * Required in production — the handler fails closed when this is
+   * unset on a non-development environment, so an attacker who knows
+   * the URL pattern cannot forge order events. Set the same value on
+   * the Amazon SNS subscription that fronts SP-API notifications.
+   */
+  amazonWebhookSecret: process.env.AMAZON_WEBHOOK_SECRET ?? "",
+  /**
+   * eBay Notification API verification token. eBay signs webhook
+   * payloads with HMAC-SHA256 using this token; the signature lands
+   * in the `x-ebay-signature` header. Required in production for the
+   * same reason as `amazonWebhookSecret`.
+   */
+  ebayVerificationToken: process.env.EBAY_VERIFICATION_TOKEN ?? "",
 
   // Google OAuth (Gmail + Ads)
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",

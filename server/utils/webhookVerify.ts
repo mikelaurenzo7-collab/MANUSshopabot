@@ -82,3 +82,27 @@ export function verifyMetaHmac(rawBody: Buffer, hubSignature: string, appSecret:
   const provided = hubSignature.slice(expectedPrefix.length);
   return verifyHmacSha256(rawBody, provided, appSecret, "hex");
 }
+
+/** Amazon webhook signature verification. The codebase fronts Amazon
+ *  SP-API notifications with a shared-secret HMAC-SHA256 envelope so
+ *  the signing path matches Etsy / eBay rather than carrying SNS
+ *  X.509 cert pinning. The signature is the hex digest of the raw
+ *  body, delivered via the `x-amazon-signature` header. The header
+ *  may include an optional `sha256=` prefix to mirror Meta's pattern;
+ *  both shapes are accepted. */
+export function verifyAmazonHmac(rawBody: Buffer, signatureHeader: string, secret: string): boolean {
+  const provided = signatureHeader.startsWith("sha256=")
+    ? signatureHeader.slice("sha256=".length)
+    : signatureHeader;
+  return verifyHmacSha256(rawBody, provided, secret, "hex");
+}
+
+/** eBay webhook signature verification. eBay signs payloads with
+ *  HMAC-SHA256 over the raw body using the verification token from
+ *  the developer portal. Header is `x-ebay-signature` (hex digest). */
+export function verifyEbayHmac(rawBody: Buffer, signature: string, verificationToken: string): boolean {
+  const provided = signature.startsWith("sha256=")
+    ? signature.slice("sha256=".length)
+    : signature;
+  return verifyHmacSha256(rawBody, provided, verificationToken, "hex");
+}
