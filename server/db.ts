@@ -614,6 +614,44 @@ export async function getOrdersByStoreSince(storeId: number, sinceDate: Date, ha
 }
 
 /**
+ * Bulk variant of `getOrdersByStoreSince` — fetches orders for many
+ * stores in a single query and groups them by `storeId`. The dashboard
+ * brief previously fired one query per store via `Promise.all` over
+ * a map, which became an N+1 hot path on orgs with 50+ stores. This
+ * single-query path scales to those orgs without changing the
+ * per-store behavior of the original helper.
+ *
+ * The hard cap (10,000 rows) is the global ceiling across ALL stores
+ * combined — bigger than the per-store cap because we're folding
+ * many stores into one fetch, but still bounded so a runaway org
+ * can't drag megabytes of orders through every dashboard load.
+ */
+export async function getOrdersByStoresSince(
+  storeIds: number[],
+  sinceDate: Date,
+  hardCap = 10_000,
+): Promise<Map<number, Array<typeof orders.$inferSelect>>> {
+  const result = new Map<number, Array<typeof orders.$inferSelect>>();
+  if (storeIds.length === 0) return result;
+  const db = await getDb();
+  if (!db) return result;
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(and(inArray(orders.storeId, storeIds), gte(orders.createdAt, sinceDate)))
+    .orderBy(desc(orders.createdAt))
+    .limit(hardCap);
+  // Pre-seed empty arrays so callers iterating over storeIds always
+  // hit a `[]` (not undefined) when a store had zero orders in window.
+  for (const id of storeIds) result.set(id, []);
+  for (const row of rows) {
+    const arr = result.get(row.storeId);
+    if (arr) arr.push(row);
+  }
+  return result;
+}
+
+/**
  * Aggregate `open` event counts grouped by day-of-week (0–6, Sunday=0)
  * and hour (0–23). Used by the Send-Time Optimizer workflow. Returns
  * a flat array `{ dow, hour, count }` so callers can fold into a 2D

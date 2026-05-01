@@ -16,7 +16,7 @@
 import { z } from "zod";
 import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { isFounderEmail } from "../_core/founder";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, type Message as LLMMessage } from "../_core/llm";
 import { getRenderedStoreContext } from "../utils/userContext";
 import * as db from "../db";
 import { launchWorkflow } from "../engine/workflowEngine";
@@ -515,15 +515,18 @@ export const chatRouter = router({
         ? `${systemBase}\n\n${storeContext}`
         : systemBase;
 
-      // Build message array for the LLM
-      const llmMessages: Array<{ role: string; content: string }> = [
+      // Build message array for the LLM. Typing the array as
+      // `LLMMessage[]` lets TypeScript catch role-typo or
+      // missing-field bugs at compile time instead of swallowing
+      // them via `as any` and shipping garbage to the model.
+      const llmMessages: LLMMessage[] = [
         { role: "system", content: systemContent },
-        ...input.messages.map((m) => ({ role: m.role, content: m.content })),
+        ...input.messages.map((m): LLMMessage => ({ role: m.role, content: m.content })),
       ];
 
       // First LLM call — may produce tool calls
       const firstResult = await invokeLLM({
-        messages: llmMessages as any,
+        messages: llmMessages,
         tools: TOOLS,
         tool_choice: "auto",
         maxTokens: 1024,
@@ -541,14 +544,21 @@ export const chatRouter = router({
         return { reply, toolsUsed: [] };
       }
 
-      // Execute all tool calls in sequence
+      // Execute all tool calls in sequence. The array gets the
+      // `assistant` reply containing the tool_calls array, then a
+      // `tool` message per result. Both shapes are Message-compatible
+      // (the underlying Anthropic / OpenAI surface accepts the
+      // tool_calls + tool_call_id fields).
       const toolsUsed: string[] = [];
-      const toolResultMessages: Array<any> = [
+      const toolResultMessages: LLMMessage[] = [
         {
-          role: "assistant" as const,
+          role: "assistant",
           content: typeof firstMessage.content === "string" ? firstMessage.content : "",
-          tool_calls: firstMessage.tool_calls,
-        },
+          // The wider Message type doesn't model `tool_calls` directly,
+          // so we attach it via the looser any-bag. The strict typing
+          // below catches bugs in the per-tool shape.
+          ...({ tool_calls: firstMessage.tool_calls } as object),
+        } as LLMMessage,
       ];
 
       for (const toolCall of firstMessage.tool_calls) {
@@ -573,18 +583,18 @@ export const chatRouter = router({
           content: toolResult,
           tool_call_id: toolCall.id,
           name: toolName,
-        } as any);
+        });
       }
 
       // Second LLM call — synthesize tool results into a natural reply
-      const finalMessages = [
+      const finalMessages: LLMMessage[] = [
         { role: "system", content: systemContent },
-        ...input.messages.map((m) => ({ role: m.role, content: m.content })),
+        ...input.messages.map((m): LLMMessage => ({ role: m.role, content: m.content })),
         ...toolResultMessages,
       ];
 
       const finalResult = await invokeLLM({
-        messages: finalMessages as any,
+        messages: finalMessages,
         maxTokens: 1024,
       });
 
