@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 import {
   CheckCircle2, XCircle, Loader2, RefreshCw, Activity,
   ShoppingBag, Share2, Zap, Clock, AlertTriangle, Wifi, WifiOff,
@@ -114,21 +115,15 @@ function WebhookEventLog() {
         ) : !events || events.length === 0 ? (
           // Patient empty state — operator is already on the health
           // page so the next-action isn't "go connect a store", it's
-          // "wait + watch". Halo glow signals the channel is ready;
-          // the row pulses on the underlying Radio icon.
-          <div className="flex flex-col items-center justify-center py-10 px-6">
-            <div className="relative mb-3">
-              <div className="absolute inset-0 rounded-2xl bg-sky-500/15 blur-xl" aria-hidden="true" />
-              <div className="relative h-12 w-12 rounded-2xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.15)]">
-                <Radio className="h-5 w-5 text-sky-300" />
-              </div>
-            </div>
-            <p className="text-sm font-semibold text-foreground">Listening for webhooks</p>
-            <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
-              The channel is live — the next event from any of your
-              connected stores will land here within seconds.
-            </p>
-          </div>
+          // "wait + watch". `size="patient"` keeps the visual quieter
+          // than the page-level hero variant.
+          <HaloEmptyState
+            size="patient"
+            tone="sky"
+            icon={Radio}
+            title="Listening for webhooks"
+            description="The channel is live — the next event from any of your connected stores will land here within seconds."
+          />
         ) : (
           <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
             {(events as any[]).map((evt: any) => {

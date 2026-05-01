@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   Mail,
@@ -53,35 +54,16 @@ export default function CampaignFunnel() {
   );
 
   if (!stores || stores.length === 0) {
-    // No stores → no campaigns → no funnel. Halo on the Mail icon
-    // reads as "this lives here once you've connected"; the CTA
-    // closes the loop in one click instead of asking the user to
-    // hunt for the right page.
+    // No stores → no campaigns → no funnel. The CTA closes the loop in
+    // one click instead of asking the user to hunt for the right page.
     return (
-      <div className="empty-state">
-        <div className="relative mb-3">
-          <div className="absolute inset-0 rounded-2xl bg-violet-500/15 blur-xl" aria-hidden="true" />
-          <div className="relative h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(167,139,250,0.18)]">
-            <Mail className="h-6 w-6 text-violet-300" />
-          </div>
-        </div>
-        <h3 className="text-base font-heading font-bold tracking-tight text-foreground">No campaigns to chart yet</h3>
-        <p className="text-xs text-muted-foreground mt-1.5 max-w-md text-center leading-relaxed">
-          Email funnel analytics light up the moment you've connected a
-          store and sent at least one campaign — opens, clicks, and
-          conversions all flow through here.
-        </p>
-        <Link href="/storefronts">
-          <Button
-            variant="outline"
-            className="mt-5 h-auto py-2 px-4 border-white/10 hover:border-violet-400/30 hover:bg-violet-500/5 gap-2"
-          >
-            <Store className="h-4 w-4 text-violet-300" />
-            <span className="text-xs font-medium">Connect a store</span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-          </Button>
-        </Link>
-      </div>
+      <HaloEmptyState
+        tone="violet"
+        icon={Mail}
+        title="No campaigns to chart yet"
+        description="Email funnel analytics light up the moment you've connected a store and sent at least one campaign — opens, clicks, and conversions all flow through here."
+        ctas={[{ label: "Connect a store", href: "/storefronts", icon: Store }]}
+      />
     );
   }
 

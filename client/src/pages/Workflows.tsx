@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 import {
   Dialog,
   DialogContent,
@@ -440,57 +441,21 @@ export default function Workflows() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : (activeWorkflows?.length ?? 0) === 0 ? (
-            // Sexy empty state — icon plate + hero copy + 3 next-action
-            // tiles. Mirrors the gold-standard pattern from Activity.tsx
-            // so a brand-new user sees a path forward, not a wall of
-            // text. Each tile is colour-coded by the bot lane it kicks
-            // off (sky / cyan / amber).
+            // First-run hero with three colour-coded next-action tiles.
+            // Each is the bot lane it kicks off (sky / cyan / amber).
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center py-12 px-6">
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 rounded-2xl bg-sky-500/20 blur-xl" aria-hidden="true" />
-                  <div className="relative h-14 w-14 rounded-2xl bg-sky-500/10 border border-sky-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(14,165,233,0.18)]">
-                    <Bot className="h-6 w-6 text-sky-400" />
-                  </div>
-                </div>
-                <h3 className="text-base font-heading font-bold tracking-tight text-foreground">No workflows running yet</h3>
-                <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
-                  Workflows are how the bots execute multi-step plans.
-                  Pick a starting move below — each one launches a real,
-                  step-by-step run you can watch unfold.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 w-full max-w-2xl">
-                  <Link href="/chat">
-                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-sky-400/30 hover:bg-sky-500/5">
-                      <Sparkles className="h-4 w-4 text-sky-400 shrink-0 mr-2" />
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="text-xs font-medium text-foreground">Ask the bot</div>
-                        <div className="text-[10px] text-muted-foreground truncate">Describe what you want done</div>
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
-                    </Button>
-                  </Link>
-                  <Link href="/workflow-builder">
-                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-cyan-400/30 hover:bg-cyan-500/5">
-                      <Wrench className="h-4 w-4 text-cyan-400 shrink-0 mr-2" />
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="text-xs font-medium text-foreground">Build a workflow</div>
-                        <div className="text-[10px] text-muted-foreground truncate">Drag-and-drop step canvas</div>
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
-                    </Button>
-                  </Link>
-                  <Link href="/storefronts">
-                    <Button variant="outline" className="w-full justify-start h-auto py-2.5 px-3 border-white/10 hover:border-amber-400/30 hover:bg-amber-500/5">
-                      <Store className="h-4 w-4 text-amber-400 shrink-0 mr-2" />
-                      <div className="flex-1 text-left min-w-0">
-                        <div className="text-xs font-medium text-foreground">Connect a store</div>
-                        <div className="text-[10px] text-muted-foreground truncate">Workflows need a store to run on</div>
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
+              <CardContent className="py-12 px-6">
+                <HaloEmptyState
+                  tone="sky"
+                  icon={Bot}
+                  title="No workflows running yet"
+                  description="Workflows are how the bots execute multi-step plans. Pick a starting move below — each one launches a real, step-by-step run you can watch unfold."
+                  ctas={[
+                    { label: "Ask the bot",      href: "/chat",             tone: "sky",   icon: Sparkles, sub: "Describe what you want done" },
+                    { label: "Build a workflow", href: "/workflow-builder", tone: "cyan",  icon: Wrench,   sub: "Drag-and-drop step canvas" },
+                    { label: "Connect a store",  href: "/storefronts",      tone: "amber", icon: Store,    sub: "Workflows need a store to run on" },
+                  ]}
+                />
               </CardContent>
             </Card>
           ) : (
@@ -529,31 +494,14 @@ export default function Workflows() {
             // explaining a feature the user can't use yet (Rerun/Retry
             // buttons that don't exist on a zero-row table).
             <Card className="bento-card">
-              <CardContent className="flex flex-col items-center py-12 px-6">
-                <div className="relative mb-4">
-                  <div className="absolute inset-0 rounded-2xl bg-violet-500/15 blur-xl" aria-hidden="true" />
-                  <div className="relative h-14 w-14 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(167,139,250,0.18)]">
-                    <Clock className="h-6 w-6 text-violet-300" />
-                  </div>
-                </div>
-                <h3 className="text-base font-heading font-bold tracking-tight text-foreground">No completed runs yet</h3>
-                <p className="text-xs text-muted-foreground mt-1.5 text-center max-w-md leading-relaxed">
-                  This timeline fills up the moment a workflow finishes.
-                  Completed runs get a one-click{" "}
-                  <span className="text-emerald-300/85 font-medium">Rerun</span>;
-                  failed ones get{" "}
-                  <span className="text-amber-300/85 font-medium">Retry</span>.
-                </p>
-                <Link href="/inbox#activity">
-                  <Button
-                    variant="outline"
-                    className="mt-5 h-auto py-2 px-4 border-white/10 hover:border-violet-400/30 hover:bg-violet-500/5 gap-2"
-                  >
-                    <GitBranch className="h-4 w-4 text-violet-300" />
-                    <span className="text-xs font-medium">View live activity</span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </Link>
+              <CardContent className="py-12 px-6">
+                <HaloEmptyState
+                  tone="violet"
+                  icon={Clock}
+                  title="No completed runs yet"
+                  description="This timeline fills up the moment a workflow finishes — completed runs get a one-click Rerun, failed ones get Retry."
+                  ctas={[{ label: "View live activity", href: "/inbox#activity", icon: GitBranch }]}
+                />
               </CardContent>
             </Card>
           ) : (
