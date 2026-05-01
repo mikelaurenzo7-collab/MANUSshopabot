@@ -15,9 +15,68 @@ new component to mirror.
 
 | Component | Why it's the reference |
 | --- | --- |
+| `HaloEmptyState.tsx` | **Use this whenever a query/state can render empty.** Halo-glow + bold heading + measured description + zero-to-three tone-coloured next-action CTAs. `size` (hero / inline / patient), `tone` (sky / cyan / violet / emerald / amber / muted), and per-CTA `tone`/`icon`/`sub` overrides cover every empty surface in the app. Adoption pinned by `server/halo-empty-state.test.ts` so a future contributor can't accidentally fork the look. |
 | `PageHeader.tsx` | Token-only colour usage. The `accent` prop drives icon-plate background, border, and outer glow via the `sky` / `cyan` / `violet` / `emerald` / `fuchsia` / `amber` palette declared in `index.css`. No raw hex anywhere. |
-| `EmptyState.tsx` | Composes the existing `.empty-state` CSS classes from `index.css` instead of re-declaring colours. Fully accessible (semantic heading hierarchy, action defaults to a `<Link>` when `href` is set). |
+| `EmptyState.tsx` | Older/lighter variant. Composes the existing `.empty-state` CSS classes from `index.css`. Fine for one-off non-page-level empty states; prefer `HaloEmptyState` for anything user-visible at page scale. |
 | `BotPageShell.tsx` | Shows how to wrap a bot dashboard with the standard header + workflow surface and surfaces the bot's brand colour through props rather than hardcoded values. |
+
+### `HaloEmptyState` quick reference
+
+```tsx
+import { HaloEmptyState } from "@/components/HaloEmptyState";
+import { ShieldCheck, Filter, GitBranch } from "lucide-react";
+
+// Single-CTA "all clear" celebration:
+<HaloEmptyState
+  tone="emerald"
+  icon={ShieldCheck}
+  title="All clear — your bots are humming"
+  description="No decisions need your sign-off right now."
+  ctas={[{ label: "View bot activity", href: "/inbox#activity", icon: GitBranch }]}
+/>
+
+// Two-CTA wrapped row (mixed tones per CTA):
+<HaloEmptyState
+  tone="emerald"
+  icon={ShieldCheck}
+  title="All caught up"
+  ctas={[
+    { label: "Tune autonomy", href: "/settings#agents", tone: "emerald", icon: Filter },
+    { label: "View activity", href: "#activity",        tone: "violet",  icon: GitBranch },
+  ]}
+/>
+
+// Three-CTA rich-tile grid (any CTA with `sub` triggers the layout):
+<HaloEmptyState
+  tone="sky"
+  icon={Bot}
+  title="No workflows running yet"
+  description="Pick a starting move below."
+  ctas={[
+    { label: "Ask the bot",      href: "/chat",        tone: "sky",   sub: "Describe what you want done" },
+    { label: "Build a workflow", href: "/workflow-builder", tone: "cyan", sub: "Drag-and-drop step canvas" },
+    { label: "Connect a store",  href: "/storefronts", tone: "amber", sub: "Workflows need a store to run on" },
+  ]}
+/>
+
+// Patient state (smaller plate, no CTA — for "we're listening" surfaces):
+<HaloEmptyState
+  size="patient"
+  tone="sky"
+  icon={Radio}
+  title="Listening for webhooks"
+  description="The channel is live — the next event will land here within seconds."
+/>
+
+// Inline (chart-card-sized; PluginStore-style sub-state):
+<HaloEmptyState size="inline" tone="violet" icon={Package} title="No top product data" description="…" />
+```
+
+Tone semantics — match the meaning, not the brand. **Emerald** for "all
+clear / we did our job". **Sky** for "let's get started / launch lane".
+**Cyan** for "connected / merchant lane". **Violet** for "analysis /
+quiet contemplation". **Amber** for "partial / waiting on user". **Muted**
+for the neutral fallback.
 
 ---
 

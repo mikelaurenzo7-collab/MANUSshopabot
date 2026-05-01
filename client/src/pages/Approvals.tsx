@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -333,34 +334,16 @@ export default function Approvals() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : pending.length === 0 ? (
-            // "All clear" — quiet celebration, not a wall of text. Halo
-            // glow on the emerald check signals confidence, then a
-            // single CTA points the operator at the activity feed so
-            // they can verify their bots are actually working.
-            <div className="empty-state">
-              <div className="relative mb-3">
-                <div className="absolute inset-0 rounded-2xl bg-emerald-500/20 blur-xl" aria-hidden="true" />
-                <div className="relative h-14 w-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.18)]">
-                  <ShieldCheck className="h-6 w-6 text-emerald-300" />
-                </div>
-              </div>
-              <h3 className="text-base font-heading font-bold tracking-tight text-foreground">All clear — your bots are humming</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-md text-center leading-relaxed">
-                No decisions need your sign-off right now. Anything the
-                bots did autonomously is logged in the activity feed —
-                check it any time to make sure they're on track.
-              </p>
-              <Link href="/inbox#activity">
-                <Button
-                  variant="outline"
-                  className="mt-5 h-auto py-2 px-4 border-white/10 hover:border-emerald-400/30 hover:bg-emerald-500/5 gap-2"
-                >
-                  <GitBranch className="h-4 w-4 text-emerald-300" />
-                  <span className="text-xs font-medium">View bot activity</span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                </Button>
-              </Link>
-            </div>
+            // "All clear" — quiet celebration. Single emerald CTA
+            // routes the operator at the activity feed so they can
+            // verify their bots are actually working.
+            <HaloEmptyState
+              tone="emerald"
+              icon={ShieldCheck}
+              title="All clear — your bots are humming"
+              description="No decisions need your sign-off right now. Anything the bots did autonomously is logged in the activity feed — check it any time to make sure they're on track."
+              ctas={[{ label: "View bot activity", href: "/inbox#activity", icon: GitBranch }]}
+            />
           ) : (
             <div className="space-y-3">
               {pending.map((a: any) => (

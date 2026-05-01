@@ -1,6 +1,6 @@
-import { useState, useMemo, type ComponentType } from "react";
-import { Link } from "wouter";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { HaloEmptyState, type HaloTone } from "@/components/HaloEmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,63 +60,32 @@ type TopProductDatum = {
   orders: number;
 };
 
-/** Per-tone visual treatment for the empty-state icon halo. Mirrors
- *  the page-level halo+CTA pattern from `/workflows`, `/inbox#approvals`,
- *  and `/insights/*` empty states — but tighter (10×10 plate vs 14×14)
- *  since these render INSIDE a chart card rather than as a hero. */
-const EMPTY_TONE = {
-  sky:     { plate: "bg-sky-500/10 border-sky-500/25",         icon: "text-sky-300",     glow: "bg-sky-500/15",     shadow: "shadow-[0_0_18px_rgba(14,165,233,0.18)]"  },
-  cyan:    { plate: "bg-cyan-500/10 border-cyan-500/25",       icon: "text-cyan-300",    glow: "bg-cyan-500/15",    shadow: "shadow-[0_0_18px_rgba(34,211,238,0.18)]" },
-  violet:  { plate: "bg-violet-500/10 border-violet-500/25",   icon: "text-violet-300",  glow: "bg-violet-500/15",  shadow: "shadow-[0_0_18px_rgba(167,139,250,0.18)]" },
-  emerald: { plate: "bg-emerald-500/10 border-emerald-500/25", icon: "text-emerald-300", glow: "bg-emerald-500/15", shadow: "shadow-[0_0_18px_rgba(16,185,129,0.18)]"  },
-  amber:   { plate: "bg-amber-500/10 border-amber-500/25",     icon: "text-amber-300",   glow: "bg-amber-500/15",   shadow: "shadow-[0_0_18px_rgba(251,191,36,0.18)]"  },
-  muted:   { plate: "bg-white/[0.04] border-white/[0.10]",     icon: "text-white/35",    glow: "bg-white/[0.04]",   shadow: "" },
-} as const;
-type EmptyTone = keyof typeof EMPTY_TONE;
-
+/** Local chart-card empty state. Thin wrapper over the canonical
+ *  `HaloEmptyState` component using the `inline` size variant —
+ *  10×10 plate with smaller halo, optimised to render inside a
+ *  CardContent slot next to a real chart. */
 function EmptyAnalyticsState({
   title,
   description,
-  icon: IconCmp = Package,
+  icon = Package,
   tone = "muted",
   cta,
 }: {
   title: string;
   description: string;
-  /** Lucide icon component — defaults to `Package`. */
-  icon?: LucideIcon | ComponentType<{ className?: string }>;
-  /** Halo colour. Use `sky`/`cyan`/`violet`/`emerald` for thematic
-   *  context (revenue / traffic / products / health), `muted` for the
-   *  neutral "no data yet" cases. */
-  tone?: EmptyTone;
-  /** Optional next-action CTA. Use it whenever the user CAN unblock
-   *  the empty state in one click (connect a store, pick a store). */
+  icon?: LucideIcon;
+  tone?: HaloTone;
   cta?: { label: string; href: string };
 }) {
-  const t = EMPTY_TONE[tone];
   return (
-    <div className="empty-state">
-      <div className="relative mb-3">
-        <div className={`absolute inset-0 rounded-xl blur-lg ${t.glow}`} aria-hidden="true" />
-        <div className={`relative h-10 w-10 rounded-xl border flex items-center justify-center ${t.plate} ${t.shadow}`}>
-          <IconCmp className={`h-5 w-5 ${t.icon}`} />
-        </div>
-      </div>
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground mt-1.5 max-w-sm leading-relaxed">{description}</p>
-      {cta && (
-        <Link href={cta.href}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4 h-auto py-1.5 px-3 border-white/10 hover:border-white/20 hover:bg-white/5 gap-1.5"
-          >
-            <span className="text-xs font-medium">{cta.label}</span>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
-          </Button>
-        </Link>
-      )}
-    </div>
+    <HaloEmptyState
+      size="inline"
+      tone={tone}
+      icon={icon}
+      title={title}
+      description={description}
+      ctas={cta ? [{ label: cta.label, href: cta.href }] : undefined}
+    />
   );
 }
 
