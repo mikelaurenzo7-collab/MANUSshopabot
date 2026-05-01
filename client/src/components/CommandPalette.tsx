@@ -75,7 +75,7 @@ interface CommandItem {
   icon: React.ElementType;
   accent?: string;     // Tailwind color name for the icon bg
   action: () => void;
-  group: "recent" | "navigation" | "workflows" | "actions" | "search";
+  group: "recent" | "workspace" | "navigation" | "workflows" | "actions" | "search";
 }
 
 interface CommandPaletteContextValue {
@@ -193,6 +193,29 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     { id: "goto-insights",   label: "View top store insights",     description: "Revenue & performance",    icon: TrendingUp,  accent: "cyan",    action: () => go("/insights"), group: "actions" },
   ];
 
+  // ── Workspace-aware items ────────────────────────────────────────
+  // When the operator is inside a per-store workspace, surface a top-
+  // priority group of actions scoped to THIS store. Each routes into
+  // the workspace's own surfaces so the palette feels like a remote
+  // control for the workspace the operator's eyes are already on.
+  const workspaceMatch = location.match(/^\/store\/(\d+)(?:\/|$)/);
+  const activeWorkspaceId = workspaceMatch ? Number(workspaceMatch[1]) : null;
+  const activeWorkspaceStore = activeWorkspaceId
+    ? (storesQuery.data ?? []).find((s: any) => s.id === activeWorkspaceId) ?? null
+    : null;
+  const workspaceItems: CommandItem[] = activeWorkspaceId
+    ? [
+        { id: "ws-chat",        label: `Open ${activeWorkspaceStore?.name ?? "this store"}'s chat`,        description: "Talk to this store's bot",                icon: MessageSquare, accent: "sky",     action: () => go(`/store/${activeWorkspaceId}/chat`),         group: "workspace" },
+        { id: "ws-workflows",   label: "Workflows in this store",                                          description: "Active + completed runs scoped here",      icon: Zap,           accent: "violet",  action: () => go(`/store/${activeWorkspaceId}/workflows`),    group: "workspace" },
+        { id: "ws-builder",     label: "Open the workflow builder",                                        description: "Compose a workflow scoped to this store",  icon: Layers,        accent: "violet",  action: () => go(`/store/${activeWorkspaceId}/builder`),      group: "workspace" },
+        { id: "ws-connectors",  label: "Connect a channel for this store",                                 description: "Social, supplier, email, ads",             icon: Globe,         accent: "emerald", action: () => go(`/store/${activeWorkspaceId}/connectors`),   group: "workspace" },
+        { id: "ws-memory",      label: "Inspect this store's memory",                                      description: "Search what the bot has learned",          icon: Bot,           accent: "fuchsia", action: () => go(`/store/${activeWorkspaceId}/memory`),       group: "workspace" },
+        { id: "ws-instructions",label: "Edit instructions for this store",                                 description: "System prompt + running rules",            icon: Settings,      accent: "slate",   action: () => go(`/store/${activeWorkspaceId}/instructions`), group: "workspace" },
+        { id: "ws-activity",    label: "This store's activity timeline",                                   description: "Approvals + workflow lifecycle",           icon: Sparkles,      accent: "amber",   action: () => go(`/store/${activeWorkspaceId}/activity`),     group: "workspace" },
+        { id: "ws-leave",       label: "Back to all stores",                                               description: "Leave this workspace",                     icon: Home,          accent: "sky",     action: () => go(`/`),                                        group: "workspace" },
+      ]
+    : [];
+
   const searchItems: CommandItem[] = (productsQuery.data ?? [])
     .slice(0, 5)
     .map((product: any) => {
@@ -237,7 +260,9 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
       };
     });
 
-  const allItems = [...navigationItems, ...workflowItems, ...actionItems, ...searchItems];
+  // Workspace items first so they sort to the top of the palette when
+  // we're inside a per-store workspace.
+  const allItems = [...workspaceItems, ...navigationItems, ...workflowItems, ...actionItems, ...searchItems];
 
   // When Quick-Ask mode is active, skip normal filtering
   const filtered = isQuickAsk
@@ -246,10 +271,11 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     ? allItems.filter((item) =>
         `${item.label} ${item.description}`.toLowerCase().includes(search.toLowerCase()),
       )
-    : [...navigationItems, ...workflowItems, ...actionItems];
+    : [...workspaceItems, ...navigationItems, ...workflowItems, ...actionItems];
 
   const grouped = {
     recent:     recentItems,
+    workspace:  filtered.filter((i) => i.group === "workspace"),
     navigation: filtered.filter((i) => i.group === "navigation"),
     workflows:  filtered.filter((i) => i.group === "workflows"),
     actions: filtered.filter((i) => i.group === "actions"),
@@ -337,6 +363,20 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
                 {!search && grouped.recent.length > 0 && (
                   <Command.Group heading="Recent">
                     {grouped.recent.map((item) => (
+                      <PaletteItem key={item.id} item={item} />
+                    ))}
+                  </Command.Group>
+                )}
+
+                {grouped.workspace.length > 0 && (
+                  <Command.Group
+                    heading={
+                      activeWorkspaceStore
+                        ? `In this workspace · ${activeWorkspaceStore.name}`
+                        : "In this workspace"
+                    }
+                  >
+                    {grouped.workspace.map((item) => (
                       <PaletteItem key={item.id} item={item} />
                     ))}
                   </Command.Group>
