@@ -314,6 +314,33 @@ describe("Workspace shell contract", () => {
     expect(src).toContain("overviewQuery, workflowsQuery, credentialsQuery, socialAccountsQuery, memoryQuery");
   });
 
+  it("Client observability is wired into the server bootstrap and the React entry", () => {
+    // Server: registerClientObservabilityRoutes runs after the body
+    // parser + before the unknown-/api/* 404 handler. Without the
+    // wire-up the endpoints exist as code but never serve traffic.
+    const serverSrc = read("server/_core/index.ts");
+    expect(serverSrc).toContain('import { registerClientObservabilityRoutes } from "../clientObservability"');
+    expect(serverSrc).toContain("registerClientObservabilityRoutes(app);");
+
+    // Client: the React entry installs both the global error handlers
+    // (window.onerror / unhandledrejection) and the web-vitals reporter
+    // BEFORE rendering, so a synchronous mount-time crash still reaches
+    // the server log.
+    const mainSrc = read("client/src/main.tsx");
+    expect(mainSrc).toContain("installGlobalErrorHandlers");
+    expect(mainSrc).toContain("installWebVitalsReporter");
+    // Both calls must precede the createRoot(...).render(...) call.
+    const installPos = mainSrc.indexOf("installGlobalErrorHandlers();");
+    const renderPos = mainSrc.indexOf("createRoot(");
+    expect(installPos).toBeGreaterThan(0);
+    expect(renderPos).toBeGreaterThan(installPos);
+
+    // ErrorBoundary forwards crashes to /api/client-errors via reportError.
+    const ebSrc = read("client/src/components/ErrorBoundary.tsx");
+    expect(ebSrc).toContain('import { reportError } from "@/lib/clientObservability"');
+    expect(ebSrc).toMatch(/reportError\(\{[\s\S]+?error,[\s\S]+?componentStack:/);
+  });
+
   it("Critical dependency CVEs locked via pnpm overrides", () => {
     // The fast-xml-parser <5.3.5 entity-encoding bypass was the only
     // critical advisory. The post-fix override map pins it to >=5.3.8.

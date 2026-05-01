@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { installGlobalErrorHandlers, installWebVitalsReporter } from "@/lib/clientObservability";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
@@ -79,6 +80,14 @@ const trpcClient = trpc.createClient({
 });
 
 mountAnalyticsScript();
+
+// Observability — wire BEFORE rendering so a synchronous mount-time
+// crash inside <App /> still reaches /api/client-errors via the
+// `window.onerror` listener that `installGlobalErrorHandlers` registers.
+// Vitals collection installs PerformanceObservers immediately; it
+// doesn't depend on the React tree being up.
+installGlobalErrorHandlers();
+installWebVitalsReporter();
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
