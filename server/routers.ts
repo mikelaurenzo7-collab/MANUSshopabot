@@ -2,6 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, orgProcedure, orgAdminProcedure, router } from "./_core/trpc";
 import { dashboardRouter } from "./routers/dashboard";
@@ -51,6 +52,29 @@ export const appRouter = router({
     completeOnboarding: protectedProcedure.mutation(async ({ ctx }) => {
       await db.markUserOnboarded(ctx.user.id);
       return { success: true, onboardedAt: new Date() } as const;
+    }),
+    /**
+     * Revoke every outstanding session JWT for the calling user. The
+     * server bumps `users.tokensInvalidBefore` to NOW(), and
+     * `verifySession` rejects any token whose `iat` claim is earlier
+     * than that cutoff on subsequent requests.
+     *
+     * Use cases: stolen device, password change in an OAuth provider,
+     * "log me out of every browser" hygiene from a security-conscious
+     * operator. The mutation also clears the current session cookie
+     * so the calling browser doesn't keep using a now-revoked token
+     * for the rest of the page lifetime.
+     */
+    logoutEverywhere: protectedProcedure.mutation(async ({ ctx }) => {
+      const cutoff = new Date();
+      await sdk.revokeAllSessionsForUser(ctx.user.id, cutoff);
+      // Drop the calling browser's cookie too — otherwise the next
+      // request would send a now-revoked token and the server would
+      // 401 on every page load until it expires naturally. Clearing
+      // forces the standard re-auth redirect.
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true, revokedAt: cutoff } as const;
     }),
   }),
 
