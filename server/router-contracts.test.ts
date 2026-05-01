@@ -414,6 +414,65 @@ describe("workflowGraphRouter contract", () => {
   });
 });
 
+describe("workflows draft procedures contract (PR #97)", () => {
+  const src = read("server/routers/workflows.ts");
+  const dbSrc = read("server/db.ts");
+
+  it("saveDraft / getDraft / listDrafts / deleteDraft are all orgProcedure", () => {
+    // Drafts cross the tenancy boundary — anything less than orgProcedure
+    // would let a user save into / read another tenant's drafts.
+    expect(src).toMatch(/saveDraft:\s*orgProcedure/);
+    expect(src).toMatch(/getDraft:\s*orgProcedure/);
+    expect(src).toMatch(/listDrafts:\s*orgProcedure/);
+    expect(src).toMatch(/deleteDraft:\s*orgProcedure/);
+  });
+
+  it("saveDraft validates storeId against the active org via requireStoreInOrg", () => {
+    // Without the per-row storeId check, a user could plant a draft
+    // pointing into another tenant's store row by guessing an id.
+    expect(src).toMatch(/saveDraft[\s\S]+?if\s*\(typeof input\.storeId === "number"\)\s*\{[\s\S]+?await requireStoreInOrg\(input\.storeId,\s*ctx\.org\.id\)/);
+  });
+
+  it("saveDraft input bounds operator-supplied fields", () => {
+    expect(src).toMatch(/name:\s*z\.string\(\)\.min\(1\)\.max\(255\)/);
+    expect(src).toMatch(/agentType:\s*z\.enum\(\["architect",\s*"merchant",\s*"social"\]\)/);
+    // Each step has a bounded type + title — prevents an LLM-fed
+    // workflow from ballooning the JSON column.
+    expect(src).toMatch(/type:\s*z\.string\(\)\.min\(1\)\.max\(64\)/);
+    expect(src).toMatch(/title:\s*z\.string\(\)\.max\(500\)/);
+  });
+
+  it("getDraft throws NOT_FOUND on miss / cross-org access (no silent null)", () => {
+    expect(src).toMatch(/getDraft[\s\S]+?if\s*\(!draft\)[\s\S]+?code:\s*"NOT_FOUND"/);
+  });
+
+  it("upsertWorkflowDraft enforces tenancy on the update path", () => {
+    // The most important db-helper invariant: when the caller passes
+    // an `id`, we must verify the row's orgId matches before writing.
+    // Without this, the upsert is a cross-tenant overwrite primitive.
+    expect(dbSrc).toMatch(/upsertWorkflowDraft[\s\S]+?if\s*\(existing\[0\] && existing\[0\]\.orgId === draft\.orgId\)/);
+    // Falling through to insert when the id doesn't match is the
+    // safe failure mode — never overwrites another tenant's row.
+    expect(dbSrc).toMatch(/Fall through[\s\S]+?to the insert path/);
+  });
+
+  it("getWorkflowDraft + deleteWorkflowDraft both gate on orgId match", () => {
+    expect(dbSrc).toMatch(/getWorkflowDraft[\s\S]+?if\s*\(!row \|\| row\.orgId !== orgId\)/);
+    expect(dbSrc).toMatch(/deleteWorkflowDraft[\s\S]+?if\s*\(!rows\[0\] \|\| rows\[0\]\.orgId !== orgId\)/);
+  });
+
+  it("schema migration 0030 ships the workflow_drafts table with org index", () => {
+    const migration = read("drizzle/0030_safe_warlock.sql");
+    expect(migration).toContain("CREATE TABLE `workflow_drafts`");
+    expect(migration).toContain("`orgId` int NOT NULL");
+    expect(migration).toContain("CREATE INDEX `workflow_drafts_org_id_idx`");
+    // Schema declares the same shape.
+    const schema = read("drizzle/schema.ts");
+    expect(schema).toMatch(/workflowDrafts = mysqlTable\("workflow_drafts"/);
+    expect(schema).toMatch(/orgId: int\("orgId"\)\.notNull\(\)/);
+  });
+});
+
 describe("queueHealthRouter contract", () => {
   const src = read("server/routers/queueHealth.ts");
 

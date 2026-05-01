@@ -669,6 +669,39 @@ export type AgentWorkflow = typeof agentWorkflows.$inferSelect;
 export type InsertAgentWorkflow = typeof agentWorkflows.$inferInsert;
 
 /**
+ * Workflow drafts — server-side persistence for the WorkflowBuilder
+ * canvas. Replaces the localStorage-only draft flow that didn't
+ * follow the operator across devices. Org-scoped so a draft saved
+ * by one teammate is invisible to another tenant.
+ *
+ * One operator can own many named drafts (the UI will pick the most
+ * recent by default); the legacy localStorage shape only stored
+ * ONE draft, but the schema supports a plural set so a future
+ * "drafts library" view drops in cleanly.
+ */
+export const workflowDrafts = mysqlTable("workflow_drafts", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Owning org — the tenancy boundary. */
+  orgId: int("orgId").notNull(),
+  /** Operator who created the draft. */
+  userId: int("userId").notNull(),
+  /** Optional workspace scope — null = "any store" / global draft. */
+  storeId: int("storeId"),
+  name: varchar("name", { length: 255 }).notNull(),
+  agentType: mysqlEnum("agentType", ["architect", "merchant", "social"]).notNull(),
+  /** Serialized step nodes — `{ order, type, title, config }[]`. */
+  steps: json("steps").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgIdx: index("workflow_drafts_org_id_idx").on(table.orgId),
+  userIdx: index("workflow_drafts_user_id_idx").on(table.userId),
+}));
+
+export type WorkflowDraft = typeof workflowDrafts.$inferSelect;
+export type InsertWorkflowDraft = typeof workflowDrafts.$inferInsert;
+
+/**
  * Workflow Steps — individual steps within a workflow pipeline.
  * Each step represents one atomic action (LLM call, API call, image gen, approval gate, etc.)
  */
