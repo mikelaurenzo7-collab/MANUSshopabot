@@ -122,6 +122,18 @@ export default function Chat() {
     setHistory((prev) => (prev[keyForStore(activeStoreId)] ? prev : { ...prev, [keyForStore(activeStoreId)]: [] }));
   }, [activeStoreId]);
 
+  // Consume Quick Ask prefill from CommandPalette (stored in sessionStorage)
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("cp-prefill");
+    if (prefill) {
+      sessionStorage.removeItem("cp-prefill");
+      // Small delay so the component is fully mounted before sending
+      const t = setTimeout(() => handleSend(prefill), 120);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const workspaceLabel = activeStore
     ? `Store Bot: ${activeStore.name}`
     : hasStores

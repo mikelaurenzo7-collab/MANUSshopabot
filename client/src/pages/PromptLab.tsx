@@ -14,6 +14,13 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
+// Internal agent type → user-facing mode name
+const AGENT_MODE_LABEL: Record<string, string> = {
+  architect: "Launch mode",
+  merchant:  "Operator mode",
+  social:    "Growth mode",
+};
+
 export default function PromptLab() {
   const [selectedAgent, setSelectedAgent] = useState<string>("social");
   const variants = trpc.promptRL.listVariants.useQuery({ agentType: selectedAgent });
@@ -45,9 +52,8 @@ export default function PromptLab() {
             variant={selectedAgent === a ? "default" : "outline"}
             size="sm"
             onClick={() => setSelectedAgent(a)}
-            className="capitalize"
           >
-            {a} Bot
+            {AGENT_MODE_LABEL[a] ?? a}
           </Button>
         ))}
       </div>
@@ -135,7 +141,7 @@ export default function PromptLab() {
             disabled={autoPromote.isPending || !variants.data?.length}
           >
             <Brain className="w-4 h-4 mr-2" />
-            Run RL Evaluation for {selectedAgent} Bot
+            Run RL Evaluation — {AGENT_MODE_LABEL[selectedAgent] ?? selectedAgent}
           </Button>
           {autoPromote.data && (
             <p className="text-sm text-muted-foreground mt-2">
