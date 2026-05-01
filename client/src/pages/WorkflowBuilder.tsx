@@ -363,7 +363,7 @@ function ConfigPanel({
           <Input
             value={node.data.label}
             onChange={(e) => onUpdate(node.id, { label: e.target.value })}
-            className="bg-black/40 border-white/10 text-white text-xs font-mono focus:border-white/30"
+            className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono focus:border-white/30"
             placeholder="Name this step…"
           />
         </div>
@@ -381,7 +381,7 @@ function ConfigPanel({
               <Textarea
                 value={node.data.config.prompt ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, prompt: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[100px] resize-none"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[100px] resize-none"
                 placeholder="Describe what this LLM step should do…"
               />
             </div>
@@ -390,7 +390,7 @@ function ConfigPanel({
               <Input
                 value={node.data.config.outputKey ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, outputKey: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-xs font-mono focus:border-white/30"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono focus:border-white/30"
                 placeholder="e.g. analysis, research, copy"
               />
             </div>
@@ -405,7 +405,7 @@ function ConfigPanel({
                 value={node.data.config.endpoint ?? "suppliers.printful.search"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, endpoint: v } })}
               >
-                <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
+                <SelectTrigger className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
@@ -422,7 +422,7 @@ function ConfigPanel({
               <Input
                 value={node.data.config.query ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, query: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-xs font-mono focus:border-white/30"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono focus:border-white/30"
                 placeholder="e.g. minimalist golf apparel"
               />
             </div>
@@ -435,7 +435,7 @@ function ConfigPanel({
             <Textarea
               value={node.data.config.message ?? ""}
               onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, message: e.target.value } })}
-              className="bg-black/40 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[80px] resize-none"
+              className="bg-page-canvas-elevated/60 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[80px] resize-none"
               placeholder="What should you review before approving?"
             />
           </div>
@@ -449,7 +449,7 @@ function ConfigPanel({
                 value={node.data.config.action ?? "push_products"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, action: v } })}
               >
-                <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
+                <SelectTrigger className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
@@ -467,7 +467,7 @@ function ConfigPanel({
                 value={node.data.config.status ?? "draft"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, status: v } })}
               >
-                <SelectTrigger className="bg-black/40 border-white/10 text-white text-xs font-mono">
+                <SelectTrigger className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-overlay border-white/10 font-mono text-xs">
@@ -486,7 +486,7 @@ function ConfigPanel({
               <Input
                 value={node.data.config.title ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, title: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-xs font-mono focus:border-white/30"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono focus:border-white/30"
                 placeholder="Notification title…"
               />
             </div>
@@ -495,7 +495,7 @@ function ConfigPanel({
               <Textarea
                 value={node.data.config.message ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, message: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[80px] resize-none"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-[11px] font-mono focus:border-white/30 min-h-[80px] resize-none"
                 placeholder="What should the notification say?"
               />
             </div>
@@ -509,7 +509,7 @@ function ConfigPanel({
               <Input
                 value={node.data.config.expression ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, expression: e.target.value } })}
-                className="bg-black/40 border-white/10 text-white text-xs font-mono focus:border-white/30"
+                className="bg-page-canvas-elevated/60 border-white/10 text-white text-xs font-mono focus:border-white/30"
                 placeholder="e.g. score >= 70"
               />
             </div>
@@ -519,7 +519,7 @@ function ConfigPanel({
                 <Input
                   value={node.data.config.truePath ?? "continue"}
                   onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, truePath: e.target.value } })}
-                  className="bg-black/40 border-emerald-500/20 text-white text-xs font-mono focus:border-emerald-500/40"
+                  className="bg-page-canvas-elevated/60 border-emerald-500/20 text-white text-xs font-mono focus:border-emerald-500/40"
                 />
               </div>
               <div className="space-y-1.5">
@@ -527,7 +527,7 @@ function ConfigPanel({
                 <Input
                   value={node.data.config.falsePath ?? "stop"}
                   onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, falsePath: e.target.value } })}
-                  className="bg-black/40 border-red-500/20 text-white text-xs font-mono focus:border-red-500/40"
+                  className="bg-page-canvas-elevated/60 border-red-500/20 text-white text-xs font-mono focus:border-red-500/40"
                 />
               </div>
             </div>
@@ -942,7 +942,7 @@ export default function WorkflowBuilder() {
             {/* Node count badge */}
             {nodes.length > 0 && (
               <Panel position="bottom-left">
-                <div className="flex items-center gap-2 text-[10px] font-mono text-white/30 bg-black/40 border border-white/[0.06] rounded px-2.5 py-1.5">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-white/30 bg-page-canvas-elevated/60 border border-white/[0.06] rounded px-2.5 py-1.5">
                   <span className="text-violet-400 font-bold">{nodes.length}</span> steps
                   <span className="text-white/15">·</span>
                   <span className="text-violet-400 font-bold">{edges.length}</span> connections

@@ -319,7 +319,7 @@ export function AIChatBox({
     <div
       ref={containerRef}
       className={cn(
-        "flex flex-col rounded-xl border border-white/[0.07] bg-[#050508]/80 backdrop-blur-2xl overflow-hidden",
+        "flex flex-col rounded-xl border border-white/[0.07] bg-page-canvas-elevated/70 backdrop-blur-2xl overflow-hidden",
         className
       )}
       style={{ height }}

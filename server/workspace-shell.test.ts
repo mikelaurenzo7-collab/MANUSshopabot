@@ -439,6 +439,56 @@ describe("Workspace shell contract", () => {
     expect(shellSrc).toContain('activeTab !== "chat"');
   });
 
+  it("Warm-mocha tokens propagate through the system surfaces (no cool patches over the canvas)", () => {
+    // Round-2 polish PR. The original mocha pass swapped the <main>
+    // background but missed several cool-toned sub-surfaces that ended
+    // up reading as cold patches over the warm room:
+    //   - WorkflowBuilder + WorkspaceInstructions inputs (`bg-black/N`).
+    //   - AIChatBox wrapper (`bg-[#050508]/80`).
+    //   - Home.tsx + Chat.tsx top-level wrappers (`bg-terminal-bg/70`,
+    //     which only Architect.tsx and direct descendants are
+    //     supposed to consume per the index.css comment).
+    //   - .custom-scrollbar (cool cyan thumb).
+    //   - Sonner toast surface (cool blue oklch).
+    //   - .workspace-card:hover glow (cool blue, no warm sheen).
+    // This test pins the round-2 fixes so a refactor can't quietly
+    // revert them.
+    const cssSrc = read("client/src/index.css");
+    const builderSrc = read("client/src/pages/WorkflowBuilder.tsx");
+    const instructionsSrc = read("client/src/pages/WorkspaceInstructions.tsx");
+    const aiChatBoxSrc = read("client/src/components/AIChatBox.tsx");
+    const homeSrc = read("client/src/pages/Home.tsx");
+    const chatSrc = read("client/src/pages/Chat.tsx");
+    const appSrc = read("client/src/App.tsx");
+
+    // ── Inputs use the warm token, not bg-black/N ────────────────────
+    expect(builderSrc).not.toMatch(/bg-black\/40/);
+    expect(builderSrc).toMatch(/bg-page-canvas-elevated\/60/);
+    expect(instructionsSrc).not.toMatch(/bg-black\/30/);
+    expect(instructionsSrc).toMatch(/bg-page-canvas-elevated\/60/);
+
+    // ── Chat wrapper takes the warm token instead of #050508 ─────────
+    expect(aiChatBoxSrc).not.toContain("bg-[#050508]/80");
+    expect(aiChatBoxSrc).toContain("bg-page-canvas-elevated/70");
+
+    // ── Home + Chat top-level wrappers no longer paint terminal-bg/70
+    //   over the warm canvas. Only Architect-style terminal pages
+    //   should consume bg-terminal-bg/N. ───────────────────────────
+    expect(homeSrc).not.toMatch(/page-enter[\s\S]{0,80}bg-terminal-bg/);
+    expect(chatSrc).not.toMatch(/page-enter[\s\S]{0,80}bg-terminal-bg/);
+
+    // ── Scrollbar is crema-tinted ────────────────────────────────────
+    expect(cssSrc).toMatch(/\.custom-scrollbar\s*\{[\s\S]+?scrollbar-color:\s*rgba\(var\(--crema-raw\),\s*0\.22\)/);
+    expect(cssSrc).toMatch(/\.custom-scrollbar::-webkit-scrollbar-thumb\s*\{[\s\S]+?background:\s*rgba\(var\(--crema-raw\),\s*0\.22\)/);
+
+    // ── Workspace card hover glow includes the crema sheen layer ─────
+    expect(cssSrc).toMatch(/\.workspace-card:hover\s*\{[\s\S]+?rgba\(var\(--crema-raw\),\s*0\.14\)/);
+
+    // ── Toast surface uses warm-mocha oklch (warm hue 50, not 270) ───
+    expect(appSrc).toMatch(/background:\s*"oklch\(0\.22 0\.012 50\)"/);
+    expect(appSrc).not.toMatch(/oklch\(0\.19 0\.012 270\)/);
+  });
+
   it("Page canvas is the warm-mocha palette, not the legacy black surface", () => {
     // The product is a "room" each store lives in: cool steel chrome
     // (sidebar / topbar) over a warm-mocha canvas. The legacy hardcoded

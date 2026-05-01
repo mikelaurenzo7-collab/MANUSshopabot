@@ -197,7 +197,7 @@ export default function WorkspaceInstructions() {
                 placeholder="🤖"
                 maxLength={8}
                 aria-label="Bot avatar emoji"
-                className="w-16 h-10 text-center text-lg rounded-lg border border-white/[0.08] bg-black/30 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
+                className="w-16 h-10 text-center text-lg rounded-lg border border-white/[0.08] bg-page-canvas-elevated/60 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
             </label>
             <label className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
@@ -211,7 +211,7 @@ export default function WorkspaceInstructions() {
                 placeholder="Brewbot"
                 maxLength={40}
                 aria-label="Bot persona name"
-                className="h-10 px-3 rounded-lg border border-white/[0.08] bg-black/30 text-[13px] text-white/90 placeholder:text-white/30 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
+                className="h-10 px-3 rounded-lg border border-white/[0.08] bg-page-canvas-elevated/60 text-[13px] text-white/90 placeholder:text-white/30 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
             </label>
           </div>
@@ -239,7 +239,7 @@ export default function WorkspaceInstructions() {
             placeholder="You are an autonomous Store Bot operating an e-commerce business. Focus on long-term store health, margin protection, and operator trust…"
             rows={6}
             maxLength={5000}
-            className="w-full rounded-lg border border-white/[0.08] bg-black/30 p-3 text-[12.5px] text-white/85 leading-relaxed font-mono placeholder:text-white/25 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 resize-y min-h-[120px]"
+            className="w-full rounded-lg border border-white/[0.08] bg-page-canvas-elevated/60 p-3 text-[12.5px] text-white/85 leading-relaxed font-mono placeholder:text-white/25 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 resize-y min-h-[120px]"
           />
         </section>
 
@@ -267,7 +267,7 @@ export default function WorkspaceInstructions() {
 - Do not source products under $10 retail — margins don't work for us.`}
             rows={10}
             maxLength={5000}
-            className="w-full rounded-lg border border-white/[0.08] bg-black/30 p-3 text-[12.5px] text-white/85 leading-relaxed placeholder:text-white/25 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 resize-y min-h-[180px]"
+            className="w-full rounded-lg border border-white/[0.08] bg-page-canvas-elevated/60 p-3 text-[12.5px] text-white/85 leading-relaxed placeholder:text-white/25 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 resize-y min-h-[180px]"
           />
         </section>
 
