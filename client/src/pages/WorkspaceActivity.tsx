@@ -185,7 +185,7 @@ export default function WorkspaceActivity() {
               return (
                 <li key={e.id} className="relative">
                   <span
-                    className={`absolute left-[-18px] top-3.5 w-2 h-2 rounded-full ring-2 ring-[#050507] ${cfg.dot}`}
+                    className={`absolute left-[-18px] top-3.5 w-2 h-2 rounded-full ring-2 ring-surface-base ${cfg.dot}`}
                     aria-hidden="true"
                   />
                   {e.href ? (
