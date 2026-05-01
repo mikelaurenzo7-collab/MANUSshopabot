@@ -14,7 +14,7 @@
  */
 
 import { z } from "zod";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { isFounderEmail } from "../_core/founder";
 import { invokeLLM } from "../_core/llm";
 import { getRenderedStoreContext } from "../utils/userContext";
@@ -439,7 +439,10 @@ async function executeTool(
       if (!store || store.orgId !== ctx.orgId) {
         return JSON.stringify({ error: "Store not found or access denied" });
       }
-      const prods = await db.getProductsByStore(storeId);
+      // Chat context — fetch only what we render (slice to 20 below).
+      // Without an explicit limit a store with 10k+ products dragged
+      // megabytes through every chat turn before the slice happened.
+      const prods = await db.getProductsByStore(storeId, 50);
       return JSON.stringify({
         storeId,
         storeName: store.name,
@@ -479,6 +482,7 @@ export const chatRouter = router({
    * and will report back what it actually executed.
    */
   message: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       // `store` is the canonical UI path. Legacy bot values remain accepted
       // so older bookmarks, tests, and embedded callers do not break while

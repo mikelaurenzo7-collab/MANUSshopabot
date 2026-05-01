@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { boundedJsonBlob } from "../utils/boundedJson";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
@@ -225,6 +225,7 @@ export const merchantRouter = router({
 
   // ─── AI Pricing Strategy ──────────────────────────────────────────────
   suggestPricing: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productId: z.number(),
@@ -323,6 +324,7 @@ export const merchantRouter = router({
 
   // ─── Demand Forecasting ────────────────────────────────────────────────
   demandForecasting: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       forecastPeriod: z.enum(["7_days", "30_days", "90_days"]).default("30_days"),
@@ -391,6 +393,7 @@ export const merchantRouter = router({
 
   // ─── Margin Analyzer ───────────────────────────────────────────────────
   marginAnalyzer: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await requireStoreInOrg(input.storeId, ctx.org.id);
@@ -459,6 +462,7 @@ export const merchantRouter = router({
 
   // ─── Return & Refund Analysis ───────────────────────────────────────────
   returnAnalysis: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await requireStoreInOrg(input.storeId, ctx.org.id);
