@@ -181,6 +181,239 @@ describe("botProfileRouter contract", () => {
   });
 });
 
+describe("activityRouter contract", () => {
+  const src = read("server/routers/activity.ts");
+
+  it("caps `limit` at 200 (DoS protection)", () => {
+    // Without the cap, a single tRPC call can pull megabytes of
+    // activity rows. The router is the last line — preflight doesn't
+    // see runtime input.
+    expect(src).toMatch(/limit:\s*z\.number\(\)\.min\(1\)\.max\(200\)\.default\(20\)/);
+  });
+
+  it("agentType is a closed enum (no free-form drift)", () => {
+    expect(src).toMatch(/agentType:\s*z\.enum\(\["architect",\s*"merchant",\s*"social"\]\)/);
+  });
+
+  it("list runs under protectedProcedure (auth required)", () => {
+    expect(src).toMatch(/list:\s*protectedProcedure/);
+    expect(src).not.toMatch(/^\s*\w+:\s*publicProcedure/m);
+  });
+});
+
+describe("orchestratorRouter contract", () => {
+  const src = read("server/routers/orchestrator.ts");
+
+  it("every tenant-scoped procedure passes ctx.org.id to its engine fn", () => {
+    // The single most important thing this router has to get right:
+    // the engine functions take a userId AND orgId, and the orgId
+    // is the tenancy boundary. If anyone calls the engine fns with
+    // just userId the cross-tenant boundary is bypassed.
+    expect(src).toMatch(/getUnifiedMetrics\(ctx\.user\.id,\s*ctx\.org\.id,\s*input\.period\)/);
+    expect(src).toMatch(/detectAnomalies\(ctx\.user\.id,\s*ctx\.org\.id\)/);
+    expect(src).toMatch(/monitorBuyBox\(ctx\.user\.id,\s*ctx\.org\.id\)/);
+    expect(src).toMatch(/runDynamicPricingEngine\(ctx\.user\.id,\s*ctx\.org\.id\)/);
+    expect(src).toMatch(/runCreativeVelocityOptimization\(ctx\.user\.id,\s*ctx\.org\.id\)/);
+    expect(src).toMatch(/pauseAdsForOutOfStockProducts\(ctx\.user\.id,\s*ctx\.org\.id\)/);
+  });
+
+  it("tenant-scoped procedures use orgProcedure (not protectedProcedure)", () => {
+    expect(src).toMatch(/unifiedMetrics:\s*orgProcedure/);
+    expect(src).toMatch(/anomalies:\s*orgProcedure/);
+    expect(src).toMatch(/buyBoxStatus:\s*orgProcedure/);
+    expect(src).toMatch(/triggerDynamicPricing:\s*orgProcedure/);
+    expect(src).toMatch(/triggerCreativeVelocity:\s*orgProcedure/);
+    expect(src).toMatch(/triggerAdPause:\s*orgProcedure/);
+  });
+
+  it("dlqStatus is intentionally NOT org-scoped (operator-only, no tenant data)", () => {
+    // The DLQ surfaces failed jobs across the whole queue — operator
+    // concern, not a tenant resource. Document that the protectedProcedure
+    // is intentional so a future "make everything org-scoped" sweep
+    // doesn't break the operator's view of stuck jobs.
+    expect(src).toMatch(/dlqStatus:\s*protectedProcedure/);
+    expect(src).toMatch(/Stays on protectedProcedure since it doesn't return any tenant data/);
+  });
+
+  it("triggerDynamicPricing returns the documented shape", () => {
+    // The dashboard renders `total / autoApplied / queuedForApproval`.
+    expect(src).toMatch(/total:\s*results\.length/);
+    expect(src).toMatch(/autoApplied:\s*results\.filter\(r\s*=>\s*r\.approved\)\.length/);
+    expect(src).toMatch(/queuedForApproval:\s*results\.filter\(r\s*=>\s*r\.requiresApproval\)\.length/);
+  });
+});
+
+describe("pluginStoreRouter contract", () => {
+  const src = read("server/routers/pluginStore.ts");
+
+  it("install verifies plugin exists AND not already installed (idempotency gate)", () => {
+    // Without the dupe-check, a double-click on the install button
+    // creates two installation rows and emits two notifications.
+    expect(src).toMatch(/install[\s\S]+?const plugin = await db\.getPluginById\(input\.pluginId\)/);
+    expect(src).toMatch(/install[\s\S]+?if\s*\(!plugin\)\s*throw/);
+    expect(src).toMatch(/install[\s\S]+?if\s*\(existing\.some[\s\S]+?\)\s*\{\s*throw new Error\("Plugin already installed"\)/);
+  });
+
+  it("install + uninstall + toggle are user-scoped via ctx.user.id", () => {
+    // The plugin store predates the org pivot — installations are
+    // per-user. Pin the scope so a refactor doesn't quietly widen
+    // the read to all installs system-wide.
+    expect(src).toMatch(/install[\s\S]+?userId:\s*ctx\.user\.id,\s*pluginId:\s*input\.pluginId/);
+    expect(src).toMatch(/uninstallPlugin\(ctx\.user\.id,\s*input\.pluginId\)/);
+    expect(src).toMatch(/togglePlugin\(ctx\.user\.id,\s*input\.pluginId,\s*input\.enabled\)/);
+  });
+
+  it("install fires a notification with structured metadata for the audit feed", () => {
+    expect(src).toMatch(/createNotification\(\{[\s\S]+?metadata:\s*\{\s*pluginId:\s*input\.pluginId\s*\}/);
+    expect(src).toMatch(/actionUrl:\s*"\/plugins"/);
+  });
+
+  it("every procedure runs under protectedProcedure", () => {
+    expect(src).not.toMatch(/^\s*\w+:\s*publicProcedure/m);
+    for (const name of ["listAvailable", "getPlugin", "myPlugins", "install", "uninstall", "toggle"]) {
+      expect(src).toMatch(new RegExp(`${name}:\\s*protectedProcedure`));
+    }
+  });
+});
+
+describe("promptRLRouter contract", () => {
+  const src = read("server/routers/promptRL.ts");
+
+  it("createVariant agentType is closed to architect/merchant/social", () => {
+    expect(src).toMatch(/agentType:\s*z\.enum\(\["architect",\s*"merchant",\s*"social"\]\)/);
+  });
+
+  it("createVariant bounds operator input (taskType, variantName, promptTemplate)", () => {
+    // Without the min length, the dashboard fills with empty drafts
+    // that never resolve. Without the max, an LLM-fed prompt can
+    // grow until it OOMs the row.
+    expect(src).toMatch(/taskType:\s*z\.string\(\)\.min\(1\)\.max\(100\)/);
+    expect(src).toMatch(/variantName:\s*z\.string\(\)\.min\(1\)\.max\(50\)/);
+    expect(src).toMatch(/promptTemplate:\s*z\.string\(\)\.min\(10\)/);
+  });
+
+  it("autoPromote falls back to a structured 'no winner' result instead of throwing", () => {
+    // The job queue calls this on a schedule. If a fresh task hasn't
+    // accumulated enough invocations, the right answer is `promoted:
+    // false` + a documented reason — not a crash.
+    expect(src).toMatch(/autoPromote[\s\S]+?if\s*\(best\)/);
+    expect(src).toMatch(/return\s*\{\s*promoted:\s*true,\s*variantId:\s*best\.id/);
+    expect(src).toMatch(/return\s*\{\s*promoted:\s*false,\s*reason:\s*"No variant with sufficient sample size/);
+  });
+
+  it("every procedure runs under protectedProcedure", () => {
+    expect(src).not.toMatch(/^\s*\w+:\s*publicProcedure/m);
+    for (const name of [
+      "listVariants",
+      "createVariant",
+      "getActivePrompt",
+      "promoteVariant",
+      "recordInvocation",
+      "recordConversion",
+      "variantMetrics",
+      "evaluateBest",
+      "autoPromote",
+      "dashboard",
+    ]) {
+      expect(src).toMatch(new RegExp(`${name}:\\s*protectedProcedure`));
+    }
+  });
+});
+
+describe("stripeRouter contract", () => {
+  const src = read("server/routers/stripe.ts");
+
+  it("getPlans is intentionally publicProcedure (landing page reads it anonymously)", () => {
+    // The landing page renders the pricing grid before login. This
+    // public read is by design — pin it so a future "make everything
+    // protected" sweep doesn't break the conversion funnel.
+    expect(src).toMatch(/getPlans:\s*publicProcedure/);
+    expect(src).toMatch(/public — used on landing page/);
+  });
+
+  it("createCheckoutSession + getSubscription + createBillingPortalSession require auth", () => {
+    expect(src).toMatch(/getSubscription:\s*protectedProcedure/);
+    expect(src).toMatch(/createCheckoutSession:\s*protectedProcedure/);
+    expect(src).toMatch(/createBillingPortalSession:\s*protectedProcedure/);
+  });
+
+  it("planId is restricted to the closed Stripe plan enum", () => {
+    // No free-form planId — the webhook hardening pins this on the
+    // server side too, but the router is the first line.
+    expect(src).toMatch(/planId:\s*z\.enum\(\["starter",\s*"growth",\s*"pro",\s*"scale"\]\)/);
+  });
+
+  it("checkout session honors the 7-day trial + cancel-on-missing-card behavior", () => {
+    // Landing/FAQ promises "7-day free trial, no credit card". The
+    // checkout collects the card up front but only charges after day 7,
+    // and cancels if no card is on file then.
+    expect(src).toMatch(/trial_period_days:\s*7/);
+    expect(src).toMatch(/missing_payment_method:\s*"cancel"/);
+  });
+
+  it("founder bypass is wired via the env-allowlisted helper, not a hardcoded list", () => {
+    // The allowlist lives in FOUNDER_EMAILS so support can rotate it
+    // without a deploy. Pin both call sites — the read AND the
+    // checkout block.
+    expect(src).toContain('import { isFounderEmail } from "../_core/founder"');
+    expect(src).toMatch(/isFounderEmail\(user\.email,\s*\{\s*reason:\s*"subscription_status"\s*\}\)/);
+    expect(src).toMatch(/isFounderEmail\(user\.email,\s*\{\s*reason:\s*"checkout_blocked"\s*\}\)/);
+  });
+
+  it("createBillingPortalSession requires an existing stripeCustomerId", () => {
+    // Calling the billing portal without a customer ID throws a
+    // confusing Stripe error; we surface a friendly BAD_REQUEST first.
+    expect(src).toMatch(/createBillingPortalSession[\s\S]+?if\s*\(!user\?\.stripeCustomerId\)[\s\S]+?code:\s*"BAD_REQUEST"/);
+  });
+});
+
+describe("workflowGraphRouter contract", () => {
+  const src = read("server/routers/workflowGraph.ts");
+
+  it("liveState is org-scoped via orgProcedure + reads only ctx.org.id stores", () => {
+    expect(src).toMatch(/liveState:\s*orgProcedure/);
+    expect(src).toMatch(/getStoresByOrg\(ctx\.org\.id\)/);
+  });
+
+  it("liveState caps the work it does (10 stores × 30 tasks, 25 task nodes, 10 events)", () => {
+    // The procedure builds a ReactFlow snapshot. Without bounds, an
+    // org with hundreds of stores tanks the dashboard.
+    expect(src).toMatch(/storeIds\.slice\(0,\s*10\)/);
+    expect(src).toMatch(/db\.getAgentTasks\(\{\s*storeId:\s*sid,\s*limit:\s*30\s*\}\)/);
+    expect(src).toMatch(/allTasks\.slice\(0,\s*25\)/);
+    expect(src).toMatch(/processedEvents\.slice\(0,\s*10\)/);
+  });
+
+  it("override mutations record an audit row in execution_overrides", () => {
+    // Pause/resume/cancel must always leave a trail keyed to the user
+    // who issued the override — this is the audit story the dashboard
+    // shows in `overrideHistory`.
+    expect(src).toMatch(/pauseTask[\s\S]+?createExecutionOverride\(\{[\s\S]+?overriddenByUserId:\s*ctx\.user\.id,[\s\S]+?actionTaken:\s*"paused"/);
+    expect(src).toMatch(/resumeTask[\s\S]+?createExecutionOverride\(\{[\s\S]+?actionTaken:\s*"resumed"/);
+    expect(src).toMatch(/cancelTask[\s\S]+?createExecutionOverride\(\{[\s\S]+?actionTaken:\s*"cancelled"/);
+  });
+
+  it("status transitions match the documented state machine", () => {
+    // pauseTask → pending_approval, resumeTask → running,
+    // cancelTask → rejected.
+    expect(src).toMatch(/pauseTask[\s\S]+?status:\s*"pending_approval"/);
+    expect(src).toMatch(/resumeTask[\s\S]+?status:\s*"running"/);
+    expect(src).toMatch(/cancelTask[\s\S]+?status:\s*"rejected"/);
+  });
+
+  it("cancelTask requires a reason (not optional like pause/resume)", () => {
+    // Cancellation is destructive — the audit row should always
+    // capture WHY. Pause and resume have a friendlier default.
+    expect(src).toMatch(/cancelTask[\s\S]+?reason:\s*z\.string\(\)\.max\(500\)\s*\}\)/);
+    expect(src).toMatch(/pauseTask[\s\S]+?reason:\s*z\.string\(\)\.max\(500\)\.optional\(\)/);
+    expect(src).toMatch(/resumeTask[\s\S]+?reason:\s*z\.string\(\)\.max\(500\)\.optional\(\)/);
+  });
+
+  it("overrideHistory caps `limit` at 100", () => {
+    expect(src).toMatch(/overrideHistory[\s\S]+?limit:\s*z\.number\(\)\.min\(1\)\.max\(100\)\.default\(50\)/);
+  });
+});
+
 describe("queueHealthRouter contract", () => {
   const src = read("server/routers/queueHealth.ts");
 
