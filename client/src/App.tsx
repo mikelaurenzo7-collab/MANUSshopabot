@@ -69,6 +69,7 @@ const WorkspaceConnectorsPage = lazy(() => import("./pages/WorkspaceConnectors")
 const WorkspaceMemoryPage = lazy(() => import("./pages/WorkspaceMemory"));
 const WorkspaceInstructionsPage = lazy(() => import("./pages/WorkspaceInstructions"));
 const WorkspaceInsightsPage = lazy(() => import("./pages/WorkspaceInsights"));
+const WorkspaceActivityPage = lazy(() => import("./pages/WorkspaceActivity"));
 
 function PageLoader() {
   return (
@@ -222,6 +223,7 @@ function Router() {
                     <Route path="/store/:storeId/memory">{() => <ErrorBoundary inline label="Workspace Memory"><WorkspaceMemoryPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/instructions">{() => <ErrorBoundary inline label="Workspace Instructions"><WorkspaceInstructionsPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/insights">{() => <ErrorBoundary inline label="Workspace Insights"><WorkspaceInsightsPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/activity">{() => <ErrorBoundary inline label="Workspace Activity"><WorkspaceActivityPage /></ErrorBoundary>}</Route>
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>

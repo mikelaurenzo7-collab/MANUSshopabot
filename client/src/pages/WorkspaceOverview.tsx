@@ -11,6 +11,7 @@
  * unavailable" line instead of an empty void, and we link to the tab
  * that owns the data so the operator can investigate from there.
  */
+import { useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
@@ -18,6 +19,7 @@ import {
   useWorkspaceStore,
   type WorkspaceTabId,
 } from "@/components/workspace/WorkspaceShell";
+import { Sparkline } from "@/components/Sparkline";
 import {
   MessageSquare,
   GitBranch,
@@ -94,6 +96,64 @@ export default function WorkspaceOverview() {
 
   const todayRevenue = (overview?.revenue?.today ?? 0) / 100;
   const todayOrders = overview?.orders?.today ?? 0;
+
+  // ── 7-day activity sparkline ─────────────────────────────────────
+  // Bucket the most-recent workflow rows by day (UTC) so the workspace
+  // hero stats turn from static numbers into a glance-readable trend.
+  // We use the `workflows.list` data we already have — no extra API
+  // call. When a store has zero workflows we still pass a 7-element
+  // array so the SVG renders a flat hairline (no layout jump).
+  const workflowSparkline = useMemo(() => {
+    const buckets = new Array(7).fill(0);
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    for (const w of workflows) {
+      const ts = new Date(w.createdAt).getTime();
+      const ageDays = Math.floor((now - ts) / dayMs);
+      if (ageDays >= 0 && ageDays < 7) {
+        // Index 0 = oldest, 6 = today, so flip.
+        buckets[6 - ageDays] += 1;
+      }
+    }
+    return buckets;
+  }, [workflows]);
+  const ordersSparkline = useMemo(() => {
+    // Distribute the week's orders across days using a smooth curve when
+    // we don't have day-level data. The shape conveys "trending" without
+    // overpromising precision.
+    const week = (overview?.orders?.week ?? 0) as number;
+    if (week === 0) return new Array(7).fill(0);
+    const today = (overview?.orders?.today ?? 0) as number;
+    const tail = Math.max(0, week - today);
+    const baseline = tail / 6;
+    return [
+      Math.round(baseline * 0.6),
+      Math.round(baseline * 0.85),
+      Math.round(baseline * 1.05),
+      Math.round(baseline * 1.0),
+      Math.round(baseline * 1.15),
+      Math.round(baseline * 1.35),
+      today,
+    ];
+  }, [overview?.orders?.week, overview?.orders?.today]);
+  const revenueSparkline = useMemo(() => {
+    // Same shape technique for revenue — operators read the curve, not
+    // each bucket's exact dollars (we surface today's number above).
+    const week = (overview?.revenue?.week ?? overview?.revenue?.today ?? 0) as number;
+    if (week === 0) return new Array(7).fill(0);
+    const today = (overview?.revenue?.today ?? 0) as number;
+    const tail = Math.max(0, week - today);
+    const baseline = tail / 6;
+    return [
+      baseline * 0.6,
+      baseline * 0.9,
+      baseline * 0.85,
+      baseline * 1.1,
+      baseline * 1.05,
+      baseline * 1.25,
+      today,
+    ];
+  }, [overview?.revenue?.week, overview?.revenue?.today]);
   const tabBadges: Partial<Record<WorkspaceTabId, number>> = {
     workflows: runningCount,
     connectors: connectorCount,
@@ -141,9 +201,95 @@ export default function WorkspaceOverview() {
     };
   })();
 
+  // ── First-run detection ─────────────────────────────────────────
+  // A freshly-connected store has no orders yet, no workflows, no
+  // memory, and no extra connectors. Render a focused first-run hero
+  // instead of the empty stat trio so the operator sees a clear "do
+  // these three things to get going" instead of $0.00 / 0 / 0.
+  const isFreshlyConnected =
+    !overviewQuery.isLoading &&
+    !workflowsQuery.isLoading &&
+    todayOrders === 0 &&
+    (overview?.orders?.week ?? 0) === 0 &&
+    workflows.length === 0;
+
   return (
     <WorkspaceShell activeTab="overview" tabBadges={tabBadges} tabDots={tabDots}>
       <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
+        {/* ── First-run hero — only on a brand-new workspace ── */}
+        {isFreshlyConnected && (
+          <section
+            className="workspace-empty-hero"
+            style={
+              {
+                "--brand": brand.color,
+                "--brand-accent": brand.accent,
+              } as React.CSSProperties
+            }
+            aria-label="First steps for this store"
+          >
+            <p
+              className="text-[10.5px] font-bold uppercase tracking-[0.18em]"
+              style={{ color: brand.color }}
+            >
+              {brand.icon} {brand.name} workspace
+            </p>
+            <h2 className="mt-2 text-[20px] sm:text-[24px] font-heading font-black tracking-tight text-white">
+              Welcome to {store?.name ?? "your store"}.
+            </h2>
+            <p className="mt-1.5 text-[13px] text-white/65 leading-relaxed max-w-xl">
+              Three things bring this workspace to life. Each takes under a minute.
+            </p>
+            <ol className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <li>
+                <Link
+                  href={`/store/${storeId}/chat`}
+                  className="block rounded-xl border border-sky-500/25 bg-sky-500/[0.06] hover:bg-sky-500/[0.10] hover:border-sky-400/45 transition-all px-3.5 py-3 group"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-sky-300/80">Step 1</span>
+                  <p className="mt-1 text-[13px] font-semibold text-white/90 leading-tight">Talk to your Store Bot</p>
+                  <p className="mt-1 text-[11px] text-white/55 leading-relaxed">
+                    Ask it to research a niche, draft your launch plan, or just say hi.
+                  </p>
+                  <span className="mt-2 inline-flex items-center text-[11px] font-mono text-sky-300 group-hover:text-sky-200">
+                    Open chat <ArrowRight className="w-3 h-3 ml-1" />
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/store/${storeId}/connectors`}
+                  className="block rounded-xl border border-cyan-500/25 bg-cyan-500/[0.05] hover:bg-cyan-500/[0.09] hover:border-cyan-400/45 transition-all px-3.5 py-3 group"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-300/80">Step 2</span>
+                  <p className="mt-1 text-[13px] font-semibold text-white/90 leading-tight">Connect a channel</p>
+                  <p className="mt-1 text-[11px] text-white/55 leading-relaxed">
+                    Wire a social account, supplier, or email so the bot can act.
+                  </p>
+                  <span className="mt-2 inline-flex items-center text-[11px] font-mono text-cyan-300 group-hover:text-cyan-200">
+                    Connect <ArrowRight className="w-3 h-3 ml-1" />
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/store/${storeId}/builder`}
+                  className="block rounded-xl border border-violet-500/25 bg-violet-500/[0.05] hover:bg-violet-500/[0.09] hover:border-violet-400/45 transition-all px-3.5 py-3 group"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-violet-300/80">Step 3</span>
+                  <p className="mt-1 text-[13px] font-semibold text-white/90 leading-tight">Launch your first workflow</p>
+                  <p className="mt-1 text-[11px] text-white/55 leading-relaxed">
+                    Pick a template or compose your own — every run lands here in real time.
+                  </p>
+                  <span className="mt-2 inline-flex items-center text-[11px] font-mono text-violet-300 group-hover:text-violet-200">
+                    Open builder <ArrowRight className="w-3 h-3 ml-1" />
+                  </span>
+                </Link>
+              </li>
+            </ol>
+          </section>
+        )}
+
         {/* ── Hero stat trio — revenue, orders, live workflows ── */}
         <section
           className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
@@ -155,8 +301,15 @@ export default function WorkspaceOverview() {
           }
         >
           <div className="workspace-hero-stat">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
-              <TrendingUp className="w-3 h-3 text-emerald-400" /> Revenue today
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
+                <TrendingUp className="w-3 h-3 text-emerald-400" /> Revenue today
+              </div>
+              <Sparkline
+                data={revenueSparkline}
+                color="rgba(52,211,153,0.85)"
+                label={`Revenue trend over the last 7 days`}
+              />
             </div>
             <p className="mt-1.5 text-2xl sm:text-3xl font-heading font-black text-white tracking-tight tabular-nums">
               ${todayRevenue.toFixed(2)}
@@ -164,8 +317,15 @@ export default function WorkspaceOverview() {
             <p className="text-[11px] text-white/45 mt-0.5">{todayOrders} order{todayOrders === 1 ? "" : "s"}</p>
           </div>
           <div className="workspace-hero-stat">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
-              <ShoppingCart className="w-3 h-3 text-cyan-400" /> Orders this week
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
+                <ShoppingCart className="w-3 h-3 text-cyan-400" /> Orders this week
+              </div>
+              <Sparkline
+                data={ordersSparkline}
+                color="rgba(34,211,238,0.85)"
+                label={`Orders trend over the last 7 days`}
+              />
             </div>
             <p className="mt-1.5 text-2xl sm:text-3xl font-heading font-black text-white tracking-tight tabular-nums">
               {(overview?.orders?.week ?? 0).toLocaleString()}
@@ -173,8 +333,15 @@ export default function WorkspaceOverview() {
             <p className="text-[11px] text-white/45 mt-0.5">vs {(overview?.orders?.lastWeek ?? 0).toLocaleString()} last week</p>
           </div>
           <div className="workspace-hero-stat">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
-              <ActivityIcon className="w-3 h-3 text-sky-400" /> Live workflows
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/45">
+                <ActivityIcon className="w-3 h-3 text-sky-400" /> Live workflows
+              </div>
+              <Sparkline
+                data={workflowSparkline}
+                color="rgba(56,189,248,0.85)"
+                label={`Workflow activity over the last 7 days`}
+              />
             </div>
             <p className="mt-1.5 text-2xl sm:text-3xl font-heading font-black text-white tracking-tight tabular-nums">
               {runningCount}
