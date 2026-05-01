@@ -1,5 +1,25 @@
 # SHOPaBOT — Gap Analysis & Roadmap to Production
 
+> ⚠️ **HISTORICAL ARCHIVE — predates the per-store workspace pivot
+> (PR #82) and the unified Store Bot rename.**
+>
+> This gap analysis was written in April 2026 against a 24,600-line
+> codebase organized around three operator-facing bot pages
+> (Architect / Merchant / Hype-Man). Since then:
+>
+> - **Each connected store is its own workspace** at
+>   `/store/:storeId/*` with 9 sub-surfaces. See AGENTS.md §7.
+> - **The triad collapsed into "Store Bot"** for operator-facing
+>   copy. `architect / merchant / social` only survive as the
+>   internal `agentType` enum.
+> - The test suite is now ~1450 tests passing (was 226/228 here).
+>
+> Many of the original gaps in this document have shipped — see
+> the merged PRs through #95 for the cumulative production-
+> readiness work. Do NOT use this file as a current source of
+> truth; consult AGENTS.md + `server/workspace-shell.test.ts` +
+> `server/router-contracts.test.ts` for the live invariants.
+
 **Author:** Manus AI (CTO)
 **Date:** April 12, 2026
 **Codebase Version:** `d8ca14e0`

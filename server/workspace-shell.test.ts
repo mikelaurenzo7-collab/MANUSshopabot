@@ -294,6 +294,32 @@ describe("Workspace shell contract", () => {
     expect(src).not.toContain('toast.success("Workflow saved as draft")');
   });
 
+  it("April 2026 audit docs carry HISTORICAL ARCHIVE banners pointing to AGENTS.md", () => {
+    // The April 2026 audits (AUDIT_2026_04, SHOPBOT_GAP_ANALYSIS,
+    // SHOPBOT_BOT_ENHANCEMENT_ROADMAP) describe the three-bot model
+    // (Architect / Merchant / Hype-Man) that predates the per-store
+    // workspace pivot (#82) and the unified Store Bot rename. Without
+    // a clear archival banner, AI agents reading those docs end up
+    // shipping cross-store sidebar pages instead of workspace-scoped
+    // surfaces. This pin asserts each doc carries the redirect.
+    const docs = [
+      "docs/AUDIT_2026_04.md",
+      "docs/SHOPBOT_GAP_ANALYSIS.md",
+      "docs/SHOPBOT_BOT_ENHANCEMENT_ROADMAP.md",
+    ];
+    for (const doc of docs) {
+      const src = read(doc);
+      expect(src, `${doc} missing archive banner`).toContain("HISTORICAL ARCHIVE");
+      // The banner must redirect readers to AGENTS.md as the live
+      // source of truth.
+      expect(src, `${doc} missing AGENTS.md redirect`).toContain("AGENTS.md");
+      // And it must mention the unified Store Bot model so an agent
+      // reading the file sees the rename note before the legacy
+      // architect/merchant/social copy below.
+      expect(src, `${doc} missing Store Bot rename note`).toMatch(/Store Bot/);
+    }
+  });
+
   it("AGENTS.md documents the per-store workspace product model", () => {
     const src = read("AGENTS.md");
     // After the workspace pivot (#82), AI agents reading AGENTS.md need

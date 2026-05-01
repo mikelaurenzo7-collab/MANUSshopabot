@@ -1,5 +1,24 @@
 # SHOPaBOT — Bot Capability Enhancement & Proactiveness Roadmap
 
+> ⚠️ **HISTORICAL ARCHIVE — predates the per-store workspace pivot
+> (PR #82) and the unified Store Bot rename.**
+>
+> This roadmap was written in April 2026 against a three-bot model
+> (Architect / Merchant / Hype-Man) where each bot had its own
+> top-level page. The "proactiveness" architecture proposed here
+> (signal registry, scheduled monitors, autonomous workflows)
+> shipped — see `server/signals/` and `server/scheduler/`.
+>
+> Since then the operator-facing surface unified into a single
+> **Store Bot** per workspace at `/store/:storeId/*`, with the
+> triad surviving only as the internal `agentType` enum on
+> database rows and engine functions. See AGENTS.md §7 for the
+> per-store workspace contract.
+>
+> Treat this file as the historical "why we built proactive bots"
+> rationale, not as the current product spec. The capability-
+> enhancement ideas remain valuable as a backlog reference.
+
 **Prepared by:** Manus AI (CTO Role)
 **Date:** April 2026
 **Classification:** Internal Strategic Document
