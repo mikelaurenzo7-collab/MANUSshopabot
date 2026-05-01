@@ -31,6 +31,7 @@ import {
   Store,
   Brain,
   ScrollText,
+  Activity as ActivityIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -110,6 +111,7 @@ function WorkspaceSidebarNav({ storeId, location }: { storeId: number; location:
     { id: "memory",       label: "Memory",       sub: "memory",       icon: Brain },
     { id: "instructions", label: "Instructions", sub: "instructions", icon: ScrollText },
     { id: "insights",     label: "Insights",     sub: "insights",     icon: BarChart3 },
+    { id: "activity",     label: "Activity",     sub: "activity",     icon: ActivityIcon },
   ];
   const baseHref = `/store/${storeId}`;
   return (

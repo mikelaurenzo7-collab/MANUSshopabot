@@ -31,7 +31,7 @@ describe("Workspace shell contract", () => {
     expect(src).toContain("WorkspaceShellContext.Provider");
   });
 
-  it("All 8 workspace surfaces are registered as routes in App.tsx", () => {
+  it("All 9 workspace surfaces are registered as routes in App.tsx", () => {
     const src = read("client/src/App.tsx");
     // The workspace pivot ships these surfaces — losing any of them
     // breaks the corresponding sub-nav tab.
@@ -43,6 +43,48 @@ describe("Workspace shell contract", () => {
     expect(src).toContain('path="/store/:storeId/memory"');
     expect(src).toContain('path="/store/:storeId/instructions"');
     expect(src).toContain('path="/store/:storeId/insights"');
+    expect(src).toContain('path="/store/:storeId/activity"');
+  });
+
+  it("Activity surface ships its own page wrapper", () => {
+    const src = read("client/src/pages/WorkspaceActivity.tsx");
+    expect(src).toContain("WorkspaceShell");
+    expect(src).toContain('activeTab="activity"');
+    // Folds approvals + workflow lifecycle into one timeline.
+    expect(src).toContain("approvals.pending");
+    expect(src).toContain("workflows.list");
+  });
+
+  it("Workspace mark pulses while running workflows are in flight", () => {
+    const shellSrc = read("client/src/components/workspace/WorkspaceShell.tsx");
+    const cssSrc = read("client/src/index.css");
+    // The shell flips a class on the brand mark when running > 0.
+    expect(shellSrc).toContain("workspace-mark-pulsing");
+    // The class drives the dual-ring keyframe animation.
+    expect(cssSrc).toContain(".workspace-mark-pulsing");
+    expect(cssSrc).toContain("@keyframes workspace-mark-ring");
+    // Honors prefers-reduced-motion.
+    expect(cssSrc).toMatch(/prefers-reduced-motion: reduce[\s\S]+workspace-mark-pulsing::before/);
+  });
+
+  it("Sparkline component is dependency-free + accessible", () => {
+    const src = read("client/src/components/Sparkline.tsx");
+    // Pure SVG primitive — no chart library import.
+    expect(src).not.toMatch(/from ['"]recharts['"]/);
+    expect(src).not.toMatch(/from ['"]d3-/);
+    // Has an accessible label hook so screen readers describe the trend.
+    expect(src).toContain("label?:");
+    expect(src).toContain('aria-label={label}');
+  });
+
+  it("WorkspaceOverview renders the first-run welcome when freshly connected", () => {
+    const src = read("client/src/pages/WorkspaceOverview.tsx");
+    expect(src).toContain("isFreshlyConnected");
+    expect(src).toContain("Welcome to ");
+    // Three concrete next steps — bot / connectors / builder.
+    expect(src).toContain("Open chat");
+    expect(src).toContain("Connect a channel");
+    expect(src).toContain("Launch your first workflow");
   });
 
   it("PageHeader honors the inside-workspace suppression hook", () => {

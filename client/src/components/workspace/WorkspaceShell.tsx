@@ -115,7 +115,7 @@ const TAB_REGISTRY: Record<WorkspaceTabId, { label: string; icon: WorkspaceTabSp
 };
 
 const DEFAULT_TAB_ORDER: WorkspaceTabId[] = [
-  "overview", "chat", "workflows", "builder", "connectors", "memory", "instructions", "insights",
+  "overview", "chat", "workflows", "builder", "connectors", "memory", "instructions", "insights", "activity",
 ];
 
 interface WorkspaceShellProps {
@@ -283,18 +283,31 @@ export function WorkspaceShell({
           </Link>
 
           <div className="min-w-0 flex-1 flex items-center gap-2.5 sm:gap-3">
-            {/* Store mark — platform glyph in a brand-tinted plate */}
-            <div
-              className="shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-base sm:text-lg shadow-[0_4px_16px_rgba(0,0,0,0.3)]"
-              style={{
-                background: `linear-gradient(135deg, ${brand.color}22, ${brand.accent}10)`,
-                border: `1px solid ${brand.color}40`,
-                boxShadow: `0 0 18px ${brand.color}1a, inset 0 1px 0 rgba(255,255,255,0.06)`,
-              }}
-              aria-hidden="true"
-            >
-              <span>{brand.icon}</span>
-            </div>
+            {/* Store mark — platform glyph in a brand-tinted plate.
+                When workflows are running for this store the plate
+                gets a soft animated ring keyed off the platform color
+                so the operator sees the workspace is *alive* without
+                having to scan for indicators. The class flips back to
+                static when nothing's in flight. */}
+            {(() => {
+              const running = (liveBadgesAndDots.dots.workflows ?? null) === "running";
+              return (
+                <div
+                  className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-base sm:text-lg shadow-[0_4px_16px_rgba(0,0,0,0.3)] ${
+                    running ? "workspace-mark-pulsing" : ""
+                  }`}
+                  style={{
+                    background: `linear-gradient(135deg, ${brand.color}22, ${brand.accent}10)`,
+                    border: `1px solid ${brand.color}40`,
+                    boxShadow: `0 0 18px ${brand.color}1a, inset 0 1px 0 rgba(255,255,255,0.06)`,
+                  }}
+                  aria-hidden="true"
+                  data-running={running ? "true" : "false"}
+                >
+                  <span>{brand.icon}</span>
+                </div>
+              );
+            })()}
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">

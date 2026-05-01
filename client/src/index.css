@@ -5524,3 +5524,60 @@ main[data-nav-dir="back"] .page-enter {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
 }
+
+/* ── Workspace identity mark: pulse when workflows are running for this store ── */
+.workspace-mark-pulsing {
+  position: relative;
+  isolation: isolate;
+}
+.workspace-mark-pulsing::before,
+.workspace-mark-pulsing::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 1px solid var(--brand, rgba(56, 189, 248, 0.5));
+  pointer-events: none;
+  z-index: -1;
+}
+.workspace-mark-pulsing::before {
+  animation: workspace-mark-ring 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+.workspace-mark-pulsing::after {
+  animation: workspace-mark-ring 2.4s cubic-bezier(0.16, 1, 0.3, 1) 1.2s infinite;
+}
+@keyframes workspace-mark-ring {
+  0%   { opacity: 0.85; transform: scale(0.96); }
+  60%  { opacity: 0;    transform: scale(1.55); }
+  100% { opacity: 0;    transform: scale(1.55); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-mark-pulsing::before,
+  .workspace-mark-pulsing::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* ── Workspace empty hero — first-run pulse on a freshly-connected store ── */
+.workspace-empty-hero {
+  position: relative;
+  isolation: isolate;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(120% 80% at 0% 0%, var(--brand, rgba(56, 189, 248, 0.10)) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.005));
+  padding: 22px 22px 24px;
+  overflow: hidden;
+}
+.workspace-empty-hero::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--brand, rgba(56, 189, 248, 0.28)) 0%, transparent 50%);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: -1;
+}
