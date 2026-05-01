@@ -55,6 +55,37 @@ describe("Workspace shell contract", () => {
     expect(src).toContain("workflows.list");
   });
 
+  it("Workspace pages use design-system tokens, not raw hex Tailwind utilities", () => {
+    // Mirrors `scripts/preflight-sync.mjs` checkPageHexRegressions().
+    // The CI "Manus sync smoke test" runs preflight with --strict, which
+    // promotes any raw-hex utility (e.g. `ring-[#050507]`) into a hard
+    // failure. PR #84 originally shipped `ring-[#050507]` on the
+    // Activity timeline dot which broke the post-merge smoke run; this
+    // assertion locks the regression so it cannot sneak past again.
+    const HEX_RE = /(?:bg|text|border|from|via|to|fill|stroke|ring)-\[#[0-9a-fA-F]{3,8}\]/;
+    const workspacePages = [
+      "client/src/pages/WorkspaceOverview.tsx",
+      "client/src/pages/WorkspaceChat.tsx",
+      "client/src/pages/WorkspaceWorkflows.tsx",
+      "client/src/pages/WorkspaceBuilder.tsx",
+      "client/src/pages/WorkspaceConnectors.tsx",
+      "client/src/pages/WorkspaceMemory.tsx",
+      "client/src/pages/WorkspaceInstructions.tsx",
+      "client/src/pages/WorkspaceInsights.tsx",
+      "client/src/pages/WorkspaceActivity.tsx",
+    ];
+    const violations: string[] = [];
+    for (const page of workspacePages) {
+      const src = read(page);
+      const lines = src.split("\n");
+      for (let i = 0; i < lines.length; i++) {
+        const m = lines[i].match(HEX_RE);
+        if (m) violations.push(`${page}:${i + 1} → ${m[0]}`);
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
   it("Workspace mark pulses while running workflows are in flight", () => {
     const shellSrc = read("client/src/components/workspace/WorkspaceShell.tsx");
     const cssSrc = read("client/src/index.css");
