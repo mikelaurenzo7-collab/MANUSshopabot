@@ -261,11 +261,11 @@ export default function Profile() {
         </CardHeader>
         <CardContent>
           {agentLoading ? (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-lg" />)}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { name: "Launch mode", type: "architect", icon: Bot, color: "bg-sky-500/8 border-sky-500/20 text-sky-400" },
                 { name: "Operator mode", type: "merchant", icon: Package, color: "bg-cyan-500/8 border-cyan-500/20 text-cyan-400" },

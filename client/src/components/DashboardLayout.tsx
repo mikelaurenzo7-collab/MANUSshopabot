@@ -562,7 +562,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
+        <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40 safe-area-top safe-area-x">
           <div className="flex items-center gap-2">
             <div className="brand-mark">
               <Zap className="w-3 h-3 text-white" />

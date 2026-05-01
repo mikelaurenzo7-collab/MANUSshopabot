@@ -92,7 +92,7 @@ export default function StorefrontsPage() {
         flushBottom
       />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5 pt-1.5">
         <TabsList className="tab-bar-shell h-auto flex-wrap gap-1">
           {tabConfig.map((t) => {
             const Icon = t.icon;

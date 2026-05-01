@@ -164,7 +164,7 @@ export default function SupplierPOs() {
 
       {/* Summary Stats */}
       {storeId && pos.data && pos.data.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-white/[0.02] border border-border/25">
             <div className="flex items-center gap-2 mb-1">
               <Hash className="h-3.5 w-3.5 text-muted-foreground" />

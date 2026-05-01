@@ -363,7 +363,7 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
             ) : revenue ? (
               <div className="space-y-6">
                 {/* Revenue KPIs */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { label: "Today", value: `$${revenue.today.toFixed(2)}`, sub: `${revenue.todayOrders} orders` },
                     { label: "This Week", value: `$${revenue.week.toFixed(2)}`, sub: `${revenue.weekOrders} orders` },

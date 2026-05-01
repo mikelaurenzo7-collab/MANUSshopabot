@@ -563,7 +563,7 @@ export default function ConfigPage() {
                         <Shield className="h-3.5 w-3.5 text-primary" />
                         Autonomy Level
                       </Label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {autonomyOptions.map((opt) => {
                           const OptIcon = opt.icon;
                           const isSelected = autonomy.value === opt.value;

@@ -53,6 +53,11 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Extra-small breakpoint (480px) — used by mobile-first utilities like
+     `xs:inline`, `xs:block`, `xs:flex` to reveal labels/subtitles once the
+     viewport is wider than the smallest phones (320–414px). */
+  --breakpoint-xs: 30rem;
 }
 
 /* Premium SaaS Typography — Monospace limited to code/terminals only */
@@ -4930,10 +4935,35 @@ h1, h2, h3, h4, h5, h6, .font-heading {
    Touch targets, readable text, and adaptive layouts for 320px+ screens
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Safe-area insets (iOS notch / home indicator) ──────────────────────── */
+/* Apply to top-level mobile chrome so content never sits under the notch.   */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-area-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 /* ── Mobile-safe touch targets (44x44px minimum per WCAG) ───────────────── */
 .touch-target-safe {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* ── Allow long unbroken strings to wrap on small viewports ──────────────── */
+/* URLs, IDs, and tokens occasionally render in user-visible surfaces (logs,
+   metadata, error banners). On phone-width viewports those strings can push
+   their containers wider than the screen and cause horizontal scroll. Letting
+   them break inside the word avoids the overflow without hiding content. */
+@media (max-width: 767px) {
+  body {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }
 
 /* ── Mobile text readability (prevent microscopic text) ─────────────────── */
