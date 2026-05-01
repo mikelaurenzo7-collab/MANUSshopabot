@@ -563,21 +563,41 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const currentNavItem = navItems.find((item) => item.path && activePathFor(item.path));
     const currentPageTitle = currentNavItem?.title ?? BRAND_NAME;
 
+    // Bottom nav primary destinations (5 tabs)
+    const bottomNavItems = [
+      { title: "Home", path: "/", icon: LayoutDashboard },
+      { title: "Inbox", path: "/inbox", icon: InboxIcon, badge: pendingCount },
+      { title: "Bot", path: "/chat", icon: Bot, dot: storeBotStatus },
+      { title: "Flows", path: "/workflows", icon: GitBranch, badge: totalRunning },
+      { title: "Settings", path: "/settings", icon: SettingsIcon },
+    ] as const;
+
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40 safe-area-top safe-area-x">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="relative flex items-center justify-between h-12 px-3.5 mobile-topbar sticky top-0 z-40 safe-area-top safe-area-x shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="brand-mark shrink-0">
               <Zap className="w-3 h-3 text-white" />
             </div>
-            {/* Show current page name on mobile instead of brand name to save space */}
-            <span className="text-sm font-semibold text-white/85 truncate">{currentPageTitle}</span>
+            <div className="min-w-0 flex flex-col">
+              <span className="text-[13px] font-bold text-white/90 truncate leading-tight">{currentPageTitle}</span>
+              {activeStore && (
+                <span className="text-[9px] font-mono text-sky-400/70 truncate leading-tight uppercase tracking-wider">
+                  {activeStore.name}
+                </span>
+              )}
+            </div>
           </div>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Open navigation menu">
-                <Menu className="w-4.5 h-4.5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-lg border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.05] hover:border-sky-500/25"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="w-4 h-4" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
@@ -595,8 +615,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Sheet>
         </div>
 
-        {/* Mobile Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+        {/* Mobile Content — padded bottom for fixed bottom nav */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          {children}
+          {/* Spacer so content clears the fixed bottom nav */}
+          <div className="mobile-nav-spacer" aria-hidden="true" />
+        </main>
+
+        {/* ── Bottom Navigation Bar ─────────────────────────────────────────── */}
+        <nav className="mobile-bottom-nav safe-area-x" aria-label="Primary navigation">
+          {bottomNavItems.map((item) => {
+            const isActive = activePathFor(item.path);
+            // Map bot dot status to CSS modifier class
+            const dotStatus = "dot" in item ? item.dot : null;
+            const dotCls: Record<NonNullable<typeof dotStatus>, string> = {
+              ok: "ok",
+              running: "running",
+              error: "error",
+            };
+            const resolvedDotCls = dotStatus ? dotCls[dotStatus] : null;
+            const hasBadge = "badge" in item && item.badge && item.badge > 0;
+            return (
+              <Link
+                key={item.title}
+                href={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`mobile-nav-item${isActive ? " active" : ""}`}
+                aria-label={item.title}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {hasBadge ? (
+                  <span className="mobile-nav-badge" aria-label={`${(item as any).badge} pending`}>
+                    {(item as any).badge > 9 ? "9+" : (item as any).badge}
+                  </span>
+                ) : resolvedDotCls ? (
+                  <span className={`mobile-nav-dot ${resolvedDotCls}`} role="status" aria-label={`Bot ${resolvedDotCls}`} />
+                ) : null}
+                <item.icon aria-hidden="true" />
+                <span className="mobile-nav-label">{item.title}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
         <KeyboardHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       </div>

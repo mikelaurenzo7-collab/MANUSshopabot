@@ -295,13 +295,13 @@ export function AIChatBox({
               })()}
 
               {suggestedPrompts && suggestedPrompts.length > 0 && (
-                <div className="flex max-w-xl flex-wrap justify-center gap-2">
+                <div className="flex flex-col sm:flex-wrap sm:flex-row sm:justify-center gap-2 w-full sm:max-w-xl">
                   {suggestedPrompts.map((prompt, index) => (
                     <button
                       key={index}
                       onClick={() => onSendMessage(prompt)}
                       disabled={isLoading}
-                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 text-xs text-white/55 transition-all hover:bg-white/[0.07] hover:border-white/[0.15] hover:text-white/85 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(14,165,233,0.08)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 sm:py-2 text-xs text-white/55 text-left transition-all hover:bg-white/[0.07] hover:border-white/[0.15] hover:text-white/85 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(14,165,233,0.08)] disabled:cursor-not-allowed disabled:opacity-50 w-full sm:w-auto"
                       style={{ animationDelay: `${index * 80}ms` }}
                     >
                       {prompt}

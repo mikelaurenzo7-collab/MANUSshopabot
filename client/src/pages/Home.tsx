@@ -195,7 +195,8 @@ export default function Home() {
       {/* ── KPI Strip ── */}
       <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 md:gap-3">
+        {/* Horizontally scrollable on mobile so all 4 KPIs stay visible without wrapping */}
+        <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0 sm:flex-wrap">
           <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
           <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
           <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
