@@ -122,6 +122,21 @@ export default function Chat() {
     setHistory((prev) => (prev[keyForStore(activeStoreId)] ? prev : { ...prev, [keyForStore(activeStoreId)]: [] }));
   }, [activeStoreId]);
 
+  // Consume Quick Ask prefill from CommandPalette (stored in sessionStorage).
+  // The delay lets React flush the initial render and register tRPC state
+  // before we fire the mutation — avoids a race where the mutation fires
+  // before the workspace key is stabilised.
+  const PREFILL_MOUNT_DELAY_MS = 120;
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("cp-prefill");
+    if (prefill) {
+      sessionStorage.removeItem("cp-prefill");
+      const t = setTimeout(() => handleSend(prefill), PREFILL_MOUNT_DELAY_MS);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const workspaceLabel = activeStore
     ? `Store Bot: ${activeStore.name}`
     : hasStores
