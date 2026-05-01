@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 import {
   Settings,
   Brain,
@@ -223,15 +224,16 @@ export default function BotSettings() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : !schedulesQuery.data || schedulesQuery.data.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">
-                <Clock className="h-5 w-5 text-white/45" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">No schedules configured</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                Schedules let this bot fire on a cadence — daily inventory checks, weekly competitor scans, hourly low-stock sweeps. Add one above.
-              </p>
-            </div>
+            // The "Add schedule" form lives directly above this slot,
+            // so the next-action is "scroll up + fill it in" — no CTA
+            // worth wiring. Violet halo for the contemplative "this
+            // is your bot's clock" framing.
+            <HaloEmptyState
+              tone="violet"
+              icon={Clock}
+              title="No schedules configured"
+              description="Schedules let this bot fire on a cadence — daily inventory checks, weekly competitor scans, hourly low-stock sweeps. Add one above."
+            />
           ) : (
             <div className="space-y-3">
               {schedulesQuery.data.map((schedule: any, idx: number) => (
@@ -271,15 +273,16 @@ export default function BotSettings() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : !safetyRulesQuery.data || safetyRulesQuery.data.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon" style={{ background: "rgba(245, 158, 11, 0.1)", borderColor: "rgba(245, 158, 11, 0.25)" }}>
-                <Shield className="h-5 w-5 text-amber-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">No safety rules configured</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                Rules cap autonomous bot actions — spending limits, price floors, action restrictions. Worth setting before you flip the bot to fully-autonomous.
-              </p>
-            </div>
+            // Amber halo signals "you should configure this" without
+            // alarming — the operator can launch the bot without
+            // safety rules but really shouldn't. Add-rule form is
+            // directly above this slot.
+            <HaloEmptyState
+              tone="amber"
+              icon={Shield}
+              title="No safety rules configured"
+              description="Rules cap autonomous bot actions — spending limits, price floors, action restrictions. Worth setting before you flip the bot to fully-autonomous."
+            />
           ) : (
             <div className="space-y-3">
               {safetyRulesQuery.data.map((rule: any, idx: number) => (

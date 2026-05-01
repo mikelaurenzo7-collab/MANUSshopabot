@@ -34,6 +34,7 @@ import {
   Store,
 } from "lucide-react";
 import { toast } from "sonner";
+import { HaloEmptyState } from "@/components/HaloEmptyState";
 
 export default function PluginStore() {
   const available = trpc.plugins.listAvailable.useQuery();
@@ -96,17 +97,18 @@ export default function PluginStore() {
             ))}
           </div>
         ) : availableCount === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <Plug className="h-5 w-5 text-fuchsia-400/70" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">Catalog opens at launch</h3>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-              First-party micro-bots — Customer Support (Zendesk), Email Marketing (Klaviyo),
-              Reviews (Judge.me), Loyalty (LoyaltyLion) — ship in waves once we hit GA. You'll see
-              them here automatically.
-            </p>
-            <p className="text-[10px] text-white/35 mt-4 font-mono uppercase tracking-widest">
+          // Pre-launch state — first-party micro-bots ship in waves
+          // post-GA. Violet halo for "quiet contemplation"; no CTA
+          // because there's nothing to install yet. The build-one
+          // hint stays as a footer line below the helper.
+          <div>
+            <HaloEmptyState
+              tone="violet"
+              icon={Plug}
+              title="Catalog opens at launch"
+              description="First-party micro-bots — Customer Support (Zendesk), Email Marketing (Klaviyo), Reviews (Judge.me), Loyalty (LoyaltyLion) — ship in waves once we hit GA. You'll see them here automatically."
+            />
+            <p className="text-[10px] text-white/35 mt-4 font-mono uppercase tracking-widest text-center">
               Want to build one? Hit hello@shop-a-bot.app
             </p>
           </div>
@@ -182,16 +184,16 @@ export default function PluginStore() {
             ))}
           </div>
         ) : installedCount === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <Plug className="h-5 w-5 text-cyan-400/70" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">No plugins installed yet</h3>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-              Install one from the marketplace above and it'll appear here. You can toggle plugins
-              on/off without uninstalling — handy for A/B testing a new bot's behavior.
-            </p>
-          </div>
+          // Installed list is empty but the marketplace is right
+          // above on the same page — so the next-action is "scroll
+          // up", which isn't a CTA worth wiring. Cyan halo signals
+          // the connect/install lane.
+          <HaloEmptyState
+            tone="cyan"
+            icon={Plug}
+            title="No plugins installed yet"
+            description="Install one from the marketplace above and it'll appear here. You can toggle plugins on/off without uninstalling — handy for A/B testing a new bot's behavior."
+          />
         ) : (
           <div className="space-y-2">
             {myPlugins.data!.map((inst: any) => {

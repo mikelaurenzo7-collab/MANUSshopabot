@@ -27,11 +27,18 @@ describe("PluginStore — section structure", () => {
     expect(src).toMatch(/\{installedCount\}\s*installed/);
   });
 
-  it("uses the shared empty-state pattern (with the aurora-drift CSS)", () => {
+  it("uses the canonical empty-state primitive on both surfaces", () => {
     const src = read(PAGE);
-    // Two empty-state surfaces (one for catalog, one for installed)
-    const matches = src.match(/className="empty-state"/g) ?? [];
-    expect(matches.length).toBeGreaterThanOrEqual(2);
+    // PluginStore has two empty surfaces (catalog + installed). Both
+    // started as raw `className="empty-state"` blocks; the design-
+    // system consolidation migrated them to the shared
+    // `HaloEmptyState` component. Accept either the legacy class or
+    // a HaloEmptyState render — the assertion tracks intent (a
+    // guided empty state exists in both surfaces) rather than the
+    // specific implementation.
+    const halos = src.match(/<HaloEmptyState\b/g) ?? [];
+    const legacy = src.match(/className="empty-state"/g) ?? [];
+    expect(halos.length + legacy.length).toBeGreaterThanOrEqual(2);
   });
 
   it("empty catalog state sets honest expectations (catalog-opens-at-launch)", () => {
