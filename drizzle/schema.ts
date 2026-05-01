@@ -26,6 +26,16 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  /**
+   * Session-revocation cutoff. Any session JWT with an `iat` claim
+   * earlier than this timestamp is rejected by `verifySession`. The
+   * `auth.logoutEverywhere` mutation sets this to NOW() so all
+   * outstanding sessions are immediately invalidated.
+   *
+   * Null means the user has never explicitly logged out everywhere
+   * — sessions are valid until their natural expiry.
+   */
+  tokensInvalidBefore: timestamp("tokensInvalidBefore"),
   stripeCustomerId: varchar("stripeCustomerId", { length: 64 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 64 }),
   stripePlan: mysqlEnum("stripePlan", ["starter", "growth", "pro", "scale"]),

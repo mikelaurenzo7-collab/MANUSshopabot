@@ -1,4 +1,5 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS, SESSION_TTL_MS } from "@shared/const";
+import crypto from "node:crypto";
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -183,9 +184,19 @@ class SDKServer {
     options: { expiresInMs?: number } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
+    // Default lifetime is the SESSION_TTL_MS (30 days). Callers can
+    // pass a longer window for system-internal flows (test fixtures,
+    // CI smoke runs); production user sessions take the default.
+    const expiresInMs = options.expiresInMs ?? SESSION_TTL_MS;
+    const issuedAtSeconds = Math.floor(issuedAt / 1000);
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
+    // 16 bytes of entropy → ~22 chars base64url. The `jti` lets us log
+    // a stable session id without exposing the bearer token, and gives
+    // us a hook for per-token revocation later. Today the revocation
+    // gate compares against `user.tokensInvalidBefore` in
+    // `verifySession` (see below).
+    const jti = crypto.randomBytes(16).toString("base64url");
 
     return new SignJWT({
       openId: payload.openId,
@@ -193,6 +204,8 @@ class SDKServer {
       name: payload.name,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuedAt(issuedAtSeconds)
+      .setJti(jti)
       .setExpirationTime(expirationSeconds)
       .sign(secretKey);
   }
@@ -210,7 +223,7 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name, iat } = payload as Record<string, unknown>;
 
       if (
         !isNonEmptyString(openId) ||
@@ -219,6 +232,24 @@ class SDKServer {
       ) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
+      }
+
+      // ── Revocation gate ────────────────────────────────────────
+      // If the user clicked "log out everywhere", `tokensInvalidBefore`
+      // is set to the moment of revocation. Any token issued before
+      // that cutoff is rejected even if the JWT is still cryptographically
+      // valid. Tokens minted before this commit have no `iat` claim —
+      // we treat the absence as "0", which means a single
+      // `logoutEverywhere` click invalidates every legacy 1-year
+      // session immediately. That's the desired migration behavior.
+      const issuedAtSeconds = typeof iat === "number" ? iat : 0;
+      const user = await db.getUserByOpenId(openId);
+      if (user?.tokensInvalidBefore) {
+        const cutoffSeconds = Math.floor(user.tokensInvalidBefore.getTime() / 1000);
+        if (issuedAtSeconds < cutoffSeconds) {
+          console.warn("[Auth] Session revoked (issued before tokensInvalidBefore cutoff)");
+          return null;
+        }
       }
 
       return {
@@ -230,6 +261,18 @@ class SDKServer {
       console.warn("[Auth] Session verification failed", String(error));
       return null;
     }
+  }
+
+  /**
+   * Server-internal helper used by `auth.logoutEverywhere` to bump
+   * the user's revocation cutoff. After this call, any session JWT
+   * with an `iat` earlier than `cutoff` (default: now) is rejected
+   * by `verifySession`. The user must re-authenticate.
+   *
+   * Idempotent — calling twice with the same cutoff is a no-op.
+   */
+  async revokeAllSessionsForUser(userId: number, cutoff: Date = new Date()): Promise<void> {
+    await db.updateUser(userId, { tokensInvalidBefore: cutoff });
   }
 
   async getUserInfoWithJwt(

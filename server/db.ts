@@ -171,6 +171,23 @@ export async function markUserOnboarded(userId: number): Promise<void> {
   await db.update(users).set({ onboardedAt: new Date() }).where(eq(users.id, userId));
 }
 
+/**
+ * Generic user-row update helper used by `auth.logoutEverywhere`
+ * to bump `tokensInvalidBefore`. Kept narrow on purpose — most
+ * callers should use a dedicated helper (markUserOnboarded,
+ * updateUserStripe, setCurrentOrgForUser) so the call sites are
+ * easy to audit. This is the escape hatch.
+ */
+export async function updateUser(
+  userId: number,
+  patch: Partial<{
+    tokensInvalidBefore: Date | null;
+  }>,
+): Promise<void> {
+  const db = await requireDb();
+  await db.update(users).set(patch).where(eq(users.id, userId));
+}
+
 export async function getUserById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
