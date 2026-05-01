@@ -626,14 +626,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <nav className="mobile-bottom-nav safe-area-x" aria-label="Primary navigation">
           {bottomNavItems.map((item) => {
             const isActive = activePathFor(item.path);
-            const dotCls =
-              "dot" in item && item.dot
-                ? item.dot === "running"
-                  ? "running"
-                  : item.dot === "error"
-                    ? "error"
-                    : "ok"
-                : null;
+            // Map bot dot status to CSS modifier class
+            const dotStatus = "dot" in item ? item.dot : null;
+            const dotCls: Record<NonNullable<typeof dotStatus>, string> = {
+              ok: "ok",
+              running: "running",
+              error: "error",
+            };
+            const resolvedDotCls = dotStatus ? dotCls[dotStatus] : null;
+            const hasBadge = "badge" in item && item.badge && item.badge > 0;
             return (
               <Link
                 key={item.title}
@@ -643,12 +644,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 aria-label={item.title}
                 aria-current={isActive ? "page" : undefined}
               >
-                {"badge" in item && item.badge && item.badge > 0 ? (
-                  <span className="mobile-nav-badge" aria-label={`${item.badge} pending`}>
-                    {item.badge > 9 ? "9+" : item.badge}
+                {hasBadge ? (
+                  <span className="mobile-nav-badge" aria-label={`${(item as any).badge} pending`}>
+                    {(item as any).badge > 9 ? "9+" : (item as any).badge}
                   </span>
-                ) : dotCls ? (
-                  <span className={`mobile-nav-dot ${dotCls}`} role="status" aria-label={`Bot ${dotCls}`} />
+                ) : resolvedDotCls ? (
+                  <span className={`mobile-nav-dot ${resolvedDotCls}`} role="status" aria-label={`Bot ${resolvedDotCls}`} />
                 ) : null}
                 <item.icon aria-hidden="true" />
                 <span className="mobile-nav-label">{item.title}</span>
