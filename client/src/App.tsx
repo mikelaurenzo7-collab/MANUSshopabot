@@ -57,6 +57,19 @@ const StorefrontsPage = lazy(() => import("./pages/Storefronts"));
 const InsightsPage = lazy(() => import("./pages/Insights"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 
+// Per-store workspace surfaces — `/store/:storeId/*`. Each route mounts
+// the WorkspaceShell (platform-tinted header + workspace sub-nav) around
+// the matching content. The shell auto-syncs the URL :storeId into
+// WorkspaceContext so existing context-scoped queries Just Work.
+const WorkspaceOverviewPage = lazy(() => import("./pages/WorkspaceOverview"));
+const WorkspaceChatPage = lazy(() => import("./pages/WorkspaceChat"));
+const WorkspaceWorkflowsPage = lazy(() => import("./pages/WorkspaceWorkflows"));
+const WorkspaceBuilderPage = lazy(() => import("./pages/WorkspaceBuilder"));
+const WorkspaceConnectorsPage = lazy(() => import("./pages/WorkspaceConnectors"));
+const WorkspaceMemoryPage = lazy(() => import("./pages/WorkspaceMemory"));
+const WorkspaceInstructionsPage = lazy(() => import("./pages/WorkspaceInstructions"));
+const WorkspaceInsightsPage = lazy(() => import("./pages/WorkspaceInsights"));
+
 function PageLoader() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -194,6 +207,21 @@ function Router() {
                     <Route path="/storefronts">{() => <ErrorBoundary inline label="Storefronts"><StorefrontsPage /></ErrorBoundary>}</Route>
                     <Route path="/insights">{() => <ErrorBoundary inline label="Insights"><InsightsPage /></ErrorBoundary>}</Route>
                     <Route path="/settings">{() => <ErrorBoundary inline label="Settings"><SettingsPage /></ErrorBoundary>}</Route>
+
+                    {/* ── Per-store workspaces ────────────────────────────────────
+                        Each connected store becomes its own "world" with chat,
+                        workflows, builder, connectors, memory, and instructions
+                        all scoped to that store. The shell self-syncs the URL
+                        :storeId into WorkspaceContext.activeStoreId so existing
+                        context-scoped queries continue to focus correctly. */}
+                    <Route path="/store/:storeId">{() => <ErrorBoundary inline label="Workspace"><WorkspaceOverviewPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/chat">{() => <ErrorBoundary inline label="Workspace Chat"><WorkspaceChatPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/workflows">{() => <ErrorBoundary inline label="Workspace Workflows"><WorkspaceWorkflowsPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/builder">{() => <ErrorBoundary inline label="Workspace Builder"><WorkspaceBuilderPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/connectors">{() => <ErrorBoundary inline label="Workspace Connectors"><WorkspaceConnectorsPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/memory">{() => <ErrorBoundary inline label="Workspace Memory"><WorkspaceMemoryPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/instructions">{() => <ErrorBoundary inline label="Workspace Instructions"><WorkspaceInstructionsPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/insights">{() => <ErrorBoundary inline label="Workspace Insights"><WorkspaceInsightsPage /></ErrorBoundary>}</Route>
                     <Route path="/404" component={NotFound} />
                     <Route component={NotFound} />
                   </Switch>

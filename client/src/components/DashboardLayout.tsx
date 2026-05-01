@@ -29,6 +29,8 @@ import {
   Zap,
   Search,
   Store,
+  Brain,
+  ScrollText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -87,6 +89,69 @@ function brandDotClass(brand: NavItem["brand"]): string | null {
     default:
       return null;
   }
+}
+
+/**
+ * WorkspaceSidebarNav — compact stack of the per-workspace surfaces
+ * (Overview · Chat · Workflows · Builder · Connectors · Memory ·
+ * Instructions · Insights). Mounts only when the operator is inside a
+ * `/store/:id/*` route, so global pages keep the cleaner top-level nav.
+ *
+ * Defined inline in DashboardLayout so it can re-use the layout's
+ * link styling (no separate CSS surface to keep in sync).
+ */
+function WorkspaceSidebarNav({ storeId, location }: { storeId: number; location: string }) {
+  const items: Array<{ id: string; label: string; sub: string; icon: any }> = [
+    { id: "overview",     label: "Overview",     sub: "",             icon: LayoutDashboard },
+    { id: "chat",         label: "Chat",         sub: "chat",         icon: Bot },
+    { id: "workflows",    label: "Workflows",    sub: "workflows",    icon: GitBranch },
+    { id: "builder",      label: "Builder",      sub: "builder",      icon: Zap },
+    { id: "connectors",   label: "Connectors",   sub: "connectors",   icon: Globe },
+    { id: "memory",       label: "Memory",       sub: "memory",       icon: Brain },
+    { id: "instructions", label: "Instructions", sub: "instructions", icon: ScrollText },
+    { id: "insights",     label: "Insights",     sub: "insights",     icon: BarChart3 },
+  ];
+  const baseHref = `/store/${storeId}`;
+  return (
+    <div
+      className="mt-1 ml-1 pl-2 border-l border-white/[0.06] space-y-px relative"
+      role="navigation"
+      aria-label="Workspace sections"
+    >
+      {/* Vertical accent rail keyed off the active workspace */}
+      <span
+        className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-sky-400/40 via-cyan-400/30 to-transparent"
+        aria-hidden="true"
+      />
+      {items.map((item) => {
+        const href = item.sub ? `${baseHref}/${item.sub}` : baseHref;
+        const isActive =
+          item.sub === ""
+            ? location === baseHref
+            : location === href || location.startsWith(`${href}/`);
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.id}
+            href={href}
+            className={`flex items-center h-6 pl-2 pr-2 rounded-md transition-colors text-[11.5px] ${
+              isActive
+                ? "bg-sky-500/[0.10] text-sky-200 font-semibold"
+                : "text-white/55 hover:text-white/85 hover:bg-white/[0.03]"
+            }`}
+          >
+            <Icon
+              className={`w-3 h-3 mr-1.5 shrink-0 ${
+                isActive ? "text-sky-300" : "opacity-55"
+              }`}
+              aria-hidden="true"
+            />
+            <span className="truncate">{item.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -394,7 +459,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="mb-1.5 px-0.5">
         <OrgSwitcher />
       </div>
-      {/* Workspace (store) switcher */}
+      {/* Workspace (store) switcher — selecting a store now navigates
+          into that store's workspace (`/store/:id`) so the sidebar
+          stays in sync with whichever world the operator is working in.
+          Below the switcher, when a store is active, we render the
+          per-workspace sub-nav inline so chat / workflows / connectors
+          / memory / instructions are one click away from anywhere. */}
       {stores && stores.length > 0 && (
         <div className="mb-2 px-0.5">
           <DropdownMenu>
@@ -403,9 +473,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 type="button"
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md border border-white/[0.06] bg-gradient-to-r from-white/[0.025] to-white/[0.01] hover:from-white/[0.05] hover:to-white/[0.02] hover:border-sky-400/25 transition-all group"
                 data-testid="workspace-switcher"
+                aria-label={activeStore ? `Active workspace: ${activeStore.name}` : "Select a workspace"}
               >
-                <span className="w-5 h-5 rounded bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0">
-                  <Store className="w-2.5 h-2.5 text-sky-300" />
+                <span
+                  className="w-5 h-5 rounded flex items-center justify-center shrink-0 text-[11px]"
+                  style={
+                    activeStore
+                      ? {
+                          background: `${getBrand(activeStore.platform).color}1f`,
+                          border: `1px solid ${getBrand(activeStore.platform).color}40`,
+                        }
+                      : undefined
+                  }
+                  aria-hidden="true"
+                >
+                  {activeStore ? getBrand(activeStore.platform).icon : <Store className="w-2.5 h-2.5 text-sky-300" />}
                 </span>
                 <span className="min-w-0 flex-1 text-[12px] font-semibold text-white/85 truncate text-left">
                   {activeStore?.name ?? "All stores"}
@@ -413,15 +495,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <ChevronDown className="w-3 h-3 text-white/35 shrink-0 group-hover:text-sky-300 transition-colors" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 bg-[#0a0a0f] border-white/10">
+            <DropdownMenuContent align="start" className="w-60 bg-[#0a0a0f] border-white/10">
               <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/60">
                 Workspace
               </DropdownMenuLabel>
               <DropdownMenuItem
-                onSelect={() => setActiveStoreId(null)}
+                onSelect={() => {
+                  setActiveStoreId(null);
+                  setLocation("/");
+                }}
                 className={!activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
               >
-                <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores
+                <Globe className="w-3.5 h-3.5 mr-2 opacity-70" /> All stores · Command Center
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {stores.map((s: any) => {
@@ -429,7 +514,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 return (
                   <DropdownMenuItem
                     key={s.id}
-                    onSelect={() => setActiveStoreId(s.id)}
+                    onSelect={() => {
+                      setActiveStoreId(s.id);
+                      setLocation(`/store/${s.id}`);
+                    }}
                     className={s.id === activeStoreId ? "bg-sky-500/10 text-sky-300" : ""}
                   >
                     <span className="text-sm leading-none mr-2">{brand.icon}</span>
@@ -438,8 +526,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                 );
               })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => setLocation("/storefronts#integrations")}
+                className="text-sky-300"
+              >
+                <Globe className="w-3.5 h-3.5 mr-2" /> Connect another store
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Per-workspace sub-nav — only renders when a store is active
+              AND we're inside a workspace route. Mirrors the header
+              sub-nav but in a sidebar-friendly stack so the operator
+              can hop between workspace surfaces without leaving the
+              sidebar context. */}
+          {activeStoreId && location.startsWith(`/store/${activeStoreId}`) && (
+            <WorkspaceSidebarNav storeId={activeStoreId} location={location} />
+          )}
         </div>
       )}
 
