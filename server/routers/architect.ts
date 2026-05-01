@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -782,13 +782,14 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
     }),
 
   // ─── Competitor Price Scanner ────────────────────────────────────────────
-  competitorPriceScan: protectedProcedure
+  competitorPriceScan: orgProcedure
     .input(z.object({
       storeId: z.number(),
       niche: z.string(),
       productNames: z.array(z.string()).min(1).max(10),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "competitor_price_scan",
