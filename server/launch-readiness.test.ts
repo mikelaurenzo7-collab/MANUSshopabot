@@ -96,15 +96,10 @@ describe("Critical path: Onboarding finish surfaces failures + retries", () => {
   });
 });
 
-describe("Critical path: trend detector launches with niche + platforms", () => {
-  it("Social.tsx threads activeStore.niche + platforms array into the launch payload", () => {
-    const src = read("client/src/pages/Social.tsx");
-    expect(src).toContain("activeStore?.niche");
-    expect(src).toContain('platforms: ["tiktok", "instagram", "twitter"]');
-    // No more empty-input launch
-    expect(src).not.toMatch(/input:\s*\{\s*\}/);
-  });
-});
+// The legacy "Critical path: trend detector launches with niche +
+// platforms" describe block was retired with the standalone /social
+// page (now redirects to /chat). The launch payload contract is still
+// enforced by the workflow router tests.
 
 describe("Manus deployment readiness", () => {
   it("REDIS_URL is required in production; localhost fallback only valid in dev", () => {

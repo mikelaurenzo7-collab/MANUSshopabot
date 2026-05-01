@@ -233,7 +233,7 @@ function QueueFailuresLog() {
               if (jobs.length === 0) return null;
               return (
                 <div key={queue} className="space-y-1.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">
+                  <div className="text-[10px] uppercase tracking-wider text-white/60 font-semibold">
                     {queue === "webhooks" ? "Webhook queue" : "External API queue"} · {jobs.length}
                   </div>
                   {jobs.map((j) => (

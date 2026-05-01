@@ -227,18 +227,19 @@ describe("Sprint 27.5 — design surface", () => {
     expect(src).toContain("<JustLanded />");
   });
 
-  it("bot pages mount the cinematic header + ambient backdrop", async () => {
+  it("cinematic header + ambient backdrop CSS is intact (legacy bot-page mounts removed)", async () => {
+    // The standalone Architect/Merchant/Social pages were retired and now
+    // redirect to /chat. The bot-page-* utility classes still live in
+    // index.css for any future reuse; verify they're defined.
     const fs = await import("fs");
     const path = await import("path");
-    for (const file of ["Architect.tsx", "Merchant.tsx", "Social.tsx"]) {
-      const src = fs.readFileSync(
-        path.resolve(__dirname, "..", "client", "src", "pages", file),
-        "utf-8",
-      );
-      expect(src, `${file} should mount bot-page-ambient`).toContain("bot-page-ambient");
-      expect(src, `${file} should mount bot-page-header`).toContain("bot-page-header");
-      expect(src, `${file} should render bot-page-header-glyph-pulse`).toContain("bot-page-header-glyph-pulse");
-    }
+    const css = fs.readFileSync(
+      path.resolve(__dirname, "..", "client", "src", "index.css"),
+      "utf-8",
+    );
+    expect(css).toContain("bot-page-ambient");
+    expect(css).toContain("bot-page-header");
+    expect(css).toContain("bot-page-header-glyph-pulse");
   });
 });
 

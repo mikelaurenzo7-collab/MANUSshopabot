@@ -49,8 +49,8 @@ export function OrgSwitcher() {
   if (loading && !activeOrg) {
     return (
       <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-white/[0.06] bg-white/[0.02]">
-        <Loader2 className="w-3 h-3 text-white/40 shrink-0 animate-spin" />
-        <span className="text-[11px] text-white/40">Loading orgs…</span>
+        <Loader2 className="w-3 h-3 text-white/60 shrink-0 animate-spin" />
+        <span className="text-[11px] text-white/60">Loading orgs…</span>
       </div>
     );
   }
@@ -107,12 +107,12 @@ export function OrgSwitcher() {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="w-64 bg-[#0a0a0f] border-white/10">
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/60">
             Your organizations
           </DropdownMenuLabel>
 
           {orgs.length === 0 && (
-            <div className="px-2 py-3 text-xs text-white/40">
+            <div className="px-2 py-3 text-xs text-white/60">
               No organizations yet.
             </div>
           )}

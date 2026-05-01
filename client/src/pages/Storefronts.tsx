@@ -103,7 +103,7 @@ export default function StorefrontsPage() {
                 value={t.id}
                 className="tab-trigger-shell group inline-flex items-center gap-1.5 px-3 py-1.5"
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "" : "text-white/40 group-hover:text-white/70"}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "" : "text-white/60 group-hover:text-white/70"}`} />
                 {t.label}
                 {typeof t.count === "number" && t.count > 0 && (
                   <span className={`ml-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded-full ${

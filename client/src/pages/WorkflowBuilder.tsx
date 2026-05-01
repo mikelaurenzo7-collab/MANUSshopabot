@@ -348,7 +348,7 @@ function ConfigPanel({
             type="button"
             onClick={onClose}
             aria-label="Close node inspector"
-            className="w-7 h-7 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded text-white/60 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
@@ -359,7 +359,7 @@ function ConfigPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Step label */}
         <div className="space-y-1.5">
-          <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Step Name</Label>
+          <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Step Name</Label>
           <Input
             value={node.data.label}
             onChange={(e) => onUpdate(node.id, { label: e.target.value })}
@@ -377,7 +377,7 @@ function ConfigPanel({
         {node.data.kind === "llm_analysis" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">System Prompt</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">System Prompt</Label>
               <Textarea
                 value={node.data.config.prompt ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, prompt: e.target.value } })}
@@ -386,7 +386,7 @@ function ConfigPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Output Key</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Output Key</Label>
               <Input
                 value={node.data.config.outputKey ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, outputKey: e.target.value } })}
@@ -400,7 +400,7 @@ function ConfigPanel({
         {node.data.kind === "api_call" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Endpoint</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Endpoint</Label>
               <Select
                 value={node.data.config.endpoint ?? "suppliers.printful.search"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, endpoint: v } })}
@@ -418,7 +418,7 @@ function ConfigPanel({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Query / Keyword</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Query / Keyword</Label>
               <Input
                 value={node.data.config.query ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, query: e.target.value } })}
@@ -431,7 +431,7 @@ function ConfigPanel({
 
         {node.data.kind === "approval_gate" && (
           <div className="space-y-1.5">
-            <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Review Message</Label>
+            <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Review Message</Label>
             <Textarea
               value={node.data.config.message ?? ""}
               onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, message: e.target.value } })}
@@ -444,7 +444,7 @@ function ConfigPanel({
         {node.data.kind === "store_action" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Action</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Action</Label>
               <Select
                 value={node.data.config.action ?? "push_products"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, action: v } })}
@@ -462,7 +462,7 @@ function ConfigPanel({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Product Status</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Product Status</Label>
               <Select
                 value={node.data.config.status ?? "draft"}
                 onValueChange={(v) => onUpdate(node.id, { config: { ...node.data.config, status: v } })}
@@ -482,7 +482,7 @@ function ConfigPanel({
         {node.data.kind === "notification" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Title</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Title</Label>
               <Input
                 value={node.data.config.title ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, title: e.target.value } })}
@@ -491,7 +491,7 @@ function ConfigPanel({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Message</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Message</Label>
               <Textarea
                 value={node.data.config.message ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, message: e.target.value } })}
@@ -505,7 +505,7 @@ function ConfigPanel({
         {node.data.kind === "condition" && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Expression</Label>
+              <Label className="text-[10px] uppercase tracking-widest text-white/60 font-mono">Expression</Label>
               <Input
                 value={node.data.config.expression ?? ""}
                 onChange={(e) => onUpdate(node.id, { config: { ...node.data.config, expression: e.target.value } })}
@@ -762,7 +762,7 @@ export default function WorkflowBuilder() {
           <div className="w-6 h-6 rounded bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-violet-400" />
           </div>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-bold">Workflow Builder</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/60 font-bold">Workflow Builder</span>
         </div>
 
         <div className="h-4 w-px bg-white/[0.07]" />
@@ -800,7 +800,7 @@ export default function WorkflowBuilder() {
 
         <button
           onClick={handleClear}
-          className="flex items-center gap-1.5 h-7 px-3 rounded border border-white/[0.08] bg-white/[0.04] hover:bg-red-500/10 hover:border-red-500/30 text-white/40 hover:text-red-400 text-[11px] font-mono transition-all"
+          className="flex items-center gap-1.5 h-7 px-3 rounded border border-white/[0.08] bg-white/[0.04] hover:bg-red-500/10 hover:border-red-500/30 text-white/60 hover:text-red-400 text-[11px] font-mono transition-all"
         >
           <Trash2 className="w-3 h-3" />
           Clear
@@ -946,12 +946,12 @@ export default function WorkflowBuilder() {
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
                   <div>
                     <h2 className="font-mono text-sm font-bold text-white uppercase tracking-widest">Starter Templates</h2>
-                    <p className="font-mono text-[10px] text-white/40 mt-0.5">Load a pre-built workflow to get started fast</p>
+                    <p className="font-mono text-[10px] text-white/60 mt-0.5">Load a pre-built workflow to get started fast</p>
                   </div>
                   <button
                     onClick={() => setShowTemplates(false)}
                     aria-label="Close templates panel"
-                    className="w-7 h-7 rounded text-white/40 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+                    className="w-7 h-7 rounded text-white/60 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors"
                   >
                     <X className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -967,7 +967,7 @@ export default function WorkflowBuilder() {
                         <Sparkles className="w-3.5 h-3.5 text-violet-400 group-hover:text-violet-300" />
                         <span className="font-mono text-[11px] font-bold text-white uppercase tracking-wide">{tpl.name}</span>
                       </div>
-                      <p className="font-mono text-[10px] text-white/40 leading-relaxed">{tpl.description}</p>
+                      <p className="font-mono text-[10px] text-white/60 leading-relaxed">{tpl.description}</p>
                       <div className="mt-3 flex items-center gap-1 text-[9px] font-mono text-white/25 uppercase tracking-widest">
                         {tpl.nodes.length} steps
                         <ChevronRight className="w-2.5 h-2.5 ml-auto text-violet-400/50 group-hover:text-violet-400 transition-colors" />

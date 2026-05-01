@@ -193,7 +193,7 @@ function ApprovalCard({
             {approval.agentType && <AgentBadge agentType={approval.agentType} />}
             <StatusBadge status={approval.status} />
             {approval.workflowType && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-white/40 border border-white/10">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 text-white/60 border border-white/10">
                 {approval.workflowType}
               </span>
             )}

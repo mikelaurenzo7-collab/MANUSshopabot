@@ -38,7 +38,7 @@ export function EmptyState({
   return (
     <div className={`empty-state ${className ?? ""}`.trim()}>
       <div className="empty-state-icon" aria-hidden="true">
-        {icon ?? <Sparkles className="w-5 h-5 text-white/40" />}
+        {icon ?? <Sparkles className="w-5 h-5 text-white/60" />}
       </div>
       <h3 className="empty-state-text">{title}</h3>
       {description && (

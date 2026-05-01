@@ -104,7 +104,7 @@ export function HandoffMoment({ storeId, storeName, onComplete, onDefer }: Hando
         {/* Close */}
         <button
           onClick={defer}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors"
           aria-label="Close"
         >
           <X className="w-4 h-4" />

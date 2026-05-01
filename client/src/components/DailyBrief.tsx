@@ -118,7 +118,7 @@ export function DailyBrief() {
             <span className="text-emerald-300 font-semibold tabular-nums">${revenueInWindow.toFixed(0)}</span> in 24h
           </span>
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70 transition-colors" />
+        <ChevronDown className="w-3.5 h-3.5 text-white/60 group-hover:text-white/70 transition-colors" />
       </button>
     );
   }
@@ -239,7 +239,7 @@ export function DailyBrief() {
                   ))}
                 </ul>
               ) : total === 0 ? (
-                <p className="text-[11px] text-white/40 italic">Idle in window — no work surfaced.</p>
+                <p className="text-[11px] text-white/60 italic">Idle in window — no work surfaced.</p>
               ) : (
                 <p className="text-[11px] text-white/55">
                   {rollup?.runningCount ?? 0} task{rollup?.runningCount === 1 ? "" : "s"} still running.

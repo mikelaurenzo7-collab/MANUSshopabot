@@ -126,7 +126,7 @@ export default function InviteAccept() {
               </p>
 
               <div className="mt-6 mb-6 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 text-left">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">
                   Your role
                 </p>
                 <p className="text-sm text-white/80 leading-relaxed">

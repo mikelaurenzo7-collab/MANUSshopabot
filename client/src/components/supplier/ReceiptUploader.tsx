@@ -234,7 +234,7 @@ export function ReceiptUploader({ storeId, onPOCreated, onClose }: ReceiptUpload
           <button
             type="button"
             onClick={() => setFile(null)}
-            className="shrink-0 w-7 h-7 rounded-md text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            className="shrink-0 w-7 h-7 rounded-md text-white/60 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
             aria-label="Remove file"
           >
             <X className="h-3.5 h-3.5" />
@@ -296,10 +296,10 @@ export function ReceiptUploader({ storeId, onPOCreated, onClose }: ReceiptUpload
       {/* Line items — editable */}
       <div className="rounded-lg border border-white/[0.06] overflow-hidden">
         <div className="px-3 py-2 bg-white/[0.025] border-b border-white/[0.06] flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
             Line items · {editedItems.length}
           </span>
-          <span className="text-[10px] text-white/40 inline-flex items-center gap-1">
+          <span className="text-[10px] text-white/60 inline-flex items-center gap-1">
             <Pencil className="h-2.5 w-2.5" /> editable before commit
           </span>
         </div>
@@ -363,7 +363,7 @@ export function ReceiptUploader({ storeId, onPOCreated, onClose }: ReceiptUpload
           )}
         </div>
         <div className="px-3 py-2 bg-white/[0.025] border-t border-white/[0.06] flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">PO total</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">PO total</span>
           <span className="text-sm font-bold font-mono text-emerald-300">${(total / 100).toFixed(2)}</span>
         </div>
       </div>

@@ -213,7 +213,7 @@ export default function PluginStore() {
                       }`}
                     >
                       <Plug
-                        className={`h-4 w-4 ${enabled ? "text-emerald-400" : "text-white/40"}`}
+                        className={`h-4 w-4 ${enabled ? "text-emerald-400" : "text-white/60"}`}
                       />
                     </div>
                     <div className="min-w-0">
@@ -241,7 +241,7 @@ export default function PluginStore() {
                       ) : enabled ? (
                         <ToggleRight className="w-5 h-5 text-emerald-400" />
                       ) : (
-                        <ToggleLeft className="w-5 h-5 text-white/40" />
+                        <ToggleLeft className="w-5 h-5 text-white/60" />
                       )}
                     </button>
                     <button
@@ -252,7 +252,7 @@ export default function PluginStore() {
                           name: inst.plugin?.pluginName || `Plugin #${inst.pluginId}`,
                         })
                       }
-                      className="p-1.5 rounded-md text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      className="p-1.5 rounded-md text-white/60 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                       title="Uninstall plugin"
                       aria-label="Uninstall plugin"
                     >

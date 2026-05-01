@@ -119,7 +119,7 @@ function CapabilityCard({
           <div className="min-w-0">
             <div className="text-sm font-heading font-semibold tracking-tight text-white truncate">{label}</div>
             {caps.category && (
-              <div className="text-[10px] text-white/40 capitalize">
+              <div className="text-[10px] text-white/60 capitalize">
                 {caps.category.replace(/_/g, " ")} · {caps.feeStructure}
               </div>
             )}

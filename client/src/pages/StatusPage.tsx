@@ -101,7 +101,7 @@ export default function StatusPage() {
                 {overallCopy.text}
               </h1>
               {lastChecked && (
-                <p className="text-xs text-white/40 mt-1.5 font-mono">
+                <p className="text-xs text-white/60 mt-1.5 font-mono">
                   Updated {lastChecked}
                 </p>
               )}
@@ -154,7 +154,7 @@ export default function StatusPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-white truncate">{s.label}</div>
-                    <div className="text-[11px] text-white/40 font-mono truncate">{s.detail}</div>
+                    <div className="text-[11px] text-white/60 font-mono truncate">{s.detail}</div>
                   </div>
                   <span
                     className={`text-[10px] font-bold uppercase tracking-widest ${
@@ -170,7 +170,7 @@ export default function StatusPage() {
         </div>
 
         {statusQuery.data?.uptimeSeconds !== undefined && (
-          <div className="text-center mt-6 text-xs text-white/40 font-mono">
+          <div className="text-center mt-6 text-xs text-white/60 font-mono">
             Server uptime: {formatUptime(statusQuery.data.uptimeSeconds)}
           </div>
         )}

@@ -2,9 +2,9 @@
  * App.tsx — top-level router.
  *
  * Shell-tab architecture (see `AUDIT_2026_04.md` §4): only the *shell*
- * pages (Home, Architect, Merchant, Social, Communicator, Storefronts,
- * Inbox, Insights, Settings, Workflows, Onboarding, Landing, …) are
- * registered here. Tabbed sub-pages live inside each shell:
+ * pages (Home, Chat, Storefronts, Inbox, Insights, Settings, Workflows,
+ * Onboarding, Landing, …) are registered here. Tabbed sub-pages live
+ * inside each shell:
  *
  * - `Inbox.tsx`       → mounts `Activity.tsx`, `Approvals.tsx`
  * - `Insights.tsx`    → mounts `Analytics.tsx`, `Intelligence.tsx`,
@@ -12,13 +12,15 @@
  * - `Settings.tsx`    → mounts `Profile.tsx`, `Members.tsx`,
  *                       `BotSettings.tsx`, `PlatformHealth.tsx`
  * - `Storefronts.tsx` → mounts `Integrations.tsx`, `PluginStore.tsx`,
- *                       `SupplierPOs.tsx`, `GmailBot.tsx`
+ *                       `SupplierPOs.tsx`
  *
- * Tab pages are imported directly by their parent shell and are
- * therefore *not* lazy-loaded here. Legacy deep links resolve through
- * `Redirect` rules below. When adding a new feature page, decide first
- * whether it deserves a top-level route (rare) or a tab inside an
- * existing shell (default).
+ * The legacy standalone bot pages (Architect / Merchant / Social /
+ * Communicator / GmailBot) were retired — `/architect`, `/merchant`,
+ * `/social`, `/communicator`, and `/gmail-bot` now redirect to `/chat`,
+ * the unified Store Bot surface. Tab pages are imported directly by
+ * their parent shell and are therefore *not* lazy-loaded here. When
+ * adding a new feature page, decide first whether it deserves a
+ * top-level route (rare) or a tab inside an existing shell (default).
  */
 
 import { Toaster } from "@/components/ui/sonner";

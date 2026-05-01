@@ -146,7 +146,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
       {/* Toolbar */}
       <div className="flex flex-col gap-2">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/60 pointer-events-none" />
           <Input
             placeholder="Search keys, values, tags…"
             value={query}
@@ -157,7 +157,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
         <div className="flex gap-2">
           <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as MemoryType | "all")}>
             <SelectTrigger className="flex-1 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
-              <Filter className="w-3.5 h-3.5 mr-1.5 text-white/40 shrink-0" />
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-white/60 shrink-0" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -171,7 +171,7 @@ export function BotMemoryView({ agentType }: BotMemoryViewProps) {
           </Select>
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
             <SelectTrigger className="flex-1 h-9 bg-white/[0.03] border-white/[0.08] text-sm">
-              <ArrowDownAZ className="w-3.5 h-3.5 mr-1.5 text-white/40 shrink-0" />
+              <ArrowDownAZ className="w-3.5 h-3.5 mr-1.5 text-white/60 shrink-0" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

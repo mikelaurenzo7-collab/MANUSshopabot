@@ -53,20 +53,12 @@ describe("ActiveBotWorkflows — inline runner panel", () => {
     expect(src).toContain("return null");
   });
 
-  it("each bot page mounts the inline panel for its own agentType", () => {
-    for (const file of [
-      { path: "client/src/pages/Architect.tsx", agent: '"architect"' },
-      { path: "client/src/pages/Merchant.tsx", agent: '"merchant"' },
-      { path: "client/src/pages/Social.tsx", agent: '"social"' },
-    ]) {
-      const src = read(file.path);
-      expect(src, `${file.path} must import ActiveBotWorkflows`).toContain(
-        'import { ActiveBotWorkflows }',
-      );
-      expect(src, `${file.path} must mount ActiveBotWorkflows agentType=${file.agent}`).toContain(
-        `<ActiveBotWorkflows agentType=${file.agent}`,
-      );
-    }
+  it("the inline panel imports + filters as expected (legacy bot-page mounts removed)", () => {
+    // The standalone Architect/Merchant/Social pages were retired and now
+    // redirect to /chat, so we can no longer assert their `<ActiveBotWorkflows>`
+    // mounts. The component itself is still required to filter by agentType.
+    const src = read("client/src/components/ActiveBotWorkflows.tsx");
+    expect(src).toContain("agentType");
   });
 });
 
@@ -84,20 +76,12 @@ describe("BotRecentWins — last 3 completions strip", () => {
     expect(src).toContain("workflows.active.invalidate");
   });
 
-  it("each bot page mounts BotRecentWins for its own agentType", () => {
-    for (const file of [
-      { path: "client/src/pages/Architect.tsx", agent: '"architect"' },
-      { path: "client/src/pages/Merchant.tsx", agent: '"merchant"' },
-      { path: "client/src/pages/Social.tsx", agent: '"social"' },
-    ]) {
-      const src = read(file.path);
-      expect(src, `${file.path} must import BotRecentWins`).toContain(
-        'import { BotRecentWins }',
-      );
-      expect(src, `${file.path} must mount BotRecentWins agentType=${file.agent}`).toContain(
-        `<BotRecentWins agentType=${file.agent}`,
-      );
-    }
+  it("BotRecentWins component still exposes the agentType prop (legacy bot-page mounts removed)", () => {
+    // Architect/Merchant/Social standalone pages were retired in favor of
+    // the unified /chat surface. We keep the component itself, so just
+    // assert it accepts an agentType filter.
+    const src = read("client/src/components/BotRecentWins.tsx");
+    expect(src).toContain("agentType");
   });
 });
 

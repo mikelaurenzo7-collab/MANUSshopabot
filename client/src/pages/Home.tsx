@@ -70,7 +70,7 @@ const STATUS_CONFIG = {
   running: { icon: <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />, label: "Running", color: "text-amber-400", dot: "bg-amber-400 animate-pulse" },
   ok:      { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />,       label: "Healthy",  color: "text-emerald-400", dot: "bg-emerald-400" },
   error:   { icon: <XCircle className="w-3.5 h-3.5 text-red-400" />,                label: "Error",    color: "text-red-400",     dot: "bg-red-400 animate-pulse" },
-  idle:    { icon: <Clock className="w-3.5 h-3.5 text-white/30" />,                 label: "Idle",     color: "text-white/40",    dot: "bg-white/20" },
+  idle:    { icon: <Clock className="w-3.5 h-3.5 text-white/30" />,                 label: "Idle",     color: "text-white/60",    dot: "bg-white/20" },
 };
 
 const WF_STATUS: Record<string, { color: string; dot: string }> = {
@@ -362,18 +362,18 @@ export default function Home() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-[12px] font-semibold text-white/90 truncate">{store.name}</p>
-                            <p className="text-[10px] font-mono text-white/40 truncate capitalize">{store.platform} · {store.status}</p>
+                            <p className="text-[10px] font-mono text-white/60 truncate capitalize">{store.platform} · {store.status}</p>
                           </div>
                           <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-emerald-400" : "bg-white/20"}`} />
                         </div>
                         {storeMetrics && (
                           <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] flex items-center gap-4">
                             <div>
-                              <p className="text-[10px] text-white/40 font-mono uppercase">Revenue</p>
+                              <p className="text-[10px] text-white/60 font-mono uppercase">Revenue</p>
                               <p className="text-[11px] font-mono text-emerald-400">${((storeMetrics.revenue ?? 0) / 100).toFixed(0)}</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-white/40 font-mono uppercase">Orders</p>
+                              <p className="text-[10px] text-white/60 font-mono uppercase">Orders</p>
                               <p className="text-[11px] font-mono text-white/70">{storeMetrics.orders ?? 0}</p>
                             </div>
                             {(storeMetrics.lowStock ?? 0) > 0 && (
@@ -407,7 +407,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setLocation("/storefronts#integrations")}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/[0.1] bg-transparent py-2.5 text-[11px] text-white/40 hover:text-white/60 hover:border-white/[0.2] transition-all"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/[0.1] bg-transparent py-2.5 text-[11px] text-white/60 hover:text-white/60 hover:border-white/[0.2] transition-all"
                   >
                     <Plus className="w-3.5 h-3.5" /> Connect another store
                   </button>
@@ -456,7 +456,7 @@ function EmptyCard({ icon, title, description, action }: {
       </div>
       <div className="mt-3">
         <p className="text-[12px] font-semibold text-white/75">{title}</p>
-        <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{description}</p>
+        <p className="text-[11px] text-white/60 mt-1 leading-relaxed">{description}</p>
       </div>
       {action && (
         <button

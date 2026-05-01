@@ -181,7 +181,7 @@ export default function Members() {
             <Clock className="w-4 h-4 text-amber-400" aria-hidden="true" />
             <h3 className="text-sm font-heading font-bold tracking-tight text-white">
               Pending invitations
-              <span className="ml-2 text-[10px] font-mono text-white/40">
+              <span className="ml-2 text-[10px] font-mono text-white/60">
                 {pendingQuery.data.filter((i: any) => !i.acceptedAt).length} active
               </span>
             </h3>
@@ -198,7 +198,7 @@ export default function Members() {
                     key={inv.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02]"
                   >
-                    <Mail className="w-3.5 h-3.5 text-white/40 shrink-0" aria-hidden="true" />
+                    <Mail className="w-3.5 h-3.5 text-white/60 shrink-0" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-white truncate">{inv.email}</div>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -207,7 +207,7 @@ export default function Members() {
                         >
                           {inv.role}
                         </span>
-                        <span className="text-[10px] text-white/40 font-mono">
+                        <span className="text-[10px] text-white/60 font-mono">
                           {expired ? (
                             <span className="text-red-400">Expired {expires.toLocaleDateString()}</span>
                           ) : (
@@ -239,7 +239,7 @@ export default function Members() {
           <h3 className="text-sm font-heading font-bold tracking-tight text-white">
             Members
             {membersQuery.data && (
-              <span className="ml-2 text-[10px] font-mono text-white/40">
+              <span className="ml-2 text-[10px] font-mono text-white/60">
                 {membersQuery.data.length}
               </span>
             )}
@@ -278,7 +278,7 @@ export default function Members() {
                     <div className="text-sm font-semibold text-white truncate">
                       {m.userName ?? m.userEmail ?? `User ${m.userId}`}
                     </div>
-                    <div className="text-[11px] text-white/40 font-mono truncate">
+                    <div className="text-[11px] text-white/60 font-mono truncate">
                       {m.userEmail ?? "—"}
                     </div>
                   </div>

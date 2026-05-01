@@ -38,7 +38,7 @@ const NODE_COLORS: Record<string, { border: string; glow: string; dot: string; t
   ok:      { border: "border-emerald-500/40", glow: "shadow-[0_0_12px_rgba(16,185,129,0.15)]", dot: "bg-emerald-400", text: "text-emerald-400" },
   active:  { border: "border-amber-500/40",   glow: "shadow-[0_0_12px_rgba(245,158,11,0.15)]",  dot: "bg-amber-400",  text: "text-amber-400" },
   error:   { border: "border-red-500/40",     glow: "shadow-[0_0_12px_rgba(239,68,68,0.15)]",   dot: "bg-red-400",    text: "text-red-400" },
-  idle:    { border: "border-white/10",       glow: "",                                           dot: "bg-white/20",   text: "text-white/40" },
+  idle:    { border: "border-white/10",       glow: "",                                           dot: "bg-white/20",   text: "text-white/60" },
 };
 
 const CustomNode = ({ data, isConnectable }: any) => {
@@ -274,7 +274,7 @@ export default function InfraTopology() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-white">{selectedNode.data.label}</p>
-                    <p className={`text-[10px] font-mono mt-0.5 ${NODE_COLORS[selectedNode.data.status]?.text ?? "text-white/40"}`}>
+                    <p className={`text-[10px] font-mono mt-0.5 ${NODE_COLORS[selectedNode.data.status]?.text ?? "text-white/60"}`}>
                       {selectedNode.data.value}
                     </p>
                   </div>
@@ -316,7 +316,7 @@ export default function InfraTopology() {
                     ) : (
                       <div className="w-2.5 h-2.5 rounded-full bg-amber-400/60 shrink-0" />
                     )}
-                    <span className="text-[9px] text-white/40 font-mono truncate">{act.title}</span>
+                    <span className="text-[9px] text-white/60 font-mono truncate">{act.title}</span>
                   </div>
                 ))}
               </div>

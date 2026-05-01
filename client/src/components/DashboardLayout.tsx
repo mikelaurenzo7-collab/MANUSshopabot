@@ -282,7 +282,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           className={`relative w-11 h-11 mx-auto flex items-center justify-center rounded-md transition-all duration-200 group ${
             isActive
               ? "bg-sky-500/[0.14] text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22)]"
-              : "text-white/40 hover:text-white/85 hover:bg-white/[0.04]"
+              : "text-white/60 hover:text-white/85 hover:bg-white/[0.04]"
           }`}
         >
           {isActive && <span className="nav-active-bar" aria-hidden="true" />}
@@ -349,7 +349,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         className={`flex items-center min-h-[44px] pl-3 pr-2.5 rounded-md transition-standard group relative ${
           isActive
             ? "bg-gradient-to-r from-sky-500/[0.14] via-sky-500/[0.06] to-transparent text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
-            : "text-white/40 hover:text-white/85 hover:bg-white/[0.045] hover:shadow-premium-sm"
+            : "text-white/60 hover:text-white/85 hover:bg-white/[0.045] hover:shadow-premium-sm"
         }`}
       >
         {isActive && <span className="nav-active-bar" aria-hidden="true" />}
@@ -407,7 +407,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 bg-[#0a0a0f] border-white/10">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/60">
                 Workspace
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -443,8 +443,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         className="w-full mb-3 flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all text-left group"
         data-testid="command-palette-trigger"
       >
-        <Search className="w-3 h-3 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
-        <span className="text-[11px] text-white/40 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
+        <Search className="w-3 h-3 text-white/60 shrink-0 group-hover:text-sky-300 transition-colors" />
+        <span className="text-[11px] text-white/60 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
         <kbd className="kbd-lux">⌘K</kbd>
       </button>
 
@@ -468,7 +468,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         onClick={() => setPaletteOpen(true)}
         title="Search & run (⌘K)"
         aria-label="Open command palette"
-        className="w-9 h-9 mb-2 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all flex items-center justify-center text-white/40 hover:text-sky-300"
+        className="w-9 h-9 mb-2 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all flex items-center justify-center text-white/60 hover:text-sky-300"
       >
         <Search className="w-4 h-4" />
       </button>
@@ -699,7 +699,7 @@ function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void })
           <button
             type="button"
             onClick={onClose}
-            className="w-6 h-6 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            className="w-6 h-6 rounded text-white/60 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
             aria-label="Close"
           >
             <span aria-hidden="true" className="text-base leading-none">×</span>

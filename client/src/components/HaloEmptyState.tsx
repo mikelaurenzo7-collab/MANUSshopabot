@@ -131,7 +131,7 @@ const TONE_STYLES: Record<HaloTone, {
   },
   muted: {
     plate: "bg-white/[0.04] border-white/[0.10]",
-    icon: "text-white/40",
+    icon: "text-white/60",
     glow: "bg-white/[0.06]",
     shadow: "",
     hoverBorder: "hover:border-white/20",

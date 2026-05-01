@@ -149,7 +149,7 @@ export function LiveWorkflowRunner({ workflowId }: { workflowId: number }) {
     return (
       <div className="live-workflow-runner live-workflow-runner--skeleton">
         <div className="flex items-center gap-3">
-          <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+          <Loader2 className="w-4 h-4 animate-spin text-white/60" />
           <span className="text-xs text-white/55">Hydrating workflow…</span>
         </div>
       </div>
