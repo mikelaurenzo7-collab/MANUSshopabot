@@ -871,8 +871,25 @@ export default function Landing() {
             toast.success("Opening checkout in new tab...");
           }
         },
-        onError: (err: any) => {
-          toast.error(err.message || "Failed to create checkout session");
+        onError: (err) => {
+          // Translate raw tRPC / Stripe errors into operator-friendly copy.
+          // The raw `err.message` can include backend stack traces or Stripe
+          // internal details that are scary and unhelpful to the prospect.
+          const raw = (err as { data?: { code?: string }; message?: string }).message ?? "";
+          const code = (err as { data?: { code?: string } }).data?.code;
+          let msg = "Couldn't open checkout. Please try again or email hello@shop-a-bot.app.";
+          if (code === "BAD_REQUEST" && /founder/i.test(raw)) {
+            msg = "Your account already has full access — no checkout needed.";
+          } else if (code === "UNAUTHORIZED") {
+            msg = "Please sign in first, then click the plan again.";
+          } else if (code === "TOO_MANY_REQUESTS") {
+            msg = "Too many attempts. Wait a moment and try again.";
+          } else if (/already.*active/i.test(raw)) {
+            msg = "Your subscription is already active.";
+          } else if (/card/i.test(raw)) {
+            msg = "Card was declined. Try a different payment method.";
+          }
+          toast.error(msg);
         },
       }
     );

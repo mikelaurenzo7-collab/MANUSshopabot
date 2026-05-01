@@ -407,7 +407,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 bg-[#0a0a0f] border-white/10">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/40">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-white/55">
                 Workspace
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -443,8 +443,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         className="w-full mb-3 flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045] hover:border-sky-400/25 transition-all text-left group"
         data-testid="command-palette-trigger"
       >
-        <Search className="w-3 h-3 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
-        <span className="text-[11px] text-white/40 truncate flex-1 group-hover:text-white/70 transition-colors">Search & run…</span>
+        <Search className="w-3 h-3 text-white/55 shrink-0 group-hover:text-sky-300 transition-colors" />
+        <span className="text-[11px] text-white/55 truncate flex-1 group-hover:text-white/85 transition-colors">Search & run…</span>
         <kbd className="kbd-lux">⌘K</kbd>
       </button>
 
@@ -763,7 +763,7 @@ function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void })
           <button
             type="button"
             onClick={onClose}
-            className="w-6 h-6 rounded text-white/40 hover:text-white/85 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+            className="w-6 h-6 rounded text-white/55 hover:text-white/90 hover:bg-white/[0.06] flex items-center justify-center transition-colors"
             aria-label="Close"
           >
             <span aria-hidden="true" className="text-base leading-none">×</span>

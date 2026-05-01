@@ -313,7 +313,13 @@ export function AIChatBox({
           </div>
         ) : (
           <ScrollArea className="h-full">
-            <div className="flex flex-col space-y-5 p-4 pb-2">
+            <div
+              className="flex flex-col space-y-5 p-4 pb-2"
+              role="log"
+              aria-label="Bot conversation"
+              aria-live="polite"
+              aria-atomic="false"
+            >
               {displayMessages.map((message, index) => {
                 const isLastMessage = index === displayMessages.length - 1;
                 const shouldApplyMinHeight =

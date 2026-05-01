@@ -71,11 +71,23 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
 export default function Profile() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: stores, isLoading: storesLoading } = trpc.stores.list.useQuery();
-  const { data: connSummary, isLoading: connLoading } = trpc.connectors.connectionSummary.useQuery();
-  const { data: agentStatus, isLoading: agentLoading } = trpc.dashboard.agentStatus.useQuery();
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery({});
-  const { data: installedPlugins, isLoading: pluginsLoading } = trpc.plugins.myPlugins.useQuery();
+  const storesQuery = trpc.stores.list.useQuery();
+  const connSummaryQuery = trpc.connectors.connectionSummary.useQuery();
+  const agentStatusQuery = trpc.dashboard.agentStatus.useQuery();
+  const metricsQuery = trpc.dashboard.metrics.useQuery({});
+  const installedPluginsQuery = trpc.plugins.myPlugins.useQuery();
+
+  const { data: stores, isLoading: storesLoading } = storesQuery;
+  const { data: connSummary, isLoading: connLoading } = connSummaryQuery;
+  const { data: agentStatus, isLoading: agentLoading } = agentStatusQuery;
+  const { data: metrics, isLoading: metricsLoading } = metricsQuery;
+  const { data: installedPlugins, isLoading: pluginsLoading } = installedPluginsQuery;
+
+  // Surface a single bar when any query failed — operators shouldn't see a
+  // page of empty cards if the backend blipped. The bar lets them retry
+  // without reloading the page (useful on flaky mobile networks).
+  const failedQueries = [storesQuery, connSummaryQuery, agentStatusQuery, metricsQuery, installedPluginsQuery]
+    .filter((q) => q.isError);
 
   const storeList = (stores as any[]) || [];
   const totalTasks = agentStatus?.reduce((sum: number, s: any) => sum + Number(s.total || 0), 0) || 0;
@@ -89,6 +101,29 @@ export default function Profile() {
       <div className="light-leak-blue" style={{top: '5%', left: '10%'}} aria-hidden="true" />
       <div className="light-leak-cyan" style={{top: '50%', right: '5%'}} aria-hidden="true" />
     <div className="space-y-4 p-3 max-w-4xl mx-auto page-enter">
+      {failedQueries.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/25 bg-red-500/[0.05] px-4 py-3 flex items-center gap-3"
+        >
+          <span className="text-[11px] font-bold uppercase tracking-widest text-red-400 shrink-0">
+            Profile data unavailable
+          </span>
+          <span className="text-[11px] text-white/60 truncate flex-1">
+            {failedQueries.length === 1
+              ? "One section failed to load."
+              : `${failedQueries.length} sections failed to load.`}{" "}
+            Check your connection or retry.
+          </span>
+          <button
+            type="button"
+            onClick={() => failedQueries.forEach((q) => q.refetch())}
+            className="shrink-0 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:border-sky-500/30 hover:text-sky-300 transition-all"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* Profile Header */}
       <div className="flex items-start gap-4">
         <Avatar className="h-14 w-14 border-2 border-primary/30 shadow-[0_0_20px_rgba(157,78,221,0.2)]">

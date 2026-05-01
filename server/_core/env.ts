@@ -1,3 +1,31 @@
+/**
+ * Environment configuration + boot-time validation.
+ *
+ * MANUS SYNC SAFETY (please read before tightening any rule below):
+ *
+ *   1. JWT_SECRET length is `warn`-only. MANUS auto-injects its session
+ *      secret late and it can be shorter than the 32-char OpenSSL norm.
+ *      Promoting this to `fatal` will brick every Manus deploy.
+ *
+ *   2. ANTHROPIC_API_KEY, STRIPE_*, SENDGRID_*, and every social/commerce
+ *      OAuth credential are OPTIONAL. The app degrades gracefully when
+ *      they're absent (feature is hidden, mutation throws PRECONDITION_
+ *      FAILED, etc.). Keep these in RECOMMENDED_VARS — never REQUIRED.
+ *
+ *   3. The only truly fatal vars are DATABASE_URL, JWT_SECRET (presence,
+ *      not length), and ALLOWED_ORIGINS in production. Anything else
+ *      that matters in prod (STRIPE_WEBHOOK_SECRET, encryption key)
+ *      enforces itself at the use site so a missing value fails the
+ *      specific operation, not the entire boot.
+ *
+ *   4. New env vars: add them as `process.env.X ?? ""` here, list them
+ *      in RECOMMENDED_VARS if absence breaks a feature, and document
+ *      them in .env.example. Do NOT add them to REQUIRED_VARS unless
+ *      the server cannot serve a single request without them.
+ *
+ * See MANUS_SYNC.md §"Why Manus has been burning credits on syncs" for
+ * the historical incidents this file is shaped around.
+ */
 import { logger } from "./logger";
 
 export const ENV = {
