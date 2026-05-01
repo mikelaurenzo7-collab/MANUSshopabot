@@ -60,7 +60,7 @@ export default function InsightsPage() {
     <div className="page-enter h-full overflow-y-auto">
       <PageHeader
         icon={<BarChart3 className="h-4 w-4" />}
-        title="Insights"
+        title="Analytics"
         subtitle="Per-store analytics and cross-store / market intelligence"
         accent="emerald"
         flushBottom

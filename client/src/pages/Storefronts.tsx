@@ -86,7 +86,7 @@ export default function StorefrontsPage() {
     <div className="page-enter h-full overflow-y-auto">
       <PageHeader
         icon={<Globe className="h-4 w-4" />}
-        title="Storefronts & Channels"
+        title="Integrations"
         subtitle="Stores, plugins, suppliers, and tools — everything connected to your operation"
         accent="cyan"
         flushBottom
