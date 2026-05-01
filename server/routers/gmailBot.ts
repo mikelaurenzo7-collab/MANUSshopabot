@@ -4,7 +4,7 @@
  * for customer communication and email marketing.
  */
 
-import { router, orgProcedure, protectedProcedure } from "../_core/trpc";
+import { router, orgProcedure, protectedProcedure, llmRateLimit } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSocialAccountsByPlatformForOrg } from "../db";
@@ -254,6 +254,7 @@ export const gmailBotRouter = router({
    * Generate email response using LLM
    */
   generateResponse: protectedProcedure
+    .use(llmRateLimit)
     .input(z.object({ emailBody: z.string(), tone: z.enum(["professional", "friendly", "formal"]).default("professional") }))
     .mutation(async ({ input }) => {
       const response = await invokeLLM({

@@ -14,7 +14,7 @@
  */
 
 import { z } from "zod";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { isFounderEmail } from "../_core/founder";
 import { invokeLLM } from "../_core/llm";
 import { getRenderedStoreContext } from "../utils/userContext";
@@ -479,6 +479,7 @@ export const chatRouter = router({
    * and will report back what it actually executed.
    */
   message: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       // `store` is the canonical UI path. Legacy bot values remain accepted
       // so older bookmarks, tests, and embedded callers do not break while
