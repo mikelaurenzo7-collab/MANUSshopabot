@@ -263,10 +263,10 @@ export default function IntegrationsPage() {
   };
 
   const tabs = [
-    { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
     { id: "stores" as const, label: "My Stores", icon: <Store className="w-3.5 h-3.5" />, count: stores?.length || 0 },
     { id: "social" as const, label: "Social Accounts", icon: <Share2 className="w-3.5 h-3.5" />, count: socialAccounts?.length || 0 },
     { id: "tools" as const, label: "Tools", icon: <Wrench className="w-3.5 h-3.5" />, count: connectedTools?.length || 0 },
+    { id: "connect" as const, label: "Connect New", icon: <Plus className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -282,9 +282,9 @@ export default function IntegrationsPage() {
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {summary && (
             <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-2 sm:px-3 py-2 overflow-x-auto whitespace-nowrap mobile-scroll-hidden">
-              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400 shrink-0" /> {summary.credentials} active</span>
-              {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400 shrink-0" /> {summary.stores} warning</span>}
-              {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400 shrink-0" /> {summary.socialAccounts} error</span>}
+              <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400 shrink-0" /> {summary.stores} stores</span>
+              <span className="flex items-center gap-1"><Plug className="w-3 h-3 text-emerald-400 shrink-0" /> {summary.credentials} platforms</span>
+              <span className="flex items-center gap-1"><Share2 className="w-3 h-3 text-violet-400 shrink-0" /> {summary.socialAccounts} social</span>
             </div>
           )}
         </div>
@@ -940,7 +940,19 @@ export default function IntegrationsPage() {
 
       {/* StoreView Slide-Over */}
       {selectedStoreId !== null && (
-        <Suspense fallback={<div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"><Loader2 className="w-8 h-8 text-sky-400 animate-spin" /></div>}>
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-stretch justify-end">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedStoreId(null)} />
+            <div className="relative w-full max-w-3xl bg-slate-950 border-l border-white/10 flex flex-col shadow-2xl overflow-hidden animate-pulse">
+              <div className="h-16 border-b border-white/8 bg-white/[0.03]" />
+              <div className="flex-1 p-6 space-y-4">
+                <div className="h-4 bg-white/[0.06] rounded w-1/2" />
+                <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+                <div className="h-4 bg-white/[0.06] rounded w-1/3" />
+              </div>
+            </div>
+          </div>
+        }>
           <StoreView storeId={selectedStoreId} onClose={() => setSelectedStoreId(null)} />
         </Suspense>
       )}

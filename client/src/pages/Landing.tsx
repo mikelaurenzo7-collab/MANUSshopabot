@@ -573,7 +573,7 @@ function OutcomesStrip() {
           {rows.map((row) => (
             <div
               key={row.before.label}
-              className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_1fr] gap-3 sm:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 sm:py-3"
+              className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_1fr] gap-3 md:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 md:py-3"
             >
               <div
                 className="flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
@@ -585,7 +585,7 @@ function OutcomesStrip() {
               >
                 <row.icon className="w-4 h-4" />
               </div>
-              <div className="sm:py-1">
+              <div className="md:py-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">
                   Before
                 </p>
@@ -596,9 +596,9 @@ function OutcomesStrip() {
                   {row.before.lead}
                 </p>
               </div>
-              <ArrowRight className="hidden sm:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
+              <ArrowRight className="hidden md:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
               <div
-                className="sm:py-1 sm:border-l sm:pl-4 pt-3 mt-1 border-t sm:border-t-0 sm:mt-0 sm:pt-1"
+                className="md:py-1 md:border-l md:pl-4 pt-3 mt-1 border-t md:border-t-0 md:mt-0 md:pt-1"
                 style={{
                   borderLeftColor: `rgba(${row.rgb}, 0.18)`,
                   borderTopColor: `rgba(${row.rgb}, 0.18)`,
