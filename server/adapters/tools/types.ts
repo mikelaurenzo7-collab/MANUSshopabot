@@ -28,7 +28,8 @@ export type ToolCategory =
   | "fulfillment"   // Printful, Printify
   | "reviews"       // Judge.me, Yotpo
   | "support"       // Gorgias, Zendesk
-  | "analytics";    // GA4, Triple Whale
+  | "analytics"     // GA4, Triple Whale
+  | "research";     // Firecrawl, Tavily — gives the agent web data
 
 export interface ToolCredentials {
   /** Tool identifier — must match the registry key. */
@@ -125,4 +126,30 @@ export interface SupportCapabilities {
 /** Analytics (GA4) — used by all three bots. */
 export interface AnalyticsCapabilities {
   runReport(credentials: ToolCredentials, input: { propertyId: string; startDate: string; endDate: string; metrics: string[]; dimensions?: string[] }): Promise<{ rows: Array<Record<string, string | number>> }>;
+}
+
+/** Web scraping (Firecrawl) — used by all three bots to ground LLM
+ *  reasoning in real page content. */
+export interface ScrapeResult {
+  /** The URL the user asked to scrape (after schema normalisation). */
+  url: string;
+  /** LLM-ready markdown, trimmed to the adapter's max-bytes budget. */
+  markdown: string;
+  /** True when the scrape was longer than the budget and got cut. */
+  truncated: boolean;
+  title: string | null;
+  description: string | null;
+  /** HTTP status the scraper observed for the underlying fetch. */
+  statusCode: number | null;
+  /** Vendor-reported source URL after redirects (often differs from
+   *  the input on sites that 302 to a canonical product page). */
+  sourceUrl: string;
+}
+
+export interface ScrapeCapabilities {
+  scrapeUrl(
+    credentials: ToolCredentials,
+    url: string,
+    options?: { onlyMainContent?: boolean; formats?: Array<"markdown" | "html"> },
+  ): Promise<ScrapeResult>;
 }

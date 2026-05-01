@@ -54,6 +54,7 @@ This guide documents the API credentials needed for every platform integration s
 | Tools | Postscript | API key (Bearer) | live | §3.6 |
 | Tools | Judge.me | API key | live | §3.7 |
 | Tools | Gorgias | Key (HTTP Basic) | live | §3.8 |
+| Tools | Firecrawl | API key (Bearer) | live | §3.9 |
 
 Section numbers below use the same scheme; everything previously in this
 file is preserved with its original wording.
@@ -366,10 +367,11 @@ existing connectors router (`SOCIAL_PLATFORMS.snapchat` in
 
 ---
 
-## Tool Integrations (8 total)
+## Tool Integrations (9 total)
 
-Tool integrations cover analytics, ESPs, fulfillment, and CX. Every adapter
-in `server/adapters/tools/` is live; only credentials are required.
+Tool integrations cover analytics, ESPs, fulfillment, CX, and research.
+Every adapter in `server/adapters/tools/` is live; only credentials are
+required.
 
 ### 3.1. Google Analytics 4
 - **Adapter**: `server/adapters/tools/googleAnalyticsAdapter.ts`
@@ -411,6 +413,22 @@ in `server/adapters/tools/` is live; only credentials are required.
 - **Adapter**: `server/adapters/tools/gorgiasAdapter.ts`
 - **Auth**: HTTP Basic with email + API key.
 - **Setup**: Gorgias admin → Settings → REST API → generate a key tied to a service account.
+
+### 3.9. Firecrawl (Web data → LLM)
+- **Adapter**: `server/adapters/tools/firecrawlAdapter.ts`
+- **Auth**: API key (Bearer). Set `FIRECRAWL_API_KEY` in Manus secrets.
+- **Setup**: Sign up at https://firecrawl.dev → API keys → copy. Free tier: 500 scrapes/month, paid plans scale linearly.
+- **What it powers**: the Builder Bot's `scout_url` agent tool. When the
+  agent has a concrete URL (a competitor product page, a vendor's
+  catalog, a Shopify storefront), it scrapes the page into LLM-ready
+  markdown so the bot reasons over real content instead of imagined
+  positioning.
+- **Graceful degradation**: when `FIRECRAWL_API_KEY` is unset, the
+  `scout_url` tool returns a structured "service unavailable" response
+  and the agent loop reasons from its other (synthetic) tools. No
+  crash, no hard dependency.
+- **Health check**: hits `/v1/team/credit-usage` (free, no credits
+  consumed). Surfaces remaining credit count in the Integrations UI.
 
 ---
 
