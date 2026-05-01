@@ -12,6 +12,7 @@ import {
   getActiveWorkflowsByOrg, getWorkflowCountsByOrg, getPendingApprovalStepsByOrg,
   getUserByOpenId,
   getStoresByOrg, getStoreCountForOrg, getProductCountForOrg,
+  upsertWorkflowDraft, getWorkflowDraft, listWorkflowDraftsForOrg, deleteWorkflowDraft,
 } from "../db";
 import { launchWorkflow, resumeWorkflow, cancelWorkflow } from "../engine/workflowEngine";
 
@@ -71,6 +72,71 @@ export const workflowRouter = router({
         { orgId: ctx.org.id },
       );
       return { workflowId };
+    }),
+
+  // ─── Workflow drafts (server-side persistence) ─────────────────────────
+  // Replaces the legacy localStorage-only flow that didn't follow the
+  // operator across devices. Drafts are org-scoped so a teammate's draft
+  // is invisible to another tenant. The four-procedure surface:
+  //   saveDraft  — upsert (insert or update by id, with org-tenancy gate)
+  //   getDraft   — read by id, returns null on miss/cross-org
+  //   listDrafts — all drafts for the active org, newest first
+  //   deleteDraft — by id, no-op when the row doesn't belong to this org
+  saveDraft: orgProcedure
+    .input(z.object({
+      id: z.number().int().positive().optional(),
+      name: z.string().min(1).max(255),
+      agentType: z.enum(["architect", "merchant", "social"]),
+      // Each step is the WorkflowBuilder canvas shape:
+      // `{ order, type, title, config }`. We accept it verbatim and
+      // round-trip it as JSON — the canvas is the source of truth
+      // for the schema and we don't want to rev the column on UI tweaks.
+      steps: z.array(z.object({
+        order: z.number().int().nonnegative(),
+        type: z.string().min(1).max(64),
+        title: z.string().max(500),
+        config: z.record(z.string(), z.any()).optional(),
+      })),
+      storeId: z.number().int().positive().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // If the draft is scoped to a specific store, verify ownership
+      // before writing — otherwise an attacker who guesses a foreign
+      // storeId could plant a draft pointing into another tenant.
+      if (typeof input.storeId === "number") {
+        await requireStoreInOrg(input.storeId, ctx.org.id);
+      }
+      const id = await upsertWorkflowDraft({
+        id: input.id,
+        orgId: ctx.org.id,
+        userId: ctx.user.id,
+        storeId: input.storeId,
+        name: input.name,
+        agentType: input.agentType,
+        steps: input.steps as any,
+      });
+      return { id, savedAt: new Date() } as const;
+    }),
+
+  getDraft: orgProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const draft = await getWorkflowDraft(input.id, ctx.org.id);
+      if (!draft) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Draft not found" });
+      }
+      return draft;
+    }),
+
+  listDrafts: orgProcedure.query(async ({ ctx }) => {
+    return listWorkflowDraftsForOrg(ctx.org.id);
+  }),
+
+  deleteDraft: orgProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteWorkflowDraft(input.id, ctx.org.id);
+      return { success: true } as const;
     }),
 
   // ─── List workflows ────────────────────────────────────────────────────

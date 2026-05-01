@@ -45,6 +45,7 @@ import {
   orgMembers, InsertOrgMember, OrgMember,
   emailDeliveryEvents, InsertEmailDeliveryEvent,
   orgInvitations, InsertOrgInvitation, OrgInvitation,
+  workflowDrafts, InsertWorkflowDraft, WorkflowDraft,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { decryptSecret, encryptSecret } from "./_core/secrets";
@@ -2468,4 +2469,101 @@ export async function getPendingInvitationsForOrg(orgId: number): Promise<OrgInv
     .from(orgInvitations)
     .where(eq(orgInvitations.orgId, orgId))
     .orderBy(desc(orgInvitations.createdAt));
+}
+
+// ─── Workflow drafts ─────────────────────────────────────────────────────
+// Server-side persistence for the WorkflowBuilder canvas. Replaces the
+// localStorage-only flow that didn't follow the operator across devices.
+
+/**
+ * Upsert a workflow draft. If `id` is provided AND the row belongs to
+ * the calling org, the existing row is updated; otherwise a new row is
+ * inserted. Returns the canonical id of the saved draft so the client
+ * can hold a stable reference for subsequent saves.
+ *
+ * The org check is critical: an attacker who guesses a draft id from
+ * another tenant must not be able to overwrite it via the upsert path.
+ * The router's `orgProcedure` enforces caller authentication; this
+ * function adds the per-row tenancy guard.
+ */
+export async function upsertWorkflowDraft(
+  draft: Omit<InsertWorkflowDraft, "createdAt" | "updatedAt"> & { id?: number },
+): Promise<number> {
+  const db = await requireDb();
+  if (draft.id) {
+    // Update path — verify ownership before writing.
+    const existing = await db
+      .select({ id: workflowDrafts.id, orgId: workflowDrafts.orgId })
+      .from(workflowDrafts)
+      .where(eq(workflowDrafts.id, draft.id))
+      .limit(1);
+    if (existing[0] && existing[0].orgId === draft.orgId) {
+      await db
+        .update(workflowDrafts)
+        .set({
+          name: draft.name,
+          agentType: draft.agentType,
+          steps: draft.steps,
+          storeId: draft.storeId ?? null,
+        })
+        .where(eq(workflowDrafts.id, draft.id));
+      return draft.id;
+    }
+    // The id was supplied but doesn't belong to this org. Fall through
+    // to the insert path so we never overwrite another tenant's row.
+  }
+  const result = await db.insert(workflowDrafts).values({
+    orgId: draft.orgId,
+    userId: draft.userId,
+    storeId: draft.storeId ?? null,
+    name: draft.name,
+    agentType: draft.agentType,
+    steps: draft.steps,
+  });
+  return Number((result as any)[0]?.insertId ?? 0);
+}
+
+/** Read a single draft by id, scoped to the caller's org. Returns
+ *  `null` when the draft doesn't exist OR belongs to a different org. */
+export async function getWorkflowDraft(
+  id: number,
+  orgId: number,
+): Promise<WorkflowDraft | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(workflowDrafts)
+    .where(eq(workflowDrafts.id, id))
+    .limit(1);
+  const row = rows[0];
+  if (!row || row.orgId !== orgId) return null;
+  return row;
+}
+
+/** All drafts owned by the caller's org, most-recently-updated first. */
+export async function listWorkflowDraftsForOrg(orgId: number): Promise<WorkflowDraft[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(workflowDrafts)
+    .where(eq(workflowDrafts.orgId, orgId))
+    .orderBy(desc(workflowDrafts.updatedAt));
+}
+
+/** Delete a draft by id, only when the row belongs to the caller's org. */
+export async function deleteWorkflowDraft(id: number, orgId: number): Promise<void> {
+  const db = await requireDb();
+  // Two-step delete: read first to confirm tenancy, then delete by id.
+  // The single-statement alternative (DELETE ... WHERE id=? AND orgId=?)
+  // is faster but harder to audit — and this path runs once on a
+  // human-driven UI click, so the extra round-trip is fine.
+  const rows = await db
+    .select({ id: workflowDrafts.id, orgId: workflowDrafts.orgId })
+    .from(workflowDrafts)
+    .where(eq(workflowDrafts.id, id))
+    .limit(1);
+  if (!rows[0] || rows[0].orgId !== orgId) return;
+  await db.delete(workflowDrafts).where(eq(workflowDrafts.id, id));
 }

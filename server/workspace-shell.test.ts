@@ -281,17 +281,22 @@ describe("Workspace shell contract", () => {
     expect(src).toContain('aria-label="Filter memory by type"');
   });
 
-  it("WorkflowBuilder save toast tells the truth about the localStorage-only persistence", () => {
+  it("WorkflowBuilder save now persists to the backend, not localStorage", () => {
     const src = read("client/src/pages/WorkflowBuilder.tsx");
-    // Honest copy: the toast says explicitly "on this device" and the
-    // description warns that backend sync isn't wired yet. The
-    // previous "Workflow saved as draft" message implied server
-    // persistence and was a refund-trigger when operators discovered
-    // their drafts didn't follow them across devices.
-    expect(src).toContain('"Draft saved on this device"');
-    expect(src).toContain("Backend draft sync isn't wired yet");
-    // The misleading message should be gone.
-    expect(src).not.toContain('toast.success("Workflow saved as draft")');
+    // The previous round shipped honest "saved on this device" copy
+    // because the backend draft endpoint hadn't landed. Now it has —
+    // saveDraft is the wire path, the toast says "Synced to your
+    // account", and the localStorage write is gone.
+    expect(src).toContain("trpc.workflows.saveDraft.useMutation");
+    expect(src).toMatch(/saveDraftMutation\.mutate\(\{[\s\S]+?id:\s*draftId\s*\?\?\s*undefined/);
+    expect(src).toContain('"Draft saved"');
+    expect(src).toContain("Synced to your account");
+    // Honest-warning copy from the previous round should no longer
+    // appear — the warning was tied to localStorage-only behavior.
+    expect(src).not.toContain('"Draft saved on this device"');
+    expect(src).not.toContain("Backend draft sync isn't wired yet");
+    // localStorage is no longer the source of truth for drafts.
+    expect(src).not.toContain('localStorage.setItem("workflow_builder_draft"');
   });
 
   it("April 2026 audit docs carry HISTORICAL ARCHIVE banners pointing to AGENTS.md", () => {

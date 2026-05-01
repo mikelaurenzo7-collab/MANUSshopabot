@@ -211,6 +211,13 @@
       "when": 1777671261541,
       "tag": "0029_steep_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1777672103016,
+      "tag": "0030_safe_warlock",
+      "breakpoints": true
     }
   ]
 }
