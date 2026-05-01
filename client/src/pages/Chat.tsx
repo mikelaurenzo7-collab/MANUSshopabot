@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useIsInsideWorkspaceShell } from "@/components/workspace/WorkspaceShell";
 import {
   Bot,
   Brain,
@@ -254,9 +255,17 @@ export default function Chat() {
     });
   }
 
+  // When this page is rendered inside a `<WorkspaceShell>`, the shell
+  // already shows the store identity, the platform pill, the live
+  // status, and the workspace switcher — so we suppress the page-local
+  // header to avoid duplicated chrome. Outside a workspace (e.g. the
+  // standalone /chat route), the local header still renders.
+  const insideWorkspace = useIsInsideWorkspaceShell();
+
   return (
     <div className="page-enter flex h-full min-h-0 flex-col bg-terminal-bg/70">
-      {/* ── Header ── */}
+      {/* ── Header (suppressed inside a workspace shell) ── */}
+      {!insideWorkspace && (
       <div className="shrink-0 border-b border-white/[0.06] relative overflow-hidden">
         {/* Ambient gradient behind header */}
         <div className="absolute inset-0 bg-gradient-to-r from-sky-500/[0.06] via-transparent to-cyan-500/[0.04] pointer-events-none" />
@@ -334,6 +343,7 @@ export default function Chat() {
           </div>
         </div>
       </div>
+      )}
 
       <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* Chat panel — always visible; never hidden behind the results panel on mobile */}
