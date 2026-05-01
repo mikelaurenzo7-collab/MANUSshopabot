@@ -115,7 +115,43 @@ The preflight script enforces all of these.
 
 ---
 
-## 7. Scope discipline
+## 7. Product model — per-store workspaces
+
+The product model is **"every connected store is its own workspace"**.
+When you build new operator-facing surfaces, default to mounting them
+inside the workspace shell, not as cross-store sidebar pages.
+
+- Per-store routes live under `/store/:storeId/*`. The
+  `WorkspaceShell` (`client/src/components/workspace/WorkspaceShell.tsx`)
+  wraps every workspace page with: a platform-tinted breadcrumb +
+  identity row, a workspace sub-nav strip, and a context provider that
+  broadcasts `inside: true` to nested components.
+- Existing surfaces: Overview · Chat · Workflows · Builder · Connectors ·
+  Memory · Instructions · Insights · Activity (9 tabs).
+- The shell self-syncs the URL `:storeId` into
+  `WorkspaceContext.activeStoreId`, so existing context-scoped tRPC
+  queries Just Work without the page being rewritten.
+- Pages rendered inside the shell can call
+  `useIsInsideWorkspaceShell()` / `useWorkspaceShellStoreId()` to
+  detect nesting and (a) suppress redundant page chrome and (b)
+  scope queries to THIS store. `Workflows.tsx` is the canonical
+  example — it passes `storeId` into `workflows.list/active/counts`
+  only when nested.
+- New per-store surfaces should add an entry to `TAB_REGISTRY` in
+  `WorkspaceShell.tsx`, mount the page wrapper at
+  `/store/:storeId/<route>` in `App.tsx`, and add a `WorkspaceSidebarNav`
+  link in `DashboardLayout.tsx`.
+- `server/workspace-shell.test.ts` pins the surface contract with
+  grep-style regression assertions. When you add a new tab, extend
+  the route-list assertion.
+- Operator-facing copy uses **Store Bot** as the unified bot name.
+  The legacy `architect / merchant / social` triad is still the
+  internal `agentType` enum but should not appear in operator-facing
+  notifications, page subtitles, or empty-state copy.
+
+---
+
+## 8. Scope discipline
 
 - Make the smallest change that solves the task. Do not refactor unrelated
   files.
@@ -126,7 +162,7 @@ The preflight script enforces all of these.
 
 ---
 
-## 8. PR description checklist
+## 9. PR description checklist
 
 Every AI-authored PR description should answer:
 

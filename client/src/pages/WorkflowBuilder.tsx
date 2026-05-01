@@ -709,6 +709,12 @@ export default function WorkflowBuilder() {
   };
 
   // ── Save + Launch ──────────────────────────────────────────────────────────
+  // Honest save UX: the backend draft mutation hasn't shipped yet, so we
+  // persist to localStorage on this device only. The toast says exactly
+  // that — operators who switch browsers/devices need to know their
+  // draft will not follow them. Once the server-side draft endpoint
+  // lands, swap this for the trpc.workflows.saveDraft mutation and lift
+  // the warning. (Tracked in the production-readiness audit roadmap.)
   const handleSave = async () => {
     if (nodes.length === 0) { toast.error("Add at least one step before saving"); return; }
     setSaving(true);
@@ -720,11 +726,17 @@ export default function WorkflowBuilder() {
       title: n.data.label,
       config: n.data.config,
     }));
-    // Store as JSON in localStorage as a draft (backend save coming in Phase 4)
     const draft = { name: workflowName, agentType, steps, savedAt: Date.now() };
-    localStorage.setItem("workflow_builder_draft", JSON.stringify(draft));
-    setSaving(false);
-    toast.success("Workflow saved as draft");
+    try {
+      localStorage.setItem("workflow_builder_draft", JSON.stringify(draft));
+      setSaving(false);
+      toast.success("Draft saved on this device", {
+        description: "Backend draft sync isn't wired yet — switch devices and you'll need to rebuild.",
+      });
+    } catch {
+      setSaving(false);
+      toast.error("Couldn't save draft — local storage may be full.");
+    }
   };
 
   const handleLaunch = () => {

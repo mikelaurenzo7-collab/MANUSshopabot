@@ -237,6 +237,75 @@ describe("Workspace shell contract", () => {
     expect(src).toMatch(/active === last/);
   });
 
+  it("Workspace shell strip implements the WAI-ARIA tabs pattern (manual activation)", () => {
+    const src = read("client/src/components/workspace/WorkspaceShell.tsx");
+    // Tab strip declares role="tablist" + aria-label.
+    expect(src).toContain('role="tablist"');
+    expect(src).toContain('aria-label="Workspace sections"');
+    // Each tab carries id + aria-controls binding to the body's id.
+    expect(src).toContain('id={`workspace-tab-${t.id}`}');
+    expect(src).toContain('aria-controls="workspace-panel"');
+    // Body container declares role="tabpanel" + aria-labelledby pointing
+    // back at the active tab id (tablist/tabpanel relationship).
+    expect(src).toContain('role="tabpanel"');
+    expect(src).toContain('aria-labelledby={`workspace-tab-${activeTab}`}');
+    expect(src).toContain('id="workspace-panel"');
+    // Roving tabindex: only the active tab is in the tab sequence.
+    expect(src).toContain("tabIndex={active ? 0 : -1}");
+    // Arrow keys + Home/End move focus among tabs.
+    expect(src).toMatch(/key === "ArrowRight"/);
+    expect(src).toMatch(/key === "ArrowLeft"/);
+    expect(src).toMatch(/key === "Home"/);
+    expect(src).toMatch(/key === "End"/);
+  });
+
+  it("WorkspaceMemory strictly filters memory by relatedStoreId — no untagged bleed", () => {
+    const src = read("client/src/pages/WorkspaceMemory.tsx");
+    // The audit identified that the previous "include if untagged"
+    // filter leaked memory recorded against the legacy global agent
+    // profile (or a sibling store) onto this workspace's memory list.
+    expect(src).toMatch(/m\.relatedStoreId === storeId/);
+    // The old loose predicate should be gone.
+    expect(src).not.toContain("!m.relatedStoreId || m.relatedStoreId === storeId");
+  });
+
+  it("WorkspaceMemory type-filter buttons expose aria-pressed for screen readers", () => {
+    const src = read("client/src/pages/WorkspaceMemory.tsx");
+    // Both the "All" reset and the per-type filter buttons declare
+    // aria-pressed so AT can convey the selected toggle state.
+    expect(src).toMatch(/aria-pressed=\{selectedType === null\}/);
+    expect(src).toMatch(/aria-pressed=\{selectedType === t\}/);
+    // Wrapper has role="group" + aria-label so the button cluster
+    // reads as a grouped filter, not a bag of disconnected toggles.
+    expect(src).toContain('role="group"');
+    expect(src).toContain('aria-label="Filter memory by type"');
+  });
+
+  it("WorkflowBuilder save toast tells the truth about the localStorage-only persistence", () => {
+    const src = read("client/src/pages/WorkflowBuilder.tsx");
+    // Honest copy: the toast says explicitly "on this device" and the
+    // description warns that backend sync isn't wired yet. The
+    // previous "Workflow saved as draft" message implied server
+    // persistence and was a refund-trigger when operators discovered
+    // their drafts didn't follow them across devices.
+    expect(src).toContain('"Draft saved on this device"');
+    expect(src).toContain("Backend draft sync isn't wired yet");
+    // The misleading message should be gone.
+    expect(src).not.toContain('toast.success("Workflow saved as draft")');
+  });
+
+  it("AGENTS.md documents the per-store workspace product model", () => {
+    const src = read("AGENTS.md");
+    // After the workspace pivot (#82), AI agents reading AGENTS.md need
+    // to learn the product model so they don't ship cross-store sidebar
+    // pages instead of workspace-scoped surfaces.
+    expect(src).toContain("per-store workspaces");
+    expect(src).toContain("/store/:storeId/*");
+    expect(src).toContain("WorkspaceShell");
+    expect(src).toContain("useIsInsideWorkspaceShell");
+    expect(src).toContain("Store Bot");
+  });
+
   it("WorkspaceOverview wires QueryErrorBanner across all 5 background queries", () => {
     const src = read("client/src/pages/WorkspaceOverview.tsx");
     // The audit flagged this page (5 queries, no isError UI) as a

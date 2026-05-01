@@ -63,8 +63,15 @@ export default function WorkspaceMemory() {
   );
   const memory = (memoryQuery.data as any[]) ?? [];
 
+  // STRICT per-store filter: only show entries tagged for THIS store.
+  // The previous "include if untagged" branch leaked memory recorded
+  // on a different store (or against the legacy global agent profile
+  // before per-store tagging shipped) onto this workspace's memory
+  // list, breaking the page's "Bot memory · {store name}" promise.
+  // Untagged + cross-store entries belong on a future global memory
+  // viewer, not on a per-store surface.
   const memoryForStore = useMemo(
-    () => memory.filter((m) => !m.relatedStoreId || m.relatedStoreId === storeId),
+    () => memory.filter((m) => m.relatedStoreId === storeId),
     [memory, storeId],
   );
 
@@ -126,15 +133,20 @@ export default function WorkspaceMemory() {
             />
           </label>
           {types.length > 0 && (
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-              <Filter className="w-3.5 h-3.5 text-white/35 shrink-0" aria-hidden="true" />
+            <div
+              role="group"
+              aria-label="Filter memory by type"
+              className="flex items-center gap-1 overflow-x-auto no-scrollbar"
+            >
+              <Filter className="w-3.5 h-3.5 text-white/55 shrink-0" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => setSelectedType(null)}
+                aria-pressed={selectedType === null}
                 className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-widest border transition-colors ${
                   selectedType === null
                     ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
-                    : "border-white/[0.08] bg-white/[0.02] text-white/55 hover:bg-white/[0.05]"
+                    : "border-white/[0.08] bg-white/[0.02] text-white/70 hover:bg-white/[0.05]"
                 }`}
               >
                 All
@@ -144,10 +156,11 @@ export default function WorkspaceMemory() {
                   key={t}
                   type="button"
                   onClick={() => setSelectedType(t)}
+                  aria-pressed={selectedType === t}
                   className={`px-2.5 h-7 rounded-md text-[11px] font-mono uppercase tracking-widest border transition-colors whitespace-nowrap ${
                     selectedType === t
                       ? "border-sky-500/30 bg-sky-500/10 text-sky-200"
-                      : "border-white/[0.08] bg-white/[0.02] text-white/55 hover:bg-white/[0.05]"
+                      : "border-white/[0.08] bg-white/[0.02] text-white/70 hover:bg-white/[0.05]"
                   }`}
                 >
                   {TYPE_LABEL[t] ?? t}
