@@ -23,7 +23,7 @@ import { ENV } from "./_core/env";
 import { logAgentAction, logTimeToFulfill } from "./telemetry";
 import { rawBodyMiddleware, verifyShopifyHmac } from "./utils/webhookVerify";
 import { WebhookDedup } from "./utils/webhookDedup";
-import { logger } from "./utils/logger";
+import { logger, safeErrorStack } from "./utils/logger";
 
 // ─── HMAC Verification ────────────────────────────────────────────────────
 // Shopify-specific verification + the raw-body middleware live in
@@ -535,7 +535,7 @@ async function handleShopifyWebhook(req: Request, res: Response) {
       topic,
       shopDomain,
       error: err.message,
-      stack: err.stack,
+      stack: safeErrorStack(err),
     });
     // Add to DLQ for retry
     addToDeadLetterQueue(topic, payload, "shopify", err.message);

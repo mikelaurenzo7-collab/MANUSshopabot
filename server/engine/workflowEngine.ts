@@ -42,7 +42,7 @@ import {
 } from "./platformBridge";
 import type { InsertAgentWorkflow, InsertWorkflowStep } from "../../drizzle/schema";
 import { logAgentAction } from "../telemetry";
-import { logger } from "../utils/logger";
+import { logger, safeErrorStack } from "../utils/logger";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -184,7 +184,7 @@ export async function launchWorkflow(
       module: "workflowEngine",
       workflowId,
       error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
+      stack: safeErrorStack(err),
     });
   });
 
@@ -534,7 +534,7 @@ export async function resumeWorkflow(workflowId: number, stepId: number, approve
       module: "workflowEngine",
       workflowId,
       error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
+      stack: safeErrorStack(err),
     });
   });
 }

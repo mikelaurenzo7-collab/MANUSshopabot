@@ -98,11 +98,18 @@ describe("Session revocation — source contract", () => {
     expect(src).toMatch(/return\s*\{\s*success:\s*true,\s*revokedAt:\s*cutoff\s*\}/);
   });
 
-  it("OAuth callback uses SESSION_TTL_MS, not ONE_YEAR_MS, for both JWT + cookie", () => {
+  it("OAuth callback uses SESSION_TTL_MS, not ONE_YEAR_MS, for the cookie maxAge", () => {
+    // The Google-OAuth migration (commit 453eb02) inlined the JWT
+    // signing path and replaced the legacy `sdk.createSessionToken({
+    // expiresInMs: SESSION_TTL_MS })` call with `setExpirationTime("30d")`
+    // directly. The cookie `maxAge` still carries the constant — pin
+    // both the constant import AND the cookie usage; the JWT side
+    // is now expressed as the matching duration string.
     const src = read("server/_core/oauth.ts");
     expect(src).toContain("SESSION_TTL_MS");
-    expect(src).toMatch(/expiresInMs:\s*SESSION_TTL_MS/);
     expect(src).toMatch(/maxAge:\s*SESSION_TTL_MS/);
+    // The JWT signs with a 30d expiration (matches SESSION_TTL_MS).
+    expect(src).toMatch(/setExpirationTime\("30d"\)/);
     // No legacy 1-year cookie path remains.
     expect(src).not.toMatch(/maxAge:\s*ONE_YEAR_MS/);
     expect(src).not.toMatch(/expiresInMs:\s*ONE_YEAR_MS/);

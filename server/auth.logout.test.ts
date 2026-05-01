@@ -54,7 +54,10 @@ describe("auth.logout", () => {
     expect(clearedCookies[0]?.options).toMatchObject({
       maxAge: -1,
       secure: true,
-      sameSite: "none",
+      // PR #103 tightened the cookie's CSRF posture — `lax` is the
+      // OWASP-recommended default. The previous `none` disabled CSRF
+      // protection on every authenticated request.
+      sameSite: "lax",
       httpOnly: true,
       path: "/",
     });
