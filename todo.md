@@ -1475,5 +1475,5 @@
 - [x] Build WorkflowResultDetail component with formatted output display
 - [x] Wire per-store workflows query to Chat tabs
 - [x] Remove global /workflows page from sidebar navigation
-- [ ] Update CommandPalette to remove /workflows shortcut
+- [x] Update CommandPalette to remove /workflows shortcut
 - [x] Test end-to-end workflow result visibility

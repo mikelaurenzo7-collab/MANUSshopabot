@@ -163,7 +163,7 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     { id: "command-center",   label: "Command Center",         description: "Personalized overview of your operation",              shortcut: "g h", icon: Home,          accent: "sky",     action: () => go("/"),                              group: "navigation" },
     { id: "inbox",            label: "Inbox",                  description: "Approvals, activity & alerts",                         shortcut: "g i", icon: Inbox,         accent: "amber",   action: () => go("/inbox"),                         group: "navigation" },
     { id: "store-bot",        label: "Store Bot",              description: "One workspace for launch, ops, social, memory & tools", shortcut: "g b", icon: Bot,           accent: "fuchsia", action: () => go("/chat"),                          group: "navigation" },
-    { id: "workflows",        label: "Workflows",              description: "Active and historical bot workflows",                   shortcut: "g w", icon: GitBranch,     accent: "sky",     action: () => go("/workflows"),                     group: "navigation" },
+
     { id: "workflow-builder", label: "Workflow Builder",       description: "Design custom automation workflows",                               icon: Zap,           accent: "violet",  action: () => go("/workflow-builder"),               group: "navigation" },
     { id: "integrations",     label: "Integrations",           description: "Connect stores, social & tools",                       shortcut: "g f", icon: Globe,         accent: "emerald", action: () => go("/storefronts"),                   group: "navigation" },
     { id: "analytics",        label: "Analytics",              description: "Per-store analytics & market intel",                   shortcut: "g n", icon: BarChart3,     accent: "cyan",    action: () => go("/insights"),                      group: "navigation" },
@@ -215,7 +215,7 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
     "/":               { label: "Command Center",   icon: Home,          accent: "sky"     },
     "/inbox":          { label: "Inbox",            icon: Inbox,         accent: "amber"   },
     "/chat":           { label: "Store Bot",        icon: Bot,           accent: "fuchsia" },
-    "/workflows":      { label: "Workflows",        icon: GitBranch,     accent: "sky"     },
+
     "/workflow-builder": { label: "Workflow Builder", icon: Zap,          accent: "violet"  },
     "/storefronts":    { label: "Integrations",     icon: Globe,         accent: "emerald" },
     "/insights":       { label: "Analytics",        icon: BarChart3,     accent: "cyan"    },
