@@ -285,7 +285,7 @@ export function WorkspaceShell({
           <Link
             href="/"
             aria-label="Back to Command Center"
-            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-mono text-white/45 hover:text-white/85 transition-colors mt-1.5 tap-compact"
+            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-mono text-white/65 hover:text-white/95 transition-colors mt-1.5 tap-compact"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">All stores</span>
@@ -345,7 +345,7 @@ export function WorkspaceShell({
                       <h1 className="text-[15px] sm:text-[17px] font-heading font-bold tracking-tight text-white truncate">
                         {store?.name ?? "Workspace"}
                       </h1>
-                      <ChevronDown className="w-3.5 h-3.5 text-white/40 shrink-0 group-hover:text-sky-300 transition-colors" />
+                      <ChevronDown className="w-3.5 h-3.5 text-white/65 shrink-0 group-hover:text-sky-300 transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64 bg-[#0a0a0f] border-white/10">
@@ -354,7 +354,7 @@ export function WorkspaceShell({
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {otherStores.length === 0 && (
-                      <div className="px-2 py-3 text-[11px] text-white/45">
+                      <div className="px-2 py-3 text-[11px] text-white/70">
                         No other connected stores yet.
                       </div>
                     )}
@@ -368,7 +368,7 @@ export function WorkspaceShell({
                         >
                           <span className="text-base mr-2">{b.icon}</span>
                           <span className="truncate flex-1">{s.name}</span>
-                          <span className="ml-2 text-[10px] text-white/45">{b.name}</span>
+                          <span className="ml-2 text-[10px] text-white/65">{b.name}</span>
                         </DropdownMenuItem>
                       );
                     })}
@@ -412,7 +412,7 @@ export function WorkspaceShell({
                 </span>
               </div>
               {lastSyncTs && (
-                <p className="text-[10px] font-mono text-white/35 mt-0.5 truncate">
+                <p className="text-[10px] font-mono text-white/55 mt-0.5 truncate">
                   Last sync · {lastSyncTs.toLocaleString()}
                 </p>
               )}
@@ -422,12 +422,45 @@ export function WorkspaceShell({
           {rightSlot && <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">{rightSlot}</div>}
         </div>
 
-        {/* ── Workspace sub-nav ─────────────────────────────────────── */}
+        {/* ── Workspace sub-nav ───────────────────────────────────────
+            Proper ARIA tab strip: each Link is `role="tab"` with
+            aria-selected and aria-controls pointing to the workspace
+            body container. Arrow keys roam between tabs (Left/Right
+            cycle, Home/End jump to first/last) — the standard WAI-ARIA
+            pattern. Tab key still moves to the next tabbable element
+            outside the tablist (the panel), so keyboard users can move
+            forward through the page after browsing the strip. */}
         <div className="relative px-2 sm:px-3 md:px-5 pb-1 overflow-x-auto no-scrollbar">
           <nav
             role="tablist"
             aria-label="Workspace sections"
             className="flex items-center gap-0.5 sm:gap-1 min-w-max"
+            onKeyDown={(e) => {
+              const key = e.key;
+              if (
+                key !== "ArrowRight" &&
+                key !== "ArrowLeft" &&
+                key !== "Home" &&
+                key !== "End"
+              ) {
+                return;
+              }
+              const root = e.currentTarget as HTMLElement;
+              const items = Array.from(
+                root.querySelectorAll<HTMLAnchorElement>('[role="tab"]'),
+              );
+              if (items.length === 0) return;
+              const current = items.indexOf(document.activeElement as HTMLAnchorElement);
+              let next = current;
+              if (key === "ArrowRight") next = current < 0 ? 0 : (current + 1) % items.length;
+              else if (key === "ArrowLeft") next = current <= 0 ? items.length - 1 : current - 1;
+              else if (key === "Home") next = 0;
+              else if (key === "End") next = items.length - 1;
+              if (next !== current && items[next]) {
+                e.preventDefault();
+                items[next].focus();
+              }
+            }}
           >
             {tabs.map((t) => {
               const Icon = t.icon;
@@ -437,7 +470,13 @@ export function WorkspaceShell({
                   key={t.id}
                   href={tabHref(t.id)}
                   role="tab"
+                  id={`workspace-tab-${t.id}`}
                   aria-selected={active}
+                  aria-controls="workspace-panel"
+                  // Roving tabindex: only the active tab is in the tab
+                  // sequence; arrow keys move focus among the rest. This
+                  // is the WAI-ARIA tabs pattern (manual activation).
+                  tabIndex={active ? 0 : -1}
                   className={`workspace-tab-pill ${active ? "is-active" : ""}`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -473,8 +512,16 @@ export function WorkspaceShell({
         </div>
       </div>
 
-      {/* ── Workspace body ─────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar scroll-touch">
+      {/* ── Workspace body ───────────────────────────────────────────
+          `id="workspace-panel"` matches the `aria-controls` set on every
+          tab in the strip above so screen-reader users get the proper
+          tablist/tabpanel relationship instead of a bag of orphan tabs. */}
+      <div
+        id="workspace-panel"
+        role="tabpanel"
+        aria-labelledby={`workspace-tab-${activeTab}`}
+        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar scroll-touch"
+      >
         <WorkspaceShellContext.Provider value={{ inside: true, storeId: storeId ?? null }}>
           {children}
         </WorkspaceShellContext.Provider>
