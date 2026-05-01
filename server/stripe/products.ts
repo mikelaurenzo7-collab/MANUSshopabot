@@ -6,6 +6,14 @@
 
 export type PlanId = "starter" | "growth" | "pro" | "scale";
 
+const PLAN_IDS: readonly PlanId[] = ["starter", "growth", "pro", "scale"] as const;
+
+/** Type-safe planId narrowing. Use this anywhere we accept a planId from
+ *  an untrusted boundary (Stripe metadata, webhook payload, request input). */
+export function isPlanId(value: unknown): value is PlanId {
+  return typeof value === "string" && (PLAN_IDS as readonly string[]).includes(value);
+}
+
 export interface Plan {
   id: PlanId;
   name: string;

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { requireStoreInOrg } from "../utils/authz";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -18,11 +19,12 @@ import {
 
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
-  generateAdCopy: protectedProcedure
+  generateAdCopy: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      productName: z.string(),
-      productDescription: z.string().optional(),
+      productName: z.string().max(255),
+      productDescription: z.string().max(2_000).optional(),
       platform: z.enum([
         "tiktok", "meta", "instagram", "twitter", "pinterest", "google_ads",
         "email", "sms",
@@ -31,9 +33,10 @@ export const socialRouter = router({
         // (the copy is reused as in-channel announcement text).
         "outlook", "slack", "youtube",
       ]).default("meta"),
-      tone: z.string().default("engaging and persuasive"),
+      tone: z.string().max(120).default("engaging and persuasive"),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ad_copy",
@@ -106,14 +109,16 @@ export const socialRouter = router({
     }),
 
   // ─── AI Image Generation for Ads ──────────────────────────────────────
-  generateAdImage: protectedProcedure
+  generateAdImage: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      productName: z.string(),
-      style: z.string().default("modern e-commerce product photography"),
-      description: z.string().optional(),
+      productName: z.string().max(255),
+      style: z.string().max(160).default("modern e-commerce product photography"),
+      description: z.string().max(1_000).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "image_generation",
@@ -140,13 +145,15 @@ export const socialRouter = router({
     }),
 
   // ─── SEO Keywords ─────────────────────────────────────────────────────
-  suggestSeoKeywords: protectedProcedure
+  suggestSeoKeywords: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      niche: z.string(),
-      currentKeywords: z.array(z.string()).optional(),
+      niche: z.string().max(255),
+      currentKeywords: z.array(z.string().max(120)).max(50).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "seo_keywords",
@@ -227,24 +234,30 @@ export const socialRouter = router({
       }
     }),
 
-  seoKeywords: protectedProcedure
+  seoKeywords: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getSeoKeywords(input.storeId);
     }),
 
-  updateSeoKeyword: protectedProcedure
+  updateSeoKeyword: orgProcedure
     .input(z.object({
       id: z.number(),
+      storeId: z.number(),
       status: z.enum(["suggested", "active", "rejected"]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      // Caller must supply the storeId so we can verify ownership before
+      // writing. The keyword is then updated in the same transaction.
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       await db.updateSeoKeyword(input.id, { status: input.status });
       return { success: true };
     }),
 
   // ─── Social Media Posts ───────────────────────────────────────────────
-  generateSocialPost: protectedProcedure
+  generateSocialPost: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       platform: z.enum([
@@ -254,10 +267,11 @@ export const socialRouter = router({
         // and uses generateAdCopy / outlook_b2b_outreach instead).
         "slack", "youtube",
       ]),
-      topic: z.string(),
-      productName: z.string().optional(),
+      topic: z.string().max(255),
+      productName: z.string().max(255).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_post",
@@ -322,21 +336,24 @@ export const socialRouter = router({
       }
     }),
 
-  socialPosts: protectedProcedure
+  socialPosts: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getSocialPosts(input.storeId);
     }),
 
   // ─── Email Campaigns ──────────────────────────────────────────────────
-  generateEmailCampaign: protectedProcedure
+  generateEmailCampaign: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       campaignType: z.enum(["welcome", "abandoned_cart", "promotional", "winback", "newsletter"]),
-      productName: z.string().optional(),
-      brandName: z.string().optional(),
+      productName: z.string().max(255).optional(),
+      brandName: z.string().max(120).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "email_campaign",
@@ -407,9 +424,10 @@ export const socialRouter = router({
       }
     }),
 
-  emailCampaigns: protectedProcedure
+  emailCampaigns: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getEmailCampaigns(input.storeId);
     }),
 
@@ -419,13 +437,14 @@ export const socialRouter = router({
    * sent → delivered → opened → clicked → bounced funnel surfaced on
    * the Insights page.
    */
-  campaignFunnel: protectedProcedure
+  campaignFunnel: orgProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const campaign = await db.getEmailCampaignById(input.campaignId);
       if (!campaign) {
         return null;
       }
+      await requireStoreInOrg(campaign.storeId, ctx.org.id);
       const counts = await db.getEmailCampaignEventCounts(input.campaignId);
       const recipients = campaign.recipientCount ?? 0;
       const delivered = counts.delivered ?? 0;
@@ -475,7 +494,7 @@ export const socialRouter = router({
    * On success, the campaign row is flipped to `sent` with the
    * provider message id captured in `recipientCount`.
    */
-  sendEmailCampaign: protectedProcedure
+  sendEmailCampaign: orgProcedure
     .input(
       z.object({
         campaignId: z.number(),
@@ -495,6 +514,7 @@ export const socialRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const campaign = await db.getEmailCampaignById(input.campaignId);
+      if (campaign) await requireStoreInOrg(campaign.storeId, ctx.org.id);
       if (!campaign) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found." });
       }
@@ -574,7 +594,7 @@ export const socialRouter = router({
    * recovery flows, transactional notifications, and one-off operator
    * messages from the Inbox.
    */
-  sendSms: protectedProcedure
+  sendSms: orgProcedure
     .input(
       z.object({
         to: z.string().regex(/^\+[1-9]\d{6,14}$/, "Must be E.164 (e.g. +14155551234)"),
@@ -582,7 +602,8 @@ export const socialRouter = router({
         storeId: z.number().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (input.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       try {
         const result = await sendSms({ to: input.to, body: sanitizeText(input.body, 1600) });
         if (input.storeId) {
@@ -611,35 +632,41 @@ export const socialRouter = router({
     }),
 
   // ─── Ad Campaigns ─────────────────────────────────────────────────────
-  adCampaigns: protectedProcedure
+  adCampaigns: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getAdCampaigns(input.storeId);
     }),
 
-  updateAdCampaign: protectedProcedure
+  updateAdCampaign: orgProcedure
     .input(z.object({
       id: z.number(),
+      storeId: z.number(),
       status: z.enum(["draft", "active", "paused", "completed"]).optional(),
-      budgetCents: z.number().optional(),
+      budgetCents: z.number().int().min(0).max(10_000_000_00).optional(),
     }))
-    .mutation(async ({ input }) => {
-      const { id, ...data } = input;
+    .mutation(async ({ input, ctx }) => {
+      // Caller must supply the storeId so we can verify ownership before
+      // mutating an arbitrary campaign id.
+      await requireStoreInOrg(input.storeId, ctx.org.id);
+      const { id, storeId: _storeId, ...data } = input;
       await db.updateAdCampaign(id, data);
       return { success: true };
     }),
 
   // ─── Platform Bridge: Publish to Connected Social Accounts ──────────
-  publishToSocial: protectedProcedure
+  publishToSocial: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number().optional(),
-      content: z.string(),
-      imageUrl: z.string().optional(),
-      link: z.string().optional(),
-      hashtags: z.array(z.string()).optional(),
+      content: z.string().max(10_000),
+      imageUrl: z.string().url().max(2048).optional(),
+      link: z.string().url().max(2048).optional(),
+      hashtags: z.array(z.string().max(100)).max(30).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (input.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_publish",
@@ -669,17 +696,18 @@ export const socialRouter = router({
       }
     }),
 
-  scheduleToSocial: protectedProcedure
+  scheduleToSocial: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number().optional(),
-      content: z.string(),
-      imageUrl: z.string().optional(),
-      link: z.string().optional(),
-      hashtags: z.array(z.string()).optional(),
-      scheduledAt: z.string(), // ISO date string
+      content: z.string().max(10_000),
+      imageUrl: z.string().url().max(2048).optional(),
+      link: z.string().url().max(2048).optional(),
+      hashtags: z.array(z.string().max(100)).max(30).optional(),
+      scheduledAt: z.string().max(64), // ISO date string
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (input.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_schedule",
@@ -710,25 +738,26 @@ export const socialRouter = router({
       }
     }),
 
-  launchCampaign: protectedProcedure
+  launchCampaign: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number(),
-      name: z.string(),
+      name: z.string().max(255),
       objective: z.enum(["awareness", "traffic", "conversions", "sales"]),
-      budgetCents: z.number(),
-      dailyBudgetCents: z.number().optional(),
-      adCopy: z.string(),
-      imageUrl: z.string().optional(),
-      targetUrl: z.string(),
+      budgetCents: z.number().int().min(0).max(10_000_000_00),
+      dailyBudgetCents: z.number().int().min(0).max(1_000_000_00).optional(),
+      adCopy: z.string().max(10_000),
+      imageUrl: z.string().url().max(2048).optional(),
+      targetUrl: z.string().url().max(2048),
       targeting: z.object({
-        ageMin: z.number().optional(),
-        ageMax: z.number().optional(),
-        locations: z.array(z.string()).optional(),
-        interests: z.array(z.string()).optional(),
+        ageMin: z.number().int().min(13).max(120).optional(),
+        ageMax: z.number().int().min(13).max(120).optional(),
+        locations: z.array(z.string().max(120)).max(50).optional(),
+        interests: z.array(z.string().max(120)).max(50).optional(),
       }).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ad_launch",
@@ -771,14 +800,16 @@ export const socialRouter = router({
     }),
 
   // ─── A/B Test Copy Generator ───────────────────────────────────────────
-  abTestCopyGenerator: protectedProcedure
+  abTestCopyGenerator: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      originalCopy: z.string(),
+      originalCopy: z.string().max(2_000),
       copyType: z.enum(["headline", "description", "cta", "email_subject", "ad_copy"]),
       numberOfVariants: z.number().min(2).max(10).default(5),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ab_test_copy",
@@ -836,13 +867,15 @@ export const socialRouter = router({
     }),
 
   // ─── SMS Recovery Flow Generator ───────────────────────────────────────
-  smsRecoveryFlow: protectedProcedure
+  smsRecoveryFlow: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       flowType: z.enum(["abandoned_cart", "browse_abandonment", "winback", "post_purchase_upsell", "review_request"]),
-      brandName: z.string().optional(),
+      brandName: z.string().max(120).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "sms_recovery",
@@ -904,13 +937,15 @@ export const socialRouter = router({
     }),
 
   // ─── Social Proof Generator ────────────────────────────────────────────
-  socialProofGenerator: protectedProcedure
+  socialProofGenerator: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      productName: z.string(),
+      productName: z.string().max(255),
       proofType: z.enum(["testimonials", "urgency_notifications", "trust_badges", "review_responses", "ugc_prompts"]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_proof",

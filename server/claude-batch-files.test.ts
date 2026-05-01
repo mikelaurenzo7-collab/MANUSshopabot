@@ -123,7 +123,9 @@ describe("supplier.parseReceiptDocument tRPC procedure", () => {
       path.resolve(__dirname, "routers/supplier.ts"),
       "utf-8",
     );
-    expect(src).toContain("parseReceiptDocument: protectedProcedure");
+    // Now org-scoped (was protectedProcedure) — every supplier mutation must
+    // verify ownership before invoking the costly vision API.
+    expect(src).toContain("parseReceiptDocument: orgProcedure");
     // PDF / PNG / JPEG / WEBP only — frontend should match.
     expect(src).toContain('"application/pdf"');
     expect(src).toContain('"image/png"');

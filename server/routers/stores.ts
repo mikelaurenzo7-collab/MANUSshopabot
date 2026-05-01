@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { requireStoreInOrg } from "../utils/authz";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { safeImageFetch, SsrfBlockedError } from "../utils/safeFetch";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
 import { getStoreLimit } from "../stripe/products";
 import { logger } from "../utils/logger";
@@ -15,19 +17,6 @@ const platformEnum = z.enum([
   // Sprint 27 expansion
   "depop", "bigcommerce", "square", "faire", "bonanza", "stockx", "reverb",
 ]);
-
-/**
- * Throw NOT_FOUND if the store doesn't exist OR doesn't belong to the
- * caller's active org. Centralizes the org-scoping check that every
- * single-store mutation needs.
- */
-async function requireStoreInOrg(storeId: number, orgId: number) {
-  const store = await db.getStoreById(storeId);
-  if (!store || store.orgId !== orgId) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Store not found" });
-  }
-  return store;
-}
 
 export const storesRouter = router({
   list: orgProcedure.query(async ({ ctx }) => {
@@ -318,19 +307,34 @@ export const storesRouter = router({
     .mutation(async ({ ctx, input }) => {
       await requireStoreInOrg(input.storeId, ctx.org.id);
       try {
-        // Fetch the image buffer from the URL, then pass Buffer to the optimizer
-        const response = await axios.get(input.imageUrl, { responseType: "arraybuffer" });
-        const imageBuffer = Buffer.from(response.data);
+        // Fetch the image buffer through the SSRF guard — blocks file://,
+        // private IPs (incl. cloud-metadata), and oversized payloads.
+        const imageBuffer = await safeImageFetch(input.imageUrl);
         const result = await optimizeProductImage(
           imageBuffer,
           `${input.storeId}/${input.productId || "product"}`
         );
         return result;
       } catch (err: any) {
+        // SSRF block surfaces as a user-fixable BAD_REQUEST so the operator
+        // knows their URL was rejected (vs an opaque server error).
+        if (err instanceof SsrfBlockedError) {
+          logger.warn("stores_optimize_product_image_ssrf_blocked", {
+            module: "stores",
+            storeId: input.storeId,
+            orgId: ctx.org.id,
+            error: err.message,
+          });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Image URL was rejected — must be a publicly reachable HTTPS URL.",
+          });
+        }
         // Log full error server-side, but never leak details to the client
         logger.error("stores_optimize_product_image_failed", {
           module: "stores",
           storeId: input.storeId,
+          orgId: ctx.org.id,
           imageUrl: input.imageUrl,
           error: err?.message,
         });

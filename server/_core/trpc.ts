@@ -94,6 +94,57 @@ const requireOrgAdmin = t.middleware(async opts => {
 
 export const orgAdminProcedure = t.procedure.use(requireOrgAdmin);
 
+/**
+ * Per-procedure tRPC rate limit, keyed on `userId:bucketName`.
+ *
+ * Why this exists: the express-level workflow rate limiter sits at
+ * `/api/trpc/workflows`, but tRPC's HTTP layout uses dot-separated paths
+ * (`/api/trpc/workflows.launch`), so the express middleware NEVER matches
+ * and effectively disables rate limiting on LLM-heavy mutations. This
+ * lives inside the tRPC chain instead, so cost-blowout protection is
+ * actually enforced.
+ *
+ * Usage:
+ *   export const myRouter = router({
+ *     expensiveLLMOp: orgProcedure
+ *       .use(rateLimit({ bucket: "llm", windowMs: 60_000, max: 20 }))
+ *       .input(...)
+ *       .mutation(...),
+ *   });
+ */
+const _rateBuckets = new Map<string, { count: number; windowStart: number }>();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of Array.from(_rateBuckets.entries())) {
+    if (now - v.windowStart > 5 * 60_000) _rateBuckets.delete(k);
+  }
+}, 5 * 60_000).unref?.();
+
+export function rateLimit(opts: { bucket: string; windowMs: number; max: number }) {
+  return t.middleware(async ({ ctx, next }) => {
+    const userId = (ctx as any).user?.id ?? "anon";
+    const key = `${opts.bucket}:${userId}`;
+    const now = Date.now();
+    const bucket = _rateBuckets.get(key);
+    if (!bucket || now - bucket.windowStart > opts.windowMs) {
+      _rateBuckets.set(key, { count: 1, windowStart: now });
+      return next();
+    }
+    bucket.count++;
+    if (bucket.count > opts.max) {
+      const retryAfter = Math.ceil((bucket.windowStart + opts.windowMs - now) / 1000);
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: `Rate limit exceeded for ${opts.bucket}. Try again in ${retryAfter}s.`,
+      });
+    }
+    return next();
+  });
+}
+
+/** Pre-configured limiter for LLM-backed mutations (costly + slow). */
+export const llmRateLimit = rateLimit({ bucket: "llm", windowMs: 60_000, max: 20 });
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;

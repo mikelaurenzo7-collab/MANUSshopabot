@@ -1,16 +1,54 @@
 /**
  * Shop_a_Bot — Stripe Webhook Handler
  * Handles subscription lifecycle events and updates user plan status in DB.
+ *
+ * Security posture:
+ *   - In production, `STRIPE_WEBHOOK_SECRET` is REQUIRED. Unsigned bodies
+ *     are rejected with 503 to prevent forged-event subscription tampering.
+ *   - Every successfully-verified event.id is recorded in the dedup store
+ *     before `handleEvent` runs. Stripe's at-least-once delivery means
+ *     duplicates would otherwise double-write billing state.
+ *   - `plan_id` from Stripe metadata is validated against PlanId before
+ *     it lands in the `stripePlan` column.
  */
 import type { Express, Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import { logger } from "../_core/logger";
+import { isPlanId, type PlanId } from "./products";
 
 function getStripe(): Stripe {
   if (!ENV.stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
   return new Stripe(ENV.stripeSecretKey, { apiVersion: "2026-03-25.dahlia" });
+}
+
+/**
+ * In-memory dedup ring for Stripe `event.id`s. Stripe redelivers events on
+ * at-least-once semantics; we MUST suppress duplicates before the handler
+ * runs or webhook redrives during a deploy will double-write billing state.
+ *
+ * The ring is bounded (10k entries) so a long-running process doesn't grow
+ * unbounded; in practice Stripe doesn't redeliver months later.
+ *
+ * For multi-instance deployments, swap this for a Redis-backed dedup store —
+ * see MANUS_SYNC.md for the integration note.
+ */
+const STRIPE_EVENT_DEDUP = new Set<string>();
+const STRIPE_DEDUP_MAX = 10_000;
+function markEventProcessed(eventId: string): boolean {
+  if (STRIPE_EVENT_DEDUP.has(eventId)) return false;
+  if (STRIPE_EVENT_DEDUP.size >= STRIPE_DEDUP_MAX) {
+    // Drop oldest by clearing — bounded retention is enough for our SLA.
+    const drop = Array.from(STRIPE_EVENT_DEDUP).slice(0, STRIPE_DEDUP_MAX / 2);
+    for (const id of drop) STRIPE_EVENT_DEDUP.delete(id);
+  }
+  STRIPE_EVENT_DEDUP.add(eventId);
+  return true;
+}
+
+function safePlanId(value: unknown): PlanId | undefined {
+  return isPlanId(value) ? value : undefined;
 }
 
 export function registerStripeWebhook(app: Express): void {
@@ -21,40 +59,72 @@ export function registerStripeWebhook(app: Express): void {
       const sig = req.headers["stripe-signature"] as string;
       const webhookSecret = ENV.stripeWebhookSecret;
 
-      let event: Stripe.Event;
-
-      try {
-        if (!webhookSecret) {
-          // Dev fallback: parse raw body as JSON
-          event = JSON.parse((req as any).rawBody || req.body.toString()) as Stripe.Event;
-        } else {
-          const stripe = getStripe();
-          const rawBody = (req as any).rawBody ?? req.body;
-          event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+      // PRODUCTION REQUIREMENT: never accept unsigned events when the secret
+      // is configured anywhere in the environment. The dev fallback path
+      // exists ONLY for local testing where the env is intentionally empty.
+      if (!webhookSecret) {
+        if (process.env.NODE_ENV === "production") {
+          logger.error("stripe_webhook_secret_missing_in_production");
+          res.status(503).json({ error: "Webhook signing not configured" });
+          return;
         }
+        // Dev-only fallback. The unsigned path is gated by NODE_ENV so any
+        // accidental prod deploy with the secret unset fails closed instead
+        // of silently accepting forged events.
+        try {
+          const rawBody = (req as any).rawBody ?? req.body;
+          const parsed = JSON.parse(typeof rawBody === "string" ? rawBody : rawBody.toString()) as Stripe.Event;
+          logger.warn("stripe_webhook_unsigned_dev_fallback", { eventId: parsed.id, type: parsed.type });
+          handleVerifiedEvent(parsed, res);
+        } catch (err: any) {
+          logger.warn("stripe_webhook_dev_parse_failed", { error: err.message });
+          res.status(400).json({ error: "Invalid payload" });
+        }
+        return;
+      }
+
+      let event: Stripe.Event;
+      try {
+        const stripe = getStripe();
+        const rawBody = (req as any).rawBody ?? req.body;
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
       } catch (err: any) {
         logger.warn("stripe_webhook_signature_failed", { error: err.message });
         res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
         return;
       }
 
-      // ⚠️ Required: test events must return verified: true
-      if (event.id.startsWith("evt_test_")) {
-        logger.info("stripe_webhook_test_event", { eventId: event.id });
-        res.json({ verified: true });
-        return;
-      }
-
-      logger.info("stripe_webhook_received", { type: event.type, eventId: event.id });
-
-      handleEvent(event).catch((err) => {
-        logger.error("stripe_webhook_handler_error", { error: err.message, type: event.type });
-      });
-
-      // Respond immediately — process async
-      res.json({ received: true });
+      handleVerifiedEvent(event, res);
     }
   );
+}
+
+function handleVerifiedEvent(event: Stripe.Event, res: Response): void {
+  // ⚠️ Required: test events must return verified: true
+  if (event.id.startsWith("evt_test_")) {
+    logger.info("stripe_webhook_test_event", { eventId: event.id });
+    res.json({ verified: true });
+    return;
+  }
+
+  if (!markEventProcessed(event.id)) {
+    logger.info("stripe_webhook_duplicate_suppressed", { eventId: event.id, type: event.type });
+    res.json({ received: true, duplicate: true });
+    return;
+  }
+
+  logger.info("stripe_webhook_received", { type: event.type, eventId: event.id });
+
+  handleEvent(event).catch((err) => {
+    logger.error("stripe_webhook_handler_error", {
+      error: err.message,
+      type: event.type,
+      eventId: event.id,
+    });
+  });
+
+  // Respond immediately — process async
+  res.json({ received: true });
 }
 
 async function handleEvent(event: Stripe.Event): Promise<void> {
@@ -71,14 +141,19 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         return;
       }
 
+      const validatedPlan = safePlanId(planId);
+      if (planId && !validatedPlan) {
+        logger.warn("stripe_checkout_invalid_plan", { userId, planId });
+      }
+
       await db.updateUserStripe(userId, {
         stripeCustomerId: customerId ?? undefined,
         stripeSubscriptionId: subscriptionId ?? undefined,
-        stripePlan: (planId as any) ?? undefined,
+        stripePlan: validatedPlan,
         stripeSubscriptionStatus: "active",
       });
 
-      logger.info("stripe_checkout_completed", { userId, planId, customerId, subscriptionId });
+      logger.info("stripe_checkout_completed", { userId, planId: validatedPlan, customerId, subscriptionId });
       break;
     }
 
@@ -89,10 +164,11 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
         logger.warn("stripe_subscription_user_not_found", { subscriptionId: sub.id });
         return;
       }
-      const planId = sub.metadata?.plan_id as string | undefined;
+      const planMeta = sub.metadata?.plan_id as string | undefined;
+      const validatedPlan = safePlanId(planMeta) ?? safePlanId(user.stripePlan);
       await db.updateUserStripe(user.id, {
         stripeSubscriptionStatus: sub.status,
-        stripePlan: (planId as any) ?? user.stripePlan ?? undefined,
+        stripePlan: validatedPlan,
       });
       logger.info("stripe_subscription_updated", { userId: user.id, status: sub.status });
       break;

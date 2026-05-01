@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { requireStoreInOrg } from "../utils/authz";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -8,6 +9,7 @@ import { pushProductToStore, syncProductsFromStore } from "../engine/platformBri
 import { getRenderedStoreContext } from "../utils/userContext";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { safeImageFetch } from "../utils/safeFetch";
 import { sanitizeText } from "../utils/sanitize";
 import {
   uploadFile,
@@ -17,12 +19,14 @@ import {
 } from "../_core/claudeFiles";
 
 export const architectRouter = router({
-  nicheResearch: protectedProcedure
+  nicheResearch: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       keyword: z.string().min(1).max(255),
       storeId: z.number().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (input.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       input = { ...input, keyword: sanitizeText(input.keyword, 255) };
       // Create the report record
       const report = await db.createNicheReport({
@@ -110,19 +114,22 @@ export const architectRouter = router({
       }
     }),
 
-  nicheReports: protectedProcedure
+  nicheReports: orgProcedure
     .input(z.object({ storeId: z.number().optional() }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (input?.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getNicheReports(input?.storeId);
     }),
 
-  generateProductCatalog: protectedProcedure
+  generateProductCatalog: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
-      keyword: z.string().min(1),
+      keyword: z.string().min(1).max(255),
       storeId: z.number(),
       count: z.number().min(1).max(20).default(5),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "product_catalog",
@@ -218,12 +225,13 @@ export const architectRouter = router({
     }),
 
   // ─── Platform Bridge: Push Products to Store ──────────────────────────
-  pushProductToStore: protectedProcedure
+  pushProductToStore: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productId: z.number(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "product_push",
@@ -243,12 +251,13 @@ export const architectRouter = router({
       }
     }),
 
-  bulkPushProducts: protectedProcedure
+  bulkPushProducts: orgProcedure
     .input(z.object({
       storeId: z.number(),
-      productIds: z.array(z.number()),
+      productIds: z.array(z.number()).max(100),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "bulk_product_push",
@@ -281,9 +290,10 @@ export const architectRouter = router({
       return { succeeded, failed, results };
     }),
 
-  syncFromStore: protectedProcedure
+  syncFromStore: orgProcedure
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "product_sync",
@@ -304,9 +314,11 @@ export const architectRouter = router({
     }),
 
   // ─── Store Health Check ─────────────────────────────────────────────────
-  storeHealthCheck: protectedProcedure
+  storeHealthCheck: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({ storeId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "store_health_check",
@@ -372,14 +384,16 @@ export const architectRouter = router({
     }),
 
   // ─── Product Description Rewriter ───────────────────────────────────────
-  rewriteProductDescriptions: protectedProcedure
+  rewriteProductDescriptions: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productIds: z.array(z.number()).min(1).max(20),
-      tone: z.string().default("persuasive and benefit-focused"),
+      tone: z.string().max(120).default("persuasive and benefit-focused"),
       seoOptimize: z.boolean().default(true),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "description_rewrite",
@@ -457,12 +471,13 @@ export const architectRouter = router({
    * runs Sharp multi-size optimization, and updates each product's imageUrl with the
    * CDN-hosted WebP thumbnail URL. Returns per-product results.
    */
-  optimizeProductImages: protectedProcedure
+  optimizeProductImages: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productIds: z.array(z.number()).min(1).max(50),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "image_optimization",
@@ -485,8 +500,8 @@ export const architectRouter = router({
             continue;
           }
           try {
-            const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
-            const buffer = Buffer.from(response.data);
+            // SSRF-guarded fetch: blocks file://, private IPs, oversized payloads.
+            const buffer = await safeImageFetch(imageUrl);
             const optimized = await optimizeProductImage(buffer, `${input.storeId}/${product.id}`);
             const thumb = optimized.find((o: any) => o.size === "thumbnail" && o.format === "webp");
             const primaryUrl = thumb?.url || optimized[0]?.url;
@@ -526,10 +541,11 @@ export const architectRouter = router({
    * are typically already stored in the merchant's CDN, so there's no
    * benefit to retaining a copy in Anthropic-land.
    */
-  generateListingFromImage: protectedProcedure
+  generateListingFromImage: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       filename: z.string().min(1).max(255),
-      bytesBase64: z.string().min(1),
+      bytesBase64: z.string().min(1).max(15_000_000),
       mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
       storeId: z.number().optional(),
       // Optional hints — when absent, the model infers from the image.
@@ -538,7 +554,8 @@ export const architectRouter = router({
       priceTier: z.enum(["budget", "mid", "premium", "luxury"]).optional(),
       tone: z.string().max(80).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      if (input.storeId) await requireStoreInOrg(input.storeId, ctx.org.id);
       if (!isFilesApiAvailable()) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -771,13 +788,15 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
     }),
 
   // ─── Competitor Price Scanner ────────────────────────────────────────────
-  competitorPriceScan: protectedProcedure
+  competitorPriceScan: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
-      niche: z.string(),
-      productNames: z.array(z.string()).min(1).max(10),
+      niche: z.string().max(255),
+      productNames: z.array(z.string().max(160)).min(1).max(10),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "architect",
         taskType: "competitor_price_scan",

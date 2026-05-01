@@ -39,7 +39,7 @@ interface UserProfile {
 // ─── Token Exchange Functions ──────────────────────────────────────────────
 
 async function exchangeMetaCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const clientId = ENV.metaClientId || ENV.metaAppId;
   const clientSecret = ENV.metaClientSecret || ENV.metaAppSecret;
   const res = await axios.get("https://graph.facebook.com/v19.0/oauth/access_token", {
@@ -49,7 +49,7 @@ async function exchangeMetaCode(code: string, redirectUri: string): Promise<Toke
 }
 
 async function fetchMetaProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const base = ENV.metaGraphApiBase || "https://graph.facebook.com/v19.0";
   const res = await axios.get(`${base}/me`, {
     params: { fields: "id,name,picture", access_token: accessToken },
@@ -62,7 +62,7 @@ async function fetchMetaProfile(accessToken: string): Promise<UserProfile> {
 }
 
 async function exchangeTikTokCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://open.tiktokapis.com/v2/oauth/token/", new URLSearchParams({
     client_key: ENV.tiktokClientKey,
     client_secret: ENV.tiktokClientSecret,
@@ -81,7 +81,7 @@ async function exchangeTikTokCode(code: string, redirectUri: string): Promise<To
 }
 
 async function fetchTikTokProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://open.tiktokapis.com/v2/user/info/", {
     headers: { Authorization: `Bearer ${accessToken}` },
     params: { fields: "open_id,display_name,avatar_url,follower_count" },
@@ -95,26 +95,38 @@ async function fetchTikTokProfile(accessToken: string): Promise<UserProfile> {
   };
 }
 
-async function exchangeTwitterCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+async function exchangeTwitterCode(
+  code: string,
+  redirectUri: string,
+  codeVerifier: string,
+): Promise<TokenResponse> {
+  const { default: axios } = await import("./utils/safeAxios");
   const credentials = Buffer.from(`${ENV.twitterClientId}:${ENV.twitterClientSecret}`).toString("base64");
   const params: Record<string, string> = {
     code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri,
-    code_verifier: "challenge",
+    // Real PKCE verifier — must match the per-request value persisted to the
+    // OAuth state token at URL-generation time. Using a hardcoded literal here
+    // (the previous behaviour) effectively disabled PKCE.
+    code_verifier: codeVerifier,
   };
-  const res = await axios.post("https://api.twitter.com/2/oauth2/token", new URLSearchParams(params).toString(), {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${credentials}`,
+  const res = await axios.post(
+    "https://api.twitter.com/2/oauth2/token",
+    new URLSearchParams(params).toString(),
+    {
+      timeout: 10_000,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${credentials}`,
+      },
     },
-  });
+  );
   return res.data;
 }
 
 async function fetchTwitterProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://api.twitter.com/2/users/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
     params: { "user.fields": "name,username,profile_image_url,public_metrics" },
@@ -130,7 +142,7 @@ async function fetchTwitterProfile(accessToken: string): Promise<UserProfile> {
 }
 
 async function exchangePinterestCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const appId = ENV.pinterestAppId;
   const appSecret = ENV.pinterestAppSecret;
   const credentials = Buffer.from(`${appId}:${appSecret}`).toString("base64");
@@ -148,7 +160,7 @@ async function exchangePinterestCode(code: string, redirectUri: string): Promise
 }
 
 async function fetchPinterestProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://api.pinterest.com/v5/user_account", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -162,7 +174,7 @@ async function fetchPinterestProfile(accessToken: string): Promise<UserProfile> 
 
 // ─── Google / Gmail ──────────────────────────────────────────────────────
 async function exchangeGmailCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://oauth2.googleapis.com/token", new URLSearchParams({
     client_id: ENV.googleClientId,
     client_secret: ENV.googleClientSecret,
@@ -180,7 +192,7 @@ async function exchangeGmailCode(code: string, redirectUri: string): Promise<Tok
   };
 }
 async function fetchGmailProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -197,7 +209,7 @@ async function fetchGmailProfile(accessToken: string): Promise<UserProfile> {
 // included offline_access — see SOCIAL_PLATFORMS.outlook in
 // server/routers/connectors.ts.
 async function exchangeOutlookCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const tenant = ENV.azureTenantId || "common";
   const res = await axios.post(
     `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
@@ -223,7 +235,7 @@ async function exchangeOutlookCode(code: string, redirectUri: string): Promise<T
 }
 
 async function fetchOutlookProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://graph.microsoft.com/v1.0/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -242,7 +254,7 @@ async function exchangeSlackCode(
   code: string,
   redirectUri: string,
 ): Promise<TokenResponse & { team?: { id: string; name: string }; bot_user_id?: string; authed_user?: { id: string; access_token?: string } }> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post(
     "https://slack.com/api/oauth.v2.access",
     new URLSearchParams({
@@ -268,7 +280,7 @@ async function exchangeSlackCode(
 }
 
 async function fetchSlackProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   // auth.test echoes the team + bot user info — we don't even need a
   // separate `users.info` call to populate the account.
   const res = await axios.post(
@@ -291,7 +303,7 @@ async function fetchSlackProfile(accessToken: string): Promise<UserProfile> {
 // is the scopes — set on the authorize URL, mirrored back here so the
 // token-exchange request is explicit about what was granted.
 async function exchangeYouTubeCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post(
     "https://oauth2.googleapis.com/token",
     new URLSearchParams({
@@ -312,7 +324,7 @@ async function exchangeYouTubeCode(code: string, redirectUri: string): Promise<T
 }
 
 async function fetchYouTubeProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
     headers: { Authorization: `Bearer ${accessToken}` },
     params: { part: "snippet,statistics", mine: "true" },
@@ -328,7 +340,7 @@ async function fetchYouTubeProfile(accessToken: string): Promise<UserProfile> {
 
 // ─── Snapchat ──────────────────────────────────────────────────────────
 async function exchangeSnapchatCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const credentials = Buffer.from(`${ENV.snapchatClientId}:${ENV.snapchatClientSecret}`).toString("base64");
   const res = await axios.post("https://accounts.snapchat.com/login/oauth2/access_token", new URLSearchParams({
     grant_type: "authorization_code",
@@ -344,7 +356,7 @@ async function exchangeSnapchatCode(code: string, redirectUri: string): Promise<
 }
 
 async function fetchSnapchatProfile(accessToken: string): Promise<UserProfile> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.get("https://adsapi.snapchat.com/v1/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -452,10 +464,20 @@ async function handleSocialOAuthCallback(req: Request, res: Response) {
         tokenData = await exchangeTikTokCode(code, redirectUri);
         profile = await fetchTikTokProfile(tokenData.access_token);
         break;
-      case "twitter":
-        tokenData = await exchangeTwitterCode(code, redirectUri);
+      case "twitter": {
+        const verifier = consumedState?.codeVerifier;
+        if (!verifier) {
+          // The state token must have carried a PKCE verifier from the
+          // generateSocialOAuthUrl mutation. Missing means either an
+          // out-of-band callback (replay) or a state-table bug.
+          return res.redirect(
+            `${callbackOrigin}/integrations?error=missing_pkce_verifier&platform=twitter`,
+          );
+        }
+        tokenData = await exchangeTwitterCode(code, redirectUri, verifier);
         profile = await fetchTwitterProfile(tokenData.access_token);
         break;
+      }
       case "pinterest":
         tokenData = await exchangePinterestCode(code, redirectUri);
         profile = await fetchPinterestProfile(tokenData.access_token);

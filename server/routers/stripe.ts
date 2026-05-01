@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { ENV } from "../_core/env";
+import { isFounderEmail } from "../_core/founder";
 import { PLANS, type PlanId } from "../stripe/products";
 import * as db from "../db";
 
@@ -24,8 +25,10 @@ export const stripeRouter = router({
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
     const user = await db.getUserByOpenId(ctx.user.openId);
     if (!user) throw new TRPCError({ code: "NOT_FOUND" });
-    // Founder bypass: mlaurenzo8@gmail.com always has active Scale plan
-    const isFounder = user.email === "mlaurenzo8@gmail.com";
+    // Founder bypass: env-controlled allowlist (FOUNDER_EMAILS) so support
+    // can correlate "why does this user have free access" tickets via the
+    // emitted `founder_bypass_used` log line. See server/_core/founder.ts.
+    const isFounder = isFounderEmail(user.email, { reason: "subscription_status" });
     const plan = isFounder ? "scale" : (user.stripePlan ?? null);
     const status = isFounder ? "active" : (user.stripeSubscriptionStatus ?? null);
     const isActive = isFounder || user.stripeSubscriptionStatus === "active" || user.stripeSubscriptionStatus === "trialing";
@@ -55,8 +58,8 @@ export const stripeRouter = router({
       const user = await db.getUserByOpenId(ctx.user.openId);
       if (!user) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // Founder bypass: mlaurenzo8@gmail.com cannot checkout (already has free access)
-      if (user.email === "mlaurenzo8@gmail.com") {
+      // Founder bypass: env-allowlisted accounts already have free access.
+      if (isFounderEmail(user.email, { reason: "checkout_blocked" })) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Founder account has unlimited access — no checkout needed." });
       }
 
