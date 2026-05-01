@@ -69,7 +69,7 @@ export default function SettingsPage() {
         flushBottom
       />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5 relative">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5 pt-1.5 relative">
         <TabsList className="tab-bar-shell">
           <TabsTrigger value="profile" className="tab-trigger-shell">Profile</TabsTrigger>
           <TabsTrigger value="members" className="tab-trigger-shell">Members</TabsTrigger>

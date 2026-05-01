@@ -109,7 +109,7 @@ export default function GmailBot() {
       <div className="space-y-3 overflow-y-auto flex-1 p-3">
       {/* Inner tabs — parent shell renders the page header */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
           <TabsTrigger value="inbox">Inbox</TabsTrigger>
           <TabsTrigger value="compose">Compose</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
