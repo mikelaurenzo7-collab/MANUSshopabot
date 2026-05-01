@@ -385,7 +385,7 @@ function CapabilityMatrixCard() {
                     placeholder="Filter by platform, capability, family, or auth model"
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
-                    className="h-7 w-72 text-xs"
+                    className="h-7 w-full sm:w-72 text-xs"
                   />
                 </span>
                 <span>{totals.platforms} platforms · {totals.rows} rows</span>
