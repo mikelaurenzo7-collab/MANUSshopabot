@@ -184,17 +184,49 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
   useEffect(() => {
     if (!user) return;
-    const targets: Record<string, string> = {
-      h: "/", c: "/", // home / command center
-      i: "/inbox",
-      // Legacy bot shortcuts now converge on the unified Store Bot workspace.
-      b: "/chat",
-      m: "/chat",
-      o: "/chat",    // `s` is taken by Settings
-      w: "/workflows",
-      f: "/storefronts", // storefronts
-      n: "/insights",   // iNsights
-      s: "/settings",
+    /**
+     * Build the leader-key target map. When the operator is inside a
+     * per-store workspace (`/store/:id/*`), the chat / workflows /
+     * builder / connectors / memory / instructions / insights /
+     * activity letters route into THIS workspace instead of the
+     * global page. Everything else (home, inbox, settings) stays
+     * cross-store. The Command Center letter `c` also doubles as
+     * "back to All stores" when nested — operators get out without
+     * reaching for the back button.
+     */
+    const buildTargets = (): Record<string, string> => {
+      const m = location.match(/^\/store\/(\d+)(?:\/|$)/);
+      if (m) {
+        const base = `/store/${m[1]}`;
+        return {
+          h: "/", c: "/", // back to Command Center (escape the workspace)
+          i: "/inbox",
+          // Workspace-scoped — leader keys route into this store.
+          b: `${base}/chat`,    // `b` historically = bots, now = this store's chat
+          m: `${base}/chat`,
+          o: `${base}/overview`,
+          w: `${base}/workflows`,
+          y: `${base}/builder`,  // 'y' free letter for builder
+          f: `${base}/connectors`,
+          r: `${base}/memory`,   // 'r' for "Remember"
+          x: `${base}/instructions`,
+          n: `${base}/insights`,
+          a: `${base}/activity`,
+          s: "/settings",
+        };
+      }
+      return {
+        h: "/", c: "/", // home / command center
+        i: "/inbox",
+        // Legacy bot shortcuts now converge on the unified Store Bot workspace.
+        b: "/chat",
+        m: "/chat",
+        o: "/chat",    // `s` is taken by Settings
+        w: "/workflows",
+        f: "/storefronts", // storefronts
+        n: "/insights",   // iNsights
+        s: "/settings",
+      };
     };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -214,6 +246,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       }
 
       if (leaderActiveRef.current) {
+        // Recompute targets per-keystroke — the active workspace can
+        // change between leader presses if the operator just navigated.
+        const targets = buildTargets();
         const dest = targets[e.key.toLowerCase()];
         if (dest) {
           e.preventDefault();
@@ -859,10 +894,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 // ─── Keyboard help overlay ────────────────────────────────────────────────────
 function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
-  const groups: { label: string; rows: Array<{ keys: string; desc: string }> }[] = [
-    {
-      label: "Navigation",
-      rows: [
+  // Detect "we're inside a workspace" the same way the leader-key
+  // handler does — read the URL directly so the help overlay always
+  // reflects the operator's actual context (not a stale React state).
+  const inWorkspace = typeof window !== "undefined" && /^\/store\/\d+(?:\/|$)/.test(window.location.pathname);
+  const navigationRows = inWorkspace
+    ? [
+        { keys: "g c", desc: "Back to Command Center" },
+        { keys: "g h", desc: "Back to Command Center" },
+        { keys: "g i", desc: "Inbox (cross-store)" },
+        { keys: "g o", desc: "Workspace overview" },
+        { keys: "g b", desc: "Workspace · Chat" },
+        { keys: "g m", desc: "Workspace · Chat" },
+        { keys: "g w", desc: "Workspace · Workflows" },
+        { keys: "g y", desc: "Workspace · Builder" },
+        { keys: "g f", desc: "Workspace · Connectors" },
+        { keys: "g r", desc: "Workspace · Memory" },
+        { keys: "g x", desc: "Workspace · Instructions" },
+        { keys: "g n", desc: "Workspace · Insights" },
+        { keys: "g a", desc: "Workspace · Activity" },
+        { keys: "g s", desc: "Settings" },
+      ]
+    : [
         { keys: "g h", desc: "Command Center" },
         { keys: "g i", desc: "Inbox" },
         { keys: "g b", desc: "Store Bot" },
@@ -872,7 +925,11 @@ function KeyboardHelp({ open, onClose }: { open: boolean; onClose: () => void })
         { keys: "g f", desc: "Integrations" },
         { keys: "g n", desc: "Analytics" },
         { keys: "g s", desc: "Settings" },
-      ],
+      ];
+  const groups: { label: string; rows: Array<{ keys: string; desc: string }> }[] = [
+    {
+      label: inWorkspace ? "Workspace navigation" : "Navigation",
+      rows: navigationRows,
     },
     {
       label: "Global",

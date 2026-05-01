@@ -145,4 +145,43 @@ describe("Workspace shell contract", () => {
     expect(src).toMatch(/setActiveStoreId\(s\.id\);\s*\n\s*setLocation\(`\/store\/\$\{s\.id\}`\)/);
     expect(src).toContain("WorkspaceSidebarNav");
   });
+
+  it("Leader-key shortcuts route into the active workspace when nested", () => {
+    const src = read("client/src/components/DashboardLayout.tsx");
+    // Workspace-aware target builder: when /store/:id is in the URL,
+    // letters route to that workspace's surfaces, not the global pages.
+    expect(src).toContain("buildTargets");
+    expect(src).toMatch(/\/\^\\\/store\\\/\(\\d\+\)\(\?:\\\/\|\$\)\//);
+    // 'b' / 'm' must hit /store/:id/chat (workspace-scoped Store Bot).
+    expect(src).toContain("`${base}/chat`");
+    expect(src).toContain("`${base}/workflows`");
+    expect(src).toContain("`${base}/connectors`");
+    expect(src).toContain("`${base}/memory`");
+    expect(src).toContain("`${base}/instructions`");
+    expect(src).toContain("`${base}/activity`");
+    // Help overlay surfaces a different rowset when nested.
+    expect(src).toContain("Workspace navigation");
+    expect(src).toContain("Workspace · Chat");
+    expect(src).toContain("Workspace · Activity");
+  });
+
+  it("Command palette surfaces workspace-scoped actions when nested", () => {
+    const src = read("client/src/components/CommandPalette.tsx");
+    expect(src).toContain('group: "workspace"');
+    // Detection mirrors the leader-key pattern.
+    expect(src).toMatch(/location\.match\(\/\^\\\/store\\\/\(\\d\+\)\(\?:\\\/\|\$\)\//);
+    // 8 workspace actions cover every per-store surface + a "leave" exit.
+    expect(src).toContain('id: "ws-chat"');
+    expect(src).toContain('id: "ws-workflows"');
+    expect(src).toContain('id: "ws-builder"');
+    expect(src).toContain('id: "ws-connectors"');
+    expect(src).toContain('id: "ws-memory"');
+    expect(src).toContain('id: "ws-instructions"');
+    expect(src).toContain('id: "ws-activity"');
+    expect(src).toContain('id: "ws-leave"');
+    // Header includes the active store's name so the operator never
+    // confuses which workspace the actions apply to.
+    expect(src).toContain("In this workspace");
+    expect(src).toContain("activeWorkspaceStore.name");
+  });
 });
