@@ -14,6 +14,7 @@ import { registerShopifyWebhookRoutes } from "../shopifyWebhooks";
 import { registerPlatformWebhookRoutes } from "../platformWebhooks";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { registerSendGridWebhookRoutes } from "../sendgridWebhooks";
+import { registerClientObservabilityRoutes } from "../clientObservability";
 import { generalRateLimiter, webhookRateLimiter, workflowRateLimiter } from "./rateLimiter";
 import { correlationMiddleware, logger } from "./logger";
 import { appRouter } from "../routers";
@@ -186,6 +187,11 @@ async function startServer() {
   registerStripeWebhook(app);
   // SendGrid Event Webhook — delivered/open/click/bounce/dropped/etc.
   registerSendGridWebhookRoutes(app);
+  // Client observability — POST /api/client-errors + /api/web-vitals.
+  // Self-hosted: these endpoints log structured via the standard logger
+  // so Manus's log pipeline picks them up under the existing
+  // correlationId tracing. No SaaS DSN required, no extra dependency.
+  registerClientObservabilityRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

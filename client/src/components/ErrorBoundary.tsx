@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { reportError } from "@/lib/clientObservability";
 import { AlertTriangle, RotateCcw, RefreshCw, Bot } from "lucide-react";
 import { Component, ReactNode } from "react";
 
@@ -29,6 +30,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
     console.error(`[ErrorBoundary:${this.props.label ?? "unknown"}]`, error, info.componentStack);
+    // Forward to /api/client-errors so the operator log captures it.
+    // `reportError` swallows network failures — observability must
+    // never crash the app it's observing.
+    reportError({
+      error,
+      componentStack: info.componentStack,
+      label: this.props.label ?? "unknown",
+    });
   }
 
   render() {
