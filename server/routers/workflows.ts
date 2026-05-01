@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { isFounderEmail } from "../_core/founder";
 import {
   getWorkflowsByOrg, getWorkflowById, getWorkflowSteps,
   getActiveWorkflowsByOrg, getWorkflowCountsByOrg, getPendingApprovalStepsByOrg,
@@ -42,9 +43,9 @@ export const workflowRouter = router({
       // The Revenue Moat: hard enforcement when a real DB user exists.
       // `trialing` is honored — Phase 1.2 wired Stripe trials so new
       // signups get 7 days before this gate fires.
-      // Founder bypass: mlaurenzo8@gmail.com always passes
+      // Founder bypass: env-allowlisted accounts always pass.
       if (dbUser) {
-        const isFounder = dbUser.email === "mlaurenzo8@gmail.com";
+        const isFounder = isFounderEmail(dbUser.email, { reason: "workflow_launch_gate" });
         const isSubscribed = isFounder || dbUser.stripeSubscriptionStatus === "active" || dbUser.stripeSubscriptionStatus === "trialing";
         if (!isSubscribed) {
           throw new TRPCError({

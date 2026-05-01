@@ -34,7 +34,7 @@ interface TokenResponse {
 // ─── Token Exchange Functions ──────────────────────────────────────────────
 
 async function exchangeEtsyCode(code: string, redirectUri: string, codeVerifier: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://api.etsy.com/v3/public/oauth/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.etsyApiKey,
@@ -48,7 +48,7 @@ async function exchangeEtsyCode(code: string, redirectUri: string, codeVerifier:
 }
 
 async function exchangeAmazonCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://api.amazon.com/auth/o2/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.amazonSpClientId,
@@ -62,7 +62,7 @@ async function exchangeAmazonCode(code: string, redirectUri: string): Promise<To
 }
 
 async function exchangeEbayCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const credentials = Buffer.from(`${ENV.ebayAppId}:${ENV.ebayCertId}`).toString("base64");
   const res = await axios.post("https://api.ebay.com/identity/v1/oauth2/token", new URLSearchParams({
     grant_type: "authorization_code",
@@ -78,7 +78,7 @@ async function exchangeEbayCode(code: string, redirectUri: string): Promise<Toke
 }
 
 async function exchangeTikTokShopCode(code: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const appKey = ENV.tiktokAppId || ENV.tiktokClientKey;
   const appSecret = ENV.tiktokClientSecret;
   const res = await axios.get("https://auth.tiktok-shops.com/api/v2/token/get", {
@@ -100,7 +100,7 @@ async function exchangeTikTokShopCode(code: string): Promise<TokenResponse> {
 
 
 async function exchangeSquareCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://connect.squareup.com/oauth2/token", {
     client_id: ENV.squareClientId,
     client_secret: ENV.squareClientSecret,
@@ -114,7 +114,7 @@ async function exchangeSquareCode(code: string, redirectUri: string): Promise<To
 }
 
 async function exchangeFaireCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://www.faire.com/api/external-api-oauth2/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.faireClientId,
@@ -128,7 +128,7 @@ async function exchangeFaireCode(code: string, redirectUri: string): Promise<Tok
 }
 
 async function exchangeBigCommerceCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://login.bigcommerce.com/oauth2/token", new URLSearchParams({
     client_id: ENV.bigcommerceClientId,
     client_secret: ENV.bigcommerceClientSecret,
@@ -144,7 +144,7 @@ async function exchangeBigCommerceCode(code: string, redirectUri: string): Promi
 }
 
 async function exchangeDepopCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://api.depop.com/oauth2/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.depopAppId,
@@ -158,7 +158,7 @@ async function exchangeDepopCode(code: string, redirectUri: string): Promise<Tok
 }
 
 async function exchangeStockXCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://accounts.stockx.com/oauth/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.stockxClientId,
@@ -172,7 +172,7 @@ async function exchangeStockXCode(code: string, redirectUri: string): Promise<To
 }
 
 async function exchangeReverbCode(code: string, redirectUri: string): Promise<TokenResponse> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
   const res = await axios.post("https://api.reverb.com/oauth/token", new URLSearchParams({
     grant_type: "authorization_code",
     client_id: ENV.reverbClientId,
@@ -417,7 +417,7 @@ export async function refreshPlatformToken(
   platform: string,
   refreshToken: string,
 ): Promise<TokenResponse | null> {
-  const { default: axios } = await import("axios");
+  const { default: axios } = await import("./utils/safeAxios");
 
   switch (platform) {
     case "etsy": {

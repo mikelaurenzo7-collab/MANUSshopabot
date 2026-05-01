@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
 import * as db from "../db";
@@ -8,6 +8,7 @@ import { pushProductToStore, syncProductsFromStore } from "../engine/platformBri
 import { getRenderedStoreContext } from "../utils/userContext";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { safeImageFetch } from "../utils/safeFetch";
 import { sanitizeText } from "../utils/sanitize";
 import {
   uploadFile,
@@ -19,6 +20,7 @@ import { requireStoreInOrg } from "../utils/authz";
 
 export const architectRouter = router({
   nicheResearch: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       keyword: z.string().min(1).max(255),
       storeId: z.number().optional(),
@@ -120,6 +122,7 @@ export const architectRouter = router({
     }),
 
   generateProductCatalog: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       keyword: z.string().min(1),
       storeId: z.number(),
@@ -312,6 +315,7 @@ export const architectRouter = router({
 
   // ─── Store Health Check ─────────────────────────────────────────────────
   storeHealthCheck: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({ storeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       await requireStoreInOrg(input.storeId, ctx.org.id);
@@ -381,6 +385,7 @@ export const architectRouter = router({
 
   // ─── Product Description Rewriter ───────────────────────────────────────
   rewriteProductDescriptions: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productIds: z.array(z.number()).min(1).max(20),
@@ -495,8 +500,8 @@ export const architectRouter = router({
             continue;
           }
           try {
-            const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
-            const buffer = Buffer.from(response.data);
+            // SSRF-guarded fetch: blocks file://, private IPs, oversized payloads.
+            const buffer = await safeImageFetch(imageUrl);
             const optimized = await optimizeProductImage(buffer, `${input.storeId}/${product.id}`);
             const thumb = optimized.find((o: any) => o.size === "thumbnail" && o.format === "webp");
             const primaryUrl = thumb?.url || optimized[0]?.url;
@@ -537,6 +542,7 @@ export const architectRouter = router({
    * benefit to retaining a copy in Anthropic-land.
    */
   generateListingFromImage: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       filename: z.string().min(1).max(255),
       bytesBase64: z.string().min(1),
@@ -783,6 +789,7 @@ If the image is blurry, contains no product, or appears to be a screenshot/UI ra
 
   // ─── Competitor Price Scanner ────────────────────────────────────────────
   competitorPriceScan: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       niche: z.string(),

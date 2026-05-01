@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, router } from "../_core/trpc";
+import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -20,6 +20,7 @@ import { requireStoreInOrg, requireSeoKeywordInOrg, requireEmailCampaignInOrg, r
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
   generateAdCopy: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),
@@ -109,6 +110,7 @@ export const socialRouter = router({
 
   // ─── AI Image Generation for Ads ──────────────────────────────────────
   generateAdImage: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),
@@ -144,6 +146,7 @@ export const socialRouter = router({
 
   // ─── SEO Keywords ─────────────────────────────────────────────────────
   suggestSeoKeywords: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       niche: z.string(),
@@ -251,6 +254,7 @@ export const socialRouter = router({
 
   // ─── Social Media Posts ───────────────────────────────────────────────
   generateSocialPost: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       platform: z.enum([
@@ -338,6 +342,7 @@ export const socialRouter = router({
 
   // ─── Email Campaigns ──────────────────────────────────────────────────
   generateEmailCampaign: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       campaignType: z.enum(["welcome", "abandoned_cart", "promotional", "winback", "newsletter"]),
@@ -790,6 +795,7 @@ export const socialRouter = router({
 
   // ─── A/B Test Copy Generator ───────────────────────────────────────────
   abTestCopyGenerator: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       originalCopy: z.string(),
@@ -856,6 +862,7 @@ export const socialRouter = router({
 
   // ─── SMS Recovery Flow Generator ───────────────────────────────────────
   smsRecoveryFlow: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       flowType: z.enum(["abandoned_cart", "browse_abandonment", "winback", "post_purchase_upsell", "review_request"]),
@@ -925,6 +932,7 @@ export const socialRouter = router({
 
   // ─── Social Proof Generator ────────────────────────────────────────────
   socialProofGenerator: orgProcedure
+    .use(llmRateLimit)
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),

@@ -97,6 +97,38 @@ pnpm run start
 - Don't try to "fix" things by reverting individual commits. Pull
   `main` clean, restart.
 
+### Production-only env requirements (post-hardening sweep)
+
+These are checked at boot in production (`NODE_ENV=production`) and at
+the use site otherwise. None of them are required in dev/test:
+
+- **`STRIPE_WEBHOOK_SECRET`** — required to accept webhooks. When unset
+  in prod, `/api/stripe/webhook` returns 503 (was: silently accepted
+  unsigned events). Set this in Manus secrets before going live.
+- **`SHOPIFY_PARTNER_CLIENT_SECRET`** — required for Shopify webhook
+  HMAC verification. Same 503 fail-closed pattern.
+- **`ETSY_SHARED_SECRET`** / **`TIKTOK_CLIENT_SECRET`** — same pattern
+  for those platforms' webhooks.
+- **`TOKEN_ENCRYPTION_KEY`** (or **`JWT_SECRET`** as fallback) —
+  required to encrypt OAuth tokens at rest. `encryptSecret()` throws in
+  prod if neither is set, so the calling mutation fails — refusing to
+  persist plaintext credentials.
+- **`FOUNDER_EMAILS`** (optional) — comma-separated allowlist for the
+  founder bypass on subscription gates. Defaults to historical emails;
+  override here if you want to lock down access.
+
+Every bypass / unsigned-fallback emits a structured `*_unsigned_dev_mode`
+or `founder_bypass_used` log line so operators can spot misconfigurations
+post-deploy without reading code.
+
+### Queue degrade behavior
+
+When `REDIS_URL` is absent, the app falls back to in-memory job
+processing. This is fine for single-instance Manus deploys but means
+scheduled jobs don't survive restarts. If you scale beyond one instance,
+provision Redis and the workers will pick it up automatically — no code
+change required.
+
 ---
 
 ## Verifying a successful sync

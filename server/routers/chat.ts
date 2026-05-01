@@ -15,6 +15,7 @@
 
 import { z } from "zod";
 import { orgProcedure, router } from "../_core/trpc";
+import { isFounderEmail } from "../_core/founder";
 import { invokeLLM } from "../_core/llm";
 import { getRenderedStoreContext } from "../utils/userContext";
 import * as db from "../db";
@@ -324,7 +325,7 @@ async function executeTool(
       // Subscription check
       const dbUser = await getUserByOpenId(ctx.openId);
       if (dbUser) {
-        const isFounder = dbUser.email === "mlaurenzo8@gmail.com" || dbUser.email === "mikelaurenzo7@gmail.com";
+        const isFounder = isFounderEmail(dbUser.email, { reason: "chat_subscription_gate" });
         const isSubscribed = isFounder || dbUser.stripeSubscriptionStatus === "active" || dbUser.stripeSubscriptionStatus === "trialing";
         if (!isSubscribed) {
           return JSON.stringify({

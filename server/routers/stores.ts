@@ -5,6 +5,7 @@ import { ENV } from "../_core/env";
 import * as db from "../db";
 import axios from "axios";
 import { optimizeProductImage } from "../utils/imageOptimizer";
+import { safeImageFetch, SsrfBlockedError } from "../utils/safeFetch";
 import { sanitizeName, sanitizeText } from "../utils/sanitize";
 import { getStoreLimit } from "../stripe/products";
 import { logger } from "../utils/logger";
@@ -319,14 +320,28 @@ export const storesRouter = router({
       await requireStoreInOrg(input.storeId, ctx.org.id);
       try {
         // Fetch the image buffer from the URL, then pass Buffer to the optimizer
-        const response = await axios.get(input.imageUrl, { responseType: "arraybuffer" });
-        const imageBuffer = Buffer.from(response.data);
+        // SSRF-guarded fetch: blocks file://, private IPs (incl. cloud-metadata),
+        // oversized payloads, and applies a 10s timeout.
+        const imageBuffer = await safeImageFetch(input.imageUrl);
         const result = await optimizeProductImage(
           imageBuffer,
           `${input.storeId}/${input.productId || "product"}`
         );
         return result;
       } catch (err: any) {
+        // SSRF block surfaces as a user-fixable BAD_REQUEST so the operator
+        // knows their URL was rejected (vs an opaque server error).
+        if (err instanceof SsrfBlockedError) {
+          logger.warn("stores_optimize_product_image_ssrf_blocked", {
+            module: "stores",
+            storeId: input.storeId,
+            error: err.message,
+          });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Image URL was rejected — must be a publicly reachable HTTPS URL.",
+          });
+        }
         // Log full error server-side, but never leak details to the client
         logger.error("stores_optimize_product_image_failed", {
           module: "stores",

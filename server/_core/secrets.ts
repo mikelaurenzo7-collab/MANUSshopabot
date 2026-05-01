@@ -8,6 +8,37 @@ function getEncryptionKey(): Buffer | null {
   return createHash("sha256").update(source).digest();
 }
 
+/**
+ * In production we MUST have an encryption key configured. Storing OAuth
+ * access tokens / refresh tokens / API credentials in plaintext would
+ * make a database snapshot equivalent to total credential compromise.
+ *
+ * This guard runs at the encryption boundary so a misconfigured prod
+ * deploy fails closed (encryption attempt throws) rather than silently
+ * persisting plaintext secrets — which is what the original `if (!key)
+ * return value` fallback did. MANUS auto-injects JWT_SECRET, so this is
+ * almost always satisfied in their runtime.
+ */
+let _plaintextWarningEmitted = false;
+function getRequiredEncryptionKey(): Buffer {
+  const key = getEncryptionKey();
+  if (key) return key;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "TOKEN_ENCRYPTION_KEY (or JWT_SECRET fallback) is required in production. " +
+        "Refusing to persist credentials in plaintext.",
+    );
+  }
+  if (!_plaintextWarningEmitted) {
+    _plaintextWarningEmitted = true;
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[secrets] No encryption key configured — secrets stored in plaintext (dev only).",
+    );
+  }
+  return Buffer.alloc(0);
+}
+
 export function isEncryptedSecret(value: string | null | undefined): boolean {
   return typeof value === "string" && value.startsWith(`${ENCRYPTED_SECRET_PREFIX}:`);
 }
@@ -15,8 +46,8 @@ export function isEncryptedSecret(value: string | null | undefined): boolean {
 export function encryptSecret(value: string | null | undefined): string | null | undefined {
   if (!value || isEncryptedSecret(value)) return value;
 
-  const key = getEncryptionKey();
-  if (!key) return value;
+  const key = getRequiredEncryptionKey();
+  if (key.length === 0) return value;
 
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
