@@ -27,11 +27,36 @@
  * id in the URL so existing context-scoped pages and queries continue
  * to work without modification.
  */
-import { ReactNode, useEffect, useMemo } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getBrand } from "@/lib/platformBrand";
+
+/**
+ * Context broadcast by WorkspaceShell so nested pages know they're rendered
+ * inside the workspace chrome and can suppress their own redundant
+ * PageHeader / store switcher / breadcrumb. The default `false` means
+ * pages render their full chrome when used at the top level (e.g.
+ * /workflows), and skip it when wrapped (e.g. /store/:id/workflows).
+ *
+ * Pages opt in by calling `useIsInsideWorkspaceShell()` and rendering
+ * conditionally — see `pages/Chat.tsx` and `pages/Workflows.tsx`.
+ */
+const WorkspaceShellContext = createContext<{ inside: boolean; storeId: number | null }>({
+  inside: false,
+  storeId: null,
+});
+
+/** True when the calling component is nested inside a `<WorkspaceShell>`. */
+export function useIsInsideWorkspaceShell(): boolean {
+  return useContext(WorkspaceShellContext).inside;
+}
+
+/** Return the active workspace storeId from shell context, or `null`. */
+export function useWorkspaceShellStoreId(): number | null {
+  return useContext(WorkspaceShellContext).storeId;
+}
 import {
   ArrowLeft,
   ChevronDown,
@@ -141,6 +166,29 @@ export function WorkspaceShell({
   // with the store's identity (Shopify green ribbon, Amazon orange, etc.).
   const brand = useMemo(() => getBrand(store?.platform ?? "shopify"), [store?.platform]);
 
+  // ── Live sub-nav badges ─────────────────────────────────────────────
+  // The shell fetches its own per-store badge counts so every workspace
+  // surface gets live indicators for free without each page having to
+  // wire them. Caller-supplied `tabBadges` / `tabDots` always take
+  // precedence — pages can override (e.g. WorkspaceOverview already
+  // computes these itself and passes them in).
+  const liveWorkflows = trpc.workflows.list.useQuery(
+    { storeId: storeId!, limit: 12 },
+    { enabled: !!storeId, refetchInterval: 15_000 },
+  );
+  const liveBadgesAndDots = useMemo(() => {
+    const wfRows = (liveWorkflows.data as any[]) ?? [];
+    const running = wfRows.filter((w) => w.status === "running" || w.status === "pending").length;
+    const failed = wfRows.filter((w) => w.status === "failed").length;
+    const awaitingApproval = wfRows.filter((w) => w.status === "awaiting_approval").length;
+    return {
+      badges: { workflows: running, activity: awaitingApproval } as Partial<Record<WorkspaceTabId, number>>,
+      dots: {
+        workflows: failed > 0 ? "error" : running > 0 ? "running" : undefined,
+      } as Partial<Record<WorkspaceTabId, "ok" | "running" | "error" | undefined>>,
+    };
+  }, [liveWorkflows.data]);
+
   // Shared tab list — ordered so the most-used surfaces sit first.
   const tabs: WorkspaceTabSpec[] = useMemo(() => {
     const order = [...DEFAULT_TAB_ORDER, ...extraTabs.filter((t) => !DEFAULT_TAB_ORDER.includes(t))];
@@ -148,10 +196,12 @@ export function WorkspaceShell({
       id,
       label: TAB_REGISTRY[id].label,
       icon: TAB_REGISTRY[id].icon,
-      badge: tabBadges[id],
-      dot: tabDots[id],
+      // Caller-supplied badge wins; otherwise fall back to the shell's
+      // live signal so every workspace tab is informative on first paint.
+      badge: tabBadges[id] ?? liveBadgesAndDots.badges[id],
+      dot: tabDots[id] ?? (liveBadgesAndDots.dots[id] as "ok" | "running" | "error" | undefined),
     }));
-  }, [extraTabs, tabBadges, tabDots]);
+  }, [extraTabs, tabBadges, tabDots, liveBadgesAndDots]);
 
   const tabHref = (id: WorkspaceTabId): string => {
     if (!storeId) return "/";
@@ -389,7 +439,9 @@ export function WorkspaceShell({
 
       {/* ── Workspace body ─────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar scroll-touch">
-        {children}
+        <WorkspaceShellContext.Provider value={{ inside: true, storeId: storeId ?? null }}>
+          {children}
+        </WorkspaceShellContext.Provider>
       </div>
     </div>
   );

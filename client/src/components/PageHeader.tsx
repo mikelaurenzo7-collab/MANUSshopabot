@@ -23,6 +23,7 @@
  *   - amber    = intelligence / signal surfaces (Intelligence)
  */
 import { ReactNode } from "react";
+import { useIsInsideWorkspaceShell } from "@/components/workspace/WorkspaceShell";
 
 type AccentColor =
   | "sky"
@@ -112,6 +113,31 @@ export function PageHeader({
   flushBottom,
 }: PageHeaderProps) {
   const styles = ACCENT_STYLES[accent];
+  // When this header is rendered inside a `<WorkspaceShell>` we collapse
+  // it to a thin compact row — the shell already shows the store identity
+  // + workspace sub-nav, so a second giant title row would feel like
+  // duplicated chrome. The page's `right` slot (action buttons) still
+  // renders so functionality isn't lost.
+  const insideWorkspace = useIsInsideWorkspaceShell();
+  if (insideWorkspace) {
+    return (
+      <div className="px-3 sm:px-4 md:px-6 pt-3 pb-1 flex items-center gap-2.5">
+        <span className={`${styles.text} shrink-0`} aria-hidden="true">{icon}</span>
+        <div className="min-w-0 flex-1">
+          {/* Title becomes an eyebrow — workspace shell already owns the H1 */}
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-white/55 truncate">
+            {title}
+          </p>
+          {subtitle && (
+            <p className="text-[11px] text-white/45 truncate mt-0.5 leading-snug hidden sm:block">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {right && <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">{right}</div>}
+      </div>
+    );
+  }
   return (
     <div className="relative">
       {/* Ambient accent halo — sits behind the header at low opacity, */}
