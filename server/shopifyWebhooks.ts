@@ -336,7 +336,7 @@ async function handleInventoryUpdate(shopDomain: string, payload: any) {
   if (available <= threshold && available >= 0) {
     await notifyOwner({
       title: "Low Stock Alert",
-      content: `Inventory for a product in your ${store.name} store has dropped to ${available} units (threshold: ${threshold}). The Merchant Bot will initiate a restock workflow.`,
+      content: `Inventory for a product in your ${store.name} store has dropped to ${available} units (threshold: ${threshold}). The Store Bot will initiate a restock workflow.`,
     });
 
     // Auto-launch restock alert workflow — org-scoped via store.

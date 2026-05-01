@@ -248,6 +248,11 @@ export function registerShopifyOAuthRoutes(app: Express) {
         (s: any) => s.platformDomain === shop && s.platform === "shopify",
       );
 
+      // Capture the resolved store id so the post-transaction redirect can
+      // land the operator on /store/:id (their workspace) instead of the
+      // legacy /architect route. Each branch of the transaction sets this.
+      let connectedStoreId: number | null = null;
+
       await db.withTransaction(async (tx) => {
         if (nonceData.storeId) {
           await db.updateStore(nonceData.storeId, {
@@ -265,6 +270,7 @@ export function registerShopifyOAuthRoutes(app: Express) {
             status: "completed",
             storeId: nonceData.storeId,
           }, tx);
+          connectedStoreId = nonceData.storeId;
           return;
         }
 
@@ -281,6 +287,7 @@ export function registerShopifyOAuthRoutes(app: Express) {
             status: "completed",
             storeId: existingStore.id,
           }, tx);
+          connectedStoreId = existingStore.id;
           return;
         }
 
@@ -306,11 +313,17 @@ export function registerShopifyOAuthRoutes(app: Express) {
           status: "completed",
           storeId: createdStore.id,
         }, tx);
+        connectedStoreId = createdStore.id;
       });
 
-      // Redirect back to the originating page (use stored origin for absolute URL)
+      // Redirect back to the originating page (use stored origin for absolute URL).
+      // Default landing is the freshly-connected store's per-store workspace
+      // — operators come out of OAuth and land where they can immediately
+      // start working. The legacy `/architect` default predated the
+      // workspace pivot and would route them through a redirect to a
+      // generic /chat surface with no store context.
       const storedOrigin = dbState?.origin ?? "";
-      const returnPath = nonceData.returnTo || "/architect";
+      const returnPath = nonceData.returnTo || (connectedStoreId ? `/store/${connectedStoreId}` : "/");
       const successUrl = storedOrigin
         ? `${storedOrigin}${returnPath}?connected=true`
         : `${returnPath}?connected=true`;
@@ -321,11 +334,13 @@ export function registerShopifyOAuthRoutes(app: Express) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      // Best-effort: use the protocol/host from the incoming request for error redirect
+      // Best-effort: use the protocol/host from the incoming request for error redirect.
+      // Land on the Command Center with an error param so the operator
+      // sees a banner; the legacy `/architect` route was retired.
       const protocol = req.headers["x-forwarded-proto"] || req.protocol;
       const host = req.headers["x-forwarded-host"] || req.headers.host;
       const fallbackOrigin = `${protocol}://${host}`;
-      res.redirect(302, `${fallbackOrigin}/architect?error=connection_failed`);
+      res.redirect(302, `${fallbackOrigin}/?error=connection_failed`);
     }
   });
 

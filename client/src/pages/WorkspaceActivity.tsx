@@ -92,10 +92,13 @@ export default function WorkspaceActivity() {
     }
     const approvalRows = (approvalsQuery.data as any[]) ?? [];
     for (const a of approvalRows) {
-      // The approvals.pending feed isn't store-tagged today, but the
-      // surrounding metadata often carries `storeId`. Filter to our
-      // store when we can; otherwise include (it's still in this org).
-      if (a.storeId && a.storeId !== storeId) continue;
+      // STRICT per-store filter: only surface approvals tagged for THIS
+      // store. Approvals without a storeId tag are cross-store / org-
+      // wide events and belong on the global Inbox, not on a per-store
+      // activity feed. The earlier "include if untagged" branch
+      // over-displayed approvals from sibling stores under the same
+      // org and broke the "scoped to this store" promise of the page.
+      if (a.storeId !== storeId) continue;
       out.push({
         id: `ap-${a.id}`,
         kind: "approval",

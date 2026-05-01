@@ -20,6 +20,11 @@ function createUserContext(overrides?: Partial<AuthenticatedUser>): TrpcContext 
   };
   return {
     user,
+    // OAuth url generation now sits on `orgProcedure` so the test
+    // context must populate `activeOrg` (the org-procedure middleware
+    // throws FORBIDDEN otherwise). Mirrors the pattern used in
+    // server/connectors.test.ts and server/adapters.test.ts.
+    activeOrg: { id: 1, role: "owner" },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };
@@ -180,6 +185,16 @@ describe("E-Commerce OAuth URL Generation", () => {
   });
 
   it("stores state data in database for Etsy", async () => {
+    // generateOAuthUrl now validates that the supplied storeId belongs
+    // to the caller's org (the OAuth callback writes the credential
+    // against the store's orgId, so leaving this unchecked let an
+    // attacker plant tokens in another tenant's row). Mock the lookup
+    // so the test's synthetic storeId 99 is treated as belonging to
+    // the active org. Without this the org-scoping guard short-
+    // circuits with NOT_FOUND before any state token is persisted.
+    const storeStub = vi
+      .spyOn(db, "getStoreById")
+      .mockResolvedValue({ id: 99, orgId: 1, userId: 42, platform: "etsy" } as any);
     const ctx = createUserContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.connectors.generateOAuthUrl({
@@ -187,6 +202,7 @@ describe("E-Commerce OAuth URL Generation", () => {
       storeId: 99,
       origin: "https://beastbots.test",
     });
+    storeStub.mockRestore();
 
     if (process.env.ETSY_API_KEY && result.url) {
       const urlObj = new URL(result.url);

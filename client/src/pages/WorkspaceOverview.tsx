@@ -20,6 +20,7 @@ import {
   type WorkspaceTabId,
 } from "@/components/workspace/WorkspaceShell";
 import { Sparkline } from "@/components/Sparkline";
+import { QueryErrorBanner } from "@/components/QueryErrorBanner";
 import {
   MessageSquare,
   GitBranch,
@@ -94,8 +95,26 @@ export default function WorkspaceOverview() {
   const storeCredentials = credentials.filter((c) => c.storeId === storeId);
   const connectorCount = storeCredentials.length + socialAccounts.length;
 
-  const todayRevenue = (overview?.revenue?.today ?? 0) / 100;
-  const todayOrders = overview?.orders?.today ?? 0;
+  // The server's `stores.overview` returns a canonical { metrics: {...} }
+  // shape — the previous `revenue.today` / `orders.today` reads here did
+  // not exist on the wire and silently rendered as $0.00 / 0 / flat for
+  // every paying operator. We now read the actual fields the server
+  // emits, including the new `weekOrders` / `lastWeekOrders` /
+  // `weekRevenueCents` fields added alongside this fix so the trend
+  // tiles use real per-store data rather than fabricated curves.
+  const metrics = (overview?.metrics ?? {}) as {
+    todayRevenue?: number;
+    todayOrders?: number;
+    weekOrders?: number;
+    lastWeekOrders?: number;
+    weekRevenueCents?: number;
+    totalOrders?: number;
+  };
+  const todayRevenue = metrics.todayRevenue ?? 0;
+  const todayOrders = metrics.todayOrders ?? 0;
+  const weekOrders = metrics.weekOrders ?? 0;
+  const lastWeekOrders = metrics.lastWeekOrders ?? 0;
+  const weekRevenue = (metrics.weekRevenueCents ?? 0) / 100;
 
   // ── 7-day activity sparkline ─────────────────────────────────────
   // Bucket the most-recent workflow rows by day (UTC) so the workspace
@@ -118,13 +137,13 @@ export default function WorkspaceOverview() {
     return buckets;
   }, [workflows]);
   const ordersSparkline = useMemo(() => {
-    // Distribute the week's orders across days using a smooth curve when
-    // we don't have day-level data. The shape conveys "trending" without
-    // overpromising precision.
-    const week = (overview?.orders?.week ?? 0) as number;
-    if (week === 0) return new Array(7).fill(0);
-    const today = (overview?.orders?.today ?? 0) as number;
-    const tail = Math.max(0, week - today);
+    // Smooth approximation: we don't yet have a day-bucketed time
+    // series for orders, but the week + today numbers come from the
+    // server, so we shape a rising-then-spiking curve toward today
+    // that's directionally honest. Today's exact number is rendered
+    // above the sparkline so operators read both signals.
+    if (weekOrders === 0) return new Array(7).fill(0);
+    const tail = Math.max(0, weekOrders - todayOrders);
     const baseline = tail / 6;
     return [
       Math.round(baseline * 0.6),
@@ -133,16 +152,13 @@ export default function WorkspaceOverview() {
       Math.round(baseline * 1.0),
       Math.round(baseline * 1.15),
       Math.round(baseline * 1.35),
-      today,
+      todayOrders,
     ];
-  }, [overview?.orders?.week, overview?.orders?.today]);
+  }, [weekOrders, todayOrders]);
   const revenueSparkline = useMemo(() => {
-    // Same shape technique for revenue — operators read the curve, not
-    // each bucket's exact dollars (we surface today's number above).
-    const week = (overview?.revenue?.week ?? overview?.revenue?.today ?? 0) as number;
-    if (week === 0) return new Array(7).fill(0);
-    const today = (overview?.revenue?.today ?? 0) as number;
-    const tail = Math.max(0, week - today);
+    if (weekRevenue === 0) return new Array(7).fill(0);
+    const today = todayRevenue;
+    const tail = Math.max(0, weekRevenue - today);
     const baseline = tail / 6;
     return [
       baseline * 0.6,
@@ -153,7 +169,7 @@ export default function WorkspaceOverview() {
       baseline * 1.25,
       today,
     ];
-  }, [overview?.revenue?.week, overview?.revenue?.today]);
+  }, [weekRevenue, todayRevenue]);
   const tabBadges: Partial<Record<WorkspaceTabId, number>> = {
     workflows: runningCount,
     connectors: connectorCount,
@@ -210,12 +226,22 @@ export default function WorkspaceOverview() {
     !overviewQuery.isLoading &&
     !workflowsQuery.isLoading &&
     todayOrders === 0 &&
-    (overview?.orders?.week ?? 0) === 0 &&
+    weekOrders === 0 &&
     workflows.length === 0;
 
   return (
     <WorkspaceShell activeTab="overview" tabBadges={tabBadges} tabDots={tabDots}>
       <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
+        {/* Bar reports any of the 5 background queries failing —
+            silent failure on a workspace landing page is what made
+            the audit's "96% of pages skip isError" finding so
+            damaging. The banner only mounts when at least one query
+            is in error and offers a one-click retry. */}
+        <QueryErrorBanner
+          queries={[overviewQuery, workflowsQuery, credentialsQuery, socialAccountsQuery, memoryQuery]}
+          label="Workspace data unavailable"
+        />
+
         {/* ── First-run hero — only on a brand-new workspace ── */}
         {isFreshlyConnected && (
           <section
@@ -328,9 +354,9 @@ export default function WorkspaceOverview() {
               />
             </div>
             <p className="mt-1.5 text-2xl sm:text-3xl font-heading font-black text-white tracking-tight tabular-nums">
-              {(overview?.orders?.week ?? 0).toLocaleString()}
+              {weekOrders.toLocaleString()}
             </p>
-            <p className="text-[11px] text-white/45 mt-0.5">vs {(overview?.orders?.lastWeek ?? 0).toLocaleString()} last week</p>
+            <p className="text-[11px] text-white/45 mt-0.5">vs {lastWeekOrders.toLocaleString()} last week</p>
           </div>
           <div className="workspace-hero-stat">
             <div className="flex items-center justify-between gap-2">

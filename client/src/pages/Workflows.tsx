@@ -51,6 +51,10 @@ import {
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { PageHeader } from "@/components/PageHeader";
 import { QueryErrorBanner } from "@/components/QueryErrorBanner";
+import {
+  useIsInsideWorkspaceShell,
+  useWorkspaceShellStoreId,
+} from "@/components/workspace/WorkspaceShell";
 import { LiveWorkflowRunner } from "@/components/LiveWorkflowRunner";
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
@@ -331,10 +335,27 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
 
 export default function Workflows() {
   const utils = trpc.useUtils();
+  // When this page is rendered inside a `/store/:id/workflows` workspace
+  // route, scope every workflow query to THAT store. Otherwise the
+  // operator on `/store/123/workflows` sees workflows from every store
+  // in the org — a clear refund-trigger flagged by the audit. Outside
+  // a workspace (the global /workflows route) `storeId` is `undefined`
+  // and the org-wide list returns as before.
+  const insideWorkspace = useIsInsideWorkspaceShell();
+  const workspaceStoreId = useWorkspaceShellStoreId();
+  const scopedStoreId = insideWorkspace ? workspaceStoreId ?? undefined : undefined;
 
-  const activeQuery = trpc.workflows.active.useQuery();
-  const historyQuery = trpc.workflows.list.useQuery({ limit: 50, offset: 0 });
-  const countsQuery = trpc.workflows.counts.useQuery();
+  const activeQuery = trpc.workflows.active.useQuery(
+    scopedStoreId ? { storeId: scopedStoreId } : undefined,
+  );
+  const historyQuery = trpc.workflows.list.useQuery({
+    limit: 50,
+    offset: 0,
+    ...(scopedStoreId ? { storeId: scopedStoreId } : {}),
+  });
+  const countsQuery = trpc.workflows.counts.useQuery(
+    scopedStoreId ? { storeId: scopedStoreId } : undefined,
+  );
   const { data: activeWorkflows, isLoading: activeLoading } = activeQuery;
   const { data: allWorkflows, isLoading: historyLoading } = historyQuery;
   const { data: counts } = countsQuery;
@@ -389,7 +410,7 @@ export default function Workflows() {
       <PageHeader
         icon={<GitBranch className="h-4 w-4" />}
         title="Workflows"
-        subtitle="Monitor and manage all bot workflows"
+        subtitle="Monitor and manage your Store Bot workflows"
         accent="violet"
         right={
           <SubscriptionGate feature="Workflow Automation" soft>

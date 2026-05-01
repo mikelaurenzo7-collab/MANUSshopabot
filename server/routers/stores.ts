@@ -274,9 +274,23 @@ export const storesRouter = router({
 
       const now = Date.now();
       const day = 86400000;
+      const week = day * 7;
       const completedOrders = recentOrders.filter((o: any) => o.status !== "cancelled");
       const todayOrders = completedOrders.filter((o: any) => new Date(o.createdAt).getTime() > now - day);
-      const todayRevenue = todayOrders.reduce((acc: number, o: any) => acc + (o.totalCents || 0), 0) / 100;
+      // Week + last-week buckets so the workspace overview can show
+      // "Orders this week vs last week" with real data instead of
+      // hand-shaped curves. We re-key these on the same cancelled-
+      // exclusion as `todayOrders` for consistency.
+      const weekOrders = completedOrders.filter((o: any) => {
+        const ts = new Date(o.createdAt).getTime();
+        return ts > now - week;
+      });
+      const lastWeekOrders = completedOrders.filter((o: any) => {
+        const ts = new Date(o.createdAt).getTime();
+        return ts <= now - week && ts > now - 2 * week;
+      });
+      const todayRevenueDollars = todayOrders.reduce((acc: number, o: any) => acc + (o.totalCents || 0), 0) / 100;
+      const weekRevenueCents = weekOrders.reduce((acc: number, o: any) => acc + (o.totalCents || 0), 0);
 
       const activeProducts = allProducts.filter((p: any) => p.status === "active" || !p.status).length;
       const lowStockProducts = allProducts.filter((p: any) =>
@@ -298,7 +312,10 @@ export const storesRouter = router({
           outOfStockProducts,
           totalOrders: recentOrders.length,
           todayOrders: todayOrders.length,
-          todayRevenue: parseFloat(todayRevenue.toFixed(2)),
+          todayRevenue: parseFloat(todayRevenueDollars.toFixed(2)),
+          weekOrders: weekOrders.length,
+          lastWeekOrders: lastWeekOrders.length,
+          weekRevenueCents,
         },
         topProduct,
         recentActivity: recentTasks,

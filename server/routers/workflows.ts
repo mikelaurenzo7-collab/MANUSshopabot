@@ -6,6 +6,7 @@ import { z } from "zod";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { isFounderEmail } from "../_core/founder";
+import { requireStoreInOrg } from "../utils/authz";
 import {
   getWorkflowsByOrg, getWorkflowById, getWorkflowSteps,
   getActiveWorkflowsByOrg, getWorkflowCountsByOrg, getPendingApprovalStepsByOrg,
@@ -86,14 +87,30 @@ export const workflowRouter = router({
     }),
 
   // ─── Get active workflows ──────────────────────────────────────────────
-  active: orgProcedure.query(async ({ ctx }) => {
-    return getActiveWorkflowsByOrg(ctx.org.id);
-  }),
+  // Optional storeId narrows the live + counts feeds to a specific
+  // workspace. The Workspace shell passes it so /store/:id/workflows
+  // shows only that store's rows; the global /workflows passes nothing
+  // and gets the org-wide list (legacy behaviour preserved).
+  active: orgProcedure
+    .input(z.object({ storeId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const storeId = input?.storeId;
+      if (typeof storeId === "number") {
+        await requireStoreInOrg(storeId, ctx.org.id);
+      }
+      return getActiveWorkflowsByOrg(ctx.org.id, storeId);
+    }),
 
   // ─── Get workflow counts ───────────────────────────────────────────────
-  counts: orgProcedure.query(async ({ ctx }) => {
-    return getWorkflowCountsByOrg(ctx.org.id);
-  }),
+  counts: orgProcedure
+    .input(z.object({ storeId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const storeId = input?.storeId;
+      if (typeof storeId === "number") {
+        await requireStoreInOrg(storeId, ctx.org.id);
+      }
+      return getWorkflowCountsByOrg(ctx.org.id, storeId);
+    }),
 
   // ─── Get workflow detail with steps ────────────────────────────────────
   detail: orgProcedure
