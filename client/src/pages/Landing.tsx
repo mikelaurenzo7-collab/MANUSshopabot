@@ -576,7 +576,7 @@ function OutcomesStrip() {
               className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_1fr] gap-3 sm:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 sm:py-3"
             >
               <div
-                className="flex sm:flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
+                className="flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
                 style={{
                   background: `rgba(${row.rgb}, 0.10)`,
                   border: `1px solid rgba(${row.rgb}, 0.28)`,
@@ -995,14 +995,16 @@ export default function Landing() {
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-2 announcement-banner">
                 <span className="eyebrow">Live</span>
-                <span className="text-white/65 text-xs">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 commerce + 10 social wired</span>
+                <span className="text-white/65 text-xs hidden sm:inline">Shopify-native today · Amazon, Etsy, TikTok Shop rolling out · 14 commerce + 10 social wired</span>
+                <span className="text-white/65 text-xs sm:hidden">Shopify-native · 14 commerce + 10 social</span>
                 <ArrowRight className="w-3 h-3 text-white/35" />
               </div>
             </div>
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-2 announcement-banner-violet">
                 <span className="eyebrow text-violet-300/85">New</span>
-                <span className="text-white/65 text-xs">Self-critique · 4-persona drafting · autonomous workflows — every step audited</span>
+                <span className="text-white/65 text-xs hidden sm:inline">Self-critique · 4-persona drafting · autonomous workflows — every step audited</span>
+                <span className="text-white/65 text-xs sm:hidden">Self-critique + autonomous workflows</span>
                 <ArrowRight className="w-3 h-3 text-white/35" />
               </div>
             </div>
