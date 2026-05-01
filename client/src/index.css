@@ -5415,3 +5415,112 @@ main[data-nav-dir="back"] .page-enter {
     animation: page-fade-in 0.2s ease;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Workspace Shell — per-store immersive chrome
+   The product model is "every connected store is its own workspace". The
+   styles below give each workspace subtle brand identity (platform-tinted
+   ribbon + tab-pill accent) so a glance tells the operator which store
+   they're in even with multiple tabs open.
+   Each WorkspaceShell sets `--brand` and `--brand-accent` on its root,
+   keying off the store's `platform` from `lib/platformBrand.ts`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.workspace-tab-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 8px 8px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.workspace-tab-pill:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.04);
+}
+.workspace-tab-pill.is-active {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(var(--blue-raw), 0.10), rgba(var(--blue-raw), 0.02));
+  border-color: rgba(var(--blue-raw), 0.18);
+  border-bottom-color: var(--brand, #38bdf8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 -2px 12px rgba(var(--blue-raw), 0.08);
+}
+.workspace-tab-pill.is-active::after {
+  content: "";
+  position: absolute;
+  inset: auto 18% -2px 18%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand, #38bdf8), var(--brand-accent, #06b6d4));
+  box-shadow: 0 0 12px var(--brand, rgba(56, 189, 248, 0.6));
+}
+@media (max-width: 640px) {
+  .workspace-tab-pill {
+    padding: 5px 9px;
+    border-radius: 6px;
+    border-bottom-width: 1.5px;
+  }
+}
+
+/* Workspace landing — hero stat tiles */
+.workspace-hero-stat {
+  position: relative;
+  isolation: isolate;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005)),
+    rgba(8, 8, 12, 0.4);
+  padding: 14px 16px;
+  overflow: hidden;
+  transition: border-color 240ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms ease;
+}
+.workspace-hero-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 80% at 0% 0%, var(--brand, rgba(56, 189, 248, 0.12)) 0%, transparent 60%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: -1;
+}
+.workspace-hero-stat:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--blue-raw), 0.28);
+  box-shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.4), 0 0 22px rgba(var(--blue-raw), 0.1);
+}
+
+/* Workspace card — the 4-up grid below the hero on the overview page */
+.workspace-card {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008)),
+    rgba(6, 6, 10, 0.4);
+  padding: 16px 18px;
+  transition: border-color 240ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms ease;
+}
+.workspace-card:hover {
+  border-color: rgba(var(--blue-raw), 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.4), 0 0 16px rgba(var(--blue-raw), 0.08);
+}
+.workspace-card-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}

@@ -357,18 +357,28 @@ export default function Home() {
                     return (
                       <div
                         key={store.id}
-                        className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all cursor-pointer"
-                        onClick={() => setLocation("/storefronts")}
+                        className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 hover:bg-white/[0.04] hover:border-sky-500/30 hover:shadow-[0_4px_18px_-6px_rgba(14,165,233,0.18)] transition-all cursor-pointer group"
+                        onClick={() => setLocation(`/store/${store.id}`)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setLocation(`/store/${store.id}`);
+                          }
+                        }}
+                        aria-label={`Open ${store.name} workspace`}
                       >
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] flex items-center justify-center shrink-0">
                             <Store className="w-4 h-4 text-emerald-400" strokeWidth={2} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[12px] font-semibold text-white/90 truncate">{store.name}</p>
+                            <p className="text-[12px] font-semibold text-white/90 truncate group-hover:text-sky-200 transition-colors">{store.name}</p>
                             <p className="text-[10px] font-mono text-white/60 truncate capitalize">{store.platform} · {store.status}</p>
                           </div>
                           <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-emerald-400" : "bg-white/20"}`} />
+                          <ChevronRight className="w-3.5 h-3.5 text-white/30 shrink-0 group-hover:text-sky-300 group-hover:translate-x-0.5 transition-all" />
                         </div>
                         {storeMetrics && (
                           <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] flex items-center gap-4">
@@ -392,17 +402,17 @@ export default function Home() {
                         <div className="mt-2.5 flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setLocation("/insights"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-2 sm:py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            onClick={(e) => { e.stopPropagation(); setLocation(`/store/${store.id}/chat`); }}
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-sky-500/20 bg-sky-500/[0.06] py-2 sm:py-1 text-[10px] font-mono text-sky-300 hover:text-sky-200 hover:border-sky-400/40 hover:bg-sky-500/[0.10] transition-all"
                           >
-                            <TrendingUp className="w-3 h-3" /> Analytics
+                            <MessageSquare className="w-3 h-3" /> Open chat
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-2 sm:py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            onClick={(e) => { e.stopPropagation(); setLocation(`/store/${store.id}/workflows`); }}
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-2 sm:py-1 text-[10px] font-mono text-white/55 hover:text-white/85 hover:border-white/[0.15] transition-all"
                           >
-                            <Package className="w-3 h-3" /> Manage
+                            <GitBranch className="w-3 h-3" /> Workflows
                           </button>
                         </div>
                       </div>
