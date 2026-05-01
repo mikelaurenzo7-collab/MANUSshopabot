@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { requireStoreInOrg } from "../utils/authz";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import { getEcommerceCapabilityMatrix } from "../adapters/ecommerce";
@@ -681,7 +682,7 @@ export const connectorsRouter = router({
     }),
 
   /** Generate OAuth URL for a platform (for platforms that support OAuth) */
-  generateOAuthUrl: protectedProcedure
+  generateOAuthUrl: orgProcedure
     .input(z.object({
       platform: z.string(),
       storeId: z.number().optional(),
@@ -689,6 +690,15 @@ export const connectorsRouter = router({
       shopDomain: z.string().optional(), // Required for Shopify
     }))
     .mutation(async ({ ctx, input }) => {
+      // CRITICAL: when a storeId is supplied, verify it belongs to the
+      // caller's org BEFORE issuing an OAuth URL. The credential bound
+      // by the callback writes against `storeRow.orgId`, not the
+      // calling user's org — so without this check, a user could plant
+      // an attacker-controlled token on another tenant's store row.
+      // See server/ecommerceOAuth.ts callback handler for the binding.
+      if (typeof input.storeId === "number") {
+        await requireStoreInOrg(input.storeId, ctx.org.id);
+      }
       // For Shopify, delegate to the existing Shopify OAuth flow
       if (input.platform === "shopify") {
         if (!input.shopDomain || !input.storeId) {

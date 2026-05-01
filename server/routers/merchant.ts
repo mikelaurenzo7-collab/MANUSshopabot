@@ -129,7 +129,7 @@ export const merchantRouter = router({
 
         await notifyOwner({
           title: "Order Auto-Fulfilled",
-          content: `The Merchant Bot fulfilled order #${input.orderId} on the connected platform.`,
+          content: `The Store Bot fulfilled order #${input.orderId} on the connected platform.`,
         });
 
         return { success: true };
@@ -309,7 +309,7 @@ export const merchantRouter = router({
 
           await notifyOwner({
             title: "Pricing Approval Needed",
-            content: `The Merchant Bot suggests changing "${product.title}" price from $${(product.price / 100).toFixed(2)} to $${(suggestion.suggestedPrice / 100).toFixed(2)}. Approval required.`,
+            content: `The Store Bot suggests changing "${product.title}" price from $${(product.price / 100).toFixed(2)} to $${(suggestion.suggestedPrice / 100).toFixed(2)}. Approval required.`,
           });
         }
 

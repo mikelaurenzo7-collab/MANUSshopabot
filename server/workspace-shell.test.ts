@@ -138,6 +138,133 @@ describe("Workspace shell contract", () => {
     expect(src).toMatch(/setLocation\(`\/store\/\$\{store\.id\}`\)/);
   });
 
+  it("Workflows page scopes its queries to the active workspace storeId when nested", () => {
+    // The audit identified this as a refund-trigger: /store/:id/workflows
+    // was showing every workflow in the org, not just this store's. The
+    // fix wires the page through useWorkspaceShellStoreId() and passes
+    // storeId into workflows.list/active/counts. Pin both sides.
+    const pageSrc = read("client/src/pages/Workflows.tsx");
+    expect(pageSrc).toContain("useIsInsideWorkspaceShell");
+    expect(pageSrc).toContain("useWorkspaceShellStoreId");
+    expect(pageSrc).toContain("scopedStoreId");
+    // Server side accepts the optional storeId on every workflow feed
+    // and re-validates org ownership.
+    const routerSrc = read("server/routers/workflows.ts");
+    expect(routerSrc).toContain("getActiveWorkflowsByOrg(ctx.org.id, storeId)");
+    expect(routerSrc).toContain("getWorkflowCountsByOrg(ctx.org.id, storeId)");
+    expect(routerSrc).toMatch(/active: orgProcedure[\s\S]+?\.input\(z\.object\(\{ storeId/);
+    expect(routerSrc).toMatch(/counts: orgProcedure[\s\S]+?\.input\(z\.object\(\{ storeId/);
+  });
+
+  it("connectors.generateOAuthUrl validates store ownership before issuing a URL", () => {
+    // Pre-existing HIGH issue surfaced by the workspace UX. The OAuth
+    // callback writes against `storeRow.orgId`, so without an upfront
+    // ownership check a user could plant their attacker-controlled
+    // token on another tenant's store row.
+    const src = read("server/routers/connectors.ts");
+    expect(src).toContain('generateOAuthUrl: orgProcedure');
+    expect(src).toMatch(/await requireStoreInOrg\(input\.storeId, ctx\.org\.id\)/);
+  });
+
+  it("WorkspaceOverview reads the canonical stores.overview shape, not a stale field tree", () => {
+    // The audit found that the previous reads (`overview.revenue.today`,
+    // `overview.orders.today`) silently returned undefined → every
+    // paying operator saw $0.00 / 0 / flat. The server emits
+    // `metrics.{todayRevenue, todayOrders, weekOrders, lastWeekOrders,
+    // weekRevenueCents}` so we pin those.
+    const pageSrc = read("client/src/pages/WorkspaceOverview.tsx");
+    expect(pageSrc).toContain("metrics.todayRevenue");
+    expect(pageSrc).toContain("metrics.todayOrders");
+    expect(pageSrc).toContain("metrics.weekOrders");
+    expect(pageSrc).toContain("metrics.lastWeekOrders");
+    // The stale shape should be gone.
+    expect(pageSrc).not.toContain("overview?.revenue?.today");
+    expect(pageSrc).not.toContain("overview?.orders?.week");
+    // Server emits the new fields the client now reads.
+    const routerSrc = read("server/routers/stores.ts");
+    expect(routerSrc).toContain("weekOrders: weekOrders.length");
+    expect(routerSrc).toContain("lastWeekOrders: lastWeekOrders.length");
+    expect(routerSrc).toContain("weekRevenueCents");
+  });
+
+  it("Shopify OAuth callback lands the operator on /store/:id, not the retired /architect route", () => {
+    const src = read("server/shopifyOAuth.ts");
+    // Default returnPath uses the resolved storeId from the
+    // transaction (each branch sets `connectedStoreId`).
+    expect(src).toContain("connectedStoreId");
+    expect(src).toMatch(/connectedStoreId\s*\?\s*`\/store\/\$\{connectedStoreId\}`/);
+    // Old retired route should not be the default.
+    expect(src).not.toContain('returnTo || "/architect"');
+    expect(src).not.toContain("/architect?error=connection_failed");
+  });
+
+  it("Operator-facing notifications use the unified Store Bot rename, not the legacy triad", () => {
+    // The audit found legacy "Architect Bot / Merchant Bot" strings
+    // surfacing in operator notifications under the unified rename.
+    // Pin the operator-facing strings; internal comments are exempt
+    // because they're dev-only and intentional.
+    const filesAndPatterns: Array<[string, RegExp]> = [
+      ["server/routers/architect.ts", /\bThe Architect Bot\b/],
+      ["server/routers/merchant.ts", /\bThe Merchant Bot\b/],
+      ["server/routers/supplier.ts", /\bMerchant Bot drafted\b/],
+      ["server/shopifyWebhooks.ts", /\bThe Merchant Bot\b/],
+    ];
+    for (const [file, pattern] of filesAndPatterns) {
+      const src = read(file);
+      const m = src.match(pattern);
+      expect(m, `${file} still has operator-facing legacy bot copy: ${m?.[0] ?? "(none)"}`).toBeNull();
+    }
+  });
+
+  it("WorkspaceActivity strictly filters approvals to the active store (no over-display)", () => {
+    const src = read("client/src/pages/WorkspaceActivity.tsx");
+    // The earlier "include if untagged" filter is gone — all approvals
+    // without a matching storeId are skipped now.
+    expect(src).toContain("if (a.storeId !== storeId) continue;");
+    expect(src).not.toContain("if (a.storeId && a.storeId !== storeId) continue;");
+  });
+
+  it("QuickAskFab traps focus and restores it to the trigger on close", () => {
+    const src = read("client/src/components/workspace/QuickAskFab.tsx");
+    // Trigger ref captured + popover ref captured for the focus trap.
+    expect(src).toContain("triggerRef");
+    expect(src).toContain("popoverRef");
+    // Focus restoration on close.
+    expect(src).toContain("requestAnimationFrame(() => target.focus");
+    // Tab-key wraps inside the popover.
+    expect(src).toContain('e.key !== "Tab"');
+    expect(src).toMatch(/active === first/);
+    expect(src).toMatch(/active === last/);
+  });
+
+  it("WorkspaceOverview wires QueryErrorBanner across all 5 background queries", () => {
+    const src = read("client/src/pages/WorkspaceOverview.tsx");
+    // The audit flagged this page (5 queries, no isError UI) as a
+    // silent-failure landmine. The banner mounts only on error.
+    expect(src).toContain("QueryErrorBanner");
+    expect(src).toContain("overviewQuery, workflowsQuery, credentialsQuery, socialAccountsQuery, memoryQuery");
+  });
+
+  it("Critical dependency CVEs locked via pnpm overrides", () => {
+    // The fast-xml-parser <5.3.5 entity-encoding bypass was the only
+    // critical advisory. The post-fix override map pins it to >=5.3.8.
+    // axios moved to >=1.13.5. path-to-regexp is pinned narrowly to
+    // 0.1.13 SCOPED to express because Express 4.x's built-in router
+    // requires the 0.1.x API (a wide ">=0.1.13" override would let
+    // pnpm pick a newer major like 6.x with the named-export shape
+    // and crash express on boot — caught by webhook integration tests).
+    // Lodash override is preventive (no patched lodash-es yet).
+    // This test pins the override map so a future "unpin to upgrade"
+    // mistake fails the build first.
+    const src = read("package.json");
+    const pkg = JSON.parse(src);
+    const overrides = pkg.pnpm?.overrides ?? {};
+    expect(overrides["fast-xml-parser"]).toBe(">=5.3.8");
+    expect(overrides["axios"]).toBe(">=1.13.5");
+    expect(overrides["express>path-to-regexp"]).toBe("0.1.13");
+    expect(overrides["lodash"]).toBe(">=4.17.21");
+  });
+
   it("Sidebar workspace switcher navigates into the workspace, not just sets context", () => {
     const src = read("client/src/components/DashboardLayout.tsx");
     // Old behavior: setActiveStoreId(s.id) only. New behavior: also

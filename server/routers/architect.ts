@@ -103,7 +103,7 @@ export const architectRouter = router({
 
         await notifyOwner({
           title: "Niche Research Complete",
-          content: `The Architect Bot completed niche research for "${input.keyword}" with a viability score of ${reportData.viabilityScore}/100.`,
+          content: `The Store Bot completed niche research for "${input.keyword}" with a viability score of ${reportData.viabilityScore}/100.`,
         });
 
         return { id: report.id, report: reportData };
@@ -214,7 +214,7 @@ export const architectRouter = router({
 
         await notifyOwner({
           title: "Product Catalog Generated",
-          content: `The Architect Bot generated ${createdProducts.length} products for the "${input.keyword}" niche.`,
+          content: `The Store Bot generated ${createdProducts.length} products for the "${input.keyword}" niche.`,
         });
 
         return { products: createdProducts };
@@ -456,7 +456,7 @@ export const architectRouter = router({
 
         await notifyOwner({
           title: "Product Descriptions Optimized",
-          content: `The Architect Bot has rewritten ${result.products.length} product descriptions with SEO optimization.`,
+          content: `The Store Bot has rewritten ${result.products.length} product descriptions with SEO optimization.`,
         });
 
         return result;

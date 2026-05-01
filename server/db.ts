@@ -1607,14 +1607,20 @@ export async function getActiveWorkflows(userId: number) {
     .orderBy(desc(agentWorkflows.createdAt));
 }
 
-export async function getActiveWorkflowsByOrg(orgId: number) {
+export async function getActiveWorkflowsByOrg(orgId: number, storeId?: number) {
   const db = await getDb();
   if (!db) return [];
+  // When the caller is inside a per-store workspace, scope to that
+  // store so the WorkspaceWorkflows tab only shows what's running in
+  // *this* store. Otherwise return every active row in the org (the
+  // global /workflows view).
+  const conditions = [
+    eq(agentWorkflows.orgId, orgId),
+    sql`${agentWorkflows.status} IN ('pending', 'running', 'awaiting_approval')`,
+  ];
+  if (typeof storeId === "number") conditions.push(eq(agentWorkflows.storeId, storeId));
   return db.select().from(agentWorkflows)
-    .where(and(
-      eq(agentWorkflows.orgId, orgId),
-      sql`${agentWorkflows.status} IN ('pending', 'running', 'awaiting_approval')`
-    ))
+    .where(and(...conditions))
     .orderBy(desc(agentWorkflows.createdAt));
 }
 
@@ -1637,16 +1643,18 @@ export async function getWorkflowCounts(userId: number) {
   return result[0] ?? { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
 }
 
-export async function getWorkflowCountsByOrg(orgId: number) {
+export async function getWorkflowCountsByOrg(orgId: number, storeId?: number) {
   const db = await getDb();
   if (!db) return { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
+  const conditions = [eq(agentWorkflows.orgId, orgId)];
+  if (typeof storeId === "number") conditions.push(eq(agentWorkflows.storeId, storeId));
   const result = await db.select({
     total: count(),
     running: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'running' THEN 1 ELSE 0 END)`,
     completed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'completed' THEN 1 ELSE 0 END)`,
     failed: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'failed' THEN 1 ELSE 0 END)`,
     awaiting: sql<number>`SUM(CASE WHEN ${agentWorkflows.status} = 'awaiting_approval' THEN 1 ELSE 0 END)`,
-  }).from(agentWorkflows).where(eq(agentWorkflows.orgId, orgId));
+  }).from(agentWorkflows).where(and(...conditions));
   return result[0] ?? { total: 0, running: 0, completed: 0, failed: 0, awaiting: 0 };
 }
 

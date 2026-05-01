@@ -34,6 +34,12 @@ export function QuickAskFab({ storeId }: QuickAskFabProps) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  // Where focus was when the popover opened — restored on close so
+  // keyboard users land back where they started instead of falling
+  // through to <body>. WCAG 2.4.3 / 2.1.2.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
   const { persona } = useWorkspacePersona(storeId);
   const personaName = resolvePersonaName(persona);
   const personaEmoji = resolvePersonaEmoji(persona);
@@ -63,19 +69,51 @@ export function QuickAskFab({ storeId }: QuickAskFabProps) {
 
   // Auto-focus the textarea when opening so the operator can type
   // immediately. Use a microtask delay so the popover is mounted first.
+  // Capture the previously-focused element BEFORE we open so we can
+  // restore it when the popover closes — a screen-reader / keyboard
+  // user opening with "/" lands back where they started.
   useEffect(() => {
     if (open) {
+      restoreFocusRef.current = (document.activeElement as HTMLElement | null) ?? null;
       const t = setTimeout(() => inputRef.current?.focus(), 30);
       return () => clearTimeout(t);
     }
+    // Closing — return focus to the trigger (or whatever was focused
+    // before the popover opened, as a safety fallback). requestAnimationFrame
+    // lets React unmount the popover before we touch focus.
+    const target = triggerRef.current ?? restoreFocusRef.current;
+    if (target && typeof target.focus === "function") {
+      requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    }
   }, [open]);
 
-  // Esc closes the popover from anywhere when it's open.
+  // While open: Esc closes; Tab inside the popover wraps so focus
+  // can't leak to elements behind it (lightweight focus trap, no
+  // dependency on focus-trap or radix-popover).
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        e.preventDefault();
         setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = popoverRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -102,6 +140,7 @@ export function QuickAskFab({ storeId }: QuickAskFabProps) {
           system chrome on phones. */}
       {!open && (
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen(true)}
           aria-label={`Ask ${personaName} something quickly`}
@@ -123,10 +162,11 @@ export function QuickAskFab({ storeId }: QuickAskFabProps) {
       {/* Popover — small inline panel with a textarea + submit. */}
       {open && (
         <div
+          ref={popoverRef}
           role="dialog"
           aria-modal="true"
           aria-label={`Quick ask ${personaName}`}
-          className="fixed z-40 bottom-[calc(76px+env(safe-area-inset-bottom))] right-3 sm:bottom-4 sm:right-5 w-[min(360px,calc(100vw-1.5rem))] rounded-xl border border-white/[0.10] bg-[#0a0a0f]/98 shadow-[0_24px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200"
+          className="fixed z-40 bottom-[calc(76px+env(safe-area-inset-bottom))] right-3 sm:bottom-4 sm:right-5 w-[min(360px,calc(100vw-1.5rem))] rounded-xl border border-white/[0.10] bg-popover/98 shadow-[0_24px_64px_rgba(0,0,0,0.6)] backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200"
         >
           <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
             <div className="flex items-center gap-1.5 min-w-0">
