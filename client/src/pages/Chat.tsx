@@ -99,6 +99,7 @@ export default function Chat() {
   const [, setLocation] = useLocation();
   const { activeStoreId, setActiveStoreId } = useWorkspace();
   const [history, setHistory] = useState<Record<WorkspaceKey, Message[]>>({ all: [] });
+  const [showAside, setShowAside] = useState(false);
 
   const storesQuery = trpc.chat.stores.useQuery();
   const workflowsQuery = trpc.workflows.list.useQuery(
@@ -229,18 +230,31 @@ export default function Chat() {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
-            <WorkspaceBadge icon={Bot} label="Unified bot" value="Launch · Operator · Growth" />
-            <WorkspaceBadge icon={Brain} label="Memory" value={activeStore ? activeStore.name : "workspace scoped"} />
-            <WorkspaceBadge icon={Plug} label="Connectors" value={String(connectorCount)} />
-            <WorkspaceBadge icon={Wrench} label="Tools" value={String(toolCount)} />
-            <WorkspaceBadge icon={Truck} label="Supplier runs" value={String(supplierRuns.length)} />
+          <div className="mt-3 flex items-center gap-2">
+            {/* Horizontally scrollable badge bar — prevents wrapping on narrow screens */}
+            <div className="flex-1 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-0.5">
+              <WorkspaceBadge icon={Bot} label="Unified bot" value="Launch · Operator · Growth" />
+              <WorkspaceBadge icon={Brain} label="Memory" value={activeStore ? activeStore.name : "workspace scoped"} />
+              <WorkspaceBadge icon={Plug} label="Connectors" value={String(connectorCount)} />
+              <WorkspaceBadge icon={Wrench} label="Tools" value={String(toolCount)} />
+              <WorkspaceBadge icon={Truck} label="Supplier runs" value={String(supplierRuns.length)} />
+            </div>
+            {/* Mobile-only toggle for the results panel */}
+            <button
+              type="button"
+              onClick={() => setShowAside((v) => !v)}
+              className="xl:hidden shrink-0 flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[10px] font-semibold text-white/55 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+              aria-label={showAside ? "Hide results panel" : "Show results panel"}
+            >
+              <GitBranch className="w-3 h-3 shrink-0" />
+              <span className="hidden xs:inline">{showAside ? "Hide" : "Results"}</span>
+            </button>
           </div>
         </div>
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-h-0 p-3 sm:p-4 md:p-5">
+        <div className={`min-h-0 p-3 sm:p-4 md:p-5 ${showAside ? "hidden xl:block" : ""}`}>
           <AIChatBox
             messages={messages}
             onSendMessage={handleSend}
@@ -254,7 +268,7 @@ export default function Chat() {
           />
         </div>
 
-        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar">
+        <aside className={`min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar ${showAside ? "block" : "hidden xl:block"}`}>
           <div className="space-y-4">
             <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
               {workflowsQuery.isLoading ? (
