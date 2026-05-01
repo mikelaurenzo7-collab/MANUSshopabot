@@ -4937,11 +4937,16 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 /* ── Mobile text readability (prevent microscopic text) ─────────────────── */
+/* Targets only text classes that fall below readable sizes on mobile.
+   Intentional micro-labels and badges should use custom classes. */
 @media (max-width: 767px) {
-  /* Bump up all instances of text that fall below 12px on mobile */
-  .text-\[8px\],
-  .text-\[9px\],
-  .text-\[10px\] {
+  /* Bump up text that falls below 12px on mobile for better readability */
+  .mobile-readable .text-\[8px\],
+  .mobile-readable .text-\[9px\],
+  .mobile-readable .text-\[10px\],
+  .page-enter .text-\[8px\],
+  .page-enter .text-\[9px\],
+  .page-enter .text-\[10px\] {
     font-size: 12px;
   }
 }
@@ -5009,11 +5014,12 @@ a {
 }
 
 /* ── Responsive dialog/modal spacing ────────────────────────────────────── */
+/* Ensure dialogs have safe margins on mobile to prevent edge-to-edge layout */
 @media (max-width: 767px) {
   [role="dialog"],
   [role="alertdialog"] {
     margin: 1rem;
-    max-width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem);
   }
 }
 

@@ -279,7 +279,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           onClick={() => isMobile && setMobileMenuOpen(false)}
           title={item.title + (item.badge && item.badge > 0 ? ` (${item.badge})` : "")}
           aria-label={item.title}
-          className={`relative w-11 h-11 mx-auto flex items-center justify-center rounded-md transition-all duration-200 group touch-target-safe ${
+          className={`relative w-11 h-11 mx-auto flex items-center justify-center rounded-md transition-all duration-200 group ${
             isActive
               ? "bg-sky-500/[0.14] text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.22)]"
               : "text-white/40 hover:text-white/85 hover:bg-white/[0.04]"
@@ -346,7 +346,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         key={item.title}
         href={item.path ?? "#"}
         onClick={() => isMobile && setMobileMenuOpen(false)}
-        className={`flex items-center min-h-[44px] h-9 pl-3 pr-2.5 rounded-md transition-standard group relative touch-target-safe ${
+        className={`flex items-center min-h-[44px] pl-3 pr-2.5 rounded-md transition-standard group relative ${
           isActive
             ? "bg-gradient-to-r from-sky-500/[0.14] via-sky-500/[0.06] to-transparent text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
             : "text-white/40 hover:text-white/85 hover:bg-white/[0.045] hover:shadow-premium-sm"
