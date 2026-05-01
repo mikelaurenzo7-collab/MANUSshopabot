@@ -50,6 +50,14 @@
   --color-terminal-bg: var(--terminal-bg);
   --color-terminal-accent: var(--terminal-accent);
   --color-terminal-muted: var(--terminal-muted);
+  /* Warm-mocha page canvas — the surface every operator-facing
+     "main content" area paints onto. Cool sidebar/topbar chrome
+     stays dark-blue-black; the canvas is warm espresso so the
+     workspace reads as a focused, premium "room" instead of a
+     terminal. White-on-canvas contrast is still WCAG AAA. */
+  --color-page-canvas: var(--page-canvas);
+  --color-page-canvas-elevated: var(--page-canvas-elevated);
+  --color-page-canvas-soft: var(--page-canvas-soft);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -154,6 +162,20 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --terminal-accent: #00ff41;
   --terminal-muted: #94a3b8;
 
+  /* ── Page canvas (warm mocha) ──────────────────────────────────────────
+     The two-tone product look: cool steel chrome (sidebar / topbar) over
+     a warm espresso canvas. Three steps for surface elevation:
+       canvas         → the deepest backdrop behind content
+       canvas-elevated→ subtle lift (cards-on-canvas, sub-nav backings)
+       canvas-soft    → for hover/active states or content highlights
+     Hex values verified at WCAG-AAA against #ffffff and text-white/85.
+     `--crema-raw` is the rgb tuple for translucent crema highlights
+     used in body gradients and warm shadows. */
+  --page-canvas: #211711;
+  --page-canvas-elevated: #2C201A;
+  --page-canvas-soft: #3A2C24;
+  --crema-raw: 201, 169, 138;
+
   /* ── Motion tokens ─────────────────────────────────────────────────────── */
   /* Single source of truth for transitions. Primitives & components should
      consume these instead of redeclaring durations/easings inline. */
@@ -232,6 +254,12 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   --terminal-bg: #050505;
   --terminal-accent: #00ff41;
   --terminal-muted: #94a3b8;
+
+  /* Page canvas (warm mocha) — see :root for documentation */
+  --page-canvas: #211711;
+  --page-canvas-elevated: #2C201A;
+  --page-canvas-soft: #3A2C24;
+  --crema-raw: 201, 169, 138;
 
   /* Motion / shadow / glow tokens — see :root for documentation */
   --duration-fast: 150ms;
@@ -4500,12 +4528,17 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
   /* ── Animated main-content ambient gradient ──────────────────────────────
      Replaces the static inline gradient on the DashboardLayout <main>.
-     Class is applied to the ambient overlay <div> inside <main>. */
+     Class is applied to the ambient overlay <div> inside <main>.
+     Tuned for the warm-mocha canvas: crema highlights wash the top-left
+     and bottom of the page like sunlight on espresso, with a single
+     small cyan brand accent retained at top-right so the operator still
+     reads orchAIstrate's blue identity peeking through. */
   .main-ambient-animate {
     background:
-      radial-gradient(circle at 20% 0%,   rgba(14, 165, 233, 0.09), transparent 35%),
-      radial-gradient(circle at 85% 18%,  rgba(6,  182, 212, 0.06), transparent 28%),
-      radial-gradient(circle at 50% 100%, rgba(249, 115, 22, 0.05), transparent 28%);
+      radial-gradient(circle at 18% -2%,  rgba(var(--crema-raw), 0.10), transparent 38%),
+      radial-gradient(circle at 88% 14%,  rgba(var(--cyan-raw),  0.045), transparent 26%),
+      radial-gradient(circle at 50% 100%, rgba(var(--crema-raw), 0.07),  transparent 32%),
+      radial-gradient(circle at 78% 86%,  rgba(var(--orange-raw), 0.04), transparent 26%);
     will-change: transform, opacity;
     animation: main-ambient-breathe 24s ease-in-out infinite alternate;
   }
@@ -5497,14 +5530,18 @@ main[data-nav-dir="back"] .page-enter {
   box-shadow: 0 8px 28px -6px rgba(0, 0, 0, 0.4), 0 0 22px rgba(var(--blue-raw), 0.1);
 }
 
-/* Workspace card — the 4-up grid below the hero on the overview page */
+/* Workspace card — the 4-up grid below the hero on the overview page.
+   Tinted warm so cards lift gently above the page-canvas mocha rather
+   than reading as a cool-cold patch over the warm room. The white
+   highlight gradient stays the same; the underlying tone shifts to
+   the elevated mocha at moderate opacity for soft depth. */
 .workspace-card {
   position: relative;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008)),
-    rgba(6, 6, 10, 0.4);
+    rgba(58, 44, 36, 0.45);
   padding: 16px 18px;
   transition: border-color 240ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms ease;
 }

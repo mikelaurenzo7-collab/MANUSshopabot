@@ -229,7 +229,7 @@ export function WorkspaceShell({
     // Store id in URL doesn't resolve — operator probably bookmarked a
     // disconnected store. Surface a friendly explainer with a route back.
     return (
-      <div className="page-enter flex h-full min-h-0 flex-col items-center justify-center bg-terminal-bg/70 p-8 text-center">
+      <div className="page-enter flex h-full min-h-0 flex-col items-center justify-center p-8 text-center">
         <div className="max-w-md space-y-4">
           <div className="text-6xl">🛒</div>
           <h2 className="text-2xl font-bold text-white/90">Store not found</h2>
@@ -250,7 +250,7 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="page-enter flex h-full min-h-0 flex-col bg-terminal-bg/70">
+    <div className="page-enter flex h-full min-h-0 flex-col">
       {/* ── Workspace identity band ─────────────────────────────────── */}
       <div
         className="shrink-0 relative overflow-hidden border-b border-white/[0.06]"
