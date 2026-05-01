@@ -198,11 +198,11 @@ export default function AnalyticsPage() {
         accent="violet"
       />
 
-      <div className="space-y-6 px-5">
+      <div className="space-y-6 px-3 sm:px-4 md:px-5">
         {/* Error States */}
         {(storesError || analyticsError) && (
           <Card className="bg-red-500/5 border-red-500/20">
-            <CardContent className="p-4 flex items-start gap-3">
+            <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
               <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-400">Analytics Error</p>
@@ -213,7 +213,7 @@ export default function AnalyticsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                className="shrink-0 w-full sm:w-auto border-red-500/30 text-red-400 hover:bg-red-500/10"
                 onClick={() => {
                   utils.stores.list.invalidate();
                   utils.analytics.overview.invalidate();
@@ -227,10 +227,10 @@ export default function AnalyticsPage() {
         )}
 
         {/* Date range selector — header is owned by parent Insights shell */}
-        <div className="flex items-center justify-end page-header">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end page-header gap-2 sm:gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-28 bg-input/50">
+              <SelectTrigger className="w-full sm:w-28 bg-input/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
               </SelectContent>
             </Select>
             <Select value={selectedStore} onValueChange={setSelectedStore} disabled={!stores}>
-              <SelectTrigger className="w-48 bg-input/50">
+              <SelectTrigger className="w-full sm:w-48 bg-input/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
