@@ -245,10 +245,13 @@ function App() {
           <Toaster
             theme="dark"
             toastOptions={{
+              // Warm-mocha tinted toast surface — harmonizes with the
+              // page-canvas warm room. Cool-blue oklch toast read as a
+              // floating cold patch over the espresso content area.
               style: {
-                background: "oklch(0.19 0.012 270)",
-                border: "1px solid oklch(0.28 0.015 270)",
-                color: "oklch(0.93 0.005 270)",
+                background: "oklch(0.22 0.012 50)",
+                border: "1px solid oklch(0.32 0.018 55)",
+                color: "oklch(0.94 0.008 60)",
               },
             }}
           />
