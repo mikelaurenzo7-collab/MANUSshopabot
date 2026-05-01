@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useIsInsideWorkspaceShell } from "@/components/workspace/WorkspaceShell";
+import { useWorkspacePersona, resolvePersonaName } from "@/hooks/useWorkspacePersona";
 import {
   Bot,
   Brain,
@@ -204,8 +205,17 @@ export default function Chat() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Per-store bot persona — when the operator has named THIS workspace's
+  // bot ("Brewbot", "Frametastic"), use it everywhere the bot identifies
+  // itself in the chat surface. Outside a workspace (the global /chat
+  // route) the persona resolves to "" and we fall back to the canonical
+  // "Store Bot" / "All Stores Bot" labels.
+  const { persona } = useWorkspacePersona(activeStore?.id ?? activeStoreId ?? null);
+  const personaName = resolvePersonaName(persona);
   const workspaceLabel = activeStore
-    ? `Store Bot: ${activeStore.name}`
+    ? persona.name.trim()
+      ? `${personaName} · ${activeStore.name}`
+      : `Store Bot: ${activeStore.name}`
     : hasStores
       ? "All Stores Bot"
       : "New Store Expert";

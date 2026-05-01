@@ -32,6 +32,8 @@ import { Link, useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { getBrand } from "@/lib/platformBrand";
+import { useWorkspacePersona, resolvePersonaName } from "@/hooks/useWorkspacePersona";
+import { QuickAskFab } from "./QuickAskFab";
 
 /**
  * Context broadcast by WorkspaceShell so nested pages know they're rendered
@@ -166,6 +168,13 @@ export function WorkspaceShell({
   // with the store's identity (Shopify green ribbon, Amazon orange, etc.).
   const brand = useMemo(() => getBrand(store?.platform ?? "shopify"), [store?.platform]);
 
+  // Per-store bot persona — the operator can give each workspace's bot
+  // a unique name + avatar emoji ("Brewbot", "🍺"). When unset, the
+  // mark stays as the platform glyph and the canonical "Store Bot" name
+  // is used everywhere the persona surfaces.
+  const { persona } = useWorkspacePersona(storeId);
+  const hasPersona = Boolean(persona.emoji.trim() || persona.name.trim());
+
   // ── Live sub-nav badges ─────────────────────────────────────────────
   // The shell fetches its own per-store badge counts so every workspace
   // surface gets live indicators for free without each page having to
@@ -292,19 +301,33 @@ export function WorkspaceShell({
             {(() => {
               const running = (liveBadgesAndDots.dots.workflows ?? null) === "running";
               return (
-                <div
-                  className={`shrink-0 h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-base sm:text-lg shadow-[0_4px_16px_rgba(0,0,0,0.3)] ${
-                    running ? "workspace-mark-pulsing" : ""
-                  }`}
-                  style={{
-                    background: `linear-gradient(135deg, ${brand.color}22, ${brand.accent}10)`,
-                    border: `1px solid ${brand.color}40`,
-                    boxShadow: `0 0 18px ${brand.color}1a, inset 0 1px 0 rgba(255,255,255,0.06)`,
-                  }}
-                  aria-hidden="true"
-                  data-running={running ? "true" : "false"}
-                >
-                  <span>{brand.icon}</span>
+                <div className="relative shrink-0">
+                  <div
+                    className={`h-9 w-9 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-base sm:text-lg shadow-[0_4px_16px_rgba(0,0,0,0.3)] ${
+                      running ? "workspace-mark-pulsing" : ""
+                    }`}
+                    style={{
+                      background: `linear-gradient(135deg, ${brand.color}22, ${brand.accent}10)`,
+                      border: `1px solid ${brand.color}40`,
+                      boxShadow: `0 0 18px ${brand.color}1a, inset 0 1px 0 rgba(255,255,255,0.06)`,
+                    }}
+                    aria-hidden="true"
+                    data-running={running ? "true" : "false"}
+                  >
+                    <span>{brand.icon}</span>
+                  </div>
+                  {/* Persona micro-avatar — small emoji badge tucked at
+                      the bottom-right of the platform mark. Only renders
+                      when the operator has named this workspace's bot. */}
+                  {hasPersona && persona.emoji && (
+                    <span
+                      className="absolute -bottom-1 -right-1 h-4 w-4 sm:h-[18px] sm:w-[18px] rounded-full flex items-center justify-center text-[10px] sm:text-[11px] bg-[#0a0a0f] ring-1 ring-white/10"
+                      aria-label={`Bot persona: ${resolvePersonaName(persona)}`}
+                      title={resolvePersonaName(persona)}
+                    >
+                      {persona.emoji}
+                    </span>
+                  )}
                 </div>
               );
             })()}
@@ -456,6 +479,12 @@ export function WorkspaceShell({
           {children}
         </WorkspaceShellContext.Provider>
       </div>
+
+      {/* Persistent quick-ask FAB — present on every workspace surface
+          except the Chat tab itself (where the input IS the surface).
+          The pill expands into a small prompt popover and routes into
+          the workspace's chat with the prompt prefilled. */}
+      {activeTab !== "chat" && <QuickAskFab storeId={storeId ?? null} />}
     </div>
   );
 }

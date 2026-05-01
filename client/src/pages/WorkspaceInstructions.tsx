@@ -24,6 +24,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { WorkspaceShell, useWorkspaceStore } from "@/components/workspace/WorkspaceShell";
 import { Button } from "@/components/ui/button";
+import { useWorkspacePersona } from "@/hooks/useWorkspacePersona";
 import {
   ScrollText,
   Save,
@@ -31,6 +32,7 @@ import {
   ShieldCheck,
   Settings as SettingsIcon,
   Sparkles,
+  Bot,
 } from "lucide-react";
 
 const SYSTEM_PROMPT_HINT =
@@ -40,6 +42,21 @@ const CUSTOM_INSTRUCTIONS_HINT =
 
 export default function WorkspaceInstructions() {
   const { storeId, store, brand } = useWorkspaceStore();
+  const { persona, setPersona } = useWorkspacePersona(storeId);
+  const [draftPersonaName, setDraftPersonaName] = useState(persona.name);
+  const [draftPersonaEmoji, setDraftPersonaEmoji] = useState(persona.emoji);
+  // Re-seed the draft when storeId changes (operator switched workspaces).
+  useEffect(() => {
+    setDraftPersonaName(persona.name);
+    setDraftPersonaEmoji(persona.emoji);
+  }, [storeId, persona.name, persona.emoji]);
+  const personaDirty =
+    draftPersonaName.trim() !== persona.name.trim() ||
+    draftPersonaEmoji.trim() !== persona.emoji.trim();
+  const onSavePersona = () => {
+    setPersona({ name: draftPersonaName.trim(), emoji: draftPersonaEmoji.trim() });
+    toast.success("Persona saved.");
+  };
 
   const profileQuery = trpc.botProfile.getProfile.useQuery({ agentType: "architect" });
   const profile = profileQuery.data as {
@@ -141,6 +158,64 @@ export default function WorkspaceInstructions() {
             </div>
           )}
         </div>
+
+        {/* ── Bot persona — operator-facing personalization ──
+            Each workspace's bot can have its own name + avatar emoji
+            ("Brewbot", "🍺"). Stored locally per-store via
+            `useWorkspacePersona`, surfaced in the shell header (small
+            corner badge), the chat avatars, and the command palette.
+            Optional — when unset, the workspace still uses the canonical
+            "Store Bot" name + the platform glyph as the avatar. */}
+        <section className="workspace-card">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="workspace-card-eyebrow">
+              <Bot className="w-3 h-3" /> Bot persona
+            </span>
+            {personaDirty && (
+              <Button
+                size="sm"
+                onClick={onSavePersona}
+                className="h-7 text-[10px] bg-sky-500 hover:bg-sky-400 text-white"
+              >
+                <Save className="w-3 h-3 mr-1" /> Save persona
+              </Button>
+            )}
+          </div>
+          <p className="text-[11px] text-white/45 leading-relaxed mb-3">
+            Give this workspace's Store Bot its own identity. Shows in chat avatars, the workspace
+            mark, and the command palette. Optional — defaults to "Store Bot".
+          </p>
+          <div className="flex flex-wrap gap-3 items-end">
+            <label className="flex flex-col gap-1.5 min-w-0">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-white/55">
+                Avatar
+              </span>
+              <input
+                type="text"
+                value={draftPersonaEmoji}
+                onChange={(e) => setDraftPersonaEmoji(e.target.value)}
+                placeholder="🤖"
+                maxLength={8}
+                aria-label="Bot avatar emoji"
+                className="w-16 h-10 text-center text-lg rounded-lg border border-white/[0.08] bg-black/30 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-white/55">
+                Name
+              </span>
+              <input
+                type="text"
+                value={draftPersonaName}
+                onChange={(e) => setDraftPersonaName(e.target.value)}
+                placeholder="Brewbot"
+                maxLength={40}
+                aria-label="Bot persona name"
+                className="h-10 px-3 rounded-lg border border-white/[0.08] bg-black/30 text-[13px] text-white/90 placeholder:text-white/30 focus:outline-none focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
+              />
+            </label>
+          </div>
+        </section>
 
         {/* System prompt */}
         <section className="workspace-card">
