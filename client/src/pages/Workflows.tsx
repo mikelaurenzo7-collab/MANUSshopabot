@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { PageHeader } from "@/components/PageHeader";
+import { QueryErrorBanner } from "@/components/QueryErrorBanner";
 import { LiveWorkflowRunner } from "@/components/LiveWorkflowRunner";
 // ─── Status Badge ──────────────────────────────────────────────────────────────
 
@@ -331,12 +332,12 @@ function LaunchWorkflowDialog({ onLaunched }: { onLaunched: () => void }) {
 export default function Workflows() {
   const utils = trpc.useUtils();
 
-  const { data: activeWorkflows, isLoading: activeLoading } = trpc.workflows.active.useQuery();
-  const { data: allWorkflows, isLoading: historyLoading } = trpc.workflows.list.useQuery({
-    limit: 50,
-    offset: 0,
-  });
-  const { data: counts } = trpc.workflows.counts.useQuery();
+  const activeQuery = trpc.workflows.active.useQuery();
+  const historyQuery = trpc.workflows.list.useQuery({ limit: 50, offset: 0 });
+  const countsQuery = trpc.workflows.counts.useQuery();
+  const { data: activeWorkflows, isLoading: activeLoading } = activeQuery;
+  const { data: allWorkflows, isLoading: historyLoading } = historyQuery;
+  const { data: counts } = countsQuery;
 
   const [retryingId, setRetryingId] = useState<number | null>(null);
 
@@ -400,6 +401,8 @@ export default function Workflows() {
           </SubscriptionGate>
         }
       />
+
+      <QueryErrorBanner queries={[activeQuery, historyQuery, countsQuery]} label="Workflow data unavailable" />
 
       {/* Stats Row */}
       <div className="stagger-list grid grid-cols-2 sm:grid-cols-4 gap-2.5">
