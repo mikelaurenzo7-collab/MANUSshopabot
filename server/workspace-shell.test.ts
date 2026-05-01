@@ -165,6 +165,57 @@ describe("Workspace shell contract", () => {
     expect(src).toContain("Workspace · Activity");
   });
 
+  it("Workspace persona helper persists per-store via localStorage with fallbacks", () => {
+    const src = read("client/src/hooks/useWorkspacePersona.ts");
+    // Storage key must include the storeId so two workspaces on the
+    // same machine never collide.
+    expect(src).toContain('STORAGE_PREFIX = "workspace_persona:"');
+    // Cross-tab sync via the storage event so two windows on the same
+    // workspace stay aligned.
+    expect(src).toContain('addEventListener("storage"');
+    // Sensible defaults so callers can render unconditionally.
+    expect(src).toContain("Store Bot");
+    expect(src).toContain("🤖");
+    // Bounded length so a malicious / accidental large value can't bloat storage.
+    expect(src).toMatch(/slice\(0,\s*40\)/);
+    expect(src).toMatch(/slice\(0,\s*8\)/);
+  });
+
+  it("Persona surfaces in the WorkspaceShell mark + Instructions editor + Chat header", () => {
+    const shellSrc = read("client/src/components/workspace/WorkspaceShell.tsx");
+    const instructionsSrc = read("client/src/pages/WorkspaceInstructions.tsx");
+    const chatSrc = read("client/src/pages/Chat.tsx");
+    // Shell renders the persona emoji as a corner badge on the platform mark.
+    expect(shellSrc).toContain("useWorkspacePersona");
+    expect(shellSrc).toContain("hasPersona");
+    expect(shellSrc).toContain("persona.emoji");
+    // Instructions has the operator-facing editor with both inputs.
+    expect(instructionsSrc).toContain("Bot persona");
+    expect(instructionsSrc).toContain("draftPersonaName");
+    expect(instructionsSrc).toContain("draftPersonaEmoji");
+    expect(instructionsSrc).toContain("Save persona");
+    // Chat header swaps in the persona name when set.
+    expect(chatSrc).toContain("useWorkspacePersona");
+    expect(chatSrc).toContain("personaName");
+  });
+
+  it("QuickAskFab follows operators across workspace surfaces (except chat)", () => {
+    const fabSrc = read("client/src/components/workspace/QuickAskFab.tsx");
+    const shellSrc = read("client/src/components/workspace/WorkspaceShell.tsx");
+    // FAB reuses the existing Chat prefill bus — no new wiring on Chat side.
+    expect(fabSrc).toContain('sessionStorage.setItem("cp-prefill"');
+    expect(fabSrc).toContain('setLocation(`/store/${storeId}/chat`)');
+    // Global "/" shortcut to open it (mirrors GitHub).
+    expect(fabSrc).toContain('e.key !== "/"');
+    expect(fabSrc).toContain('aria-keyshortcuts="/"');
+    // Esc closes; persona name shown in label so a screen reader can read it.
+    expect(fabSrc).toContain('e.key === "Escape"');
+    expect(fabSrc).toContain("aria-label={`Ask ${personaName}");
+    // Shell mounts the FAB on every tab EXCEPT chat (where the chat input is the surface).
+    expect(shellSrc).toContain("QuickAskFab");
+    expect(shellSrc).toContain('activeTab !== "chat"');
+  });
+
   it("Command palette surfaces workspace-scoped actions when nested", () => {
     const src = read("client/src/components/CommandPalette.tsx");
     expect(src).toContain('group: "workspace"');
