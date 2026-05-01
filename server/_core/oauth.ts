@@ -1,12 +1,72 @@
 import { COOKIE_NAME, SESSION_TTL_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
+import axios from "axios";
+import { SignJWT } from "jose";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
+import { ENV } from "./env";
+
+const GOOGLE_TOKEN_URL = "https://oauth.googleapis.com/token";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
+}
+
+async function exchangeGoogleCodeForToken(
+  code: string,
+  redirectUri: string
+): Promise<{ accessToken: string; idToken?: string }> {
+  const response = await axios.post(GOOGLE_TOKEN_URL, {
+    client_id: ENV.googleClientId,
+    client_secret: ENV.googleClientSecret,
+    code,
+    grant_type: "authorization_code",
+    redirect_uri: redirectUri,
+  });
+
+  return {
+    accessToken: response.data.access_token,
+    idToken: response.data.id_token,
+  };
+}
+
+async function getGoogleUserInfo(accessToken: string): Promise<{
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+}> {
+  const response = await axios.get(GOOGLE_USERINFO_URL, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  return {
+    id: response.data.id,
+    email: response.data.email,
+    name: response.data.name,
+    picture: response.data.picture,
+  };
+}
+
+async function createSessionToken(
+  userId: string,
+  userEmail: string,
+  userName: string
+): Promise<string> {
+  const secret = new TextEncoder().encode(ENV.cookieSecret);
+  const token = await new SignJWT({
+    sub: userId,
+    email: userEmail,
+    name: userName,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(secret);
+
+  return token;
 }
 
 export function registerOAuthRoutes(app: Express) {
@@ -20,33 +80,42 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+      // Decode the redirect URI from state
+      const redirectUri = Buffer.from(state, "base64").toString("utf-8");
 
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
-        return;
-      }
+      // Exchange code for Google tokens
+      const tokens = await exchangeGoogleCodeForToken(code, redirectUri);
 
+      // Get user info from Google
+      const userInfo = await getGoogleUserInfo(tokens.accessToken);
+
+      // Upsert user to database
       await db.upsertUser({
-        openId: userInfo.openId,
+        openId: userInfo.id, // Use Google's user ID
         name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+        email: userInfo.email || null,
+        loginMethod: "google",
         lastSignedIn: new Date(),
       });
 
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: SESSION_TTL_MS,
+      // Create session token
+      const sessionToken = await createSessionToken(
+        userInfo.id,
+        userInfo.email,
+        userInfo.name
+      );
+
+      // Set session cookie
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, {
+        ...cookieOptions,
+        maxAge: SESSION_TTL_MS,
       });
 
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: SESSION_TTL_MS });
-
+      // Redirect to home
       res.redirect(302, "/");
     } catch (error) {
-      console.error("[OAuth] Callback failed", error);
+      console.error("[OAuth] Google callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });
