@@ -54,6 +54,41 @@ export async function requireOrderInOrg(orderId: number, orgId: number) {
   return order;
 }
 
+export async function requireSeoKeywordInOrg(keywordId: number, orgId: number) {
+  const keyword = await db.getSeoKeywordById(keywordId);
+  if (!keyword) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "SEO keyword not found" });
+  }
+  await requireStoreInOrg(keyword.storeId, orgId);
+  return keyword;
+}
+
+export async function requireEmailCampaignInOrg(campaignId: number, orgId: number) {
+  const campaign = await db.getEmailCampaignById(campaignId);
+  if (!campaign) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
+  }
+  await requireStoreInOrg(campaign.storeId, orgId);
+  return campaign;
+}
+
+export async function requireAdCampaignInOrg(campaignId: number, orgId: number) {
+  const campaign = await db.getAdCampaignById(campaignId);
+  if (!campaign) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Ad campaign not found" });
+  }
+  await requireStoreInOrg(campaign.storeId, orgId);
+  return campaign;
+}
+
+export async function requireSocialAccountInOrg(accountId: number, orgId: number) {
+  const account = await db.getSocialAccountById(accountId);
+  if (!account || account.orgId !== orgId) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Social account not found" });
+  }
+  return account;
+}
+
 // ─── Legacy single-user helpers (soft-deprecated) ──────────────────────────
 
 /**

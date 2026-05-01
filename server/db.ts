@@ -901,6 +901,13 @@ export async function getAdCampaignsByOrg(orgId: number) {
     )`)
     .orderBy(desc(adCampaigns.createdAt));
 }
+export async function getAdCampaignById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(adCampaigns).where(eq(adCampaigns.id, id)).limit(1);
+  return rows[0];
+}
+
 export async function updateAdCampaign(id: number, data: Partial<InsertAdCampaign>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -948,6 +955,13 @@ export async function getSeoKeywords(storeId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(seoKeywords).where(eq(seoKeywords.storeId, storeId)).orderBy(desc(seoKeywords.createdAt));
+}
+
+export async function getSeoKeywordById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(seoKeywords).where(eq(seoKeywords.id, id)).limit(1);
+  return rows[0];
 }
 
 export async function updateSeoKeyword(id: number, data: Partial<InsertSeoKeyword>) {

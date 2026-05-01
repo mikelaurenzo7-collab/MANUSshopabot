@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import { invokeLLM, parseLLMJson } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
 import { notifyOwner } from "../_core/notification";
@@ -15,7 +15,7 @@ import {
   NoDeliveryProviderError,
   type EmailRecipient,
 } from "../delivery";
-import { requireStoreInOrg } from "../utils/authz";
+import { requireStoreInOrg, requireSeoKeywordInOrg, requireEmailCampaignInOrg, requireAdCampaignInOrg, requireSocialAccountInOrg } from "../utils/authz";
 
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
@@ -238,12 +238,13 @@ export const socialRouter = router({
       return db.getSeoKeywords(input.storeId);
     }),
 
-  updateSeoKeyword: protectedProcedure
+  updateSeoKeyword: orgProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["suggested", "active", "rejected"]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireSeoKeywordInOrg(input.id, ctx.org.id);
       await db.updateSeoKeyword(input.id, { status: input.status });
       return { success: true };
     }),
@@ -428,13 +429,10 @@ export const socialRouter = router({
    * sent → delivered → opened → clicked → bounced funnel surfaced on
    * the Insights page.
    */
-  campaignFunnel: protectedProcedure
+  campaignFunnel: orgProcedure
     .input(z.object({ campaignId: z.number() }))
-    .query(async ({ input }) => {
-      const campaign = await db.getEmailCampaignById(input.campaignId);
-      if (!campaign) {
-        return null;
-      }
+    .query(async ({ ctx, input }) => {
+      const campaign = await requireEmailCampaignInOrg(input.campaignId, ctx.org.id);
       const counts = await db.getEmailCampaignEventCounts(input.campaignId);
       const recipients = campaign.recipientCount ?? 0;
       const delivered = counts.delivered ?? 0;
@@ -484,7 +482,7 @@ export const socialRouter = router({
    * On success, the campaign row is flipped to `sent` with the
    * provider message id captured in `recipientCount`.
    */
-  sendEmailCampaign: protectedProcedure
+  sendEmailCampaign: orgProcedure
     .input(
       z.object({
         campaignId: z.number(),
@@ -503,10 +501,7 @@ export const socialRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const campaign = await db.getEmailCampaignById(input.campaignId);
-      if (!campaign) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found." });
-      }
+      const campaign = await requireEmailCampaignInOrg(input.campaignId, ctx.org.id);
       if (!campaign.subject || !campaign.body) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -583,7 +578,7 @@ export const socialRouter = router({
    * recovery flows, transactional notifications, and one-off operator
    * messages from the Inbox.
    */
-  sendSms: protectedProcedure
+  sendSms: orgProcedure
     .input(
       z.object({
         to: z.string().regex(/^\+[1-9]\d{6,14}$/, "Must be E.164 (e.g. +14155551234)"),
@@ -591,7 +586,10 @@ export const socialRouter = router({
         storeId: z.number().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (input.storeId) {
+        await requireStoreInOrg(input.storeId, ctx.org.id);
+      }
       try {
         const result = await sendSms({ to: input.to, body: sanitizeText(input.body, 1600) });
         if (input.storeId) {
@@ -627,20 +625,21 @@ export const socialRouter = router({
       return db.getAdCampaigns(input.storeId);
     }),
 
-  updateAdCampaign: protectedProcedure
+  updateAdCampaign: orgProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["draft", "active", "paused", "completed"]).optional(),
       budgetCents: z.number().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireAdCampaignInOrg(input.id, ctx.org.id);
       const { id, ...data } = input;
       await db.updateAdCampaign(id, data);
       return { success: true };
     }),
 
   // ─── Platform Bridge: Publish to Connected Social Accounts ──────────
-  publishToSocial: protectedProcedure
+  publishToSocial: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number().optional(),
@@ -649,7 +648,11 @@ export const socialRouter = router({
       link: z.string().optional(),
       hashtags: z.array(z.string()).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireSocialAccountInOrg(input.socialAccountId, ctx.org.id);
+      if (input.storeId) {
+        await requireStoreInOrg(input.storeId, ctx.org.id);
+      }
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_publish",
@@ -679,7 +682,7 @@ export const socialRouter = router({
       }
     }),
 
-  scheduleToSocial: protectedProcedure
+  scheduleToSocial: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number().optional(),
@@ -689,7 +692,11 @@ export const socialRouter = router({
       hashtags: z.array(z.string()).optional(),
       scheduledAt: z.string(), // ISO date string
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireSocialAccountInOrg(input.socialAccountId, ctx.org.id);
+      if (input.storeId) {
+        await requireStoreInOrg(input.storeId, ctx.org.id);
+      }
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_schedule",
