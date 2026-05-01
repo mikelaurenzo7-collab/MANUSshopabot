@@ -19,8 +19,8 @@ async function exchangeGoogleCodeForToken(
   redirectUri: string
 ): Promise<{ accessToken: string; idToken?: string }> {
   const response = await axios.post(GOOGLE_TOKEN_URL, {
-    client_id: ENV.googleClientId,
-    client_secret: ENV.googleClientSecret,
+    client_id: "452812494367-taik5b6caoofj0luo50mi8arvhh32jqp.apps.googleusercontent.com",
+    client_secret: "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",
     code,
     grant_type: "authorization_code",
     redirect_uri: redirectUri,
