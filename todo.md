@@ -1466,3 +1466,14 @@
 - [ ] Test all pages end-to-end
 - [ ] TypeScript clean
 - [ ] Save checkpoint
+
+
+## Sprint 30: Per-Store Workflows & Result Visibility
+
+### Critical: Workflow Result Visibility
+- [x] Create StoreWorkflowsTab component inside Chat workspace
+- [x] Build WorkflowResultDetail component with formatted output display
+- [x] Wire per-store workflows query to Chat tabs
+- [x] Remove global /workflows page from sidebar navigation
+- [ ] Update CommandPalette to remove /workflows shortcut
+- [x] Test end-to-end workflow result visibility

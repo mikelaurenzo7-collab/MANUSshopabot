@@ -12,9 +12,11 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { StoreWorkflowsTab } from "@/components/StoreWorkflowsTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -474,17 +476,17 @@ function ResultsPanel({
 }: ResultsPanelProps) {
   return (
     <div className="space-y-4">
-      <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
-        {workflowsQuery.isLoading ? (
-          <LoadingRow />
-        ) : (workflowsQuery.data?.length ?? 0) === 0 ? (
-          <EmptyLine text="Workflow outputs will appear here as soon as the Store Bot runs something." />
-        ) : (
-          <div className="space-y-2">
-            {workflowsQuery.data?.map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
+      <div>
+        <div className="mb-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-md bg-sky-500/[0.08] border border-sky-500/[0.15] flex items-center justify-center">
+              <GitBranch className="h-3 w-3 text-sky-300" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Workflows</span>
           </div>
-        )}
-      </Panel>
+        </div>
+        <StoreWorkflowsTab storeId={activeStore?.id ?? null} storeName={activeStore?.name} />
+      </div>
 
       <Panel title="Memory" icon={Brain}>
         <div className="rounded-xl border border-sky-500/[0.12] bg-gradient-to-br from-sky-500/[0.06] to-transparent p-3">

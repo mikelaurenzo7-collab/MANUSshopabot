@@ -206,7 +206,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { title: "Store Bot", path: "/chat", icon: Bot, brand: "sky", dot: storeBotStatus },
     // ── OPERATIONS section ──
     { title: "OPERATIONS", section: true },
-    { title: "Workflows", path: "/workflows", icon: GitBranch, badge: totalRunning },
+
     { title: "Workflow Builder", path: "/workflow-builder", icon: Zap },
     { title: "Integrations", path: "/storefronts", icon: Globe },
     { title: "Analytics", path: "/insights", icon: BarChart3 },
@@ -224,9 +224,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const activePathFor = (path: string): boolean => {
     if (!path) return false; // Section headers have no path
     if (path === "/") return location === "/";
-    if (path === "/inbox") {
+    if (path === "/chat") {
       return (
-        location.startsWith("/inbox") ||
+        location.startsWith("/chat") ||
+        location.startsWith("/workflows") ||
         location.startsWith("/activity") ||
         location.startsWith("/approvals")
       );
