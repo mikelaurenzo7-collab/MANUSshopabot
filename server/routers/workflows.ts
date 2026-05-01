@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { orgProcedure, protectedProcedure, router } from "../_core/trpc";
+import { boundedJsonBlob } from "../utils/boundedJson";
 import { TRPCError } from "@trpc/server";
 import { isFounderEmail } from "../_core/founder";
 import { requireStoreInOrg } from "../utils/authz";
@@ -37,7 +38,7 @@ export const workflowRouter = router({
       description: z.string().optional(),
       scope: z.enum(["specific_store", "all_stores", "global"]),
       storeId: z.number().optional(),
-      input: z.record(z.string(), z.any()).optional(),
+      input: boundedJsonBlob().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const dbUser = await getUserByOpenId(ctx.user.openId);
@@ -95,7 +96,7 @@ export const workflowRouter = router({
         order: z.number().int().nonnegative(),
         type: z.string().min(1).max(64),
         title: z.string().max(500),
-        config: z.record(z.string(), z.any()).optional(),
+        config: boundedJsonBlob().optional(),
       })),
       storeId: z.number().int().positive().optional(),
     }))
