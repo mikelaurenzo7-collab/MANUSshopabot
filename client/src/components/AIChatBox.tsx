@@ -197,6 +197,8 @@ export function AIChatBox({
       : null;
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  // Snapshot of input when recording starts so speech is appended, not replaced
+  const voiceBaseRef = useRef<string>("");
 
   function toggleVoiceInput() {
     if (!SpeechRecognitionAPI) return;
@@ -208,11 +210,13 @@ export function AIChatBox({
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-US";
+    // Snapshot existing text so appended speech doesn't clobber it
+    voiceBaseRef.current = input ? `${input.trimEnd()} ` : "";
     recognition.onresult = (e: any) => {
       const transcript = Array.from(e.results as SpeechRecognitionResultList)
         .map((r) => r[0].transcript)
         .join("");
-      setInput(transcript);
+      setInput(voiceBaseRef.current + transcript);
     };
     recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);

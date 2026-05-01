@@ -112,6 +112,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // Mobile bottom-nav: track previous tab index for directional slide animation
   const prevNavIdxRef = useRef<number>(-1);
   const mobileMainRef = useRef<HTMLElement>(null);
+  // Timeout ID for clearing data-nav-dir; stored so rapid taps cancel the prior timer
+  const navDirTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   useEffect(() => {
     if (!user) return;
@@ -164,6 +166,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener("keydown", onKey);
       if (leaderTimerRef.current) clearTimeout(leaderTimerRef.current);
+      if (navDirTimerRef.current) clearTimeout(navDirTimerRef.current);
     };
   }, [user, setLocation, helpOpen]);
 
@@ -590,11 +593,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const dir = newIdx > prevIdx ? "forward" : "back";
         if (mobileMainRef.current) {
           mobileMainRef.current.setAttribute("data-nav-dir", dir);
-          // Remove after animation so it doesn't interfere with scrolling
-          const tid = setTimeout(() => mobileMainRef.current?.removeAttribute("data-nav-dir"), 320);
-          // Persist tid in closure — no need to cancel since component unmount
-          // is unlikely in the 320 ms window and the ref check guards against it.
-          void tid;
+          // Cancel any prior pending clear (rapid taps) then schedule a fresh one
+          if (navDirTimerRef.current !== null) clearTimeout(navDirTimerRef.current);
+          navDirTimerRef.current = setTimeout(() => {
+            mobileMainRef.current?.removeAttribute("data-nav-dir");
+            navDirTimerRef.current = null;
+          }, 320);
         }
       }
       prevNavIdxRef.current = newIdx;
@@ -603,7 +607,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       navigator.vibrate?.(8);
 
       setMobileMenuOpen(false);
-    }
+    };
 
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">

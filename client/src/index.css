@@ -5385,6 +5385,8 @@ a {
   .chat-mic-listening { animation: none; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE BOTTOM-NAV DIRECTIONAL PAGE TRANSITIONS
    When data-nav-dir is set on <main> by DashboardLayout, the .page-enter
    animation swaps from a plain fade to a directional slide so navigating
    forward (higher tab index) slides in from the right and navigating back
