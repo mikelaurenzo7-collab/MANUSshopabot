@@ -223,9 +223,9 @@ export function CommandPalette({ children }: { children?: ReactNode } = {}) {
   };
   const recentItems: CommandItem[] = recentPaths
     .filter((p) => p !== location)
-    .slice(0, 4)
+    .slice(0, MAX_RECENTS)
     .map((p) => {
-      const meta = PATH_META[p] ?? { label: p, icon: Clock, accent: "sky" };
+      const meta = PATH_META[p] ?? { label: "Page", icon: Clock, accent: "sky" };
       return {
         id: `recent-${p}`,
         label: meta.label,
