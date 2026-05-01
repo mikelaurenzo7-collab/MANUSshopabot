@@ -110,6 +110,11 @@ export const ENV = {
   // Set in Manus secrets; read at request time so a missing key
   // gracefully falls back to the synthetic dispatcher.
   firecrawlApiKey: process.env.FIRECRAWL_API_KEY ?? "",
+  // Tavily — gives the bots real web search (query → ranked URLs +
+  // synthesized answer). Pairs with Firecrawl: search to discover,
+  // scrape to deep-dive. Set in Manus secrets; missing key triggers
+  // graceful "service unavailable" in the agent dispatcher.
+  tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
   // CJ Dropshipping
   cjEmail: process.env.CJ_EMAIL ?? "",
   cjPassword: process.env.CJ_PASSWORD ?? "",

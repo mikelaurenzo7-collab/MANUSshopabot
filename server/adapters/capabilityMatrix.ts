@@ -115,6 +115,7 @@ const AUTH_MODEL: Record<string, AuthModel> = {
   gorgias: "api_key",
   // Research / web-data tools
   firecrawl: "api_key",
+  tavily: "api_key",
 };
 
 /** Public accessor — returns "none" for unknown platforms so callers don't

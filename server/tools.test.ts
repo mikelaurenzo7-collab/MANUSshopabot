@@ -50,10 +50,13 @@ describe("Tool Connector Adapters", () => {
         "judgeme",
         "gorgias",
         "google_ads",
-        // Research / web-data tool — Firecrawl scrapes a URL into
-        // LLM-ready markdown so the agent loop can ground its
-        // reasoning in real page content (PR adding scout_url).
+        // Research / web-data tools — Firecrawl scrapes a single URL
+        // into LLM-ready markdown; Tavily searches the live web for
+        // ranked URLs + a synthesized answer. Together they form the
+        // agent's research stack: search to discover, scrape to
+        // deep-dive (PRs adding scout_url + web_search).
         "firecrawl",
+        "tavily",
       ].sort(),
     );
   });
