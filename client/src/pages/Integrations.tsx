@@ -940,7 +940,19 @@ export default function IntegrationsPage() {
 
       {/* StoreView Slide-Over */}
       {selectedStoreId !== null && (
-        <Suspense fallback={null}>
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-stretch justify-end">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedStoreId(null)} />
+            <div className="relative w-full max-w-3xl bg-slate-950 border-l border-white/10 flex flex-col shadow-2xl overflow-hidden animate-pulse">
+              <div className="h-16 border-b border-white/8 bg-white/[0.03]" />
+              <div className="flex-1 p-6 space-y-4">
+                <div className="h-4 bg-white/[0.06] rounded w-1/2" />
+                <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+                <div className="h-4 bg-white/[0.06] rounded w-1/3" />
+              </div>
+            </div>
+          </div>
+        }>
           <StoreView storeId={selectedStoreId} onClose={() => setSelectedStoreId(null)} />
         </Suspense>
       )}
