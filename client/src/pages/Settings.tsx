@@ -69,12 +69,12 @@ export default function SettingsPage() {
         flushBottom
       />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-5 pt-1.5 relative">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5 pt-1.5 relative">
         <TabsList className="tab-bar-shell">
-          <TabsTrigger value="profile" className="tab-trigger-shell">Profile</TabsTrigger>
-          <TabsTrigger value="members" className="tab-trigger-shell">Members</TabsTrigger>
-          <TabsTrigger value="bots" className="tab-trigger-shell">Bot Settings</TabsTrigger>
-          {isAdmin && <TabsTrigger value="platform" className="tab-trigger-shell">Platform Health</TabsTrigger>}
+          <TabsTrigger value="profile" className="tab-trigger-shell whitespace-nowrap">Profile</TabsTrigger>
+          <TabsTrigger value="members" className="tab-trigger-shell whitespace-nowrap">Members</TabsTrigger>
+          <TabsTrigger value="bots" className="tab-trigger-shell whitespace-nowrap">Bot Settings</TabsTrigger>
+          {isAdmin && <TabsTrigger value="platform" className="tab-trigger-shell whitespace-nowrap">Platform Health</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="profile" className="mt-3">

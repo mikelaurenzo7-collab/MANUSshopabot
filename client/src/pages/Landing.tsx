@@ -932,10 +932,10 @@ export default function Landing() {
       )}
 
       {/* ── Navigation ─────────────────────────────────────────────────────── */}
-      <nav className={`fixed left-0 right-0 z-50 topbar-glass ${subscriptionSuccess ? "top-12" : "top-0"}`}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className={`fixed left-0 right-0 z-50 topbar-glass ${subscriptionSuccess ? "top-12" : "top-0"}`} style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
           <BrandName size="sm" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <Button
                 onClick={() => setLocation("/")}
@@ -951,7 +951,7 @@ export default function Landing() {
                   onClick={() => window.location.href = `/manus-oauth/login?returnPath=${encodeURIComponent(window.location.pathname)}`}
                   variant="outline"
                   size="sm"
-                  className="border-white/10 text-white/70 hover:border-white/20 hover:text-white hover:bg-white/5 transition-all"
+                  className="hidden sm:inline-flex border-white/10 text-white/70 hover:border-white/20 hover:text-white hover:bg-white/5 transition-all"
                 >
                   Sign In
                 </Button>
@@ -964,10 +964,13 @@ export default function Landing() {
                   {checkoutMutation.isPending ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                      Loading…
+                      <span className="hidden sm:inline">Loading…</span>
                     </>
                   ) : (
-                    "Get Started"
+                    <>
+                      <span className="sm:hidden">Get started</span>
+                      <span className="hidden sm:inline">Get Started</span>
+                    </>
                   )}
                 </Button>
               </>
@@ -977,7 +980,7 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-16 sm:pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-44 sm:pt-52" : "pt-28 sm:pt-36"}`}>
         {/* Background effects */}
         <div className="aurora-mesh" />
         <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
@@ -1009,7 +1012,7 @@ export default function Landing() {
 
             {/* Headline — the cofounder one-liner. Three short stabs;
                 the meaning compounds line-by-line. */}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
+            <h1 className="text-[2.25rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.95] sm:leading-[0.92]">
               <span className="text-white">Hire one expert.</span>
               <br />
               <span className="text-white">Run your store.</span>
@@ -1083,7 +1086,7 @@ export default function Landing() {
             </div>
 
             {/* Trust strip */}
-            <div className="mt-12 grid sm:grid-cols-3 gap-3">
+            <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {TRUST_ITEMS.map((item) => (
                 <div key={item.label} className="luxury-stat-card text-left">
                   <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
@@ -1101,18 +1104,19 @@ export default function Landing() {
           <div className="relative mx-auto w-full max-w-2xl">
             <div className="commerce-orb" />
             <div className="command-preview">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
-                <div>
+              <div className="flex items-center justify-between gap-2 border-b border-white/[0.07] px-4 sm:px-5 py-3 sm:py-4">
+                <div className="min-w-0">
                   <p className="micro-label mb-1">Live Autonomous Store</p>
-                  <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
+                  <h2 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-white truncate">Revenue engine online</h2>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.12)]">
+                <div className="shrink-0 flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.12)]">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
-                  24/7 Active
+                  <span className="hidden sm:inline">24/7 Active</span>
+                  <span className="sm:hidden">Live</span>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-[1fr_0.8fr] gap-4 p-5">
+              <div className="grid md:grid-cols-[1fr_0.8fr] gap-3 sm:gap-4 p-3 sm:p-5">
                 <div className="space-y-4">
                   {BOTS.map((bot, index) => {
                     const colors = BOT_COLORS[bot.name];
@@ -1305,18 +1309,18 @@ export default function Landing() {
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(14,165,233,0.07),transparent_65%)]" />
         <div className="absolute inset-x-0 top-0 hairline opacity-60" />
         <div className="absolute inset-x-0 bottom-0 hairline opacity-60" />
-        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 text-center group relative overflow-hidden"
+              className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-5 sm:p-7 text-center group relative overflow-hidden"
             >
               {/* Top glow rim */}
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent" />
-              <div className="w-11 h-11 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 group-hover:shadow-[0_0_18px_rgba(14,165,233,0.15)] transition-all duration-300">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 mx-auto mb-3 sm:mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 group-hover:shadow-[0_0_18px_rgba(14,165,233,0.15)] transition-all duration-300">
                 <metric.icon className={`w-5 h-5 ${metric.color} group-hover:scale-110 transition-transform duration-300`} />
               </div>
-              <div className="lux-numeral text-3xl font-black text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
+              <div className="lux-numeral text-2xl sm:text-3xl font-black text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
               <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
             </div>
           ))}
@@ -1698,7 +1702,7 @@ export default function Landing() {
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="border-t border-white/[0.06] bg-surface-deep py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
             <div>
               <BrandName size="sm" />
               <p className="text-white/45 text-sm mt-2 max-w-xs leading-relaxed">
@@ -1706,7 +1710,7 @@ export default function Landing() {
                 <span className="block text-white/30 mt-1">One expert. One operation. Zero touch.</span>
               </p>
             </div>
-            <div className="flex flex-wrap gap-x-8 gap-y-3">
+            <div className="flex flex-wrap gap-x-5 sm:gap-x-8 gap-y-2 sm:gap-y-3">
               {[
                 { label: "Terms", href: "/terms" },
                 { label: "Privacy", href: "/privacy" },
@@ -1724,7 +1728,7 @@ export default function Landing() {
               ))}
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div className="mt-8 pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-left">
             <span className="text-white/20 text-xs">© 2026 {BRAND_NAME}. All rights reserved.</span>
             <span className="text-white/20 text-xs">Built with AI. Powered by bots.</span>
           </div>

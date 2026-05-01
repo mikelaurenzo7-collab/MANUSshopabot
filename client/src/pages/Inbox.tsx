@@ -71,9 +71,9 @@ export default function InboxPage() {
         }
       />
 
-      <div className="px-5 mb-2" />
+      <div className="px-3 sm:px-5 mb-2" />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-5">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5">
         <TabsList className="tab-bar-shell">
           <TabsTrigger value="activity" className="tab-trigger-shell">Activity</TabsTrigger>
           <TabsTrigger value="approvals" className="relative tab-trigger-shell">

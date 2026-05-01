@@ -125,7 +125,7 @@ export function PageHeader({
         aria-hidden="true"
         className={`pointer-events-none absolute top-0 left-4 h-16 w-28 ${styles.halo} blur-2xl opacity-40`}
       />
-      <div className={`relative px-6 pt-5 ${flushBottom ? "pb-2" : "pb-4"} flex items-center gap-3`}>
+      <div className={`relative px-4 sm:px-6 pt-4 sm:pt-5 ${flushBottom ? "pb-2" : "pb-3 sm:pb-4"} flex items-center gap-2.5 sm:gap-3`}>
         {/* Icon plate — 36×36, slightly larger than before for more presence */}
         <div
           className={`h-9 w-9 rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-all duration-500 hover:scale-110 hover:shadow-premium-lg`}
@@ -135,14 +135,14 @@ export function PageHeader({
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[18px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
+          <h1 className="text-[16px] sm:text-[18px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[12px] text-white/45 truncate mt-0.5 leading-snug">{subtitle}</p>
+            <p className="text-[11px] sm:text-[12px] text-white/45 truncate mt-0.5 leading-snug">{subtitle}</p>
           )}
         </div>
-        {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
+        {right && <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">{right}</div>}
       </div>
       {/* Signature accent line — animated sweep for a dynamic edge. */}
       <div

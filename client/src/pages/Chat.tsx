@@ -240,7 +240,7 @@ export default function Chat() {
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-h-0 p-3 sm:p-4 md:p-5">
+        <div className="min-h-0 p-2 sm:p-4 md:p-5">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSend}
@@ -254,7 +254,7 @@ export default function Chat() {
           />
         </div>
 
-        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar">
+        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar scroll-touch">
           <div className="space-y-4">
             <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
               {workflowsQuery.isLoading ? (

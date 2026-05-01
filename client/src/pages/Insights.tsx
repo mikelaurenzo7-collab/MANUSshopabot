@@ -66,9 +66,9 @@ export default function InsightsPage() {
         flushBottom
       />
 
-      <div className="px-5 mb-2" />
+      <div className="px-3 sm:px-5 mb-2" />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="px-5">
+      <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5">
         <TabsList
           className="tab-bar-shell"
           role="tablist"
@@ -78,7 +78,7 @@ export default function InsightsPage() {
             value="stores"
             role="tab"
             aria-selected={tab === "stores"}
-            className="tab-trigger-shell"
+            className="tab-trigger-shell whitespace-nowrap"
           >
             My Stores
           </TabsTrigger>
@@ -86,7 +86,7 @@ export default function InsightsPage() {
             value="campaigns"
             role="tab"
             aria-selected={tab === "campaigns"}
-            className="tab-trigger-shell"
+            className="tab-trigger-shell whitespace-nowrap"
           >
             Campaigns
           </TabsTrigger>
@@ -94,7 +94,7 @@ export default function InsightsPage() {
             value="intelligence"
             role="tab"
             aria-selected={tab === "intelligence"}
-            className="tab-trigger-shell"
+            className="tab-trigger-shell whitespace-nowrap"
           >
             Cross-Store &amp; Market
           </TabsTrigger>

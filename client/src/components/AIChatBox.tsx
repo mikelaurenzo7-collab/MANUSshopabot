@@ -348,7 +348,7 @@ export function AIChatBox({
 
                     <div
                       className={cn(
-                        "max-w-[82%] rounded-xl px-4 py-3 animate-in fade-in slide-in-from-bottom-1 duration-200",
+                        "max-w-[88%] sm:max-w-[82%] rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 animate-in fade-in slide-in-from-bottom-1 duration-200",
                         message.role === "user"
                           ? "chat-user-bubble"
                           : "chat-bot-bubble"

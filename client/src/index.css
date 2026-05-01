@@ -4924,3 +4924,222 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   from { background-position: 0% center;   opacity: 0.75; }
   to   { background-position: 100% center; opacity: 1; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile Responsiveness Polish — End-to-end refinements
+   Designed to preserve the supreme web look while making every surface
+   touch-comfortable, safe-area aware, and visually crisp on small screens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Safe-area utilities — respect notches, home indicators, browser chrome. */
+.safe-pt    { padding-top:    env(safe-area-inset-top); }
+.safe-pb    { padding-bottom: env(safe-area-inset-bottom); }
+.safe-pl    { padding-left:   env(safe-area-inset-left); }
+.safe-pr    { padding-right:  env(safe-area-inset-right); }
+.safe-px    { padding-left:   env(safe-area-inset-left);  padding-right: env(safe-area-inset-right); }
+.safe-py    { padding-top:    env(safe-area-inset-top);   padding-bottom: env(safe-area-inset-bottom); }
+.safe-mb    { margin-bottom:  env(safe-area-inset-bottom); }
+
+/* Prevent iOS rubber-band scrolling on body, allow inner scrollers to scroll. */
+html, body { overscroll-behavior-y: none; }
+html { -webkit-text-size-adjust: 100%; }
+
+/* On touch devices, hover-only effects flash on tap then linger. Disable. */
+@media (hover: none) {
+  .glass-card:hover,
+  .glass-subtle:hover,
+  .card-hover:hover,
+  .lift-on-hover:hover,
+  .hover-lift:hover,
+  .kpi-lux:hover,
+  .btn-glow:hover,
+  .btn-cyan-glow:hover,
+  .btn-amber-glow:hover {
+    transform: none !important;
+  }
+}
+
+/* ── Mobile chrome: fixed bottom-nav for the authenticated dashboard ─────── */
+.mobile-bottom-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  background: rgba(4, 4, 6, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -1px 0 rgba(14, 165, 233, 0.06), 0 -8px 28px rgba(0, 0, 0, 0.45);
+}
+.mobile-bottom-nav-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 200ms ease, background 200ms ease;
+}
+.mobile-bottom-nav-item[aria-current="page"] {
+  color: #93c5fd;
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.14), rgba(14, 165, 233, 0.04));
+  box-shadow: inset 0 1px 0 rgba(14, 165, 233, 0.18);
+}
+.mobile-bottom-nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 30%;
+  right: 30%;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0), rgba(56, 189, 248, 0.95), rgba(14, 165, 233, 0));
+}
+.mobile-bottom-nav-item:active { transform: scale(0.96); }
+
+/* ── Tabs: horizontal scroll on small viewports ──────────────────────────── */
+@media (max-width: 640px) {
+  .tab-bar-shell {
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    /* Slight inset shadow on the right hints there's more to scroll. */
+    mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%);
+  }
+  .tab-bar-shell::-webkit-scrollbar { display: none; }
+  .tab-trigger-shell {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    min-height: 36px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* ── KPI strip: smooth horizontal scroll on phones; full grid on desktop ─── */
+@media (max-width: 640px) {
+  .kpi-strip-mobile {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+  }
+  .kpi-strip-mobile::-webkit-scrollbar { display: none; }
+  .kpi-strip-mobile > * {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+  .kpi-strip-mobile .kpi-lux {
+    min-width: 168px;
+  }
+}
+
+/* ── Touch target floor ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Buttons, links, and form inputs honor a 40px minimum tap target. */
+  button,
+  [role="button"],
+  a.button,
+  .btn,
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    min-height: 40px;
+  }
+  /* But icon-only ghost triggers (close X, expand chevrons) stay compact. */
+  button[data-tap-compact="true"],
+  .tap-compact { min-height: 0 !important; }
+}
+
+/* ── Headline & body type: phone-first scale for big marketing pages ─────── */
+@media (max-width: 480px) {
+  .hero-shrink-sm h1 { font-size: clamp(2rem, 9vw, 2.75rem); line-height: 1.02; }
+  .hero-shrink-sm p  { font-size: 0.95rem; line-height: 1.55; }
+}
+
+/* ── PageHeader: tighten padding on phones, keep desktop polish ─────────── */
+@media (max-width: 640px) {
+  .page-header-pad { padding-left: 1rem !important; padding-right: 1rem !important; }
+}
+
+/* ── Marquee performance polish on phones ─────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Halve the marquee width-to-pace ratio so brand tiles read at 1x. */
+  .marquee-mobile-tight { gap: 0.5rem !important; }
+}
+
+/* ── Horizontal scroll affordance: prevent body scroll bleed ─────────────── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Dashboard mobile content: leave room for the bottom nav ─────────────── */
+.dashboard-mobile-main {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
+/* ── Mobile sheet: fluid width, never wider than viewport ────────────────── */
+@media (max-width: 480px) {
+  [data-sheet="true"][data-side="left"],
+  [data-sheet="true"][data-side="right"] {
+    max-width: 88vw;
+  }
+}
+
+/* ── Forms: prevent iOS auto-zoom by pinning input font-size to 16px ─────── */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px; }
+  .text-xs input, .text-sm input,
+  .text-xs textarea, .text-sm textarea {
+    font-size: 16px; /* override smaller-than-16 to stop zoom */
+  }
+}
+
+/* ── Desktop polish: keep landing trust strip / footer chrome elegant ───── */
+@media (min-width: 769px) {
+  .lg-only-shadow { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+}
+
+/* ── Mobile-friendly Pricing matrix: hide swipe hint on desktop ────────── */
+@media (min-width: 769px) {
+  .pricing-matrix-mobile-hint { display: none; }
+}
+
+/* ── Stop horizontal-scroll bleed on landing hero / trust strips ─────────── */
+.no-x-scroll { overflow-x: clip; }
+
+/* ── Card density tuning for phones ───────────────────────────────────────── */
+@media (max-width: 640px) {
+  .empty-state {
+    padding: 1.25rem 1rem;
+  }
+  .glass-card,
+  .bento-card {
+    border-radius: 0.85rem;
+  }
+}
+
+/* ── Native-feeling touch: passive, smooth, momentum scrolling everywhere ── */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}

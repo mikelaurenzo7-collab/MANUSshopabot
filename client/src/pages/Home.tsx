@@ -174,7 +174,7 @@ export default function Home() {
 
       {/* ── Error Banner ── */}
       {(metricsError || agentError) && (
-        <div className="shrink-0 mx-4 md:mx-6 mt-4 rounded-xl border border-red-500/25 bg-red-500/[0.05] px-4 py-3 flex items-center gap-3">
+        <div className="shrink-0 mx-3 sm:mx-4 md:mx-6 mt-3 sm:mt-4 rounded-xl border border-red-500/25 bg-red-500/[0.05] px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2.5 sm:gap-3">
           <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-widest text-red-400">Dashboard Error</p>
@@ -193,16 +193,25 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-4 md:px-5 py-3 flex flex-wrap items-center gap-2.5 md:gap-3 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-3 sm:px-4 md:px-5 py-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
-        <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
-        <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
-        <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
-        <Kpi
-          icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
-          label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
-        />
-        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
+        <div className="flex flex-nowrap sm:flex-wrap items-center gap-2.5 md:gap-3 kpi-strip-mobile">
+          <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
+          <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
+          <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
+          <Kpi
+            icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
+            label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
+          />
+          <div className="hidden sm:flex sm:ml-auto items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
+            {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
+            <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
+            <span className="text-[11px] font-medium text-white/90 truncate" title={recommendation}>{recommendation}</span>
+          </div>
+        </div>
+        {/* Mobile-only recommendation row — placed below the KPIs so the strip
+            scrolls cleanly without forcing the chip to the right. */}
+        <div className="sm:hidden mt-2 flex items-center gap-2 rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
           <span className="text-[11px] font-medium text-white/90 truncate" title={recommendation}>{recommendation}</span>
@@ -210,8 +219,8 @@ export default function Home() {
       </div>
 
       {/* ── Scrollable body ── */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="px-4 md:px-5 py-3 space-y-5">
+      <div className="flex-1 overflow-y-auto custom-scrollbar scroll-touch">
+        <div className="px-3 sm:px-4 md:px-5 py-3 space-y-4 sm:space-y-5">
 
           {/* Daily brief */}
           <DailyBrief />
@@ -226,7 +235,7 @@ export default function Home() {
           <RecommendedWorkflows />
 
           {/* ── Ops Grid ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-6">
 
             {/* ── Col 1: Unified Store Bot ── */}
             <div className="space-y-3">

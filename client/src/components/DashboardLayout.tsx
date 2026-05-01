@@ -559,39 +559,103 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   if (isMobile) {
+    // Five primary destinations for the mobile bottom nav. Keep this list
+    // tight (max 5) so each tap target stays >= ~64px wide on a 360px
+    // viewport. Workflows / Workflow Builder / Storefronts are reachable
+    // via the drawer + the Command Center surface.
+    const bottomNavItems: Array<{ path: string; icon: any; label: string; badge?: number; dot?: NavItem["dot"] }> = [
+      { path: "/", icon: LayoutDashboard, label: "Home" },
+      { path: "/inbox", icon: InboxIcon, label: "Inbox", badge: pendingCount },
+      { path: "/chat", icon: Bot, label: "Bot", dot: storeBotStatus },
+      { path: "/insights", icon: BarChart3, label: "Insights" },
+      { path: "/settings", icon: SettingsIcon, label: "Settings" },
+    ];
+
     return (
-      <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
+      <div className="flex h-[100dvh] w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40">
-          <div className="flex items-center gap-2">
-            <div className="brand-mark">
+        <div
+          className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40 safe-pt safe-pl safe-pr"
+          style={{ paddingTop: "calc(env(safe-area-inset-top) + 0px)" }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="brand-mark shrink-0">
               <Zap className="w-3 h-3 text-white" />
             </div>
             <BrandName size="sm" />
           </div>
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open navigation menu">
-                <Menu className="w-4 h-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
-              <div className="flex h-full flex-col">
-                <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2">
-                  <div className="brand-mark">
-                    <Zap className="w-3 h-3 text-white" />
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Open command palette"
+              className="h-9 w-9 rounded-md flex items-center justify-center text-white/55 hover:text-sky-300 hover:bg-white/[0.06] transition-colors"
+              data-tap-compact="true"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu">
+                  <Menu className="w-4 h-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 max-w-[88vw] p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
+                <div className="flex h-full flex-col safe-pt safe-pb">
+                  <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2">
+                    <div className="brand-mark">
+                      <Zap className="w-3 h-3 text-white" />
+                    </div>
+                    <BrandName size="sm" />
                   </div>
-                  <BrandName size="sm" />
+                  <NavContent />
+                  <SidebarFooter />
                 </div>
-                <NavContent />
-                <SidebarFooter />
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
-        {/* Mobile Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+        {/* Mobile Content — leave room above the bottom nav */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden dashboard-mobile-main scroll-touch">
+          {children}
+        </main>
+
+        {/* Mobile bottom navigation — 5 primary destinations */}
+        <nav className="mobile-bottom-nav" aria-label="Primary">
+          {bottomNavItems.map((item) => {
+            const isActive = activePathFor(item.path);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={item.label}
+                className="mobile-bottom-nav-item"
+              >
+                <span className="relative inline-flex">
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={2.1} />
+                  {item.badge && item.badge > 0 ? (
+                    <span
+                      className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-amber-500 text-black text-[9px] font-bold flex items-center justify-center"
+                      aria-label={`${item.badge} pending`}
+                    >
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  ) : null}
+                  {item.dot === "running" && (
+                    <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  )}
+                  {item.dot === "error" && (
+                    <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                  )}
+                </span>
+                <span className="text-[10px] leading-none truncate max-w-full">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
         <KeyboardHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
       </div>
@@ -599,7 +663,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#050505] text-white app-chrome">
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white app-chrome">
       {/* Desktop Sidebar — rail at narrow viewports unless user pinned expanded */}
       <aside
         className={`shrink-0 flex flex-col border-r border-white/[0.05] bg-[#040406]/90 backdrop-blur-2xl relative z-20 sidebar-luxe transition-[width] duration-200 ${

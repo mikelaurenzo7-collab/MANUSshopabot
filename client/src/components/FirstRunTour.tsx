@@ -123,7 +123,7 @@ export function FirstRunTour() {
       role="dialog"
       aria-label={`First-run tour, step ${stop.id} of ${STOPS.length}`}
       aria-modal="false"
-      className="fixed bottom-4 right-4 z-50 w-[min(360px,calc(100vw-2rem))] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-300"
+      className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-4 right-3 md:right-4 z-50 w-[min(360px,calc(100vw-1.5rem))] motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-300"
     >
       <div className="rounded-xl border border-white/[0.10] bg-[#0a0b0f]/95 backdrop-blur-md shadow-2xl overflow-hidden">
         {/* Progress bar */}
