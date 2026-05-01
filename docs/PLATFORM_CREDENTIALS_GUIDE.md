@@ -55,6 +55,7 @@ This guide documents the API credentials needed for every platform integration s
 | Tools | Judge.me | API key | live | §3.7 |
 | Tools | Gorgias | Key (HTTP Basic) | live | §3.8 |
 | Tools | Firecrawl | API key (Bearer) | live | §3.9 |
+| Tools | Tavily | API key (in body) | live | §3.10 |
 
 Section numbers below use the same scheme; everything previously in this
 file is preserved with its original wording.
@@ -367,7 +368,7 @@ existing connectors router (`SOCIAL_PLATFORMS.snapchat` in
 
 ---
 
-## Tool Integrations (9 total)
+## Tool Integrations (10 total)
 
 Tool integrations cover analytics, ESPs, fulfillment, CX, and research.
 Every adapter in `server/adapters/tools/` is live; only credentials are
@@ -429,6 +430,39 @@ required.
   crash, no hard dependency.
 - **Health check**: hits `/v1/team/credit-usage` (free, no credits
   consumed). Surfaces remaining credit count in the Integrations UI.
+
+### 3.10. Tavily (Web search → LLM)
+- **Adapter**: `server/adapters/tools/tavilyAdapter.ts`
+- **Auth**: API key passed in the request body (Tavily's convention).
+  Set `TAVILY_API_KEY` in Manus secrets.
+- **Setup**: Sign up at https://tavily.com → API keys → copy. Choose the
+  pay-as-you-go plan for production usage; free tier covers prototyping
+  but throttles aggressively.
+- **What it powers**: the `web_search` agent tool — wired into ALL
+  three bot toolsets (architect/merchant/social). Returns a synthesized
+  one-paragraph answer plus ranked URLs with snippets. Pairs with
+  Firecrawl's `scout_url`: the agent uses Tavily to *discover* relevant
+  pages, then optionally hands the best 1-2 hits to Firecrawl for
+  deep-scrape.
+- **Optimal usage pattern**:
+  1. `web_search(query)` → ranked URLs + answer
+  2. (optional) `scout_url(top_url)` → full markdown of the most
+     promising hit
+  3. Reason over the combined evidence and emit a structured decision
+- **Per-bot leverage**:
+  - **Architect / competitor_stalker**: search for competitor sites in
+    a niche, scrape the top 1-2 for grounded positioning analysis.
+  - **Merchant / repricer**: search for supplier news, vendor price
+    changes, and category-wide demand shifts when the synth band
+    feels stale.
+  - **Social / trend_hunter**: search with `topic: "news"` to ground
+    creative briefs in current cultural moments and viral content.
+- **Graceful degradation**: when `TAVILY_API_KEY` is unset, the
+  `web_search` tool returns a structured "service unavailable"
+  response and the agent reasons from its other tools. No crash, no
+  hard dependency.
+- **Health check**: minimal `/search` query with `max_results: 1` and
+  `include_answer: false` — single credit per probe.
 
 ---
 

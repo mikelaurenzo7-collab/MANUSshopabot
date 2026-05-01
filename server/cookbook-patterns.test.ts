@@ -393,7 +393,13 @@ describe("Cookbook recipe — agent-loop engine wiring", () => {
     const { getAgentToolset } = await import("./engine/agentToolsets");
     const set = getAgentToolset("merchant.repricer_v0");
     expect(set).toBeDefined();
-    expect(set!.tools.map((t) => t.name).sort()).toEqual(["get_competitor_band", "get_sku_snapshot", "propose_repricing"]);
+    // Toolset grew when web_search (Tavily) was wired into all
+    // bot toolsets. Guard the v0 floor (the three synth tools must
+    // remain), but don't pin the ceiling — future real-data tools
+    // can land without churning this assertion.
+    expect(set!.tools.map((t) => t.name)).toEqual(
+      expect.arrayContaining(["get_competitor_band", "get_sku_snapshot", "propose_repricing"]),
+    );
 
     const snapshot = (await set!.dispatch("get_sku_snapshot", { sku: "ABC-100" })) as any;
     expect(snapshot.ok).toBe(true);
@@ -433,7 +439,11 @@ describe("Cookbook recipe — agent-loop engine wiring", () => {
     const { getAgentToolset } = await import("./engine/agentToolsets");
     const set = getAgentToolset("social.trend_hunter_v0");
     expect(set).toBeDefined();
-    expect(set!.tools.map((t) => t.name).sort()).toEqual(["commit_trend_brief", "fetch_platform_trends", "score_trend_relevance"]);
+    // Same as repricer above: web_search joined the three synth
+    // tools, so guard the floor not the ceiling.
+    expect(set!.tools.map((t) => t.name)).toEqual(
+      expect.arrayContaining(["commit_trend_brief", "fetch_platform_trends", "score_trend_relevance"]),
+    );
 
     const trends = (await set!.dispatch("fetch_platform_trends", { platform: "tiktok", niche: "minimalist watches", limit: 3 })) as any;
     expect(trends.ok).toBe(true);

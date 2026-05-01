@@ -153,3 +153,58 @@ export interface ScrapeCapabilities {
     options?: { onlyMainContent?: boolean; formats?: Array<"markdown" | "html"> },
   ): Promise<ScrapeResult>;
 }
+
+/** Web search (Tavily) — used by all three bots to discover citable
+ *  URLs and a synthesized answer the agent can reason over directly,
+ *  before optionally deep-scraping a hit with Firecrawl. */
+export interface SearchHit {
+  /** Page title from the search index. */
+  title: string;
+  /** Result URL — pass to scrapeUrl for the full page if needed. */
+  url: string;
+  /** Trimmed snippet of the page's most-relevant chunk. */
+  content: string;
+  /** Tavily-assigned relevance score (0-1, higher = more relevant);
+   *  null when the provider didn't supply one. */
+  score: number | null;
+  /** ISO-8601 publish date when available (mostly populated for
+   *  `topic: "news"` queries). */
+  publishedDate: string | null;
+}
+
+export interface SearchResult {
+  query: string;
+  /** One-paragraph synthesized answer when `include_answer` is on
+   *  (default). null when the search doesn't surface a clear answer
+   *  or the caller turned the option off. */
+  answer: string | null;
+  /** Ranked hits, highest score first. */
+  results: SearchHit[];
+  /** Provider-reported wall-clock for the search, in milliseconds. */
+  responseTimeMs: number | null;
+}
+
+export interface SearchOptions {
+  /** "basic" (default) — fast, ~2s. "advanced" — deeper crawl, ~5-10s. */
+  searchDepth?: "basic" | "advanced";
+  /** Number of results (1-20, default 5). */
+  maxResults?: number;
+  /** Synthesize a one-paragraph answer alongside the hits (default true). */
+  includeAnswer?: boolean;
+  /** "general" (default) or "news" (for trend / current-events queries). */
+  topic?: "general" | "news";
+  /** Restrict to these domains (e.g. ["shopify.com", "etsy.com"]). */
+  includeDomains?: string[];
+  /** Exclude these domains. */
+  excludeDomains?: string[];
+  /** For news topic: only return results from the last N days. */
+  daysBack?: number;
+}
+
+export interface SearchCapabilities {
+  search(
+    credentials: ToolCredentials,
+    query: string,
+    options?: SearchOptions,
+  ): Promise<SearchResult>;
+}

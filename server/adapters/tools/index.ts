@@ -17,6 +17,7 @@ export { JudgeMeAdapter } from "./judgemeAdapter";
 export { GorgiasAdapter } from "./gorgiasAdapter";
 export { GoogleAdsAdapter } from "./googleAdsAdapter";
 export { FirecrawlAdapter } from "./firecrawlAdapter";
+export { TavilyAdapter } from "./tavilyAdapter";
 
 import type { ToolConnectorAdapter, ToolCredentials } from "./types";
 import { GoogleSheetsAdapter } from "./googleSheetsAdapter";
@@ -29,6 +30,7 @@ import { JudgeMeAdapter } from "./judgemeAdapter";
 import { GorgiasAdapter } from "./gorgiasAdapter";
 import { GoogleAdsAdapter } from "./googleAdsAdapter";
 import { FirecrawlAdapter } from "./firecrawlAdapter";
+import { TavilyAdapter } from "./tavilyAdapter";
 
 const adapters: Record<string, ToolConnectorAdapter> = {
   google_sheets: new GoogleSheetsAdapter(),
@@ -41,6 +43,7 @@ const adapters: Record<string, ToolConnectorAdapter> = {
   gorgias: new GorgiasAdapter(),
   google_ads: new GoogleAdsAdapter(),
   firecrawl: new FirecrawlAdapter(),
+  tavily: new TavilyAdapter(),
 };
 
 export function getToolAdapter(tool: string): ToolConnectorAdapter {
