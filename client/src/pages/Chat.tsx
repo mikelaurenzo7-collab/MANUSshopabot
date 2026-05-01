@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -239,7 +240,7 @@ export default function Chat() {
               <WorkspaceBadge icon={Wrench} label="Tools" value={String(toolCount)} />
               <WorkspaceBadge icon={Truck} label="Supplier runs" value={String(supplierRuns.length)} />
             </div>
-            {/* Mobile-only toggle for the results panel */}
+            {/* Mobile-only toggle for the results panel (opens as bottom sheet) */}
             <button
               type="button"
               onClick={() => setShowAside((v) => !v)}
@@ -254,7 +255,8 @@ export default function Chat() {
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className={`min-h-0 p-3 sm:p-4 md:p-5 ${showAside ? "hidden xl:block" : ""}`}>
+        {/* Chat panel — always visible; never hidden behind the results panel on mobile */}
+        <div className="min-h-0 p-3 sm:p-4 md:p-5">
           <AIChatBox
             messages={messages}
             onSendMessage={handleSend}
@@ -268,72 +270,51 @@ export default function Chat() {
           />
         </div>
 
-        <aside className={`min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar ${showAside ? "block" : "hidden xl:block"}`}>
-          <div className="space-y-4">
-            <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
-              {workflowsQuery.isLoading ? (
-                <LoadingRow />
-              ) : (workflowsQuery.data?.length ?? 0) === 0 ? (
-                <EmptyLine text="Workflow outputs will appear here as soon as the Store Bot runs something." />
-              ) : (
-                <div className="space-y-2">
-                  {workflowsQuery.data?.map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
-                </div>
-              )}
-            </Panel>
-
-            <Panel title="Memory" icon={Brain}>
-              <div className="rounded-xl border border-sky-500/[0.12] bg-gradient-to-br from-sky-500/[0.06] to-transparent p-3">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                  <p className="text-[11px] font-bold text-sky-200 break-words">
-                    {activeStore ? activeStore.name : hasStores ? "Cross-store workspace" : "Launch workspace"}
-                  </p>
-                </div>
-                <p className="text-[10px] leading-relaxed text-white/60">
-                  Conversation history stays separated by workspace in this session, so each connected store gets its own specialized bot context.
-                </p>
-              </div>
-            </Panel>
-
-            <Panel title="Connectors & tools" icon={Plug} actionLabel="Manage" onAction={() => setLocation("/storefronts") }>
-              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                <MiniStat icon={Store} label="Stores" value={String(stores.length)} accent="sky" />
-                <MiniStat icon={Megaphone} label="Social" value={String(socialAccountsQuery.data?.length ?? 0)} accent="orange" />
-                <MiniStat icon={Plug} label="Credentials" value={String(credentialsQuery.data?.length ?? 0)} accent="cyan" />
-                <MiniStat icon={Wrench} label="Tools" value={String(toolCount)} accent="violet" />
-              </div>
-              {/* Show store names if connected */}
-              {stores.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {stores.slice(0, 3).map((s: any) => (
-                    <div key={s.id} className="flex items-center gap-1.5 rounded-lg border border-emerald-500/[0.12] bg-emerald-500/[0.05] px-2.5 py-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                      <span className="text-[10px] font-medium text-emerald-200/80 truncate">{s.name}</span>
-                      <span className="ml-auto text-[9px] text-white/30 uppercase tracking-widest shrink-0">{s.platform ?? "store"}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Panel>
-
-            <Panel title="Suppliers" icon={Package} actionLabel="Supplier POs" onAction={() => setLocation("/storefronts#supplier") }>
-              {supplierRuns.length === 0 ? (
-                <EmptyLine text="Ask the Store Bot to source products or audit fulfillment to populate supplier work." />
-              ) : (
-                <div className="space-y-2">
-                  {supplierRuns.slice(0, 3).map((wf: any) => (
-                    <div key={wf.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2.5">
-                      <p className="truncate text-[11px] font-semibold text-white/75">{wf.title}</p>
-                      <p className="mt-0.5 text-[9px] uppercase tracking-widest text-white/30">{wf.status}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Panel>
-          </div>
+        {/* Results panel — persistent aside on xl+, hidden on smaller screens */}
+        <aside className="min-h-0 overflow-y-auto border-t border-white/[0.06] bg-gradient-to-b from-white/[0.02] to-transparent p-3 sm:p-4 xl:border-l xl:border-t-0 md:p-5 custom-scrollbar hidden xl:block">
+          <ResultsPanel
+            workflowsQuery={workflowsQuery}
+            activeStore={activeStore}
+            hasStores={hasStores}
+            connectorCount={connectorCount}
+            toolCount={toolCount}
+            stores={stores}
+            socialAccountsQuery={socialAccountsQuery}
+            credentialsQuery={credentialsQuery}
+            supplierRuns={supplierRuns}
+            setLocation={setLocation}
+          />
         </aside>
       </div>
+
+      {/* ── Mobile results bottom sheet ───────────────────────────────────────
+           On smaller screens the aside is a slide-up Sheet so the chat stays
+           fully visible and users can dismiss results with a swipe or tap.     */}
+      <Sheet open={showAside} onOpenChange={setShowAside}>
+        <SheetContent
+          side="bottom"
+          className="xl:hidden h-[72vh] rounded-t-2xl border-t border-white/[0.08] bg-surface-overlay backdrop-blur-2xl p-0"
+        >
+          {/* Handle affordance */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-white/[0.15]" />
+          </div>
+          <div className="overflow-y-auto h-full custom-scrollbar px-4 pb-6 space-y-4">
+            <ResultsPanel
+              workflowsQuery={workflowsQuery}
+              activeStore={activeStore}
+              hasStores={hasStores}
+              connectorCount={connectorCount}
+              toolCount={toolCount}
+              stores={stores}
+              socialAccountsQuery={socialAccountsQuery}
+              credentialsQuery={credentialsQuery}
+              supplierRuns={supplierRuns}
+              setLocation={setLocation}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -446,4 +427,98 @@ function LoadingRow() {
 
 function EmptyLine({ text }: { text: string }) {
   return <p className="rounded-xl border border-dashed border-white/[0.07] bg-white/[0.01] p-3.5 text-[10px] leading-relaxed text-white/30 italic">{text}</p>;
+}
+
+// ── ResultsPanel ──────────────────────────────────────────────────────────────
+// Extracted so it can be rendered both in the xl+ aside column and in the
+// mobile bottom Sheet without duplicating JSX.
+
+interface ResultsPanelProps {
+  workflowsQuery: any;
+  activeStore: any;
+  hasStores: boolean;
+  connectorCount: number;
+  toolCount: number;
+  stores: any[];
+  socialAccountsQuery: any;
+  credentialsQuery: any;
+  supplierRuns: any[];
+  setLocation: (path: string) => void;
+}
+
+function ResultsPanel({
+  workflowsQuery,
+  activeStore,
+  hasStores,
+  toolCount,
+  stores,
+  socialAccountsQuery,
+  credentialsQuery,
+  supplierRuns,
+  setLocation,
+}: ResultsPanelProps) {
+  return (
+    <div className="space-y-4">
+      <Panel title="Workflow results" icon={GitBranch} actionLabel="All workflows" onAction={() => setLocation("/workflows")}>
+        {workflowsQuery.isLoading ? (
+          <LoadingRow />
+        ) : (workflowsQuery.data?.length ?? 0) === 0 ? (
+          <EmptyLine text="Workflow outputs will appear here as soon as the Store Bot runs something." />
+        ) : (
+          <div className="space-y-2">
+            {workflowsQuery.data?.map((wf: any) => <WorkflowCard key={wf.id} workflow={wf} />)}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Memory" icon={Brain}>
+        <div className="rounded-xl border border-sky-500/[0.12] bg-gradient-to-br from-sky-500/[0.06] to-transparent p-3">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+            <p className="text-[11px] font-bold text-sky-200 break-words">
+              {activeStore ? activeStore.name : hasStores ? "Cross-store workspace" : "Launch workspace"}
+            </p>
+          </div>
+          <p className="text-[10px] leading-relaxed text-white/60">
+            Conversation history stays separated by workspace in this session, so each connected store gets its own specialized bot context.
+          </p>
+        </div>
+      </Panel>
+
+      <Panel title="Connectors & tools" icon={Plug} actionLabel="Manage" onAction={() => setLocation("/storefronts")}>
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+          <MiniStat icon={Store} label="Stores" value={String(stores.length)} accent="sky" />
+          <MiniStat icon={Megaphone} label="Social" value={String(socialAccountsQuery.data?.length ?? 0)} accent="orange" />
+          <MiniStat icon={Plug} label="Credentials" value={String(credentialsQuery.data?.length ?? 0)} accent="cyan" />
+          <MiniStat icon={Wrench} label="Tools" value={String(toolCount)} accent="violet" />
+        </div>
+        {stores.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {stores.slice(0, 3).map((s: any) => (
+              <div key={s.id} className="flex items-center gap-1.5 rounded-lg border border-emerald-500/[0.12] bg-emerald-500/[0.05] px-2.5 py-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                <span className="text-[10px] font-medium text-emerald-200/80 truncate">{s.name}</span>
+                <span className="ml-auto text-[9px] text-white/30 uppercase tracking-widest shrink-0">{s.platform ?? "store"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Suppliers" icon={Package} actionLabel="Supplier POs" onAction={() => setLocation("/storefronts#supplier")}>
+        {supplierRuns.length === 0 ? (
+          <EmptyLine text="Ask the Store Bot to source products or audit fulfillment to populate supplier work." />
+        ) : (
+          <div className="space-y-2">
+            {supplierRuns.slice(0, 3).map((wf: any) => (
+              <div key={wf.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2.5">
+                <p className="truncate text-[11px] font-semibold text-white/75">{wf.title}</p>
+                <p className="mt-0.5 text-[9px] uppercase tracking-widest text-white/30">{wf.status}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
 }

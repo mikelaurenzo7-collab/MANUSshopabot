@@ -109,6 +109,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   // shortcuts.
   const leaderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const leaderActiveRef = useRef(false);
+  // Mobile bottom-nav: track previous tab index for directional slide animation
+  const prevNavIdxRef = useRef<number>(-1);
+  const mobileMainRef = useRef<HTMLElement>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   useEffect(() => {
     if (!user) return;
@@ -572,6 +575,36 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       { title: "Settings", path: "/settings", icon: SettingsIcon },
     ] as const;
 
+    // Stable dot→CSS-class map (defined once, not inside the render loop)
+    const DOT_CLS: Record<NonNullable<typeof storeBotStatus>, string> = {
+      ok: "ok",
+      running: "running",
+      error: "error",
+    };
+
+    const handleBottomNavTap = (path: string) => {
+      const newIdx = bottomNavItems.findIndex((t) => t.path === path);
+      const prevIdx = prevNavIdxRef.current;
+
+      if (prevIdx !== -1 && newIdx !== prevIdx) {
+        const dir = newIdx > prevIdx ? "forward" : "back";
+        if (mobileMainRef.current) {
+          mobileMainRef.current.setAttribute("data-nav-dir", dir);
+          // Remove after animation so it doesn't interfere with scrolling
+          const tid = setTimeout(() => mobileMainRef.current?.removeAttribute("data-nav-dir"), 320);
+          // Persist tid in closure — no need to cancel since component unmount
+          // is unlikely in the 320 ms window and the ref check guards against it.
+          void tid;
+        }
+      }
+      prevNavIdxRef.current = newIdx;
+
+      // Subtle haptic pulse on supported devices (iOS 16+, Android Chrome)
+      navigator.vibrate?.(8);
+
+      setMobileMenuOpen(false);
+    }
+
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
@@ -616,7 +649,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Mobile Content — padded bottom for fixed bottom nav */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main ref={mobileMainRef} className="flex-1 overflow-y-auto overflow-x-hidden">
           {children}
           {/* Spacer so content clears the fixed bottom nav */}
           <div className="mobile-nav-spacer" aria-hidden="true" />
@@ -626,20 +659,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <nav className="mobile-bottom-nav safe-area-x" aria-label="Primary navigation">
           {bottomNavItems.map((item) => {
             const isActive = activePathFor(item.path);
-            // Map bot dot status to CSS modifier class
             const dotStatus = "dot" in item ? item.dot : null;
-            const dotCls: Record<NonNullable<typeof dotStatus>, string> = {
-              ok: "ok",
-              running: "running",
-              error: "error",
-            };
-            const resolvedDotCls = dotStatus ? dotCls[dotStatus] : null;
+            const resolvedDotCls = dotStatus ? DOT_CLS[dotStatus] : null;
             const hasBadge = "badge" in item && item.badge && item.badge > 0;
             return (
               <Link
                 key={item.title}
                 href={item.path}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => handleBottomNavTap(item.path)}
                 className={`mobile-nav-item${isActive ? " active" : ""}`}
                 aria-label={item.title}
                 aria-current={isActive ? "page" : undefined}
