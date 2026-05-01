@@ -4966,17 +4966,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   }
 }
 
-/* ── Mobile text readability (prevent microscopic text) ─────────────────── */
-/* Targets only text classes that fall below readable sizes on mobile.
-   Intentional micro-labels and badges should use custom classes. */
+/* ── Mobile text readability ─────────────────────────────────────────────── */
+/* Intentional micro-labels (badges, kpi labels, table headers) are NOT
+   included here — they are designed to be small and remain so.
+   Apply .mobile-readable to a container to opt those subtree elements in. */
 @media (max-width: 767px) {
-  /* Bump up text that falls below 12px on mobile for better readability */
   .mobile-readable .text-\[8px\],
   .mobile-readable .text-\[9px\],
-  .mobile-readable .text-\[10px\],
-  .page-enter .text-\[8px\],
-  .page-enter .text-\[9px\],
-  .page-enter .text-\[10px\] {
+  .mobile-readable .text-\[10px\] {
     font-size: 12px;
   }
 }
@@ -5004,6 +5001,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   display: none;
 }
 .mobile-scroll-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── No-scrollbar: hide scrollbar visually but keep scroll functionality ─── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -5036,9 +5042,11 @@ a {
   -webkit-tap-highlight-color: rgba(14, 165, 233, 0.2);
 }
 
-/* ── Mobile-safe grid gaps (prevent overflow) ────────────────────────────── */
+/* ── Mobile-safe grid gaps — intentionally narrow to avoid overriding
+   fine-grained gaps set directly in Tailwind utility classes.
+   Only applies to grids that explicitly opt in via .mobile-gap-sm. ─── */
 @media (max-width: 767px) {
-  .grid {
+  .mobile-gap-sm.grid {
     gap: 0.75rem;
   }
 }
@@ -5097,5 +5105,44 @@ a {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.25rem;
+  }
+}
+
+/* ─── Pricing matrix mobile scroll ───────────────────────────────────────────
+   The comparison table is min-w-[640px] so it scrolls horizontally on mobile.
+   Hide the scrollbar — gesture-based swiping feels more native. */
+.pricing-matrix-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.pricing-matrix-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Smooth horizontal scroll for badge rows on mobile ─────────────────────
+   Used in Chat workspace badge bar and similar overflow-x-auto pill rows. */
+.badge-scroll-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px; /* prevent clipping box shadows */
+}
+.badge-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+.badge-scroll-row > * {
+  flex-shrink: 0;
+}
+
+/* ─── Hero headline responsive clamp ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hero-headline {
+    font-size: clamp(2rem, 8vw, 2.6rem);
+    line-height: 0.95;
   }
 }

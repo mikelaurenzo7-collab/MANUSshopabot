@@ -193,16 +193,19 @@ export default function Home() {
       )}
 
       {/* ── KPI Strip ── */}
-      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 flex flex-wrap items-center gap-2 sm:gap-2.5 md:gap-3 z-20">
+      <div className="shrink-0 relative border-b border-white/[0.06] bg-gradient-to-r from-surface-deep/85 via-surface-base/75 to-surface-deep/85 backdrop-blur-xl px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 z-20">
         <div className="absolute inset-x-0 top-0 hairline opacity-40" />
-        <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
-        <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
-        <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
-        <Kpi
-          icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
-          label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
-        />
-        <div className="ml-auto flex items-center gap-2 max-w-[440px] rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)]">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 md:gap-3">
+          <Kpi icon={<TrendingUp className="w-3 h-3 text-emerald-400" />} label="Today's revenue" value={`$${todayRevenue}`} sub={`${todayOrders} order${todayOrders === 1 ? "" : "s"}`} />
+          <Kpi icon={<ShieldCheck className="w-3 h-3 text-amber-400" />} label="Pending approvals" value={String(pendingCount)} sub={pendingCount > 0 ? "needs review" : "all clear"} href="/inbox#approvals" />
+          <Kpi icon={<GitBranch className="w-3 h-3 text-sky-400" />} label="Active workflows" value={String(totalRunning)} sub={totalRunning > 0 ? "running" : "idle"} href="/workflows" />
+          <Kpi
+            icon={<Bot className={`w-3 h-3 ${botHealth.tone === "warn" ? "text-red-400" : botHealth.tone === "active" ? "text-amber-400" : "text-emerald-400"}`} />}
+            label="Store Bot" value={botHealth.tone === "warn" ? "Attention" : botHealth.tone === "active" ? "Active" : "Healthy"} sub={botHealth.text}
+          />
+        </div>
+        {/* Recommendation pill — separate row on mobile to prevent overflow */}
+        <div className="mt-2 flex items-center gap-2 rounded-full border border-sky-500/30 bg-gradient-to-r from-sky-500/[0.12] to-cyan-500/[0.07] px-2.5 py-1 shadow-[0_0_28px_rgba(14,165,233,0.10),inset_0_1px_0_rgba(14,165,233,0.10)] sm:mt-0 sm:w-fit sm:max-w-[440px]">
           {lifecycle && <LifecycleBadge stage={lifecycle.stage} className="shrink-0" />}
           <Sparkles className="w-3 h-3 text-sky-300 shrink-0" />
           <span className="text-[11px] font-medium text-white/90 truncate" title={recommendation}>{recommendation}</span>
@@ -259,14 +262,14 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/[0.14] transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] py-2 sm:py-1.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/[0.14] transition-all min-h-[40px] sm:min-h-0"
                   >
                     <MessageSquare className="w-3 h-3" /> Chat + workspace
                   </button>
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setLocation("/storefronts#integrations"); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.02] py-2 sm:py-1.5 text-[10px] font-semibold text-white/50 hover:bg-white/[0.06] hover:text-white/80 transition-all min-h-[40px] sm:min-h-0"
                   >
                     <Store className="w-3 h-3" /> Add store
                   </button>
@@ -389,14 +392,14 @@ export default function Home() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setLocation("/insights"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-2 sm:py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <TrendingUp className="w-3 h-3" /> Analytics
                           </button>
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); setLocation("/chat"); }}
-                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md border border-white/[0.07] bg-transparent py-2 sm:py-1 text-[10px] font-mono text-white/45 hover:text-white/70 hover:border-white/[0.15] transition-all"
                           >
                             <Package className="w-3 h-3" /> Manage
                           </button>

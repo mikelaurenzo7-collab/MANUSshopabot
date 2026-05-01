@@ -346,7 +346,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         key={item.title}
         href={item.path ?? "#"}
         onClick={() => isMobile && setMobileMenuOpen(false)}
-        className={`flex items-center min-h-[44px] pl-3 pr-2.5 rounded-md transition-standard group relative ${
+        className={`flex items-center min-h-[48px] pl-3 pr-2.5 rounded-md transition-standard group relative ${
           isActive
             ? "bg-gradient-to-r from-sky-500/[0.14] via-sky-500/[0.06] to-transparent text-sky-200 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.18)]"
             : "text-white/60 hover:text-white/85 hover:bg-white/[0.045] hover:shadow-premium-sm"
@@ -559,23 +559,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   if (isMobile) {
+    // Find the current page title for the mobile header
+    const currentNavItem = navItems.find((item) => item.path && activePathFor(item.path));
+    const currentPageTitle = currentNavItem?.title ?? BRAND_NAME;
+
     return (
       <div className="flex h-screen w-screen flex-col bg-[#050505] text-white overflow-hidden app-chrome">
         {/* Mobile Header */}
         <div className="flex items-center justify-between h-12 px-3.5 border-b border-white/[0.06] topbar-glass sticky top-0 z-40 safe-area-top safe-area-x">
-          <div className="flex items-center gap-2">
-            <div className="brand-mark">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="brand-mark shrink-0">
               <Zap className="w-3 h-3 text-white" />
             </div>
-            <BrandName size="sm" />
+            {/* Show current page name on mobile instead of brand name to save space */}
+            <span className="text-sm font-semibold text-white/85 truncate">{currentPageTitle}</span>
           </div>
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Open navigation menu">
-                <Menu className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Open navigation menu">
+                <Menu className="w-4.5 h-4.5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
+            <SheetContent side="left" className="w-64 p-0 bg-[#040406]/95 border-r border-white/[0.06] backdrop-blur-2xl">
               <div className="flex h-full flex-col">
                 <div className="h-12 flex items-center px-4 border-b border-white/[0.05] gap-2">
                   <div className="brand-mark">

@@ -573,10 +573,10 @@ function OutcomesStrip() {
           {rows.map((row) => (
             <div
               key={row.before.label}
-              className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_1fr] gap-3 md:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 md:py-3"
+              className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_1fr] gap-3 sm:gap-4 items-center rounded-xl border border-white/[0.06] bg-white/[0.01] px-4 py-4 sm:py-3"
             >
               <div
-                className="hidden md:flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
+                className="flex sm:flex w-9 h-9 rounded-lg items-center justify-center shrink-0"
                 style={{
                   background: `rgba(${row.rgb}, 0.10)`,
                   border: `1px solid rgba(${row.rgb}, 0.28)`,
@@ -585,7 +585,7 @@ function OutcomesStrip() {
               >
                 <row.icon className="w-4 h-4" />
               </div>
-              <div className="md:py-1">
+              <div className="sm:py-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 mb-1">
                   Before
                 </p>
@@ -596,9 +596,9 @@ function OutcomesStrip() {
                   {row.before.lead}
                 </p>
               </div>
-              <ArrowRight className="hidden md:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
+              <ArrowRight className="hidden sm:block w-4 h-4 text-white/25 mx-auto" aria-hidden="true" />
               <div
-                className="md:py-1 md:border-l md:pl-4 pt-3 mt-1 border-t md:border-t-0 md:mt-0 md:pt-1"
+                className="sm:py-1 sm:border-l sm:pl-4 pt-3 mt-1 border-t sm:border-t-0 sm:mt-0 sm:pt-1"
                 style={{
                   borderLeftColor: `rgba(${row.rgb}, 0.18)`,
                   borderTopColor: `rgba(${row.rgb}, 0.18)`,
@@ -830,7 +830,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="w-full flex items-center justify-between px-6 py-4 text-left gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-xl"
+        className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-xl min-h-[52px]"
       >
         <span className="text-sm font-semibold text-white/80">{q}</span>
         <ChevronDown
@@ -843,7 +843,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           id={panelId}
           role="region"
           aria-labelledby={buttonId}
-          className="px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4"
+          className="px-4 sm:px-6 pb-5 text-sm text-white/45 leading-relaxed border-t border-white/[0.05] pt-4"
         >
           {a}
         </div>
@@ -933,9 +933,9 @@ export default function Landing() {
 
       {/* ── Navigation ─────────────────────────────────────────────────────── */}
       <nav className={`fixed left-0 right-0 z-50 topbar-glass ${subscriptionSuccess ? "top-12" : "top-0"}`}>
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
           <BrandName size="sm" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <Button
                 onClick={() => setLocation("/")}
@@ -951,7 +951,7 @@ export default function Landing() {
                   onClick={() => window.location.href = `/manus-oauth/login?returnPath=${encodeURIComponent(window.location.pathname)}`}
                   variant="outline"
                   size="sm"
-                  className="border-white/10 text-white/70 hover:border-white/20 hover:text-white hover:bg-white/5 transition-all"
+                  className="border-white/10 text-white/70 hover:border-white/20 hover:text-white hover:bg-white/5 transition-all hidden xs:inline-flex"
                 >
                   Sign In
                 </Button>
@@ -964,7 +964,7 @@ export default function Landing() {
                   {checkoutMutation.isPending ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                      Loading…
+                      <span className="hidden xs:inline">Loading…</span>
                     </>
                   ) : (
                     "Get Started"
@@ -977,7 +977,7 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className={`relative pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-52" : "pt-36"}`}>
+      <section className={`relative pb-16 sm:pb-24 px-4 overflow-hidden aurora-stage grain ${subscriptionSuccess ? "pt-40 sm:pt-52" : "pt-24 sm:pt-36"}`}>
         {/* Background effects */}
         <div className="aurora-mesh" />
         <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
@@ -1009,7 +1009,7 @@ export default function Landing() {
 
             {/* Headline — the cofounder one-liner. Three short stabs;
                 the meaning compounds line-by-line. */}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
+            <h1 className="hero-headline text-[2.4rem] sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-5 leading-[0.92]">
               <span className="text-white">Hire one expert.</span>
               <br />
               <span className="text-white">Run your store.</span>
@@ -1032,7 +1032,7 @@ export default function Landing() {
                 onClick={() => handlePricingClick("growth")}
                 disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-8 h-12 text-base font-semibold disabled:opacity-70"
+                className="btn-glow text-white px-6 sm:px-8 h-12 text-base font-semibold disabled:opacity-70"
               >
                 {checkoutMutation.isPending ? (
                   <>
@@ -1051,7 +1051,7 @@ export default function Landing() {
                 }}
                 variant="outline"
                 size="lg"
-                className="btn-glow-outline h-12 text-base font-semibold px-8"
+                className="btn-glow-outline h-12 text-base font-semibold px-6 sm:px-8"
               >
                 See the system
               </Button>
@@ -1065,7 +1065,7 @@ export default function Landing() {
               <button
                 type="button"
                 onClick={() => document.getElementById("lifecycle")?.scrollIntoView({ behavior: "smooth" })}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 hover:text-white hover:border-sky-400/40 hover:bg-sky-500/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 hover:text-white hover:border-sky-400/40 hover:bg-sky-500/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 min-h-[44px] sm:min-h-0"
               >
                 <Rocket className="w-3 h-3 text-sky-300" aria-hidden="true" />
                 Start my first store
@@ -1074,7 +1074,7 @@ export default function Landing() {
               <button
                 type="button"
                 onClick={() => document.getElementById("existing-store")?.scrollIntoView({ behavior: "smooth" })}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-200 hover:text-emerald-100 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] text-emerald-200 hover:text-emerald-100 hover:border-emerald-400/40 hover:bg-emerald-500/[0.10] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 min-h-[44px] sm:min-h-0"
               >
                 <Store className="w-3 h-3" aria-hidden="true" />
                 I already have a store
@@ -1083,7 +1083,7 @@ export default function Landing() {
             </div>
 
             {/* Trust strip */}
-            <div className="mt-12 grid sm:grid-cols-3 gap-3">
+            <div className="mt-8 sm:mt-12 grid grid-cols-1 xs:grid-cols-3 gap-2 sm:gap-3">
               {TRUST_ITEMS.map((item) => (
                 <div key={item.label} className="luxury-stat-card text-left">
                   <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
@@ -1101,18 +1101,18 @@ export default function Landing() {
           <div className="relative mx-auto w-full max-w-2xl">
             <div className="commerce-orb" />
             <div className="command-preview">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 sm:px-5 py-4">
                 <div>
                   <p className="micro-label mb-1">Live Autonomous Store</p>
-                  <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-white">Revenue engine online</h2>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.12)]">
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/[0.08] px-2.5 sm:px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.12)] shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
-                  24/7 Active
+                  <span className="hidden xs:inline">24/7</span> Active
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-[1fr_0.8fr] gap-4 p-5">
+              <div className="grid sm:grid-cols-[1fr_0.8fr] gap-4 p-4 sm:p-5">
                 <div className="space-y-4">
                   {BOTS.map((bot, index) => {
                     const colors = BOT_COLORS[bot.name];
@@ -1120,13 +1120,13 @@ export default function Landing() {
                     return (
                       <div key={bot.name} className="bot-flight-card" style={{ "--accent": colors.hex } as BotAccentCSSVars}>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-[0_0_14px_var(--accent,rgba(14,165,233,0.4))]" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-[0_0_14px_var(--accent,rgba(14,165,233,0.4))] shrink-0" style={{ background: colors.bg, border: `1px solid ${colors.border}` }}>
                             <bot.icon className={`w-5 h-5 ${colors.icon}`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-sm font-bold text-white truncate">{bot.name}</p>
-                              <span className="text-[10px] font-mono font-bold" style={{ color: colors.hex }}>{progress}%</span>
+                              <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: colors.hex }}>{progress}%</span>
                             </div>
                             <p className="text-[11px] text-white/60 truncate">{bot.tagline}</p>
                           </div>
@@ -1159,7 +1159,7 @@ export default function Landing() {
                     {HERO_ACTION_FEED.map((item) => (
                       <div key={item} className="flex items-center gap-2 text-[11px] text-white/65">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                        <span>{item}</span>
+                        <span className="truncate">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -1174,10 +1174,10 @@ export default function Landing() {
       <OutcomesStrip />
 
       {/* ── Integration Logo Bar ───────────────────────────────────────────── */}
-      <section className="py-10 px-4 border-b border-white/[0.06] bg-white/[0.01]">
+      <section className="py-8 sm:py-10 px-4 border-b border-white/[0.06] bg-white/[0.01]">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-6">Works with your existing stack</p>
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-5 sm:mb-6">Works with your existing stack</p>
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-10">
             {INTEGRATION_LOGOS.map((logo) => (
               <div
                 key={logo.name}
@@ -1305,18 +1305,18 @@ export default function Landing() {
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(14,165,233,0.07),transparent_65%)]" />
         <div className="absolute inset-x-0 top-0 hairline opacity-60" />
         <div className="absolute inset-x-0 bottom-0 hairline opacity-60" />
-        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {METRICS.map((metric) => (
             <div
               key={metric.label}
-              className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 text-center group relative overflow-hidden"
+              className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-5 sm:p-7 text-center group relative overflow-hidden"
             >
               {/* Top glow rim */}
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/40 to-transparent" />
               <div className="w-11 h-11 mx-auto mb-4 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center group-hover:border-sky-400/30 group-hover:shadow-[0_0_18px_rgba(14,165,233,0.15)] transition-all duration-300">
                 <metric.icon className={`w-5 h-5 ${metric.color} group-hover:scale-110 transition-transform duration-300`} />
               </div>
-              <div className="lux-numeral text-3xl font-black text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
+              <div className="lux-numeral text-2xl sm:text-3xl font-black text-white mb-1.5 metric-number tracking-tight">{metric.value}</div>
               <div className="micro-label-muted text-[10px] uppercase tracking-widest">{metric.label}</div>
             </div>
           ))}
@@ -1335,11 +1335,11 @@ export default function Landing() {
           </div>
 
           {/* Lifecycle ribbon */}
-          <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 md:gap-2 items-stretch">
+          <div className="max-w-4xl mx-auto mb-12 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 sm:gap-2 items-stretch">
             <LifecyclePill stage="Day 1" title="Building" lead="Store Bot is in the cockpit." hex="#38bdf8" Icon={Bot} />
-            <div className="hidden md:flex items-center justify-center"><KeyRound className="w-4 h-4 text-amber-300/70" /></div>
+            <div className="hidden sm:flex items-center justify-center"><KeyRound className="w-4 h-4 text-amber-300/70" /></div>
             <LifecyclePill stage="Launch Day" title="Handoff" lead="Store Bot switches from launch to operator mode." hex="#fbbf24" Icon={KeyRound} highlight />
-            <div className="hidden md:flex items-center justify-center"><ArrowRight className="w-4 h-4 text-white/30" /></div>
+            <div className="hidden sm:flex items-center justify-center"><ArrowRight className="w-4 h-4 text-white/30" /></div>
             <LifecyclePill stage="Day 2+" title="Operating" lead="Store Bot fulfills, optimizes, and grows." hex="#22d3ee" Icon={Package} />
           </div>
 
@@ -1349,7 +1349,7 @@ export default function Landing() {
               return (
                 <div
                   key={bot.name}
-                  className="bento-card spotlight-card card-shimmer-hover p-8 group relative overflow-hidden hover-lift"
+                  className="bento-card spotlight-card card-shimmer-hover p-5 sm:p-8 group relative overflow-hidden hover-lift"
                   style={{ "--hover-glow": colors.glow } as HoverGlowCSSVars}
                 >
                   {/* Top gradient accent */}
@@ -1469,7 +1469,7 @@ export default function Landing() {
           </div>
 
           {/* Quick math — what existing operators stop paying for */}
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 max-w-3xl mx-auto">
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-6 max-w-3xl mx-auto">
             <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300/85 mb-3">What stops being your problem</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {[
@@ -1551,7 +1551,7 @@ export default function Landing() {
                 text: "Every Store Bot action is logged in the Activity feed in real time. Pause, override, or roll back any workflow at any moment — your expert runs with a full audit trail.",
               },
             ].map(({ step, accent, Icon, title, text }) => (
-              <div key={step} className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-7 flex flex-col gap-4">
+              <div key={step} className="bento-card spotlight-card lift-on-hover card-shimmer-hover p-5 sm:p-7 flex flex-col gap-4">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: `${accent}1a`, border: `1px solid ${accent}40`, boxShadow: `0 0 16px ${accent}33` }}
@@ -1576,11 +1576,11 @@ export default function Landing() {
             <p className="mt-4 text-white/60 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
             {PRICING.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl p-6 transition-all duration-500 lift-on-hover card-shimmer-hover ${
+                className={`relative rounded-xl p-4 sm:p-6 transition-all duration-500 lift-on-hover card-shimmer-hover ${
                   tier.featured
                     ? "pricing-featured tier-popular bg-gradient-to-b from-sky-500/[0.08] via-sky-500/[0.03] to-transparent shadow-[0_0_40px_rgba(14,165,233,0.15)]"
                     : "bento-card spotlight-card"
@@ -1657,7 +1657,7 @@ export default function Landing() {
       {/* ── CTA Section ────────────────────────────────────────────────────── */}
       <section className="py-14 px-4 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center reveal reveal-visible">
-          <div className="bento-card-featured gradient-ring rounded-2xl p-12 relative overflow-hidden">
+          <div className="bento-card-featured gradient-ring rounded-2xl p-6 sm:p-10 md:p-12 relative overflow-hidden">
             <div className="aurora-mesh opacity-50" />
             <div className="light-leak-blue absolute -top-20 left-1/2 -translate-x-1/2 opacity-40 pointer-events-none" />
             <div className="relative">
@@ -1672,7 +1672,7 @@ export default function Landing() {
                 onClick={() => handlePricingClick("growth")}
                 disabled={checkoutMutation.isPending}
                 size="lg"
-                className="btn-glow text-white px-10 h-12 text-base font-semibold mx-auto disabled:opacity-70"
+                className="btn-glow text-white px-8 sm:px-10 h-12 text-base font-semibold mx-auto disabled:opacity-70"
               >
                 {checkoutMutation.isPending ? (
                   <>
@@ -1685,7 +1685,7 @@ export default function Landing() {
                   </>
                 )}
               </Button>
-              <div className="mt-4 flex items-center justify-center gap-4 text-xs text-white/25">
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-white/25">
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> 7-day free trial</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> No credit card</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-400" /> Cancel anytime</span>
