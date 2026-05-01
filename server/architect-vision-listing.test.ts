@@ -69,57 +69,10 @@ describe("architect.generateListingFromImage — server wiring", () => {
   });
 });
 
-describe("VisionListingPanel — client wiring", () => {
-  it("mounts in Architect.tsx between the niche scan and the bulk image optimizer", async () => {
-    const fs = await import("fs");
-    const path = await import("path");
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../client/src/pages/Architect.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("<VisionListingPanel />");
-    // Order matters: vision listing comes before image optimizer.
-    const visionIdx = src.indexOf("<VisionListingPanel />");
-    const optimizerIdx = src.indexOf("<ImageOptimizerPanel />");
-    expect(visionIdx).toBeGreaterThan(0);
-    expect(optimizerIdx).toBeGreaterThan(visionIdx);
-  });
-
-  it("calls the trpc mutation with mimeType + bytesBase64", async () => {
-    const fs = await import("fs");
-    const path = await import("path");
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../client/src/pages/Architect.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("trpc.architect.generateListingFromImage.useMutation");
-    expect(src).toContain("bytesBase64");
-    expect(src).toContain("mimeType");
-  });
-
-  it("chunks bytes through btoa to avoid call-stack overflow on large images", async () => {
-    // Naive `btoa(String.fromCharCode(...bytes))` blows up at ~100KB
-    // on V8. The chunked encode handles 10MB cleanly.
-    const fs = await import("fs");
-    const path = await import("path");
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../client/src/pages/Architect.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("CHUNK = 0x8000");
-    expect(src).toContain("btoa(bin)");
-  });
-
-  it("caps client-side file size at 10MB to match the server", async () => {
-    const fs = await import("fs");
-    const path = await import("path");
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../client/src/pages/Architect.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("10 * 1024 * 1024");
-  });
-});
+// The "VisionListingPanel — client wiring" describe block was retired
+// with client/src/pages/Architect.tsx (the page that mounted
+// <VisionListingPanel />). The server-side mutation contract is still
+// validated by the block above.
 
 describe("Activity page — actionable empty states", () => {
   it("Activity Log empty state offers three concrete next-actions", async () => {

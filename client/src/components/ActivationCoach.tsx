@@ -213,7 +213,7 @@ export function ActivationCoach() {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40 leading-none">
+            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60 leading-none">
               {c.eyebrow}
             </span>
           </div>

@@ -20,16 +20,10 @@ import * as path from "path";
 const read = (rel: string): string =>
   fs.readFileSync(path.resolve(__dirname, "..", rel), "utf-8");
 
-describe("Real-impact: Social trend detector launches the workflow", () => {
-  it("Social.tsx wires the button to trpc.workflows.launch (no more dead toast redirect)", () => {
-    const src = read("client/src/pages/Social.tsx");
-    expect(src).toContain("launchTrendDetector");
-    expect(src).toContain("trpc.workflows.launch.useMutation");
-    expect(src).toContain('workflowType: "viral_trend_detector"');
-    // Old dead-toast redirect must be gone
-    expect(src).not.toContain('toast.info("Trend detection runs via Workflows');
-  });
-});
+// The legacy "Social trend detector" describe block referenced
+// client/src/pages/Social.tsx, which was deleted when /social was
+// retired (it now redirects to /chat). The trend-detector workflow
+// itself is still tested at the workflow / router layer.
 
 describe("Real-impact: saveListingAsDraftProduct closes the vision-listing loop", () => {
   it("registers the mutation on the architectRouter", async () => {
@@ -48,12 +42,9 @@ describe("Real-impact: saveListingAsDraftProduct closes the vision-listing loop"
     expect(src).toContain('status: "draft"');
   });
 
-  it("VisionListingPanel exposes a Save-as-draft button gated by store selection", () => {
-    const src = read("client/src/pages/Architect.tsx");
-    expect(src).toContain("trpc.architect.saveListingAsDraftProduct.useMutation");
-    expect(src).toContain("Save as draft product");
-    expect(src).toContain("Pick a store above to enable save-as-draft");
-  });
+  // The "VisionListingPanel" UI assertion lived in client/src/pages/Architect.tsx,
+  // which was deleted when /architect was retired (now redirects to /chat).
+  // The server-side mutation is still validated by the two tests above.
 });
 
 describe("Design system: shared PageHeader sweeps the page surface", () => {

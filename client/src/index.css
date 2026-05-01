@@ -691,7 +691,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
   /* ── Improved muted text ─────────────────────────────────────────────── */
   .text-muted-enhanced { @apply text-white/50; }
-  .text-muted-light { @apply text-white/40; }
+  .text-muted-light { @apply text-white/60; }
 
   /* ── Standardized badge styling ──────────────────────────────────────── */
   .badge-standard {
@@ -904,7 +904,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   input::placeholder,
   textarea::placeholder,
   select::placeholder {
-    @apply text-white/40;
+    @apply text-white/60;
   }
 
   /* ── Heading line-height improvements ────────────────────────────────── */

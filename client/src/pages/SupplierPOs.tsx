@@ -275,7 +275,7 @@ export default function SupplierPOs() {
                           <span className="text-foreground font-medium">${(po.totalCents / 100).toFixed(2)}</span>
                         </p>
                         {po.notes && (
-                          <p className="text-xs text-white/40 italic mt-1">{po.notes}</p>
+                          <p className="text-xs text-white/60 italic mt-1">{po.notes}</p>
                         )}
                       </div>
                       <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />

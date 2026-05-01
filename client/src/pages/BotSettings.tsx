@@ -87,7 +87,7 @@ export default function BotSettings() {
           const isSelected = selectedBot === id;
           const baseClasses = "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-200 flex-1 sm:flex-initial min-w-0 justify-center";
           const selectedClasses = `${cfg.accent} ${cfg.color} shadow-sm`;
-          const unselectedClasses = "bg-white/[0.02] border-white/[0.06] text-white/40 hover:text-white/70 hover:bg-white/[0.04]";
+          const unselectedClasses = "bg-white/[0.02] border-white/[0.06] text-white/60 hover:text-white/70 hover:bg-white/[0.04]";
           return (
             <button
               key={id}
@@ -116,7 +116,7 @@ export default function BotSettings() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center justify-center gap-1.5 text-xs font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/40 rounded-lg px-2 sm:px-3 py-1.5"
+                className="flex items-center justify-center gap-1.5 text-xs font-medium data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 rounded-lg px-2 sm:px-3 py-1.5"
               >
                 <TabIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{tab.label}</span>
@@ -193,7 +193,7 @@ export default function BotSettings() {
               </div>
             ) : (
               <EmptyState
-                icon={<Settings className="w-5 h-5 text-white/40" />}
+                icon={<Settings className="w-5 h-5 text-white/60" />}
                 title="No profile data yet"
                 description="This bot hasn't been configured. Add instructions on the left to give it personality, guardrails, and a tone of voice."
               />
@@ -216,7 +216,7 @@ export default function BotSettings() {
         {/* Schedules Tab */}
         <TabsContent value="schedules" className="mt-4 space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-white/40" />
+            <Clock className="w-4 h-4 text-white/60" />
             <h3 className="font-semibold text-white/70 text-sm">Recurring Tasks & Automation Triggers</h3>
           </div>
           {schedulesQuery.isLoading ? (
@@ -241,9 +241,9 @@ export default function BotSettings() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-white text-sm">{schedule.name}</p>
-                      <p className="text-xs text-white/40 mt-0.5">{schedule.description}</p>
+                      <p className="text-xs text-white/60 mt-0.5">{schedule.description}</p>
                       <div className="flex gap-2 mt-2">
-                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/40">{schedule.triggerType}</Badge>
+                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/60">{schedule.triggerType}</Badge>
                         {schedule.enabled ? (
                           <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">
                             <CheckCircle2 className="w-2.5 h-2.5 mr-1" />Active
@@ -265,7 +265,7 @@ export default function BotSettings() {
         {/* Safety Rules Tab */}
         <TabsContent value="safety" className="mt-4 space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-4 h-4 text-white/40" />
+            <Shield className="w-4 h-4 text-white/60" />
             <h3 className="font-semibold text-white/70 text-sm">Approval Requirements & Spending Limits</h3>
           </div>
           {safetyRulesQuery.isLoading ? (
@@ -290,9 +290,9 @@ export default function BotSettings() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-white text-sm">{rule.name}</p>
-                      <p className="text-xs text-white/40 mt-0.5">{rule.description}</p>
+                      <p className="text-xs text-white/60 mt-0.5">{rule.description}</p>
                       <div className="flex gap-2 mt-2">
-                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/40">{rule.ruleType}</Badge>
+                        <Badge variant="outline" className="text-[10px] border-white/10 text-white/60">{rule.ruleType}</Badge>
                         <Badge
                           className={`text-[10px] ${
                             rule.action === "block"

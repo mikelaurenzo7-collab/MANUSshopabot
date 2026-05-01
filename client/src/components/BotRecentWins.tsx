@@ -73,7 +73,7 @@ export function BotRecentWins({ agentType }: { agentType: AgentType }) {
           <li key={w.id} className="bot-recent-wins-row group">
             <div className="min-w-0 flex-1">
               <div className="text-[12px] text-white/85 truncate font-medium">{w.title}</div>
-              <div className="text-[10px] text-white/40 tabular-nums">
+              <div className="text-[10px] text-white/60 tabular-nums">
                 {relativeTime(w.completedAt ?? w.updatedAt ?? w.createdAt)}
               </div>
             </div>

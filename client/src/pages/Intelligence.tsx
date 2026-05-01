@@ -44,7 +44,7 @@ function SchedulerTask({ name, freq, agent }: { name: string; freq: string; agen
       <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" aria-hidden="true" />
       <div className="min-w-0">
         <p className="text-xs text-foreground truncate">{name}</p>
-        <p className="text-[10px] text-white/40">{freq}</p>
+        <p className="text-[10px] text-white/60">{freq}</p>
       </div>
     </div>
   );
@@ -109,7 +109,7 @@ function MetricCard({
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
             <p className={`text-2xl font-bold ${accent}`}>{animatedValue}</p>
-            {sub && <p className="text-xs text-white/40">{sub}</p>}
+            {sub && <p className="text-xs text-white/60">{sub}</p>}
           </div>
           <div className="p-2 rounded-lg bg-secondary/40">
             <Icon className={`h-5 w-5 ${accent}`} />
@@ -298,7 +298,7 @@ export default function Intelligence() {
         </div>
       ) : (
         <EmptyState
-          icon={<BarChart3 className="w-5 h-5 text-white/40" />}
+          icon={<BarChart3 className="w-5 h-5 text-white/60" />}
           title="No metrics yet"
           description="Connect a store to see anomaly detection, performance trends, and revenue intelligence."
           action={{ label: "Connect a store", href: "/storefronts#integrations" }}
@@ -372,7 +372,7 @@ export default function Intelligence() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-white/40">
+                        <p className="text-xs text-white/60">
                           {new Date(anomaly.detectedAt).toLocaleTimeString()}
                         </p>
                         <p className={`text-sm font-bold mt-1 ${
@@ -402,7 +402,7 @@ export default function Intelligence() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.ecommerce.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-white/40">No store data available</p>
+                    <p className="text-sm text-white/60">No store data available</p>
                   ) : (
                     metrics.ecommerce.platformBreakdown.map((p) => {
                       const pct = metrics.ecommerce.totalRevenue > 0
@@ -427,7 +427,7 @@ export default function Intelligence() {
                               }}
                             />
                           </div>
-                          <p className="text-[10px] text-white/40">{p.orders} orders · {pct.toFixed(1)}% of total</p>
+                          <p className="text-[10px] text-white/60">{p.orders} orders · {pct.toFixed(1)}% of total</p>
                         </div>
                       );
                     })
@@ -444,7 +444,7 @@ export default function Intelligence() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {metrics.advertising.platformBreakdown.length === 0 ? (
-                    <p className="text-sm text-white/40">No active ad campaigns</p>
+                    <p className="text-sm text-white/60">No active ad campaigns</p>
                   ) : (
                     metrics.advertising.platformBreakdown.map((p) => {
                       const maxROAS = Math.max(...metrics.advertising.platformBreakdown.map(x => x.roas), 1);
@@ -471,7 +471,7 @@ export default function Intelligence() {
                               }}
                             />
                           </div>
-                          <p className="text-[10px] text-white/40">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
+                          <p className="text-[10px] text-white/60">${p.spend.toLocaleString()} spend · {p.conversions} conversions</p>
                         </div>
                       );
                     })
@@ -480,7 +480,7 @@ export default function Intelligence() {
               </Card>
             </div>
           ) : (
-            <div className="text-center py-12 text-white/40">Connect stores and ad accounts to see platform breakdown.</div>
+            <div className="text-center py-12 text-white/60">Connect stores and ad accounts to see platform breakdown.</div>
           )}
         </TabsContent>
 
@@ -493,7 +493,7 @@ export default function Intelligence() {
               ))}
             </div>
           ) : !buyBox || buyBox.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-white/40">
+            <div className="flex flex-col items-center justify-center py-16 text-white/60">
               <ShoppingCart className="h-10 w-10 text-muted-foreground/40 mb-3" />
               <p className="font-medium text-foreground/80">No Buy Box Data</p>
               <p className="text-sm mt-1">Connect Amazon, eBay, or Walmart stores to monitor Buy Box status.</p>
@@ -540,22 +540,22 @@ export default function Intelligence() {
                       </div>
                       <div className="flex items-center gap-6 text-right flex-shrink-0">
                         <div>
-                          <p className="text-[10px] text-white/40">Current</p>
+                          <p className="text-[10px] text-white/60">Current</p>
                           <p className="text-sm font-medium text-foreground">${item.currentPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-white/40">Buy Box</p>
+                          <p className="text-[10px] text-white/60">Buy Box</p>
                           <p className="text-sm font-medium text-foreground">${item.buyBoxPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-white/40">Recommended</p>
+                          <p className="text-[10px] text-white/60">Recommended</p>
                           <p className={`text-sm font-bold ${
                             item.action === "lower_price" ? "text-red-400" :
                             item.action === "raise_price" ? "text-blue-400" : "text-emerald-400"
                           }`}>${item.recommendedPrice.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-white/40">Margin</p>
+                          <p className="text-[10px] text-white/60">Margin</p>
                           <p className={`text-sm font-medium ${item.marginAtRecommended >= 20 ? "text-emerald-400" : item.marginAtRecommended >= 10 ? "text-yellow-400" : "text-red-400"}`}>
                             {item.marginAtRecommended}%
                           </p>
@@ -596,7 +596,7 @@ export default function Intelligence() {
                     <><Zap className="h-3.5 w-3.5 mr-2" /> Run Pricing Engine</>
                   )}
                 </Button>
-                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 6 hours</p>
+                <p className="text-[10px] text-white/60 mt-2 text-center">Auto-runs every 6 hours</p>
               </CardContent>
             </Card>
 
@@ -624,7 +624,7 @@ export default function Intelligence() {
                     <><BarChart3 className="h-3.5 w-3.5 mr-2" /> Optimize Creatives</>
                   )}
                 </Button>
-                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 4 hours</p>
+                <p className="text-[10px] text-white/60 mt-2 text-center">Auto-runs every 4 hours</p>
               </CardContent>
             </Card>
 
@@ -652,7 +652,7 @@ export default function Intelligence() {
                     <><PauseCircle className="h-3.5 w-3.5 mr-2" /> Scan & Pause OOS Ads</>
                   )}
                 </Button>
-                <p className="text-[10px] text-white/40 mt-2 text-center">Auto-runs every 30 minutes</p>
+                <p className="text-[10px] text-white/60 mt-2 text-center">Auto-runs every 30 minutes</p>
               </CardContent>
             </Card>
           </div>
@@ -739,7 +739,7 @@ export default function Intelligence() {
                             {entry.platform}
                           </Badge>
                         </div>
-                        <p className="text-white/40 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
+                        <p className="text-white/60 mt-0.5">Attempt {entry.attempts}/5 · {entry.lastError}</p>
                         <p className="text-muted-foreground/40 mt-0.5">Next retry: {new Date(entry.nextRetryAt).toLocaleTimeString()}</p>
                       </div>
                     ))}

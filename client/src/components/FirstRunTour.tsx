@@ -142,13 +142,13 @@ export function FirstRunTour() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">
                   Tour · {stopIdx + 1} / {STOPS.length}
                 </span>
                 <button
                   type="button"
                   onClick={dismiss}
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-white/60 hover:text-white/80 hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
                   aria-label="Dismiss tour"
                 >
                   <X className="w-3.5 h-3.5" aria-hidden="true" />

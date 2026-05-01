@@ -205,7 +205,7 @@ export default function Chat() {
             <div className="flex flex-col sm:flex-row w-full lg:w-auto items-stretch sm:items-center gap-2">
               <Select value={activeStore ? `store:${activeStore.id}` : GLOBAL_WORKSPACE} onValueChange={handleWorkspaceChange}>
                 <SelectTrigger className="h-9 w-full sm:w-56 border-white/10 bg-white/[0.04] text-sm">
-                  <Store className="mr-1.5 h-3.5 w-3.5 shrink-0 text-white/40" />
+                  <Store className="mr-1.5 h-3.5 w-3.5 shrink-0 text-white/60" />
                   <SelectValue placeholder="Choose workspace" />
                 </SelectTrigger>
                 <SelectContent className="border-white/10 bg-surface-overlay">
@@ -276,7 +276,7 @@ export default function Chat() {
                     {activeStore ? activeStore.name : hasStores ? "Cross-store workspace" : "Launch workspace"}
                   </p>
                 </div>
-                <p className="text-[10px] leading-relaxed text-white/40">
+                <p className="text-[10px] leading-relaxed text-white/60">
                   Conversation history stays separated by workspace in this session, so each connected store gets its own specialized bot context.
                 </p>
               </div>
@@ -416,7 +416,7 @@ function MiniStat({ icon: Icon, label, value, accent = "sky" }: { icon: typeof B
     <div className={`rounded-xl border ${hasData ? a.border : "border-white/[0.06]"} ${hasData ? a.bg : "bg-white/[0.02]"} p-2.5 sm:p-3 min-w-0 transition-all`}>
       <Icon className={`h-3.5 w-3.5 ${hasData ? a.icon : "text-white/25"}`} />
       <p className="mt-1.5 sm:mt-2 text-[9px] uppercase tracking-widest text-white/35 truncate">{label}</p>
-      <p className={`mt-0.5 text-sm font-bold ${hasData ? a.value : "text-white/40"} truncate`}>{value}</p>
+      <p className={`mt-0.5 text-sm font-bold ${hasData ? a.value : "text-white/60"} truncate`}>{value}</p>
     </div>
   );
 }

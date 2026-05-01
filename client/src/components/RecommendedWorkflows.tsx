@@ -112,7 +112,7 @@ export function RecommendedWorkflows() {
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">{stageCopy.lead}</p>
         </div>
-        <div className="flex items-center gap-3 text-[10px] font-mono text-white/40 uppercase tracking-widest">
+        <div className="flex items-center gap-3 text-[10px] font-mono text-white/60 uppercase tracking-widest">
           <span><span className="text-white/65">{storeCount}</span> {storeCount === 1 ? "store" : "stores"}</span>
           <span><span className="text-white/65">{productCount}</span> products</span>
         </div>

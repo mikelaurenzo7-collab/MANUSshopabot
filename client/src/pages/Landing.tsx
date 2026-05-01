@@ -328,7 +328,7 @@ function CookbookShowcase() {
           />
         </div>
 
-        <div className="mt-10 text-center text-xs text-white/40 max-w-3xl mx-auto leading-relaxed">
+        <div className="mt-10 text-center text-xs text-white/60 max-w-3xl mx-auto leading-relaxed">
           When the Anthropic API key is configured, every lift runs end-to-end
           through Claude Opus 4.7 with prompt caching + adaptive thinking.
           Without the key, the workflows still run via the Forge proxy —
@@ -592,7 +592,7 @@ function OutcomesStrip() {
                 <p className="text-sm font-semibold text-white/55 line-through decoration-white/15">
                   {row.before.label}
                 </p>
-                <p className="text-xs text-white/40 mt-1 leading-relaxed">
+                <p className="text-xs text-white/60 mt-1 leading-relaxed">
                   {row.before.lead}
                 </p>
               </div>
@@ -699,7 +699,7 @@ function PricingMatrix({ onPick }: { onPick: (planId: string) => void }) {
           <div className="min-w-[640px]">
             {/* Header row — plan names */}
             <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-3 border-b border-white/[0.06] text-[10px] font-bold uppercase tracking-widest">
-              <div className="text-white/40">Capability</div>
+              <div className="text-white/60">Capability</div>
               {plans.map((p) => (
                 <div
                   key={p.planId}
@@ -749,7 +749,7 @@ function PricingMatrix({ onPick }: { onPick: (planId: string) => void }) {
             {/* CTA row — one button per plan, repeated below the matrix
                 so operators don't have to scroll back up after comparing. */}
             <div className="grid grid-cols-[2fr_repeat(4,_1fr)] gap-2 px-4 md:px-6 py-4 border-t border-white/[0.06] bg-white/[0.015]">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 self-center">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 self-center">
                 Start a 7-day trial
               </div>
               {plans.map((p) => (
@@ -1128,7 +1128,7 @@ export default function Landing() {
                               <p className="text-sm font-bold text-white truncate">{bot.name}</p>
                               <span className="text-[10px] font-mono font-bold" style={{ color: colors.hex }}>{progress}%</span>
                             </div>
-                            <p className="text-[11px] text-white/40 truncate">{bot.tagline}</p>
+                            <p className="text-[11px] text-white/60 truncate">{bot.tagline}</p>
                           </div>
                         </div>
                         <div className="mt-3 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -1511,7 +1511,7 @@ export default function Landing() {
                 </>
               )}
             </Button>
-            <p className="text-[11px] text-white/40 mt-3 font-mono">
+            <p className="text-[11px] text-white/60 mt-3 font-mono">
               7-day trial · No credit card · OAuth read+write to your store
             </p>
           </div>
@@ -1573,7 +1573,7 @@ export default function Landing() {
           <div className="text-center mb-16 reveal reveal-visible">
             <span className="eyebrow mb-4">Pricing</span>
             <h2 className="mt-4 text-3xl md:text-4xl font-black tracking-tighter text-white">Simple Pricing</h2>
-            <p className="mt-4 text-white/40 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
+            <p className="mt-4 text-white/60 max-w-xl mx-auto">Start free for 7 days. Scale as your store grows. Cancel anytime.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1603,7 +1603,7 @@ export default function Landing() {
                   <span className="text-3xl font-black text-white">{tier.price}</span>
                   <span className="text-white/35 text-sm">{tier.period}</span>
                 </div>
-                <p className="text-white/40 text-sm mb-4 leading-relaxed">{tier.description}</p>
+                <p className="text-white/60 text-sm mb-4 leading-relaxed">{tier.description}</p>
 
                 <div className="h-px bg-white/[0.06] mb-4" />
 

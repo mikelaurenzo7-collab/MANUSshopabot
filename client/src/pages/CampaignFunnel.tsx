@@ -72,7 +72,7 @@ export default function CampaignFunnel() {
       {/* Store selector — only when multiple stores exist */}
       {stores.length > 1 && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Store</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Store</span>
           <select
             value={effectiveStoreId ?? ""}
             onChange={(e) => setSelectedStoreId(Number(e.target.value))}
@@ -137,7 +137,7 @@ export default function CampaignFunnel() {
                     <div className="text-sm font-medium text-white truncate">
                       {c.subject ?? c.name}
                     </div>
-                    <div className="text-[10px] text-white/40 font-mono">
+                    <div className="text-[10px] text-white/60 font-mono">
                       {c.recipientCount ?? 0} recipient{c.recipientCount === 1 ? "" : "s"} ·{" "}
                       <span className="capitalize">{c.status}</span>
                       {c.sentAt && ` · ${new Date(c.sentAt).toLocaleDateString()}`}
@@ -247,11 +247,11 @@ function FunnelDisplay({ data }: { data: FunnelData }) {
           <h3 className="text-base font-heading font-bold text-white truncate">
             {data.subject ?? data.name}
           </h3>
-          <p className="text-[11px] text-white/40 font-mono mt-0.5">
+          <p className="text-[11px] text-white/60 font-mono mt-0.5">
             {data.sentAt ? `Sent ${new Date(data.sentAt).toLocaleString()}` : "Not yet sent"}
           </p>
         </div>
-        <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-white/60">
           Funnel
         </span>
       </div>
@@ -267,7 +267,7 @@ function FunnelDisplay({ data }: { data: FunnelData }) {
                   {stage.label}
                 </span>
                 {i > 0 && stage.rate !== undefined && (
-                  <span className="text-[10px] text-white/40 font-mono ml-auto">
+                  <span className="text-[10px] text-white/60 font-mono ml-auto">
                     {stage.rate.toFixed(1)}%
                   </span>
                 )}

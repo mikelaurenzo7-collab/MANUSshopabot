@@ -18,7 +18,7 @@ export function ConnectionStatusBanner() {
   return (
     <div className="px-3 md:px-5 py-2 bg-white/[0.02] border-b border-white/[0.06]">
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">Connected:</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-white/60">Connected:</span>
         {connections.map((conn) => {
           const brand = getBrand(conn.platform);
           return (

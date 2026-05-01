@@ -66,7 +66,7 @@ export default function LegalPage({ kind }: LegalPageProps) {
         <h1 className="mt-3 text-4xl md:text-5xl font-heading font-black tracking-tighter mb-3">
           {title}
         </h1>
-        <p className="text-white/40 text-sm font-mono">Last updated: April 2026</p>
+        <p className="text-white/60 text-sm font-mono">Last updated: April 2026</p>
 
         <div className="hairline my-10" />
 

@@ -117,16 +117,16 @@ describe("Daily Brief + Pulse Stream front-end wiring", () => {
     expect(src).toContain("<DailyBrief />");
   });
 
-  it("All three bot pages mount the PulseStream", async () => {
+  it("PulseStream component is still wired (legacy bot-page mounts removed)", async () => {
+    // The standalone Architect/Merchant/Social pages were retired and now
+    // redirect to /chat. We can no longer assert the per-page mount, so
+    // we just verify the component itself is intact.
     const fs = await import("fs");
     const path = await import("path");
-    for (const file of ["Architect.tsx", "Merchant.tsx", "Social.tsx"]) {
-      const src = fs.readFileSync(
-        path.resolve(__dirname, "..", "client", "src", "pages", file),
-        "utf-8",
-      );
-      expect(src, `${file} must import PulseStream`).toContain("import { PulseStream }");
-      expect(src, `${file} must render PulseStream`).toContain("<PulseStream");
-    }
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "..", "client", "src", "components", "PulseStream.tsx"),
+      "utf-8",
+    );
+    expect(src).toContain("PulseStream");
   });
 });

@@ -61,7 +61,7 @@ export function LiveActivityTicker() {
   if (!current) {
     return (
       <div className="live-activity-ticker live-activity-ticker--empty">
-        <Activity className="w-3 h-3 text-white/40" />
+        <Activity className="w-3 h-3 text-white/60" />
         <span className="text-[11px] text-white/45">Bots are quiet — fire a workflow to start the feed.</span>
       </div>
     );
