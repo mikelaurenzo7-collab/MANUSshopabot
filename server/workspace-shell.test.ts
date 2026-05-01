@@ -412,6 +412,56 @@ describe("Workspace shell contract", () => {
     expect(shellSrc).toContain('activeTab !== "chat"');
   });
 
+  it("Page canvas is the warm-mocha palette, not the legacy black surface", () => {
+    // The product is a "room" each store lives in: cool steel chrome
+    // (sidebar / topbar) over a warm-mocha canvas. The legacy hardcoded
+    // `bg-[#050505]` on the desktop and mobile <main> elements made the
+    // canvas read as a terminal, not a workspace. This test pins:
+    //   1. The new tokens are defined in BOTH :root and .dark.
+    //   2. They are wired into @theme inline so `bg-page-canvas` etc.
+    //      compile as Tailwind utilities.
+    //   3. The desktop and mobile <main> elements consume the token
+    //      class instead of reverting to a raw hex.
+    const cssSrc = read("client/src/index.css");
+    const layoutSrc = read("client/src/components/DashboardLayout.tsx");
+
+    // Tokens defined (twice — :root + .dark).
+    const tokenLines = cssSrc.match(/--page-canvas:\s*#211711;/g) ?? [];
+    expect(tokenLines.length).toBeGreaterThanOrEqual(2);
+    const elevatedLines = cssSrc.match(/--page-canvas-elevated:\s*#2C201A;/g) ?? [];
+    expect(elevatedLines.length).toBeGreaterThanOrEqual(2);
+    const softLines = cssSrc.match(/--page-canvas-soft:\s*#3A2C24;/g) ?? [];
+    expect(softLines.length).toBeGreaterThanOrEqual(2);
+    const cremaLines = cssSrc.match(/--crema-raw:\s*201,\s*169,\s*138;/g) ?? [];
+    expect(cremaLines.length).toBeGreaterThanOrEqual(2);
+
+    // Wired into @theme inline so Tailwind utilities compile.
+    expect(cssSrc).toContain("--color-page-canvas: var(--page-canvas);");
+    expect(cssSrc).toContain("--color-page-canvas-elevated: var(--page-canvas-elevated);");
+    expect(cssSrc).toContain("--color-page-canvas-soft: var(--page-canvas-soft);");
+
+    // Desktop <main> consumes the token, mobile <main> consumes the token.
+    expect(layoutSrc).toMatch(/<main className="flex-1 flex flex-col relative h-full min-w-0 bg-page-canvas/);
+    expect(layoutSrc).toMatch(/mobileMainRef[\s\S]+?bg-page-canvas/);
+    // The legacy hardcoded canvas color should no longer appear on the
+    // <main> elements (the chrome wrappers can keep #050505 — that's
+    // the cool side of the two-tone).
+    expect(layoutSrc).not.toMatch(/<main[^>]*bg-\[#050505\]/);
+
+    // Ambient overlay wash uses the crema raw tuple (warm tone), not
+    // a stray cool blue gradient that would fight the mocha.
+    expect(cssSrc).toMatch(/\.main-ambient-animate[\s\S]+?rgba\(var\(--crema-raw\)/);
+  });
+
+  it("WorkspaceShell content wrapper does not paint over the warm canvas", () => {
+    // The shell used to wrap children in `bg-terminal-bg/70` which laid a
+    // 70%-opacity cool dark wash over the warm-mocha <main>, dulling the
+    // intended palette. The wrapper is now transparent so the canvas
+    // shows through cleanly.
+    const src = read("client/src/components/workspace/WorkspaceShell.tsx");
+    expect(src).not.toMatch(/className="page-enter[^"]*bg-terminal-bg\/70/);
+  });
+
   it("Command palette surfaces workspace-scoped actions when nested", () => {
     const src = read("client/src/components/CommandPalette.tsx");
     expect(src).toContain('group: "workspace"');

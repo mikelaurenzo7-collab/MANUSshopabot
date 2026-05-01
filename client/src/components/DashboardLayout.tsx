@@ -794,8 +794,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Sheet>
         </div>
 
-        {/* Mobile Content — padded bottom for fixed bottom nav */}
-        <main ref={mobileMainRef} className="flex-1 overflow-y-auto overflow-x-hidden">
+        {/* Mobile Content — padded bottom for fixed bottom nav.
+            Warm-mocha canvas matches the desktop two-tone — cool top-bar
+            and bottom-nav chrome over an espresso content surface. */}
+        <main ref={mobileMainRef} className="flex-1 overflow-y-auto overflow-x-hidden bg-page-canvas">
           {children}
           {/* Spacer so content clears the fixed bottom nav */}
           <div className="mobile-nav-spacer" aria-hidden="true" />
@@ -875,8 +877,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <SidebarFooter rail={railMode} />
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#050505] overflow-hidden">
+      {/* Main Content — warm-mocha canvas (the "room" where stores live).
+          Cool steel chrome on the sidebar / topbar, warm espresso here.
+          The ambient overlay layers crema + brand-accent radial gradients. */}
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-page-canvas overflow-hidden">
         {/* Ambient decorative layer — must stay behind content with z-index: -1 */}
         <div className="pointer-events-none absolute inset-0 z-[-1] main-ambient-animate" aria-hidden="true" />
         {/* Scrollable content wrapper */}
