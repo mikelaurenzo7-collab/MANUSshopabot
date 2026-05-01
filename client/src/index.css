@@ -4924,3 +4924,142 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   from { background-position: 0% center;   opacity: 0.75; }
   to   { background-position: 100% center; opacity: 1; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS ENHANCEMENTS
+   Touch targets, readable text, and adaptive layouts for 320px+ screens
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Mobile-safe touch targets (44x44px minimum per WCAG) ───────────────── */
+.touch-target-safe {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ── Mobile text readability (prevent microscopic text) ─────────────────── */
+@media (max-width: 767px) {
+  /* Bump up all instances of text that fall below 12px on mobile */
+  .text-\[8px\],
+  .text-\[9px\],
+  .text-\[10px\] {
+    font-size: 12px;
+  }
+}
+
+/* ── Responsive padding scale-down for mobile ───────────────────────────── */
+.mobile-padding-sm {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+@media (min-width: 640px) {
+  .mobile-padding-sm {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+@media (min-width: 768px) {
+  .mobile-padding-sm {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* ── Hide horizontal scrollbars on mobile (but keep functionality) ───────── */
+.mobile-scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+.mobile-scroll-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Stack elements vertically on mobile ────────────────────────────────── */
+.mobile-stack {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 768px) {
+  .mobile-stack {
+    flex-direction: row;
+  }
+}
+
+/* ── Full-width on mobile, constrained on desktop ───────────────────────── */
+.mobile-full {
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .mobile-full {
+    width: auto;
+  }
+}
+
+/* ── Improved tap highlight for mobile interaction ──────────────────────── */
+button,
+[role="button"],
+a {
+  -webkit-tap-highlight-color: rgba(14, 165, 233, 0.2);
+}
+
+/* ── Mobile-safe grid gaps (prevent overflow) ────────────────────────────── */
+@media (max-width: 767px) {
+  .grid {
+    gap: 0.75rem;
+  }
+}
+
+/* ── Responsive dialog/modal spacing ────────────────────────────────────── */
+@media (max-width: 767px) {
+  [role="dialog"],
+  [role="alertdialog"] {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+/* ── Mobile navbar adjustments ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .nav-item {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* ── Prevent layout shift on orientation change ─────────────────────────── */
+@media (max-width: 767px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+/* ── Mobile-friendly table alternative ──────────────────────────────────── */
+@media (max-width: 767px) {
+  .table-mobile-cards thead {
+    display: none;
+  }
+  .table-mobile-cards tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    background: rgba(10, 10, 10, 0.5);
+  }
+  .table-mobile-cards tbody td {
+    display: block;
+    text-align: left !important;
+    padding: 0.5rem 0;
+    border: none;
+  }
+  .table-mobile-cards tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+}
