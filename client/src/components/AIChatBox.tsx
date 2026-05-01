@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Loader2, Send, User, Sparkles, Bot, Package, Megaphone, Zap } from "lucide-react";
+import { Loader2, Mic, MicOff, Send, User, Sparkles, Bot, Package, Megaphone, Zap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
@@ -188,6 +188,47 @@ export function AIChatBox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputAreaRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // ── Voice input via Web Speech API ────────────────────────────────────────
+  // Gracefully absent on unsupported browsers; no polyfill needed.
+  const SpeechRecognitionAPI =
+    typeof window !== "undefined"
+      ? ((window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition ?? null)
+      : null;
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  // Snapshot of input when recording starts so speech is appended, not replaced
+  const voiceBaseRef = useRef<string>("");
+
+  function toggleVoiceInput() {
+    if (!SpeechRecognitionAPI) return;
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    // Snapshot existing text so appended speech doesn't clobber it
+    voiceBaseRef.current = input ? `${input.trimEnd()} ` : "";
+    recognition.onresult = (e: any) => {
+      const transcript = Array.from(e.results as SpeechRecognitionResultList)
+        .map((r) => r[0].transcript)
+        .join("");
+      setInput(voiceBaseRef.current + transcript);
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsListening(true);
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { recognitionRef.current?.stop(); };
+  }, []);
 
   // Filter out system messages
   const displayMessages = messages.filter((msg) => msg.role !== "system");
@@ -419,11 +460,28 @@ export function AIChatBox({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={isListening ? "Listening…" : placeholder}
             className="chat-textarea flex-1 max-h-32 resize-none min-h-[40px] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm text-white/85 placeholder:text-white/25"
             rows={1}
           />
         </div>
+        {SpeechRecognitionAPI && (
+          <Button
+            type="button"
+            size="icon"
+            onClick={toggleVoiceInput}
+            aria-label={isListening ? "Stop voice input" : "Start voice input"}
+            aria-pressed={isListening}
+            className={cn(
+              "shrink-0 h-10 w-10 rounded-xl border transition-all",
+              isListening
+                ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 chat-mic-listening"
+                : "border-white/[0.08] bg-white/[0.03] text-white/40 hover:bg-white/[0.07] hover:text-white/70"
+            )}
+          >
+            {isListening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+          </Button>
+        )}
         <Button
           type="submit"
           size="icon"
