@@ -281,7 +281,7 @@ export default function IntegrationsPage() {
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {summary && (
-            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-2 sm:px-3 py-2 overflow-x-auto whitespace-nowrap">
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-slate-400 bg-white/4 border border-white/8 rounded-lg px-2 sm:px-3 py-2 overflow-x-auto whitespace-nowrap mobile-scroll-hidden">
               <span className="flex items-center gap-1"><Store className="w-3 h-3 text-sky-400 shrink-0" /> {summary.credentials} active</span>
               {(summary as any).warning > 0 && <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-amber-400 shrink-0" /> {summary.stores} warning</span>}
               {(summary as any).error > 0 && <span className="flex items-center gap-1"><XCircle className="w-3 h-3 text-red-400 shrink-0" /> {summary.socialAccounts} error</span>}
@@ -291,7 +291,7 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 px-3 sm:px-4 py-2 border-b border-white/8 bg-white/2 overflow-x-auto">
+      <div className="flex gap-1 px-3 sm:px-4 py-2 border-b border-white/8 bg-white/2 overflow-x-auto mobile-scroll-hidden">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -647,7 +647,7 @@ export default function IntegrationsPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 mobile-scroll-hidden">
               {(["ecommerce", "social", "tools"] as const).map(t => {
                 const count = t === "ecommerce" ? (ecommercePlatforms?.length || 0)
                   : t === "social" ? (socialPlatforms?.length || 0)

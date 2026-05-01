@@ -68,15 +68,15 @@ export default function CampaignFunnel() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-3 sm:px-4 md:px-5">
       {/* Store selector — only when multiple stores exist */}
       {stores.length > 1 && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Store</span>
           <select
             value={effectiveStoreId ?? ""}
             onChange={(e) => setSelectedStoreId(Number(e.target.value))}
-            className="bg-white/[0.04] border border-white/10 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-400/40"
+            className="w-full sm:w-auto bg-white/[0.04] border border-white/10 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-400/40"
           >
             {stores.map((s: any) => (
               <option key={s.id} value={s.id} className="bg-surface-overlay">
@@ -88,7 +88,7 @@ export default function CampaignFunnel() {
       )}
 
       {/* Campaign list */}
-      <div className="bento-card p-5">
+      <div className="bento-card p-3 sm:p-4 md:p-5">
         <div className="flex items-center gap-2 mb-3">
           <Mail className="w-4 h-4 text-sky-400" aria-hidden="true" />
           <h3 className="text-sm font-heading font-bold tracking-tight text-white">

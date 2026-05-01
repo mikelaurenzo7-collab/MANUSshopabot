@@ -116,33 +116,34 @@ export function PageHeader({
     <div className="relative">
       {/* Ambient accent halo — sits behind the header at low opacity, */}
       {/* keyed to the page accent. Adds depth without cost.            */}
+      {/* Responsive sizing: smaller on mobile to prevent overflow */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute -top-16 -left-8 h-48 w-80 ${styles.halo} blur-3xl opacity-60`}
+        className={`pointer-events-none absolute -top-16 -left-8 h-32 w-48 sm:h-48 sm:w-80 ${styles.halo} blur-3xl opacity-60`}
       />
       {/* Secondary halo — a smaller, more focused glow behind the icon */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute top-0 left-4 h-16 w-28 ${styles.halo} blur-2xl opacity-40`}
+        className={`pointer-events-none absolute top-0 left-4 h-12 w-20 sm:h-16 sm:w-28 ${styles.halo} blur-2xl opacity-40`}
       />
-      <div className={`relative px-6 pt-5 ${flushBottom ? "pb-2" : "pb-4"} flex items-center gap-3`}>
-        {/* Icon plate — 36×36, slightly larger than before for more presence */}
+      <div className={`relative px-3 sm:px-4 md:px-6 pt-4 sm:pt-5 ${flushBottom ? "pb-2" : "pb-3 sm:pb-4"} flex items-center gap-2 sm:gap-3`}>
+        {/* Icon plate — responsive sizing for better mobile layout */}
         <div
-          className={`h-9 w-9 rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-all duration-500 hover:scale-110 hover:shadow-premium-lg`}
+          className={`h-8 w-8 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl ${styles.bg} border ${styles.border} flex items-center justify-center ${styles.glow} shrink-0 transition-all duration-500 hover:scale-110 hover:shadow-premium-lg`}
         >
-          <span className={`${styles.text} flex items-center justify-center`} aria-hidden="true">
+          <span className={`${styles.text} flex items-center justify-center text-sm sm:text-base`} aria-hidden="true">
             {icon}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[18px] font-heading font-bold tracking-tight text-foreground leading-tight truncate">
+          <h1 className="text-base sm:text-lg font-heading font-bold tracking-tight text-foreground leading-tight truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-[12px] text-white/45 truncate mt-0.5 leading-snug">{subtitle}</p>
+            <p className="text-xs sm:text-[12px] text-white/45 truncate mt-0.5 leading-snug hidden xs:block">{subtitle}</p>
           )}
         </div>
-        {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
+        {right && <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">{right}</div>}
       </div>
       {/* Signature accent line — animated sweep for a dynamic edge. */}
       <div

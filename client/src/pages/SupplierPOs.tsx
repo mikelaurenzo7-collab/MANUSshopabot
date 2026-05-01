@@ -94,7 +94,7 @@ export default function SupplierPOs() {
               value={selectedStoreId || String(storeId || "")}
               onValueChange={(v) => setSelectedStoreId(v)}
             >
-              <SelectTrigger className="w-[220px] h-9 text-sm">
+              <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm">
                 <SelectValue placeholder="Select store" />
               </SelectTrigger>
               <SelectContent>
