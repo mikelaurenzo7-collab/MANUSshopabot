@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { orgProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 import { generatePO } from "../adapters/supplierAdapter";
 import {
@@ -18,25 +18,34 @@ import {
   deleteFile,
   isFilesApiAvailable,
 } from "../_core/claudeFiles";
+import { requireStoreInOrg } from "../utils/authz";
+
+/** Verify a purchase order exists and its store belongs to the active org. */
+async function requirePOInOrg(poId: number, orgId: number) {
+  const po = await db.getPurchaseOrderById(poId);
+  if (!po) throw new TRPCError({ code: "NOT_FOUND", message: "Purchase order not found" });
+  await requireStoreInOrg(po.storeId, orgId);
+  return po;
+}
 
 export const supplierRouter = router({
   /**
    * List all POs for a store.
    */
-  listPOs: protectedProcedure
+  listPOs: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getPurchaseOrdersByStore(input.storeId);
     }),
 
   /**
    * Get a single PO with line items.
    */
-  getPO: protectedProcedure
+  getPO: orgProcedure
     .input(z.object({ poId: z.number() }))
-    .query(async ({ input }) => {
-      const po = await db.getPurchaseOrderById(input.poId);
-      if (!po) return null;
+    .query(async ({ ctx, input }) => {
+      const po = await requirePOInOrg(input.poId, ctx.org.id);
       const lineItems = await db.getPoLineItems(input.poId);
       return { ...po, lineItems };
     }),
@@ -57,7 +66,7 @@ export const supplierRouter = router({
    * receipts are sensitive. For longer-lived references (a brand
    * style guide reused across many workflows), don't auto-delete.
    */
-  parseReceiptDocument: protectedProcedure
+  parseReceiptDocument: orgProcedure
     .input(z.object({
       filename: z.string().min(1).max(255),
       // base64 bytes — frontend converts file → base64 before submit
@@ -168,7 +177,7 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
   /**
    * Create a draft PO (manually by user or auto-triggered by Merchant Bot).
    */
-  createDraft: protectedProcedure
+  createDraft: orgProcedure
     .input(z.object({
       storeId: z.number(),
       supplierId: z.string().optional(),
@@ -185,6 +194,7 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
       })).min(1),
     }))
     .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const totalCents = input.lineItems.reduce((sum, li) => sum + li.quantity * li.unitCostCents, 0);
       const poNumber = `PO-${Date.now().toString(36).toUpperCase()}`;
 
@@ -220,11 +230,11 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
   /**
    * Approve a draft PO — transitions to "approved" status.
    */
-  approve: protectedProcedure
+  approve: orgProcedure
     .input(z.object({ poId: z.number() }))
-    .mutation(async ({ input }) => {
-      const po = await db.getPurchaseOrderById(input.poId);
-      if (!po || po.status !== "draft") throw new Error("PO is not in draft status");
+    .mutation(async ({ ctx, input }) => {
+      const po = await requirePOInOrg(input.poId, ctx.org.id);
+      if (po.status !== "draft") throw new Error("PO is not in draft status");
       await db.updatePurchaseOrderStatus(input.poId, "approved");
       return { success: true };
     }),
@@ -234,11 +244,11 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
    * In V1, this logs the submission and transitions status.
    * When real supplier APIs are configured, it calls the external endpoint.
    */
-  submit: protectedProcedure
+  submit: orgProcedure
     .input(z.object({ poId: z.number() }))
-    .mutation(async ({ input }) => {
-      const po = await db.getPurchaseOrderById(input.poId);
-      if (!po || po.status !== "approved") throw new Error("PO must be approved before submission");
+    .mutation(async ({ ctx, input }) => {
+      const po = await requirePOInOrg(input.poId, ctx.org.id);
+      if (po.status !== "approved") throw new Error("PO must be approved before submission");
 
       const lineItems = await db.getPoLineItems(input.poId);
 
@@ -261,7 +271,7 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
   /**
    * Mark a PO as fulfilled (goods received).
    */
-  markFulfilled: protectedProcedure
+  markFulfilled: orgProcedure
     .input(z.object({
       poId: z.number(),
       lineItemReceipts: z.array(z.object({
@@ -269,7 +279,8 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
         receivedQty: z.number().min(0),
       })).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requirePOInOrg(input.poId, ctx.org.id);
       if (input.lineItemReceipts) {
         for (const receipt of input.lineItemReceipts) {
           await db.updatePoLineItemReceived(receipt.lineItemId, receipt.receivedQty);
@@ -283,7 +294,7 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
    * Auto-generate a PO from the Merchant Bot's low-stock detection.
    * This is the entry point the orchestrator calls when inventory dips.
    */
-  autoGeneratePO: protectedProcedure
+  autoGeneratePO: orgProcedure
     .input(z.object({
       storeId: z.number(),
       lowStockProducts: z.array(z.object({
@@ -295,7 +306,7 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
       })),
     }))
     .mutation(async ({ ctx, input }) => {
-      // Group by supplier
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const bySupplier: Record<string, typeof input.lowStockProducts> = {};
       for (const item of input.lowStockProducts) {
         const key = item.supplierId || "default";

@@ -15,10 +15,11 @@ import {
   NoDeliveryProviderError,
   type EmailRecipient,
 } from "../delivery";
+import { requireStoreInOrg } from "../utils/authz";
 
 export const socialRouter = router({
   // ─── Ad Copy Generation ───────────────────────────────────────────────
-  generateAdCopy: protectedProcedure
+  generateAdCopy: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),
@@ -33,7 +34,8 @@ export const socialRouter = router({
       ]).default("meta"),
       tone: z.string().default("engaging and persuasive"),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ad_copy",
@@ -106,14 +108,15 @@ export const socialRouter = router({
     }),
 
   // ─── AI Image Generation for Ads ──────────────────────────────────────
-  generateAdImage: protectedProcedure
+  generateAdImage: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),
       style: z.string().default("modern e-commerce product photography"),
       description: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "image_generation",
@@ -140,13 +143,14 @@ export const socialRouter = router({
     }),
 
   // ─── SEO Keywords ─────────────────────────────────────────────────────
-  suggestSeoKeywords: protectedProcedure
+  suggestSeoKeywords: orgProcedure
     .input(z.object({
       storeId: z.number(),
       niche: z.string(),
       currentKeywords: z.array(z.string()).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "seo_keywords",
@@ -227,9 +231,10 @@ export const socialRouter = router({
       }
     }),
 
-  seoKeywords: protectedProcedure
+  seoKeywords: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getSeoKeywords(input.storeId);
     }),
 
@@ -244,7 +249,7 @@ export const socialRouter = router({
     }),
 
   // ─── Social Media Posts ───────────────────────────────────────────────
-  generateSocialPost: protectedProcedure
+  generateSocialPost: orgProcedure
     .input(z.object({
       storeId: z.number(),
       platform: z.enum([
@@ -257,7 +262,8 @@ export const socialRouter = router({
       topic: z.string(),
       productName: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_post",
@@ -322,21 +328,23 @@ export const socialRouter = router({
       }
     }),
 
-  socialPosts: protectedProcedure
+  socialPosts: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getSocialPosts(input.storeId);
     }),
 
   // ─── Email Campaigns ──────────────────────────────────────────────────
-  generateEmailCampaign: protectedProcedure
+  generateEmailCampaign: orgProcedure
     .input(z.object({
       storeId: z.number(),
       campaignType: z.enum(["welcome", "abandoned_cart", "promotional", "winback", "newsletter"]),
       productName: z.string().optional(),
       brandName: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "email_campaign",
@@ -407,9 +415,10 @@ export const socialRouter = router({
       }
     }),
 
-  emailCampaigns: protectedProcedure
+  emailCampaigns: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getEmailCampaigns(input.storeId);
     }),
 
@@ -611,9 +620,10 @@ export const socialRouter = router({
     }),
 
   // ─── Ad Campaigns ─────────────────────────────────────────────────────
-  adCampaigns: protectedProcedure
+  adCampaigns: orgProcedure
     .input(z.object({ storeId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       return db.getAdCampaigns(input.storeId);
     }),
 
@@ -710,7 +720,7 @@ export const socialRouter = router({
       }
     }),
 
-  launchCampaign: protectedProcedure
+  launchCampaign: orgProcedure
     .input(z.object({
       socialAccountId: z.number(),
       storeId: z.number(),
@@ -728,7 +738,8 @@ export const socialRouter = router({
         interests: z.array(z.string()).optional(),
       }).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ad_launch",
@@ -771,14 +782,15 @@ export const socialRouter = router({
     }),
 
   // ─── A/B Test Copy Generator ───────────────────────────────────────────
-  abTestCopyGenerator: protectedProcedure
+  abTestCopyGenerator: orgProcedure
     .input(z.object({
       storeId: z.number(),
       originalCopy: z.string(),
       copyType: z.enum(["headline", "description", "cta", "email_subject", "ad_copy"]),
       numberOfVariants: z.number().min(2).max(10).default(5),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "ab_test_copy",
@@ -836,13 +848,14 @@ export const socialRouter = router({
     }),
 
   // ─── SMS Recovery Flow Generator ───────────────────────────────────────
-  smsRecoveryFlow: protectedProcedure
+  smsRecoveryFlow: orgProcedure
     .input(z.object({
       storeId: z.number(),
       flowType: z.enum(["abandoned_cart", "browse_abandonment", "winback", "post_purchase_upsell", "review_request"]),
       brandName: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "sms_recovery",
@@ -904,13 +917,14 @@ export const socialRouter = router({
     }),
 
   // ─── Social Proof Generator ────────────────────────────────────────────
-  socialProofGenerator: protectedProcedure
+  socialProofGenerator: orgProcedure
     .input(z.object({
       storeId: z.number(),
       productName: z.string(),
       proofType: z.enum(["testimonials", "urgency_notifications", "trust_badges", "review_responses", "ugc_prompts"]),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
       const task = await db.createAgentTask({
         agentType: "social",
         taskType: "social_proof",

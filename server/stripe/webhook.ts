@@ -7,11 +7,14 @@ import Stripe from "stripe";
 import { ENV } from "../_core/env";
 import * as db from "../db";
 import { logger } from "../_core/logger";
+import { WebhookDedup } from "../utils/webhookDedup";
 
 function getStripe(): Stripe {
   if (!ENV.stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not configured");
   return new Stripe(ENV.stripeSecretKey, { apiVersion: "2026-03-25.dahlia" });
 }
+
+const stripeEventDedup = new WebhookDedup();
 
 export function registerStripeWebhook(app: Express): void {
   // MUST use express.raw() — registered before express.json() in _core/index.ts
@@ -21,17 +24,18 @@ export function registerStripeWebhook(app: Express): void {
       const sig = req.headers["stripe-signature"] as string;
       const webhookSecret = ENV.stripeWebhookSecret;
 
+      if (!webhookSecret) {
+        logger.error("stripe_webhook_secret_missing", {});
+        res.status(400).json({ error: "Webhook secret not configured" });
+        return;
+      }
+
       let event: Stripe.Event;
 
       try {
-        if (!webhookSecret) {
-          // Dev fallback: parse raw body as JSON
-          event = JSON.parse((req as any).rawBody || req.body.toString()) as Stripe.Event;
-        } else {
-          const stripe = getStripe();
-          const rawBody = (req as any).rawBody ?? req.body;
-          event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-        }
+        const stripe = getStripe();
+        const rawBody = (req as any).rawBody ?? req.body;
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
       } catch (err: any) {
         logger.warn("stripe_webhook_signature_failed", { error: err.message });
         res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
@@ -45,11 +49,29 @@ export function registerStripeWebhook(app: Express): void {
         return;
       }
 
+      // Idempotency: skip events already processed or currently in-flight
+      const dedupResult = stripeEventDedup.tryClaim(event.id);
+      if (dedupResult === "completed") {
+        logger.info("stripe_webhook_duplicate_skipped", { eventId: event.id, type: event.type });
+        res.json({ received: true });
+        return;
+      }
+      if (dedupResult === "in_flight") {
+        logger.info("stripe_webhook_in_flight_skipped", { eventId: event.id, type: event.type });
+        res.json({ received: true });
+        return;
+      }
+
       logger.info("stripe_webhook_received", { type: event.type, eventId: event.id });
 
-      handleEvent(event).catch((err) => {
-        logger.error("stripe_webhook_handler_error", { error: err.message, type: event.type });
-      });
+      handleEvent(event)
+        .then(() => {
+          stripeEventDedup.markCompleted(event.id);
+        })
+        .catch((err) => {
+          stripeEventDedup.releaseClaim(event.id);
+          logger.error("stripe_webhook_handler_error", { error: err.message, type: event.type });
+        });
 
       // Respond immediately — process async
       res.json({ received: true });
