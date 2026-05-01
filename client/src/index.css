@@ -4954,14 +4954,15 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   min-height: 44px;
 }
 
-/* ── Prevent horizontal page overflow on tiny viewports ──────────────────── */
-/* Long unbroken strings (URLs, IDs) sometimes push the body wider than the
-   viewport, causing the whole app to scroll sideways on mobile. Belt-and-
-   braces guard. */
+/* ── Allow long unbroken strings to wrap on small viewports ──────────────── */
+/* URLs, IDs, and tokens occasionally render in user-visible surfaces (logs,
+   metadata, error banners). On phone-width viewports those strings can push
+   their containers wider than the screen and cause horizontal scroll. Letting
+   them break inside the word avoids the overflow without hiding content. */
 @media (max-width: 767px) {
-  html, body {
-    overflow-x: hidden;
-    max-width: 100vw;
+  body {
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 }
 
