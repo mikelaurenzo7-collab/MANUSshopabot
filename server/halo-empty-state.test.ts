@@ -36,6 +36,8 @@ const ADOPTERS = [
   "client/src/pages/CampaignFunnel.tsx",
   "client/src/pages/PlatformHealth.tsx",
   "client/src/pages/Analytics.tsx",
+  "client/src/pages/PluginStore.tsx",
+  "client/src/pages/BotSettings.tsx",
 ];
 
 describe("HaloEmptyState — canonical primitive", () => {

@@ -365,15 +365,15 @@ export default function Approvals() {
               {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl bg-white/5" />)}
             </div>
           ) : reviewed.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">
-                <Clock className="h-5 w-5 text-white/45" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">No approval history yet</h3>
-              <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-                Reviewed decisions land here. Once a bot escalates an action and you approve or reject it, the audit trail starts here.
-              </p>
-            </div>
+            // Quiet history-empty state — violet halo signals the
+            // contemplative "audit trail" framing. No CTA: the
+            // history fills itself once approvals start happening.
+            <HaloEmptyState
+              tone="violet"
+              icon={Clock}
+              title="No approval history yet"
+              description="Reviewed decisions land here. Once a bot escalates an action and you approve or reject it, the audit trail starts here."
+            />
           ) : (
             <div className="space-y-3">
               {reviewed.map((a: any) => (
