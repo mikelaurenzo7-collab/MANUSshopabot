@@ -476,10 +476,22 @@ export async function bulkInsertProducts(rows: InsertProduct[]): Promise<number>
   return Number(result[0]?.affectedRows ?? rows.length);
 }
 
-export async function getProductsByStore(storeId: number) {
+/**
+ * Read products for a store. Returns the most-recent N rows ordered
+ * by `createdAt`. The default cap (1000) bounds memory and serialization
+ * cost — a store with 50k SKUs would otherwise stream the entire table
+ * into memory and slow every caller (chat context, merchant analysis,
+ * etc.). Callers that need more must pass an explicit `limit` up to
+ * `MAX_PRODUCTS_PER_QUERY`; anything higher is silently clamped, which
+ * prevents an LLM-fed `limit` field from accidentally requesting a
+ * full-table scan.
+ */
+export const MAX_PRODUCTS_PER_QUERY = 5000;
+export async function getProductsByStore(storeId: number, limit = 1000) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(products).where(eq(products.storeId, storeId)).orderBy(desc(products.createdAt));
+  const cappedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_PRODUCTS_PER_QUERY);
+  return db.select().from(products).where(eq(products.storeId, storeId)).orderBy(desc(products.createdAt)).limit(cappedLimit);
 }
 
 /**
@@ -571,10 +583,18 @@ export async function createOrder(data: InsertOrder) {
   return { id: result[0].insertId };
 }
 
+/**
+ * Read orders for a store. The default `limit=50` covers the dashboard
+ * cards; analyses that need more pass higher values, but we clamp to
+ * `MAX_ORDERS_PER_QUERY` so an LLM-fed or buggy caller can't request
+ * a full-table scan.
+ */
+export const MAX_ORDERS_PER_QUERY = 5000;
 export async function getOrdersByStore(storeId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.storeId, storeId)).orderBy(desc(orders.createdAt)).limit(limit);
+  const cappedLimit = Math.min(Math.max(1, Math.floor(limit)), MAX_ORDERS_PER_QUERY);
+  return db.select().from(orders).where(eq(orders.storeId, storeId)).orderBy(desc(orders.createdAt)).limit(cappedLimit);
 }
 
 /**

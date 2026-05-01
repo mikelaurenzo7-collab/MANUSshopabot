@@ -439,7 +439,10 @@ async function executeTool(
       if (!store || store.orgId !== ctx.orgId) {
         return JSON.stringify({ error: "Store not found or access denied" });
       }
-      const prods = await db.getProductsByStore(storeId);
+      // Chat context — fetch only what we render (slice to 20 below).
+      // Without an explicit limit a store with 10k+ products dragged
+      // megabytes through every chat turn before the slice happened.
+      const prods = await db.getProductsByStore(storeId, 50);
       return JSON.stringify({
         storeId,
         storeName: store.name,
