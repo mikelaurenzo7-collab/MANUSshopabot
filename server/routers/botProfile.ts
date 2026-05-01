@@ -1,5 +1,6 @@
 import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
+import { boundedJsonBlob } from "../utils/boundedJson";
 import {
   getBotProfile,
   upsertBotProfile,
@@ -126,7 +127,7 @@ export const botProfileRouter = router({
         cronExpression: z.string().optional(),
         intervalSeconds: z.number().optional(),
         eventType: z.string().optional(),
-        taskInput: z.record(z.string(), z.any()).optional(),
+        taskInput: boundedJsonBlob().optional(),
         targetStoreIds: z.array(z.number()).optional(),
         maxConcurrent: z.number().optional(),
         enabled: z.boolean().optional(),
@@ -172,7 +173,7 @@ export const botProfileRouter = router({
         name: z.string(),
         description: z.string().optional(),
         ruleType: RuleType,
-        condition: z.record(z.string(), z.any()),
+        condition: boundedJsonBlob(),
         action: z.enum(["block", "warn", "approve_required", "log"]).optional(),
         appliesToWorkflows: z.array(z.string()).optional(),
         appliesToStores: z.array(z.number()).optional(),
