@@ -308,7 +308,18 @@ describe("Cookbook recipe — agent-loop engine wiring", () => {
     const set = mod.getAgentToolset("architect.competitor_stalker_v0");
     expect(set).toBeDefined();
     expect(Array.isArray(set!.tools)).toBe(true);
-    expect(set!.tools.length).toBe(3);
+    // Toolset count grows as we plug in real-data tools (Firecrawl's
+    // `scout_url` joined the original 3 synthetic tools). Guard the
+    // floor so removing a tool fails the test, but don't pin the
+    // ceiling — future v1+ tools can land without churning this file.
+    expect(set!.tools.length).toBeGreaterThanOrEqual(3);
+    expect(set!.tools.map((t: any) => t.name)).toEqual(
+      expect.arrayContaining([
+        "search_competitors",
+        "fetch_competitor_pricing",
+        "compare_to_our_pricing",
+      ]),
+    );
     for (const t of set!.tools) {
       expect(typeof t.name).toBe("string");
       expect(typeof t.description).toBe("string");

@@ -106,6 +106,10 @@ export const ENV = {
   printfulClientId: process.env.PRINTFUL_CLIENT_ID ?? "",
   printfulClientSecret: process.env.PRINTFUL_CLIENT_SECRET ?? "",
   printfulApiToken: process.env.PRINTFUL_API_TOKEN ?? "",
+  // Firecrawl — gives the bots real web data (URL → markdown).
+  // Set in Manus secrets; read at request time so a missing key
+  // gracefully falls back to the synthetic dispatcher.
+  firecrawlApiKey: process.env.FIRECRAWL_API_KEY ?? "",
   // CJ Dropshipping
   cjEmail: process.env.CJ_EMAIL ?? "",
   cjPassword: process.env.CJ_PASSWORD ?? "",

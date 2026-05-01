@@ -113,6 +113,8 @@ const AUTH_MODEL: Record<string, AuthModel> = {
   printful: "api_key",
   judgeme: "api_key",
   gorgias: "api_key",
+  // Research / web-data tools
+  firecrawl: "api_key",
 };
 
 /** Public accessor — returns "none" for unknown platforms so callers don't

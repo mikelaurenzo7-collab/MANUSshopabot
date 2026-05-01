@@ -38,7 +38,7 @@ function createUserContext(): TrpcContext {
 }
 
 describe("Tool Connector Adapters", () => {
-  it("registry returns all 9 expected tool ids", () => {
+  it("registry returns all expected tool ids", () => {
     expect(SUPPORTED_TOOL_CONNECTORS.sort()).toEqual(
       [
         "google_sheets",
@@ -50,6 +50,10 @@ describe("Tool Connector Adapters", () => {
         "judgeme",
         "gorgias",
         "google_ads",
+        // Research / web-data tool — Firecrawl scrapes a URL into
+        // LLM-ready markdown so the agent loop can ground its
+        // reasoning in real page content (PR adding scout_url).
+        "firecrawl",
       ].sort(),
     );
   });

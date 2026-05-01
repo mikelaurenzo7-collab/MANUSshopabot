@@ -79,10 +79,13 @@ export function listAgentToolsetNames(): string[] {
 // our pricing. The audit trail shows exactly which competitors it
 // looked at and why it picked the final shortlist.
 //
-// All three tools return deterministic synthesized data in this v0
-// — the structure is stable so the rest of the workflow can rely on
-// it. v1 will swap the dispatcher to call the live web-scrape +
-// internal pricing endpoints.
+// search_competitors / fetch_competitor_pricing / compare_to_our_pricing
+// still return deterministic synthesized data in this version — the
+// structure is stable so the rest of the workflow can rely on it.
+// scout_url DOES use real web data via Firecrawl when
+// `FIRECRAWL_API_KEY` is configured, returning a structured "service
+// unavailable" stub otherwise so the agent loop never crashes on a
+// missing key.
 
 const COMPETITOR_STALKER_TOOLS: AgentTool[] = [
   {
@@ -128,6 +131,35 @@ const COMPETITOR_STALKER_TOOLS: AgentTool[] = [
         targetMarginPct: { type: "number", default: 40 },
       },
       required: ["ourPriceUsdMin", "ourPriceUsdMax", "competitorPriceUsdMin", "competitorPriceUsdMax"],
+    },
+  },
+  {
+    // The first real-data tool in the competitor_stalker toolset —
+    // routes through Firecrawl when FIRECRAWL_API_KEY is set, returns
+    // a "service unavailable" stub when it isn't (so the agent can
+    // gracefully reason without it instead of crashing). Use this when
+    // the merchant or workflow input includes a specific URL — the
+    // bot's own competitor's product page, a vendor's pricing page,
+    // a Shopify storefront — and the agent needs grounded content
+    // instead of imagined positioning.
+    name: "scout_url",
+    description:
+      "Scrape a specific URL into LLM-ready markdown. Use this when you have a concrete URL (a competitor product page, a vendor catalog, a marketplace listing) and need to ground your analysis in REAL page content — not your imagination. Returns title, description, and trimmed markdown of the page's main content. Cite the URL in your reasoning.",
+    category: "research",
+    input_schema: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "Fully-qualified URL including the http(s):// scheme. The page should be a public commerce/marketing surface, not a login-walled or JS-only-rendered route.",
+        },
+        onlyMainContent: {
+          type: "boolean",
+          default: true,
+          description: "Trim out nav, footer, cookie banners, etc. Defaults to true; flip to false only when you specifically need site chrome.",
+        },
+      },
+      required: ["url"],
     },
   },
 ];
@@ -201,6 +233,79 @@ const competitorStalkerDispatch: AgentToolDispatcher = async (toolName, input) =
             ? "Raise to band median and validate elasticity — current pricing leaves margin on the table."
             : "Hold and differentiate on positioning rather than price; the band is fair.",
     };
+  }
+
+  if (toolName === "scout_url") {
+    // Lazy-imported so the agentToolsets module stays cheap to
+    // load in tests + cold paths that never invoke the agent.
+    const { ENV } = await import("../_core/env");
+    const toolsModule = await import("../adapters/tools");
+    const { logger } = await import("../utils/logger");
+    const url = String(input.url ?? "");
+    const onlyMainContent = input.onlyMainContent !== false;
+
+    if (!url) {
+      return { ok: false, error: "scout_url requires a non-empty `url`" };
+    }
+    if (!ENV.firecrawlApiKey) {
+      logger.info("agent_tool_scout_url_unavailable", {
+        module: "agentToolsets",
+        reason: "FIRECRAWL_API_KEY not configured",
+      });
+      // Honest "service unavailable" — the agent should reason about
+      // its other tool outputs instead of fabricating a scraped page.
+      return {
+        ok: false,
+        error: "scout_url is unavailable in this environment (no Firecrawl key configured). Reason from search_competitors / fetch_competitor_pricing instead.",
+      };
+    }
+    try {
+      const firecrawl = toolsModule.getToolAdapter("firecrawl") as unknown as {
+        scrapeUrl: (
+          credentials: { tool: string; apiKey?: string },
+          url: string,
+          options?: { onlyMainContent?: boolean },
+        ) => Promise<{
+          url: string;
+          markdown: string;
+          truncated: boolean;
+          title: string | null;
+          description: string | null;
+          sourceUrl: string;
+        }>;
+      };
+      const result = await firecrawl.scrapeUrl(
+        { tool: "firecrawl", apiKey: ENV.firecrawlApiKey },
+        url,
+        { onlyMainContent },
+      );
+      logger.info("agent_tool_scout_url_succeeded", {
+        module: "agentToolsets",
+        url,
+        truncated: result.truncated,
+        bytes: result.markdown.length,
+      });
+      return {
+        ok: true,
+        url: result.url,
+        title: result.title,
+        description: result.description,
+        markdown: result.markdown,
+        truncated: result.truncated,
+        sourceUrl: result.sourceUrl,
+      };
+    } catch (err: any) {
+      logger.warn("agent_tool_scout_url_failed", {
+        module: "agentToolsets",
+        url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return {
+        ok: false,
+        url,
+        error: `Scrape failed: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
   }
 
   throw new Error(`Unknown tool: ${toolName}`);
