@@ -15,11 +15,15 @@ import {
 
 import { getBrand } from "@/lib/platformBrand";
 
+// Recharts tooltip surface — warm-mocha tinted to harmonize with the
+// page-canvas. The legacy cool-slate (`rgba(15,23,42,0.95)`) read as
+// a frigid floating panel over the warm room. Values match the
+// `--page-canvas-elevated` token at 0.95 alpha.
 const TOOLTIP_STYLE = {
-  backgroundColor: "rgba(15,23,42,0.95)",
-  border: "1px solid rgba(148,163,184,0.15)",
+  backgroundColor: "rgba(44,32,26,0.95)",
+  border: "1px solid rgba(201,169,138,0.18)",
   borderRadius: "8px",
-  color: "#f1f5f9",
+  color: "#f5ebe0",
   fontSize: "12px",
 };
 
@@ -88,8 +92,10 @@ export default function StoreView({ storeId, onClose }: StoreViewProps) {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel */}
-      <div className="relative w-full max-w-3xl bg-slate-950 border-l border-white/10 flex flex-col shadow-2xl overflow-hidden">
+      {/* Panel — warm-mocha canvas matches the rest of the workspace
+          surface so the slide-in drawer doesn't read as a cold patch
+          docked against the warm room. */}
+      <div className="relative w-full max-w-3xl bg-page-canvas border-l border-white/10 flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-4 border-b border-white/8"
           style={{ background: `linear-gradient(135deg, ${platformColor}18 0%, transparent 60%)` }}>

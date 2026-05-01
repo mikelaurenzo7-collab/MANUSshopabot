@@ -470,6 +470,41 @@ describe("Workspace shell contract", () => {
     expect(shellSrc).toContain('activeTab !== "chat"');
   });
 
+  it("Modal dialogs + Recharts tooltip + StoreView panel inherit the warm canvas (round-3)", () => {
+    // Round-3 polish PR. After rounds 1-2, the cool sub-surfaces still
+    // hiding inside modal dialogs + a third-party chart tooltip read as
+    // floating cold patches over the warm room. This pin asserts the
+    // round-3 fixes:
+    //   - StoreView side-panel uses bg-page-canvas (not bg-slate-950).
+    //   - StoreView's Recharts tooltip uses warm-tinted rgba (matches
+    //     --page-canvas-elevated at 0.95) instead of cool slate
+    //     (rgba(15,23,42,0.95)).
+    //   - OrgSwitcher's "Create org" dialog uses bg-page-canvas-elevated
+    //     instead of the cool bg-[#0a0a0f]. The dropdown menu (chrome)
+    //     intentionally STAYS cool — only the modal is warmed.
+    //   - Both Integrations dialogs (Shopify domain, generic) use
+    //     bg-page-canvas-elevated instead of bg-slate-900.
+    const storeViewSrc = read("client/src/components/StoreView.tsx");
+    const orgSwitcherSrc = read("client/src/components/OrgSwitcher.tsx");
+    const integrationsSrc = read("client/src/pages/Integrations.tsx");
+
+    // ── StoreView side-panel + tooltip ────────────────────────────────
+    expect(storeViewSrc).toContain("bg-page-canvas");
+    expect(storeViewSrc).not.toMatch(/bg-slate-950/);
+    expect(storeViewSrc).toMatch(/backgroundColor:\s*"rgba\(44,32,26,0\.95\)"/);
+    expect(storeViewSrc).not.toMatch(/backgroundColor:\s*"rgba\(15,23,42,0\.95\)"/);
+
+    // ── OrgSwitcher dialog (modal warmed; dropdown stays chrome cool) ─
+    expect(orgSwitcherSrc).toMatch(/<DialogContent className="bg-page-canvas-elevated/);
+    expect(orgSwitcherSrc).not.toMatch(/<DialogContent className="bg-\[#0a0a0f\]/);
+
+    // ── Integrations dialogs (both shop-domain + generic) ─────────────
+    const remainingSlate = (integrationsSrc.match(/<DialogContent[^>]*bg-slate-900/g) ?? []).length;
+    expect(remainingSlate).toBe(0);
+    const warmDialogs = (integrationsSrc.match(/<DialogContent[^>]*bg-page-canvas-elevated/g) ?? []).length;
+    expect(warmDialogs).toBeGreaterThanOrEqual(2);
+  });
+
   it("Warm-mocha tokens propagate through the system surfaces (no cool patches over the canvas)", () => {
     // Round-2 polish PR. The original mocha pass swapped the <main>
     // background but missed several cool-toned sub-surfaces that ended

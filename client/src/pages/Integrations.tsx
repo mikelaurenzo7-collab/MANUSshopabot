@@ -814,7 +814,7 @@ export default function IntegrationsPage() {
 
       {/* ── Shopify Domain Dialog ── */}
       <Dialog open={shopifyDialogOpen} onOpenChange={setShopifyDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-slate-900 border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-page-canvas-elevated border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-xl">🛍️</span> Connect Shopify Store
@@ -860,7 +860,7 @@ export default function IntegrationsPage() {
 
       {/* ── API Key Dialog (WooCommerce, Walmart, Faire, Bonanza) ── */}
       <Dialog open={apiKeyDialogOpen} onOpenChange={setApiKeyDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-slate-900 border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-page-canvas-elevated border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-xl">{apiKeyPlatform ? getBrand(apiKeyPlatform).icon : "🔌"}</span>

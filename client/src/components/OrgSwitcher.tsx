@@ -164,7 +164,7 @@ export function OrgSwitcher() {
       </DropdownMenu>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-[#0a0a0f] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-page-canvas-elevated border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-sky-300" aria-hidden="true" />
