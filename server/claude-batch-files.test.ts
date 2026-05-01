@@ -123,7 +123,7 @@ describe("supplier.parseReceiptDocument tRPC procedure", () => {
       path.resolve(__dirname, "routers/supplier.ts"),
       "utf-8",
     );
-    expect(src).toContain("parseReceiptDocument: protectedProcedure");
+    expect(src).toContain("parseReceiptDocument: orgProcedure");
     // PDF / PNG / JPEG / WEBP only — frontend should match.
     expect(src).toContain('"application/pdf"');
     expect(src).toContain('"image/png"');
