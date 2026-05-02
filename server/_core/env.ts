@@ -114,8 +114,14 @@ export const ENV = {
    */
   ebayVerificationToken: process.env.EBAY_VERIFICATION_TOKEN ?? "",
 
-  // Google OAuth (Gmail + Ads)
-  googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  // Google OAuth (Gmail + Ads + sign-in).
+  // VITE_GOOGLE_CLIENT_ID is the canonical name (same value ships to the
+  // browser bundle). GOOGLE_CLIENT_ID is accepted as a fallback so
+  // existing Manus secrets don't break after this rename.
+  googleClientId:
+    process.env.VITE_GOOGLE_CLIENT_ID ??
+    process.env.GOOGLE_CLIENT_ID ??
+    "",
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   googleAdsClientId: process.env.GOOGLE_ADS_CLIENT_ID ?? "",
   googleAdsClientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET ?? "",

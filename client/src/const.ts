@@ -2,7 +2,7 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 // Generate Google OAuth login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
-  const clientId = "452812494367-taik5b6caoofj0luo50mi8arvhh32jqp.apps.googleusercontent.com";
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
   const scope = "openid email profile";
