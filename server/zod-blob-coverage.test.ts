@@ -27,6 +27,10 @@ const ROUTERS_DIR = resolve(REPO, "server/routers");
 
 function listRouterFiles(): string[] {
   const out: string[] = [];
+  // Root aggregator: server/routers.ts (inline bot-config / org / session procedures)
+  const rootRouter = resolve(REPO, "server/routers.ts");
+  out.push(rootRouter);
+  // Individual routers in server/routers/ directory
   for (const entry of readdirSync(ROUTERS_DIR)) {
     const full = join(ROUTERS_DIR, entry);
     if (statSync(full).isFile() && entry.endsWith(".ts") && !entry.endsWith(".test.ts")) {
@@ -62,10 +66,12 @@ describe("Zod blob coverage", () => {
 
   it("every previously-loose call site now imports + uses boundedJsonBlob", () => {
     // Belt-and-suspenders: the audit specifically flagged 5 router
-    // files. Pin that each one carries the import AND a usage so a
-    // future refactor can't quietly drop the import (which would
-    // make the loose-scan above pass while the schema regressed).
+    // files plus the root routers.ts aggregator. Pin that each one
+    // carries the import AND a usage so a future refactor can't
+    // quietly drop the import (which would make the loose-scan above
+    // pass while the schema regressed).
     const expectedImporters = [
+      "server/routers.ts",
       "server/routers/workflows.ts",
       "server/routers/botProfile.ts",
       "server/routers/merchant.ts",
@@ -75,7 +81,7 @@ describe("Zod blob coverage", () => {
     for (const rel of expectedImporters) {
       const src = readFileSync(resolve(REPO, rel), "utf8");
       expect(src, `${rel} missing boundedJsonBlob import`).toMatch(
-        /import\s*\{\s*boundedJsonBlob\s*\}\s*from\s*"\.\.\/utils\/boundedJson"/,
+        /import\s*\{\s*boundedJsonBlob\s*\}\s*from\s*"\.\.?\/?utils\/boundedJson"/,
       );
       expect(src, `${rel} imports boundedJsonBlob but never calls it`).toMatch(
         /boundedJsonBlob\(/,
