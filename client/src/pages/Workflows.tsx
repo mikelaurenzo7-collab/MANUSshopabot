@@ -407,21 +407,23 @@ export default function Workflows() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="page-enter p-3 sm:p-5 space-y-4 overflow-y-auto flex-1">
-      <PageHeader
-        icon={<GitBranch className="h-4 w-4" />}
-        title="Workflows"
-        subtitle="Monitor and manage your Store Bot workflows"
-        accent="violet"
-        right={
-          <SubscriptionGate feature="Workflow Automation" soft>
-            <LaunchWorkflowDialog onLaunched={() => {
-              utils.workflows.active.invalidate();
-              utils.workflows.list.invalidate();
-              utils.workflows.counts.invalidate();
-            }} />
-          </SubscriptionGate>
-        }
-      />
+      {!insideWorkspace && (
+        <PageHeader
+          icon={<GitBranch className="h-4 w-4" />}
+          title="Workflows"
+          subtitle="Monitor and manage your Store Bot workflows"
+          accent="violet"
+          right={
+            <SubscriptionGate feature="Workflow Automation" soft>
+              <LaunchWorkflowDialog onLaunched={() => {
+                utils.workflows.active.invalidate();
+                utils.workflows.list.invalidate();
+                utils.workflows.counts.invalidate();
+              }} />
+            </SubscriptionGate>
+          }
+        />
+      )}
 
       <QueryErrorBanner queries={[activeQuery, historyQuery, countsQuery]} label="Workflow data unavailable" />
 

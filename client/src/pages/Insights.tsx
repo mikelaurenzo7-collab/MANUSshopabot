@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { useIsInsideWorkspaceShell } from "@/components/workspace/WorkspaceShell";
 import AnalyticsPage from "./Analytics";
 import IntelligencePage from "./Intelligence";
 import CampaignFunnel from "./CampaignFunnel";
@@ -23,6 +24,7 @@ function readTabFromHash(): InsightsTab {
 }
 
 export default function InsightsPage() {
+  const insideWorkspace = useIsInsideWorkspaceShell();
   const [tab, setTab] = useState<InsightsTab>(() => readTabFromHash());
   const [isTransitioning, setIsTransitioning] = useState(false);
   const prevTabRef = useRef<InsightsTab>(tab);
@@ -58,15 +60,18 @@ export default function InsightsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <PageHeader
-        icon={<BarChart3 className="h-4 w-4" />}
-        title="Analytics"
-        subtitle="Per-store analytics and cross-store / market intelligence"
-        accent="emerald"
-        flushBottom
-      />
-
-      <div className="px-3 sm:px-5 mb-2" />
+      {!insideWorkspace && (
+        <>
+          <PageHeader
+            icon={<BarChart3 className="h-4 w-4" />}
+            title="Analytics"
+            subtitle="Per-store analytics and cross-store / market intelligence"
+            accent="emerald"
+            flushBottom
+          />
+          <div className="px-3 sm:px-5 mb-2" />
+        </>
+      )}
 
       <Tabs value={tab} onValueChange={handleTabChange} className="px-3 sm:px-5">
         <TabsList
