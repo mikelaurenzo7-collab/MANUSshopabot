@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Globe, Plug, Layers, Puzzle, Truck, Mail, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { useIsInsideWorkspaceShell } from "@/components/workspace/WorkspaceShell";
 import { QueryErrorBanner } from "@/components/QueryErrorBanner";
 import { trpc } from "@/lib/trpc";
 import IntegrationsPage from "./Integrations";
@@ -30,6 +31,7 @@ function readTabFromHash(): StorefrontsTab {
 }
 
 export default function StorefrontsPage() {
+  const insideWorkspace = useIsInsideWorkspaceShell();
   const [, setLocation] = useLocation();
   const [tab, setTab] = useState<StorefrontsTab>(() => readTabFromHash());
   const [returnTo, setReturnTo] = useState<string | null>(null);
@@ -90,13 +92,15 @@ export default function StorefrontsPage() {
 
   return (
     <div className="page-enter h-full overflow-y-auto">
-      <PageHeader
-        icon={<Globe className="h-4 w-4" />}
-        title="Integrations"
-        subtitle="Stores, plugins, suppliers, and tools — everything connected to your operation"
-        accent="cyan"
-        flushBottom
-      />
+      {!insideWorkspace && (
+        <PageHeader
+          icon={<Globe className="h-4 w-4" />}
+          title="Integrations"
+          subtitle="Stores, plugins, suppliers, and tools — everything connected to your operation"
+          accent="cyan"
+          flushBottom
+        />
+      )}
 
       <div className="px-3 sm:px-5 mt-2">
         <QueryErrorBanner
