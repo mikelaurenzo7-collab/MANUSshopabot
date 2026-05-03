@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { boundedJsonBlob } from "./utils/boundedJson";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
@@ -200,8 +201,8 @@ export const appRouter = router({
         enabled: z.boolean().optional(),
         autoApprove: z.boolean().optional(),
         autonomyLevel: z.enum(["fully_autonomous", "supervised", "manual"]).optional(),
-        maxBudgetCents: z.number().optional(),
-        config: z.any().optional(),
+        maxBudgetCents: z.number().int().min(0).optional(),
+        config: boundedJsonBlob().optional(),
         // Priority 3: granular safety thresholds — now persisted to DB
         lowStockThreshold: z.number().int().min(0).max(10000).optional(),
         approvalRequired: z.boolean().optional(),
