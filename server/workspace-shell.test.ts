@@ -39,6 +39,7 @@ describe("Workspace shell contract", () => {
     expect(src).toContain('path="/store/:storeId/chat"');
     expect(src).toContain('path="/store/:storeId/workflows"');
     expect(src).toContain('path="/store/:storeId/builder"');
+    expect(src).toContain('path="/store/:storeId/sourcing"');
     expect(src).toContain('path="/store/:storeId/connectors"');
     expect(src).toContain('path="/store/:storeId/memory"');
     expect(src).toContain('path="/store/:storeId/instructions"');

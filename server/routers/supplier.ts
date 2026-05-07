@@ -1,17 +1,22 @@
 /**
- * Supplier Purchase Order Router
+ * Supplier Router
  *
- * Phase 3: Autonomous supply chain management.
- * Allows the Merchant Bot (and users) to create, approve, submit,
- * and track purchase orders against suppliers.
- * Integrates with the supplier adapter layer for external API calls.
+ * Two sub-surfaces:
+ *  1. Purchase Orders — create, approve, submit, and track POs.
+ *  2. Catalog — browse/search Printful and CJ Dropshipping products
+ *     directly from the UI without running a full workflow.
  */
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { llmRateLimit, orgProcedure, router } from "../_core/trpc";
+import { orgProcedure, llmRateLimit, router } from "../_core/trpc";
 import * as db from "../db";
 import { generatePO } from "../adapters/supplierAdapter";
+import {
+  printfulAdapter,
+  type PrintfulProduct,
+} from "../adapters/suppliers/printfulAdapter";
+import { cjAdapter, type CJProduct } from "../adapters/suppliers/cjAdapter";
 import {
   uploadFile,
   visionQuery,
@@ -354,5 +359,106 @@ If the document is unreadable or appears not to be a receipt/PO, return an empty
       }
 
       return results;
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Catalog — browse supplier product catalogs without running a workflow.
+  // Returns graceful empty arrays when credentials are unconfigured.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Check which suppliers are configured and available.
+   * Call this before rendering the catalog browser so you can hide
+   * disabled supplier tabs rather than showing empty states.
+   */
+  catalogAvailability: orgProcedure.query(async () => {
+    const [printfulOk, cjOk] = await Promise.all([
+      printfulAdapter.isAvailable(),
+      cjAdapter.isAvailable(),
+    ]);
+    return { printful: printfulOk, cjdropshipping: cjOk };
+  }),
+
+  /**
+   * Search supplier catalogs by keyword.
+   *
+   * supplier: "printful" | "cjdropshipping" | "all" (default "all")
+   * Returns { printful: Product[], cjdropshipping: Product[] }.
+   * Missing or unconfigured suppliers return empty arrays.
+   */
+  catalogSearch: orgProcedure
+    .input(
+      z.object({
+        keyword: z.string().max(120).default(""),
+        supplier: z.enum(["printful", "cjdropshipping", "all"]).default("all"),
+        limit: z.number().int().min(1).max(50).default(20),
+        category: z.string().max(80).optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { keyword, supplier, limit, category } = input;
+      const half = Math.ceil(limit / 2);
+
+      const [printfulProducts, cjProducts] = await Promise.all([
+        supplier !== "cjdropshipping"
+          ? printfulAdapter.searchProducts(keyword, supplier === "printful" ? limit : half)
+          : Promise.resolve([] as PrintfulProduct[]),
+        supplier !== "printful"
+          ? cjAdapter.searchProducts(keyword, supplier === "cjdropshipping" ? limit : half, category)
+          : Promise.resolve([] as CJProduct[]),
+      ]);
+
+      return { printful: printfulProducts, cjdropshipping: cjProducts };
+    }),
+
+  /**
+   * Return trending / best-selling products from configured suppliers.
+   */
+  catalogTrending: orgProcedure
+    .input(
+      z.object({
+        supplier: z.enum(["printful", "cjdropshipping", "all"]).default("all"),
+        limit: z.number().int().min(1).max(50).default(20),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { supplier, limit } = input;
+      const half = Math.ceil(limit / 2);
+
+      const [printfulProducts, cjProducts] = await Promise.all([
+        supplier !== "cjdropshipping"
+          ? printfulAdapter.getTrendingProducts(supplier === "printful" ? limit : half)
+          : Promise.resolve([] as PrintfulProduct[]),
+        supplier !== "printful"
+          ? cjAdapter.getTrendingProducts(supplier === "cjdropshipping" ? limit : half)
+          : Promise.resolve([] as CJProduct[]),
+      ]);
+
+      return { printful: printfulProducts, cjdropshipping: cjProducts };
+    }),
+
+  /**
+   * Get CJ margin calculation for a given cost and markup.
+   * Pure compute — no external API call.
+   */
+  catalogMargin: orgProcedure
+    .input(
+      z.object({
+        costCents: z.number().int().min(0),
+        markupPercent: z.number().min(0).max(500).default(100),
+      }),
+    )
+    .query(({ input }) => {
+      const { costCents, markupPercent } = input;
+      const costDollars = costCents / 100;
+      const retailDollars = costDollars * (1 + markupPercent / 100);
+      const profitDollars = retailDollars - costDollars;
+      const marginPct = retailDollars > 0 ? (profitDollars / retailDollars) * 100 : 0;
+      return {
+        costCents,
+        retailCents: Math.round(retailDollars * 100),
+        profitCents: Math.round(profitDollars * 100),
+        marginPercent: Math.round(marginPct * 10) / 10,
+      };
     }),
 });
