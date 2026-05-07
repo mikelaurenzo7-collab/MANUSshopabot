@@ -65,6 +65,7 @@ const WorkspaceOverviewPage = lazy(() => import("./pages/WorkspaceOverview"));
 const WorkspaceChatPage = lazy(() => import("./pages/WorkspaceChat"));
 const WorkspaceWorkflowsPage = lazy(() => import("./pages/WorkspaceWorkflows"));
 const WorkspaceBuilderPage = lazy(() => import("./pages/WorkspaceBuilder"));
+const WorkspaceSourcingPage = lazy(() => import("./pages/WorkspaceSourcing"));
 const WorkspaceConnectorsPage = lazy(() => import("./pages/WorkspaceConnectors"));
 const WorkspaceMemoryPage = lazy(() => import("./pages/WorkspaceMemory"));
 const WorkspaceInstructionsPage = lazy(() => import("./pages/WorkspaceInstructions"));
@@ -219,6 +220,7 @@ function Router() {
                     <Route path="/store/:storeId/chat">{() => <ErrorBoundary inline label="Workspace Chat"><WorkspaceChatPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/workflows">{() => <ErrorBoundary inline label="Workspace Workflows"><WorkspaceWorkflowsPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/builder">{() => <ErrorBoundary inline label="Workspace Builder"><WorkspaceBuilderPage /></ErrorBoundary>}</Route>
+                    <Route path="/store/:storeId/sourcing">{() => <ErrorBoundary inline label="Workspace Sourcing"><WorkspaceSourcingPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/connectors">{() => <ErrorBoundary inline label="Workspace Connectors"><WorkspaceConnectorsPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/memory">{() => <ErrorBoundary inline label="Workspace Memory"><WorkspaceMemoryPage /></ErrorBoundary>}</Route>
                     <Route path="/store/:storeId/instructions">{() => <ErrorBoundary inline label="Workspace Instructions"><WorkspaceInstructionsPage /></ErrorBoundary>}</Route>

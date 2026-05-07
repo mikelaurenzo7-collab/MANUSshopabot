@@ -72,6 +72,7 @@ import {
   Activity as ActivityIcon,
   ChevronRight,
   Store as StoreIcon,
+  Package,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -97,6 +98,7 @@ export type WorkspaceTabId =
   | "chat"
   | "workflows"
   | "builder"
+  | "sourcing"
   | "connectors"
   | "memory"
   | "instructions"
@@ -109,6 +111,7 @@ const TAB_REGISTRY: Record<WorkspaceTabId, { label: string; icon: WorkspaceTabSp
   chat:         { label: "Chat",         icon: MessageSquare,  subroute: "chat" },
   workflows:    { label: "Workflows",    icon: GitBranch,      subroute: "workflows" },
   builder:      { label: "Builder",      icon: Wrench,         subroute: "builder" },
+  sourcing:     { label: "Sourcing",     icon: Package,        subroute: "sourcing" },
   connectors:   { label: "Connectors",   icon: Plug,           subroute: "connectors" },
   memory:       { label: "Memory",       icon: Brain,          subroute: "memory" },
   instructions: { label: "Instructions", icon: ScrollText,     subroute: "instructions" },
@@ -117,7 +120,7 @@ const TAB_REGISTRY: Record<WorkspaceTabId, { label: string; icon: WorkspaceTabSp
 };
 
 const DEFAULT_TAB_ORDER: WorkspaceTabId[] = [
-  "overview", "chat", "workflows", "builder", "connectors", "memory", "instructions", "insights", "activity",
+  "overview", "chat", "workflows", "builder", "sourcing", "connectors", "memory", "instructions", "insights", "activity",
 ];
 
 interface WorkspaceShellProps {
