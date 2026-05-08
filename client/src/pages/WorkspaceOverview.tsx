@@ -11,8 +11,9 @@
  * unavailable" line instead of an empty void, and we link to the tab
  * that owns the data so the operator can investigate from there.
  */
-import { useMemo } from "react";
-import { Link, useLocation } from "wouter";
+import { useMemo, useEffect } from "react";
+import { Link, useLocation, useSearch } from "wouter";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import {
   WorkspaceShell,
@@ -63,7 +64,27 @@ function formatRelative(iso: string | Date | null | undefined): string {
 
 export default function WorkspaceOverview() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const { storeId, store, brand } = useWorkspaceStore();
+
+  // Show a success toast when landing here after Shopify (or any) OAuth.
+  // The server redirects to /store/:id?connected=true on success.
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("connected") === "true") {
+      toast.success("Store connected", {
+        description: store?.name ? `${store.name} is ready — your Store Bot is active.` : "Your store is ready.",
+        duration: 5000,
+      });
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    if (params.get("error") === "connection_failed") {
+      toast.error("Connection failed", {
+        description: "OAuth did not complete. Check your Shopify credentials and try again.",
+      });
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [searchString, store?.name]);
 
   // Per-store data — every query is store-scoped so two open workspaces
   // never interfere.

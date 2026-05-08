@@ -395,7 +395,10 @@ export const storesRouter = router({
       shop = shop.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
       const returnToParam = input.returnTo ? `&returnTo=${encodeURIComponent(input.returnTo)}` : '';
-      const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}${returnToParam}`;
+      // Pass origin explicitly so the install handler can store the correct
+      // public domain in the OAuth state even when behind a Cloud Run / Manus
+      // proxy that rewrites x-forwarded-host to an internal container URL.
+      const installUrl = `${input.origin}/api/shopify/install?shop=${encodeURIComponent(shop)}&storeId=${input.storeId}${returnToParam}&origin=${encodeURIComponent(input.origin)}`;
 
       await db.updateStore(input.storeId, { platformDomain: shop });
       return { url: installUrl, shop };

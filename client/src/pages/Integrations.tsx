@@ -77,7 +77,13 @@ const API_KEY_FIELDS: Record<string, { label: string; key: string; placeholder: 
 };
 
 export default function IntegrationsPage() {
+  // Default to "connect" tab when there are no stores yet, so first-time
+  // operators land directly on the connect flow without a second click.
   const [mainTab, setMainTab] = useState<"stores" | "social" | "tools" | "connect">("stores");
+  const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
+  useEffect(() => {
+    if (stores && stores.length === 0) setMainTab("connect");
+  }, [stores]);
   const [connectTab, setConnectTab] = useState<"ecommerce" | "social" | "tools">("ecommerce");
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
@@ -93,7 +99,6 @@ export default function IntegrationsPage() {
   const [apiKeyValues, setApiKeyValues] = useState<Record<string, string>>({});
   const [apiKeyShowSecrets, setApiKeyShowSecrets] = useState<Record<string, boolean>>({});
 
-  const { data: stores, refetch: refetchStores } = trpc.stores.list.useQuery();
   const { data: ecommercePlatforms } = trpc.connectors.ecommercePlatforms.useQuery();
   const { data: socialPlatforms } = trpc.connectors.socialPlatforms.useQuery();
   const { data: credentials, refetch: refetchCreds } = trpc.connectors.listCredentials.useQuery();
@@ -105,16 +110,29 @@ export default function IntegrationsPage() {
   const searchString = useSearch();
   useEffect(() => {
     const params = new URLSearchParams(searchString);
-    if (params.get("connected") && params.get("account")) {
+    if (params.get("connected")) {
       const platformId = (params.get("account") || "").toLowerCase();
-      const brand = getBrand(platformId);
-      const customName = params.get("name");
-      toast.success(`${brand.icon} ${customName || brand.name} connected`, {
-        description: brand.tagline,
-      });
+      if (platformId) {
+        const brand = getBrand(platformId);
+        const customName = params.get("name");
+        toast.success(`${brand.icon} ${customName || brand.name} connected`, {
+          description: brand.tagline,
+        });
+      } else {
+        toast.success("Connection successful", {
+          description: "Your account has been connected.",
+        });
+      }
       history.replaceState(null, "", window.location.pathname);
       refetchCreds();
       refetchSocial();
+      refetchStores();
+    }
+    if (params.get("error")) {
+      toast.error("Connection failed", {
+        description: "OAuth did not complete. Please try again.",
+      });
+      history.replaceState(null, "", window.location.pathname);
     }
   }, [searchString]);
 
