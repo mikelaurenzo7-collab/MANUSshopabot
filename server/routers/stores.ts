@@ -401,6 +401,157 @@ export const storesRouter = router({
       return { url: installUrl, shop };
     }),
 
+  /**
+   * Health Score — 0–100 composite score for a single store.
+   *
+   * Five components (max points in parens):
+   *   Catalog quality  (30) — % of active products with images, descriptions, pricing
+   *   Bot activity     (25) — workflows run in the last 30 days + success rate
+   *   Inventory health (20) — out-of-stock and low-stock rates
+   *   Channels         (15) — connected social / ad accounts
+   *   Order velocity   (10) — non-cancelled orders in the last 30 days
+   *
+   * Grade scale: S ≥ 90 · A ≥ 80 · B ≥ 70 · C ≥ 60 · D ≥ 50 · F < 50
+   */
+  healthScore: orgProcedure
+    .input(z.object({ storeId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      await requireStoreInOrg(input.storeId, ctx.org.id);
+
+      const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [allProducts, recentOrders, recentWorkflows, socialAccounts] = await Promise.all([
+        db.getProductsByStore(input.storeId),
+        db.getOrdersByStore(input.storeId, 100),
+        db.getWorkflowsByOrg(ctx.org.id, { storeId: input.storeId, limit: 50 }),
+        db.getSocialAccountsByOrg(ctx.org.id),
+      ]);
+
+      // Active products include both published ("active") and in-progress
+      // ("draft") — drafts count against catalog quality, which is
+      // intentional: an unmissed-image draft still hurts the store.
+      const scorableProducts = (allProducts as any[]).filter(
+        (p) => p.status !== "archived",
+      );
+      const total = scorableProducts.length;
+
+      const tips: string[] = [];
+
+      // ── 1. Catalog quality (0–30) ────────────────────────────────────
+      let catalogScore = 0;
+      if (total === 0) {
+        tips.push("Add your first products to unlock catalog scoring");
+      } else {
+        const withImage = scorableProducts.filter((p) => !!p.imageUrl).length;
+        const withDesc = scorableProducts.filter(
+          (p) => typeof p.description === "string" && p.description.length > 50,
+        ).length;
+        const withPrice = scorableProducts.filter((p) => Number(p.price) > 0).length;
+
+        const imgScore = Math.round((withImage / total) * 10);
+        const descScore = Math.round((withDesc / total) * 10);
+        const priceScore = Math.round((withPrice / total) * 10);
+        catalogScore = imgScore + descScore + priceScore;
+
+        if (imgScore < 7)
+          tips.push(
+            `Add images to ${total - withImage} product${total - withImage > 1 ? "s" : ""}`,
+          );
+        else if (descScore < 7)
+          tips.push(
+            `Write descriptions for ${total - withDesc} product${total - withDesc > 1 ? "s" : ""}`,
+          );
+      }
+
+      // ── 2. Bot activity (0–25) ───────────────────────────────────────
+      const recentWfs = (recentWorkflows as any[]).filter(
+        (w) => w.createdAt && new Date(w.createdAt).getTime() >= since30d.getTime(),
+      );
+      const completedWfs = recentWfs.filter((w) => w.status === "completed");
+      const wfCountScore = Math.min(recentWfs.length * 3, 20);
+      const wfSuccessBonus =
+        recentWfs.length > 0 && completedWfs.length / recentWfs.length >= 0.7 ? 5 : 0;
+      const botScore = wfCountScore + wfSuccessBonus;
+
+      if (recentWfs.length === 0)
+        tips.push("Run your first workflow — Store Bot is ready to activate");
+      else if (recentWfs.length < 4)
+        tips.push("Run more workflows to maximize your bot activity score");
+
+      // ── 3. Inventory health (0–20) ───────────────────────────────────
+      let inventoryScore = 10; // neutral when no products exist yet
+      if (total > 0) {
+        const oos = (allProducts as any[]).filter(
+          (p) => p.stockLevel !== null && Number(p.stockLevel) <= 0,
+        ).length;
+        const lowStock = (allProducts as any[]).filter(
+          (p) =>
+            p.stockLevel !== null &&
+            p.lowStockThreshold !== null &&
+            Number(p.stockLevel) > 0 &&
+            Number(p.stockLevel) <= Number(p.lowStockThreshold),
+        ).length;
+        const oosScore = Math.round((1 - oos / total) * 10);
+        const lowScore = Math.round((1 - Math.min(lowStock, total) / total) * 10);
+        inventoryScore = oosScore + lowScore;
+
+        if (oos > 0)
+          tips.push(
+            `Restock ${oos} out-of-stock product${oos > 1 ? "s" : ""}`,
+          );
+        else if (lowStock > 0)
+          tips.push(
+            `${lowStock} product${lowStock > 1 ? "s are" : " is"} running low — reorder soon`,
+          );
+      }
+
+      // ── 4. Channels connected (0–15) ────────────────────────────────
+      const socialCount = (socialAccounts as any[]).length;
+      const socialScore = Math.min(socialCount * 5, 10);
+      const channelBonus = socialCount >= 2 ? 5 : 0;
+      const channelScore = socialScore + channelBonus;
+
+      if (socialCount === 0)
+        tips.push("Connect a social channel to enable Social Bot automation");
+
+      // ── 5. Order velocity (0–10) ─────────────────────────────────────
+      const activeOrders30d = (recentOrders as any[]).filter(
+        (o) =>
+          o.createdAt &&
+          new Date(o.createdAt).getTime() >= since30d.getTime() &&
+          o.status !== "cancelled",
+      );
+      const orderScore = Math.min(activeOrders30d.length, 10);
+
+      const score = catalogScore + botScore + inventoryScore + channelScore + orderScore;
+      const grade =
+        score >= 90 ? "S"
+        : score >= 80 ? "A"
+        : score >= 70 ? "B"
+        : score >= 60 ? "C"
+        : score >= 50 ? "D"
+        : "F";
+
+      return {
+        score,
+        grade,
+        components: [
+          { key: "catalog",   label: "Catalog quality",  score: catalogScore,   max: 30 },
+          { key: "bot",       label: "Bot activity",     score: botScore,       max: 25 },
+          { key: "inventory", label: "Inventory health", score: inventoryScore, max: 20 },
+          { key: "channels",  label: "Channels",         score: channelScore,   max: 15 },
+          { key: "orders",    label: "Order velocity",   score: orderScore,     max: 10 },
+        ],
+        tips: tips.slice(0, 3),
+        meta: {
+          totalProducts: total,
+          recentWorkflows: recentWfs.length,
+          socialChannels: socialCount,
+          ordersLast30d: activeOrders30d.length,
+        },
+      };
+    }),
+
   supportedPlatforms: protectedProcedure.query(() => {
     return [
       { id: "shopify", name: "Shopify", icon: "🛍️", color: "#96BF48", description: "Full store management via Admin API & OAuth", oauthSupported: true, capabilities: ["products", "orders", "fulfillment", "themes", "customers", "analytics"] },

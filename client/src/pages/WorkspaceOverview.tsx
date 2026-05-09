@@ -21,6 +21,7 @@ import {
 } from "@/components/workspace/WorkspaceShell";
 import { Sparkline } from "@/components/Sparkline";
 import { QueryErrorBanner } from "@/components/QueryErrorBanner";
+import { StoreHealthScore } from "@/components/workspace/StoreHealthScore";
 import {
   MessageSquare,
   GitBranch,
@@ -402,6 +403,9 @@ export default function WorkspaceOverview() {
             {suggestion.cta} <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </Link>
+
+        {/* ── Store Health Score ── */}
+        {storeId && !isFreshlyConnected && <StoreHealthScore storeId={storeId} />}
 
         {/* ── Ops grid: Chat · Workflows · Connectors · Memory ── */}
         <section
