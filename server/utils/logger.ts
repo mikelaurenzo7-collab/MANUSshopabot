@@ -53,3 +53,8 @@ export const logger = {
   warn: (message: string, meta?: LogMetadata) => logger.log("WARN", message, meta),
   error: (message: string, meta?: LogMetadata) => logger.log("ERROR", message, meta),
 };
+
+// Re-export the production-safe stack helper so callers that import
+// from `utils/logger` don't need a second import line. See
+// `_core/logger.ts` for the canonical definition + rationale.
+export { safeErrorStack } from "../_core/logger";

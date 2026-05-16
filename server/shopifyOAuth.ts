@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import * as db from "./db";
-import { logger } from "./utils/logger";
+import { logger, safeErrorStack } from "./utils/logger";
 
 /**
  * Shopify OAuth 2.0 flow for connecting user stores to ShopBot.
@@ -332,7 +332,7 @@ export function registerShopifyOAuthRoutes(app: Express) {
       logger.error("shopify_oauth_callback_failed", {
         module: "shopifyOAuth",
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+        stack: safeErrorStack(error),
       });
       // Best-effort: use the protocol/host from the incoming request for error redirect.
       // Land on the Command Center with an error param so the operator

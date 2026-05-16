@@ -130,6 +130,30 @@ class Logger {
 /** Global singleton logger — use this for all server-side logging */
 export const logger = new Logger();
 
+/**
+ * Production-safe stack-trace extractor. Stack traces leak variable
+ * names, line numbers, and minified bundle structure that an attacker
+ * can use to map the codebase. They're invaluable in dev / staging
+ * but pure information disclosure in production where logs may flow
+ * to a less-trusted aggregator.
+ *
+ * Usage:
+ *   logger.error("workflow_failed", {
+ *     error: err.message,
+ *     stack: safeErrorStack(err),
+ *   });
+ *
+ * Returns the stack string in non-production environments and
+ * `undefined` in production (which the structured logger drops from
+ * the JSON envelope, keeping logs clean). The error message is
+ * always safe to log — that's why this helper is stack-only.
+ */
+export function safeErrorStack(err: unknown): string | undefined {
+  if (process.env.NODE_ENV === "production") return undefined;
+  if (err instanceof Error && typeof err.stack === "string") return err.stack;
+  return undefined;
+}
+
 // ─── Request Correlation Middleware ──────────────────────────────────────────
 import type { Request, Response, NextFunction } from "express";
 import { randomBytes } from "crypto";

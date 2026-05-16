@@ -16,7 +16,7 @@ import { registerStripeWebhook } from "../stripe/webhook";
 import { registerSendGridWebhookRoutes } from "../sendgridWebhooks";
 import { registerClientObservabilityRoutes } from "../clientObservability";
 import { generalRateLimiter, webhookRateLimiter, workflowRateLimiter } from "./rateLimiter";
-import { correlationMiddleware, logger } from "./logger";
+import { correlationMiddleware, logger, safeErrorStack } from "./logger";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -275,7 +275,7 @@ async function startServer() {
       path: req.originalUrl,
       method: req.method,
       error: err?.message ?? String(err),
-      stack: err?.stack,
+      stack: safeErrorStack(err),
     });
     if (res.headersSent) {
       return;
@@ -352,15 +352,15 @@ async function startServer() {
   process.on("unhandledRejection", (reason: unknown) => {
     logger.error("unhandled_rejection", {
       error: reason instanceof Error ? reason.message : String(reason),
-      stack: reason instanceof Error ? reason.stack : undefined,
+      stack: safeErrorStack(reason),
     });
   });
   process.on("uncaughtException", (err: Error) => {
-    logger.error("uncaught_exception", { error: err.message, stack: err.stack });
+    logger.error("uncaught_exception", { error: err.message, stack: safeErrorStack(err) });
   });
 }
 
 startServer().catch((err) => {
-  logger.error("server_fatal", { error: err?.message ?? String(err), stack: err?.stack });
+  logger.error("server_fatal", { error: err?.message ?? String(err), stack: safeErrorStack(err) });
   process.exit(1);
 });

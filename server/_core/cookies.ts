@@ -42,7 +42,17 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    // `lax` is the OWASP-recommended default for session cookies: the
+    // cookie ships on top-level navigations (so the operator can land
+    // on /command-center via a magic link) but NOT on cross-site
+    // sub-requests (so a CSRF POST from an attacker page can't ride
+    // the user's session). The previous `none` value disabled CSRF
+    // protection without justification — there's no cross-site
+    // embedding flow that requires it. If a future feature does
+    // require it (e.g. an embedded iframe checkout), gate that
+    // single endpoint behind its own cookie name + scope rather than
+    // weakening the default.
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }

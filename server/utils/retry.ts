@@ -3,7 +3,7 @@
  * serverless or asynchronous managed orchestration (e.g. Manus).
  */
 
-import { logger } from "./logger";
+import { logger, safeErrorStack } from "./logger";
 
 export async function withRetries<T>(
   operationName: string,
@@ -18,7 +18,7 @@ export async function withRetries<T>(
     } catch (error: any) {
       attempt++;
       logger.warn(`Operation '${operationName}' failed (attempt ${attempt}/${maxRetries}): ${error.message}`, {
-        error: error.stack,
+        error: safeErrorStack(error),
         attempt,
       });
 
