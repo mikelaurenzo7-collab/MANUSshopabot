@@ -94,11 +94,33 @@ export const dashboardRouter = router({
       // dashboard-metrics primitive returns lifetime totals, which
       // would overstate "what happened overnight" by orders of
       // magnitude.
+      //
+      // The previous N+1 path fired one query per active store via
+      // `Promise.all(activeStores.map(...))` and silently swallowed
+      // errors with `.catch(() => [])`. On orgs with 50+ stores that
+      // was 50 separate DB round-trips per dashboard load; on a flake
+      // the brief silently showed incomplete data. Now: single query
+      // grouped by storeId, with structured error logging on failure.
       const activeStores = stores.filter((s: any) => s.status === "active");
-      const ordersByStore = await Promise.all(
-        activeStores.map((s: any) => db.getOrdersByStoreSince(s.id, since).catch(() => [])),
-      );
-      const flatOrders = ordersByStore.flat();
+      let flatOrders: any[] = [];
+      try {
+        const orderMap = await db.getOrdersByStoresSince(
+          activeStores.map((s: any) => s.id),
+          since,
+        );
+        flatOrders = Array.from(orderMap.values()).flat();
+      } catch (err) {
+        // Surface the failure rather than silently dropping it.
+        // The brief is a read-only summary so we degrade gracefully —
+        // ordersInWindow / revenueInWindow stay 0, but the operator
+        // gets at least the bot rollups + counts.
+        const { logger } = await import("../utils/logger");
+        logger.warn("daily_brief_orders_fetch_failed", {
+          module: "dashboard",
+          error: err instanceof Error ? err.message : String(err),
+          storeCount: activeStores.length,
+        });
+      }
       const ordersInWindow = flatOrders.length;
       const revenueInWindow = flatOrders.reduce(
         (sum: number, o: any) => sum + Number(o.totalAmount ?? 0),

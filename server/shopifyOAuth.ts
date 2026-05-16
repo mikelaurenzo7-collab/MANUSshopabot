@@ -67,20 +67,6 @@ function generateNonce(): string {
   return crypto.randomBytes(16).toString("hex");
 }
 
-/**
- * Legacy in-memory nonce store — kept as fallback for in-flight OAuth redirects
- * created before DB persistence was deployed. New flows write to oauthStateTokens table.
- */
-const nonceStore = new Map<string, { userId: number; storeId?: number; returnTo?: string; timestamp: number }>();
-setInterval(() => {
-  const now = Date.now();
-  for (const [nonce, data] of Array.from(nonceStore.entries())) {
-    if (now - data.timestamp > 10 * 60 * 1000) {
-      nonceStore.delete(nonce);
-    }
-  }
-}, 10 * 60 * 1000);
-
 async function getUserFromRequest(req: Request): Promise<{ id: number; openId: string } | null> {
   try {
     const userInfo = await sdk.authenticateRequest(req);
@@ -144,9 +130,6 @@ export function registerShopifyOAuthRoutes(app: Express) {
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       });
 
-      // Also write to legacy in-memory store for backward compatibility
-      nonceStore.set(nonce, { userId: user.id, storeId, returnTo, timestamp: Date.now() });
-
       const installUrl = `https://${shop}/admin/oauth/authorize?` +
         `client_id=${clientId}` +
         `&scope=${SHOPIFY_SCOPES}` +
@@ -176,20 +159,24 @@ export function registerShopifyOAuthRoutes(app: Express) {
         return;
       }
 
-      // Verify the nonce — try durable DB state first, then legacy in-memory fallback
+      // Verify the nonce against the atomic DB consume. Pre-this-PR
+      // there was a legacy in-memory Map fallback whose read/delete
+      // pair wasn't atomic — two concurrent callbacks could both
+      // pass through. The DB path (`consumeOAuthStateToken`) deletes
+      // the row in the same SQL transaction as the read, so it's
+      // race-free. The fallback was a migration aid that's no
+      // longer needed.
       const dbState = await db.consumeOAuthStateToken(state, "shopify");
-      const legacyState = dbState ? undefined : nonceStore.get(state);
-      if (!dbState && !legacyState) {
+      if (!dbState) {
         res.status(403).json({ error: "Invalid or expired state parameter" });
         return;
       }
-      if (legacyState) {
-        nonceStore.delete(state);
-      }
 
-      const nonceData = dbState
-        ? { userId: dbState.userId, storeId: dbState.storeId ?? undefined, returnTo: dbState.returnTo ?? undefined }
-        : legacyState!;
+      const nonceData = {
+        userId: dbState.userId,
+        storeId: dbState.storeId ?? undefined,
+        returnTo: dbState.returnTo ?? undefined,
+      };
 
       // Verify HMAC signature
       const { clientSecret, clientId } = getShopifyCredentials();
