@@ -36,7 +36,7 @@
  * are wired through.
  */
 
-import type { AgentTool, AgentToolDispatcher } from "../_core/claudeAgentLoop";
+import type { AgentTool, AgentToolContext, AgentToolDispatcher } from "../_core/claudeAgentLoop";
 
 interface RegisteredToolset {
   tools: AgentTool[];
@@ -73,20 +73,20 @@ export function listAgentToolsetNames(): string[] {
 
 // ─── Shared tool: web_search ──────────────────────────────────────────────
 //
-// Tavily-powered web search. Wired into every toolset (architect /
-// merchant / social) because *every* bot benefits from real-time
+// Parallel MCP (no key) or configured Tavily web search. Wired into every
+// toolset (architect / merchant / social) because *every* bot benefits from real-time
 // discovery — competitors, vendor pages, news, trends, supplier
 // changes. Pairs with `scout_url` (Firecrawl): search to discover
-// URLs + a synthesized answer; scrape to deep-dive a specific hit.
+// URLs + excerpts; scrape to deep-dive a specific hit.
 //
-// Graceful degradation: when `TAVILY_API_KEY` is unset the dispatcher
-// returns a structured "service unavailable" reject instead of
-// crashing — the agent reasons from its other tools instead.
+// A configured Tavily key preserves the existing provider. Otherwise use
+// anonymous Parallel MCP. WEB_SEARCH_PROVIDER can override or disable search.
+// Provider errors are returned to the agent without switching providers.
 
 const WEB_SEARCH_TOOL: AgentTool = {
   name: "web_search",
   description:
-    "Search the live web for a query. Returns a synthesized one-paragraph answer plus the top ranked URLs with snippets. Use this BEFORE scout_url when you don't already have a specific URL — search to discover relevant pages, then optionally scrape the best 1-2 hits with scout_url for full content. Default search is fast (basic depth, ~2s); use 'advanced' depth only when initial results were thin.",
+    "Search the live web for ranked URLs and snippets. A synthesized answer is included when the selected provider supports it. Use this BEFORE scout_url to discover relevant pages, then optionally scrape the best 1-2 hits. Parallel MCP works without a search key by default; a configured Tavily key keeps Tavily. Advanced depth, news topic and domain filters require Tavily.",
   category: "research",
   input_schema: {
     type: "object",
@@ -99,7 +99,7 @@ const WEB_SEARCH_TOOL: AgentTool = {
         type: "string",
         enum: ["basic", "advanced"],
         default: "basic",
-        description: "Search depth. 'basic' is fast and cheap. Use 'advanced' only when you need exhaustive coverage and the first basic search came back thin.",
+        description: "Use basic for general search. Advanced depth requires configured Tavily.",
       },
       maxResults: {
         type: "integer",
@@ -112,7 +112,7 @@ const WEB_SEARCH_TOOL: AgentTool = {
         type: "string",
         enum: ["general", "news"],
         default: "general",
-        description: "Use 'news' for trend / current-events queries — biases toward recent published articles. 'general' for everything else.",
+        description: "Use general by default. News biases toward recent articles and requires configured Tavily.",
       },
       includeDomains: {
         type: "array",
@@ -134,25 +134,43 @@ const WEB_SEARCH_TOOL: AgentTool = {
  * deps so the hot path stays cheap and the module is safe to import
  * from cold contexts (tests, OAuth callbacks, etc).
  */
-async function dispatchWebSearch(input: any): Promise<any> {
+async function dispatchWebSearch(input: any, context?: AgentToolContext): Promise<any> {
   const { ENV } = await import("../_core/env");
-  const toolsModule = await import("../adapters/tools");
   const { logger } = await import("../utils/logger");
   const query = String(input.query ?? "").trim();
   if (!query) {
     return { ok: false, error: "web_search requires a non-empty `query`" };
   }
-  if (!ENV.tavilyApiKey) {
-    logger.info("agent_tool_web_search_unavailable", {
-      module: "agentToolsets",
-      reason: "TAVILY_API_KEY not configured",
-    });
-    return {
-      ok: false,
-      error: "web_search is unavailable in this environment (no Tavily key configured). Reason from the other tools instead.",
-    };
+  const configured = ENV.webSearchProvider;
+  if (configured && !["parallel", "tavily", "disabled"].includes(configured)) {
+    return { ok: false, error: "Invalid WEB_SEARCH_PROVIDER; use parallel, tavily or disabled" };
+  }
+  const provider = configured || (ENV.tavilyApiKey ? "tavily" : "parallel");
+  if (provider === "disabled") {
+    return { ok: false, error: "Web search is disabled by WEB_SEARCH_PROVIDER" };
+  }
+  if (query.length > 400) {
+    return { ok: false, error: "web_search query must be ≤400 characters" };
+  }
+  if (context?.signal?.aborted) {
+    return { ok: false, error: "Web search cancelled" };
   }
   try {
+    if (provider === "parallel") {
+      if (input.searchDepth === "advanced" || input.topic === "news" ||
+          input.includeDomains?.length || input.excludeDomains?.length) {
+        return { ok: false, error: "Advanced depth, news topic and domain filters require Tavily. Configure WEB_SEARCH_PROVIDER=tavily and TAVILY_API_KEY, or use basic general search without domain filters." };
+      }
+      const { searchParallel } = await import("../adapters/tools/parallelSearch");
+      const count = Number(input.maxResults ?? 5);
+      const maxResults = Number.isFinite(count) ? Math.min(20, Math.max(1, Math.trunc(count))) : 5;
+      const result = await searchParallel(query, maxResults, ENV.anthropicModel, context);
+      return { ok: true, ...result };
+    }
+    if (!ENV.tavilyApiKey) {
+      return { ok: false, error: "Tavily search requires TAVILY_API_KEY; no other provider was attempted" };
+    }
+    const toolsModule = await import("../adapters/tools");
     const tavily = toolsModule.getToolAdapter("tavily") as unknown as {
       search: (
         credentials: { tool: string; apiKey?: string },
@@ -231,10 +249,9 @@ async function dispatchWebSearch(input: any): Promise<any> {
 // structure is stable so the rest of the workflow can rely on it.
 // scout_url DOES use real web data via Firecrawl when
 // `FIRECRAWL_API_KEY` is configured. web_search uses Tavily when
-// `TAVILY_API_KEY` is configured. Both return structured "service
-// unavailable" stubs otherwise so the agent loop never crashes on a
-// missing key. The optimal pattern is web_search → identify the
-// best URL → scout_url for the deep-scrape.
+// `TAVILY_API_KEY` is configured, otherwise anonymous Parallel MCP.
+// Provider failures return structured errors to the agent. The optimal
+// pattern is web_search → identify the best URL → scout_url for the deep-scrape.
 
 const COMPETITOR_STALKER_TOOLS: AgentTool[] = [
   {
@@ -320,9 +337,9 @@ const COMPETITOR_STALKER_TOOLS: AgentTool[] = [
  * stable across versions; the values are deterministic functions of
  * the input so tests can assert on them.
  */
-const competitorStalkerDispatch: AgentToolDispatcher = async (toolName, input) => {
+const competitorStalkerDispatch: AgentToolDispatcher = async (toolName, input, context) => {
   if (toolName === "web_search") {
-    return dispatchWebSearch(input);
+    return dispatchWebSearch(input, context);
   }
   if (toolName === "search_competitors") {
     const niche = String(input.niche ?? "general");
@@ -487,8 +504,7 @@ registerAgentToolset("architect.competitor_stalker_v0", {
 //     "hold" is the right call.
 //   • web_search — real-time market context (supplier news, vendor
 //     price changes, category-wide demand shifts) when the synth
-//     band feels stale. Powered by Tavily; degrades gracefully when
-//     TAVILY_API_KEY is unset.
+//     band feels stale. Uses configured Tavily or anonymous Parallel MCP.
 //   • propose_repricing — writes the decision into a structured
 //     {action, newPriceUsd, justification, requiresApproval} blob
 //     the workflow's downstream approval gate consumes.
@@ -546,9 +562,9 @@ const REPRICER_TOOLS: AgentTool[] = [
   WEB_SEARCH_TOOL,
 ];
 
-const repricerDispatch: AgentToolDispatcher = async (toolName, input) => {
+const repricerDispatch: AgentToolDispatcher = async (toolName, input, context) => {
   if (toolName === "web_search") {
-    return dispatchWebSearch(input);
+    return dispatchWebSearch(input, context);
   }
   // Hash SKU into deterministic snapshot + band so tests can assert
   // on stable shapes without coupling to randomness.
@@ -629,8 +645,8 @@ registerAgentToolset("merchant.repricer_v0", {
 // scores them against the brand's niche, and shortlists the trends
 // the Social Bot should jump on. Four tools:
 //   • web_search(query, topic="news") — REAL trend / news context
-//     from Tavily. Use this first to ground the briefs in what's
-//     actually happening this week.
+//     from Tavily (news) or Parallel (general search). Use this first
+//     to ground the briefs in what's actually happening this week.
 //   • fetch_platform_trends(platform, niche) — top-N rising sounds /
 //     hashtags / formats on a single platform (synth data; v1).
 //   • score_trend_relevance(trendName, niche) — niche-fit score 0-100.
@@ -694,9 +710,9 @@ const TREND_HUNTER_TOOLS: AgentTool[] = [
   WEB_SEARCH_TOOL,
 ];
 
-const trendHunterDispatch: AgentToolDispatcher = async (toolName, input) => {
+const trendHunterDispatch: AgentToolDispatcher = async (toolName, input, context) => {
   if (toolName === "web_search") {
-    return dispatchWebSearch(input);
+    return dispatchWebSearch(input, context);
   }
   const niche = String(input.niche ?? "general");
 

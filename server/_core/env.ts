@@ -156,9 +156,11 @@ export const ENV = {
   firecrawlApiKey: process.env.FIRECRAWL_API_KEY ?? "",
   // Tavily — gives the bots real web search (query → ranked URLs +
   // synthesized answer). Pairs with Firecrawl: search to discover,
-  // scrape to deep-dive. Set in Manus secrets; missing key triggers
-  // graceful "service unavailable" in the agent dispatcher.
+  // scrape to deep-dive. A configured key keeps Tavily as the provider;
+  // otherwise the agent dispatcher uses anonymous Parallel Search MCP.
   tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
+  // Explicit search selection. Empty keeps configured Tavily, else Parallel.
+  webSearchProvider: process.env.WEB_SEARCH_PROVIDER ?? "",
   // CJ Dropshipping
   cjEmail: process.env.CJ_EMAIL ?? "",
   cjPassword: process.env.CJ_PASSWORD ?? "",
