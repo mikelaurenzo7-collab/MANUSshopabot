@@ -41,6 +41,7 @@
  * loop blows up loudly instead of silently burning $40 of inference.
  */
 
+import { randomUUID } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { ENV } from "./env";
 import { isClaudeDirectAvailable } from "./claudeDirect";
@@ -78,12 +79,21 @@ export interface AgentTool {
  * produces. Errors thrown here are caught and returned to the model
  * as `{ ok: false, error: <message> }` so the loop can recover.
  */
+export interface AgentToolContext {
+  signal?: AbortSignal;
+  /** Stable for all research calls in one agent loop. */
+  sessionId?: string;
+}
+
 export type AgentToolDispatcher = (
   toolName: string,
   input: Record<string, unknown>,
+  context?: AgentToolContext,
 ) => Promise<unknown>;
 
 export interface AgentLoopParams {
+  /** Cancel model requests and supported research tools together. */
+  signal?: AbortSignal;
   /** System prompt — usually the shared platform preamble + workflow-
    *  specific instructions. Cached when caching is on so all
    *  iterations of the loop read from the same prefix. */
@@ -159,7 +169,9 @@ export function isAgentLoopAvailable(): boolean {
 export async function runAgentLoop(
   params: AgentLoopParams,
 ): Promise<AgentLoopResult> {
+  params.signal?.throwIfAborted();
   const client = getClient();
+  const toolContext: AgentToolContext = { signal: params.signal, sessionId: randomUUID() };
   const cap = params.maxIterations ?? DEFAULT_MAX_ITERATIONS;
   const maxTokens = params.maxTokens ?? 4000;
   const effort = params.effort ?? "high";
@@ -194,6 +206,7 @@ export async function runAgentLoop(
   let totalCacheRead = 0;
 
   while (iterations < cap) {
+    params.signal?.throwIfAborted();
     iterations++;
 
     const response = await client.messages.create({
@@ -207,7 +220,7 @@ export async function runAgentLoop(
         input_schema: t.input_schema,
       })) as Anthropic.Tool[],
       output_config: { effort },
-    });
+    }, { signal: params.signal });
 
     stopReason = response.stop_reason ?? null;
     totalInput += response.usage.input_tokens ?? 0;
@@ -252,7 +265,10 @@ export async function runAgentLoop(
       let resultPayload: unknown;
       let isError = false;
       try {
-        resultPayload = await params.dispatch(toolUse.name, input);
+        if (!toolCategoryByName.has(toolUse.name)) {
+          throw new Error(`Tool ${toolUse.name} is not allowed in this agent loop`);
+        }
+        resultPayload = await params.dispatch(toolUse.name, input, toolContext);
       } catch (err) {
         isError = true;
         resultPayload = {
@@ -260,6 +276,7 @@ export async function runAgentLoop(
           error: err instanceof Error ? err.message : String(err),
         };
       }
+      params.signal?.throwIfAborted();
       const serialized = JSON.stringify(resultPayload);
       toolResults.push({
         type: "tool_result",
